@@ -20,15 +20,18 @@ function LorServiceCreatePage() {
   const [editForm, setEditForm] = useState({ name: "", price: "" });
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const currentUserId = String(user?.id || user?._id || "");
 
   const lorServices = useMemo(() => {
-    const currentUserId = String(user?.id || user?._id || "");
     return services.filter((item) => {
       if (item.type !== "lor") return false;
-      if (!item.createdBy?.userId) return false;
-      return String(item.createdBy.userId) === currentUserId;
+      return true;
     });
-  }, [services, user?.id, user?._id]);
+  }, [services]);
+
+  const canManageService = (service) =>
+    !!service?.createdBy?.userId &&
+    String(service.createdBy.userId) === currentUserId;
 
   const loadServices = async () => {
     setLoading(true);
@@ -85,6 +88,11 @@ function LorServiceCreatePage() {
   };
 
   const handleStartEdit = (service) => {
+    if (!canManageService(service)) {
+      setError("Faqat o'zingiz qo'shgan xizmatni tahrirlashingiz mumkin.");
+      return;
+    }
+
     setEditingServiceId(service._id);
     setEditForm({
       name: service.name || "",
@@ -132,6 +140,10 @@ function LorServiceCreatePage() {
 
   const handleDelete = async (service) => {
     if (!service?._id) return;
+    if (!canManageService(service)) {
+      setError("Faqat o'zingiz qo'shgan xizmatni o'chirishingiz mumkin.");
+      return;
+    }
 
     const confirmed = window.confirm(
       `${service.name} xizmatini o'chirmoqchimisiz? Bu amal qaytarilmaydi.`
@@ -259,7 +271,7 @@ function LorServiceCreatePage() {
                     variant="secondary"
                     className="px-3 py-1.5 text-xs"
                     onClick={() => handleStartEdit(row)}
-                    disabled={deletingId === row._id}
+                    disabled={deletingId === row._id || !canManageService(row)}
                   >
                     Tahrirlash
                   </Button>
@@ -269,6 +281,7 @@ function LorServiceCreatePage() {
                     className="px-3 py-1.5 text-xs"
                     onClick={() => handleDelete(row)}
                     loading={deletingId === row._id}
+                    disabled={!canManageService(row)}
                   >
                     O'chirish
                   </Button>
