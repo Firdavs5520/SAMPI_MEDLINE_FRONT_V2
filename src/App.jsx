@@ -46,8 +46,16 @@ function App() {
 
       <Route element={<ProtectedRoute allowedRoles={["lor"]} />}>
         <Route element={<DashboardLayout />}>
-          <Route path="/lor" element={<Navigate to="/lor/select" replace />} />
-          <Route path="/lor/select" element={<LorSelectPage />} />
+          <Route
+            path="/lor"
+            element={<Navigate to={lorIdentity ? "/lor/checks" : "/lor/select"} replace />}
+          />
+          <Route
+            path="/lor/select"
+            element={
+              lorIdentity ? <Navigate to="/lor/checks" replace /> : <LorSelectPage />
+            }
+          />
 
           <Route element={<RequireLorIdentity />}>
             <Route path="/lor/checks" element={<LorChecksPage />} />

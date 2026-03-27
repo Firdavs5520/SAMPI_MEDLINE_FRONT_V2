@@ -16,6 +16,11 @@ const usageService = {
     return data.data;
   },
 
+  async createLorCheckout(payload) {
+    const { data } = await api.post("/usage/lor-checkout", payload);
+    return data.data;
+  },
+
   async getMyChecks(search = "", lorIdentity = "") {
     const params = new URLSearchParams();
     if (search?.trim()) {

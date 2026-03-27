@@ -3,12 +3,8 @@ import { sidebarMenus } from "../utils/constants.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 function Sidebar({ open, onClose }) {
-  const { role, lorIdentity } = useAuth();
-  const baseMenus = sidebarMenus[role] || [];
-  const menus =
-    role === "lor" && !lorIdentity
-      ? baseMenus.filter((item) => item.path === "/lor/select")
-      : baseMenus;
+  const { role } = useAuth();
+  const menus = sidebarMenus[role] || [];
 
   return (
     <aside
