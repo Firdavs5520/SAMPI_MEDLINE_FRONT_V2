@@ -20,7 +20,7 @@ export const roleLabels = {
 
 export const sidebarMenus = {
   nurse: [
-    { label: "Hamshira paneli", path: "/nurse", end: true },
+    { label: "Dorilar va xizmatlar tanlash", path: "/nurse", end: true },
     { label: "Dori qo'shish", path: "/nurse/medicines" },
     { label: "Xizmat qo'shish", path: "/nurse/services" }
   ],

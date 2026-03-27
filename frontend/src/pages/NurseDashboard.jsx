@@ -14,9 +14,49 @@ import {
 } from "../utils/printReceipt.js";
 
 const defaultPatient = { firstName: "", lastName: "" };
+const priceTierLabels = {
+  first: "1-marta",
+  second: "2-marta",
+  third: "3-marta"
+};
+const priceTierOrder = ["first", "second", "third"];
+
 const isValidStoredPrice = (value) => {
   const price = Number(value);
   return Number.isFinite(price) && price > 0 && price < 1000000;
+};
+
+const getServiceTierPrices = (service) => {
+  const first = Number(service?.priceOptions?.first);
+  const second = Number(service?.priceOptions?.second);
+  const third = Number(service?.priceOptions?.third);
+
+  if (
+    isValidStoredPrice(first) &&
+    isValidStoredPrice(second) &&
+    isValidStoredPrice(third)
+  ) {
+    return { first, second, third, hasTierPrices: true };
+  }
+
+  const base = Number(service?.price);
+  if (isValidStoredPrice(base)) {
+    return {
+      first: base,
+      second: base,
+      third: base,
+      hasTierPrices: false
+    };
+  }
+
+  return null;
+};
+
+const getSelectedServicePrice = (service, priceTier) => {
+  const prices = getServiceTierPrices(service);
+  if (!prices) return null;
+  const safeTier = priceTierOrder.includes(priceTier) ? priceTier : "first";
+  return prices[safeTier];
 };
 
 function NurseDashboard() {
@@ -32,9 +72,9 @@ function NurseDashboard() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  const nurseMedicines = useMemo(() => {
-    return medicines;
-  }, [medicines]);
+  const nurseMedicines = useMemo(() => medicines, [medicines]);
+
+  const hasAnySelection = selectedMedicineIds.length > 0 || selectedServiceIds.length > 0;
 
   const loadData = async () => {
     setLoading(true);
@@ -79,7 +119,9 @@ function NurseDashboard() {
 
   useEffect(() => {
     setSelectedServiceIds((prev) =>
-      prev.filter((id) => nurseServices.some((item) => item._id === id && isValidStoredPrice(item.price)))
+      prev.filter((id) =>
+        nurseServices.some((item) => item._id === id && !!getServiceTierPrices(item))
+      )
     );
   }, [nurseServices]);
 
@@ -119,7 +161,8 @@ function NurseDashboard() {
       setServiceInputs((prevInputs) => ({
         ...prevInputs,
         [serviceId]: {
-          quantity: prevInputs[serviceId]?.quantity || "1"
+          quantity: prevInputs[serviceId]?.quantity || "1",
+          priceTier: prevInputs[serviceId]?.priceTier || "first"
         }
       }));
 
@@ -136,11 +179,13 @@ function NurseDashboard() {
     }));
   };
 
-  const updateServiceInput = (serviceId, value) => {
+  const updateServiceInput = (serviceId, patch) => {
     setServiceInputs((prev) => ({
       ...prev,
       [serviceId]: {
-        quantity: value
+        quantity: prev[serviceId]?.quantity || "1",
+        priceTier: prev[serviceId]?.priceTier || "first",
+        ...patch
       }
     }));
   };
@@ -148,7 +193,7 @@ function NurseDashboard() {
   const validateQuantity = (quantity) => {
     const parsedQuantity = Number(quantity);
     if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0) {
-      throw new Error("Quantity 0 dan katta bo'lishi kerak.");
+      throw new Error("Miqdor 0 dan katta bo'lishi kerak.");
     }
     return parsedQuantity;
   };
@@ -166,7 +211,7 @@ function NurseDashboard() {
         throw new Error("Bemorning ismi va familiyasi kiritilishi shart.");
       }
 
-      if (selectedMedicineIds.length === 0 && selectedServiceIds.length === 0) {
+      if (!hasAnySelection) {
         throw new Error("Kamida bitta dori yoki xizmat tanlang.");
       }
 
@@ -182,7 +227,7 @@ function NurseDashboard() {
 
         const quantity = validateQuantity(input.quantity);
         if (medicine.stock < quantity) {
-          throw new Error(`${medicine.name} uchun stock yetarli emas.`);
+          throw new Error(`${medicine.name} uchun omborda yetarli qoldiq yo'q.`);
         }
 
         return {
@@ -197,14 +242,20 @@ function NurseDashboard() {
         if (!service) {
           throw new Error("Tanlangan xizmat topilmadi.");
         }
-        if (!isValidStoredPrice(service.price)) {
+
+        const quantity = validateQuantity(input.quantity);
+        const priceTier = priceTierOrder.includes(input.priceTier)
+          ? input.priceTier
+          : "first";
+        const selectedPrice = getSelectedServicePrice(service, priceTier);
+        if (!isValidStoredPrice(selectedPrice)) {
           throw new Error(`${service.name} uchun narx sozlanmagan.`);
         }
-        const quantity = validateQuantity(input.quantity);
 
         return {
           serviceId,
-          quantity
+          quantity,
+          priceTier
         };
       });
 
@@ -238,15 +289,15 @@ function NurseDashboard() {
   };
 
   if (loading) {
-    return <Spinner text="Nurse panel yuklanmoqda..." />;
+    return <Spinner text="Hamshira paneli yuklanmoqda..." />;
   }
 
   return (
     <div className="space-y-6">
       <div className="card p-4">
-        <h2 className="text-lg font-semibold text-slate-800">Dorilar (Button)</h2>
+        <h2 className="text-lg font-semibold text-slate-800">1-qadam: Dorilarni tanlang</h2>
         <p className="mb-4 text-sm text-slate-500">
-          Dori tanlang. Narx avtomatik olinadi. Omborda yo'q bo'lsa "QOLMADI".
+          Kerakli dorilarni belgilang. Omborda bo'lmasa "QOLMADI" holatda chiqadi.
         </p>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -300,7 +351,7 @@ function NurseDashboard() {
 
       {selectedMedicineIds.length > 0 ? (
         <div className="card p-4">
-          <h3 className="text-base font-semibold text-slate-800">Tanlangan Dorilar</h3>
+          <h3 className="text-base font-semibold text-slate-800">Tanlangan dorilar</h3>
           <div className="mt-3 space-y-3">
             {selectedMedicineIds.map((medicineId) => {
               const medicine = nurseMedicines.find((item) => item._id === medicineId);
@@ -319,7 +370,7 @@ function NurseDashboard() {
                     </p>
                   </div>
                   <Input
-                    label="Quantity"
+                    label="Miqdor"
                     type="number"
                     min="1"
                     value={input.quantity || ""}
@@ -340,15 +391,16 @@ function NurseDashboard() {
       ) : null}
 
       <div className="card p-4">
-        <h2 className="text-lg font-semibold text-slate-800">Xizmatlar (Button)</h2>
+        <h2 className="text-lg font-semibold text-slate-800">2-qadam: Xizmatlarni tanlang</h2>
         <p className="mb-4 text-sm text-slate-500">
-          Xizmat tanlang. Narx avtomatik olinadi.
+          Hamshira xizmatlari 1/2/3-marta narxlari bilan chiqadi.
         </p>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {nurseServices.map((service) => {
             const selected = selectedServiceIds.includes(service._id);
-            const hasInvalidPrice = !isValidStoredPrice(service.price);
+            const tierPrices = getServiceTierPrices(service);
+            const hasInvalidPrice = !tierPrices;
             return (
               <button
                 key={service._id}
@@ -359,8 +411,8 @@ function NurseDashboard() {
                   hasInvalidPrice
                     ? "cursor-not-allowed border-amber-300 bg-amber-50"
                     : selected
-                    ? "border-primary bg-cyan-50"
-                    : "border-slate-200 bg-white hover:border-primary/50"
+                      ? "border-primary bg-cyan-50"
+                      : "border-slate-200 bg-white hover:border-primary/50"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -371,10 +423,13 @@ function NurseDashboard() {
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-1 text-xs uppercase text-slate-500">{service.type}</p>
-                <p className="text-xs text-slate-500">
-                  Narx: {service.price ? formatCurrency(service.price) : "-"}
-                </p>
+                {tierPrices ? (
+                  <div className="mt-2 space-y-1 text-xs text-slate-500">
+                    <p>1-marta: {formatCurrency(tierPrices.first)}</p>
+                    <p>2-marta: {formatCurrency(tierPrices.second)}</p>
+                    <p>3-marta: {formatCurrency(tierPrices.third)}</p>
+                  </div>
+                ) : null}
               </button>
             );
           })}
@@ -383,30 +438,54 @@ function NurseDashboard() {
 
       {selectedServiceIds.length > 0 ? (
         <div className="card p-4">
-          <h3 className="text-base font-semibold text-slate-800">Tanlangan Xizmatlar</h3>
+          <h3 className="text-base font-semibold text-slate-800">Tanlangan xizmatlar</h3>
           <div className="mt-3 space-y-3">
             {selectedServiceIds.map((serviceId) => {
               const service = nurseServices.find((item) => item._id === serviceId);
               const input = serviceInputs[serviceId] || {};
+              const priceTier = priceTierOrder.includes(input.priceTier)
+                ? input.priceTier
+                : "first";
+              const selectedPrice = getSelectedServicePrice(service, priceTier);
 
               return (
                 <div
                   key={serviceId}
-                  className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_180px_auto]"
+                  className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_160px_180px_auto]"
                 >
                   <div>
                     <p className="font-medium text-slate-800">{service?.name}</p>
                     <p className="text-xs text-slate-500">
-                      Narx: {service?.price ? formatCurrency(service.price) : "-"}
+                      Tanlangan narx: {selectedPrice ? formatCurrency(selectedPrice) : "-"}
                     </p>
                   </div>
                   <Input
-                    label="Quantity"
+                    label="Miqdor"
                     type="number"
                     min="1"
                     value={input.quantity || ""}
-                    onChange={(e) => updateServiceInput(serviceId, e.target.value)}
+                    onChange={(e) =>
+                      updateServiceInput(serviceId, { quantity: e.target.value })
+                    }
                   />
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-slate-700">
+                      Narx turi
+                    </label>
+                    <select
+                      value={priceTier}
+                      onChange={(e) =>
+                        updateServiceInput(serviceId, { priceTier: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/20"
+                    >
+                      {priceTierOrder.map((tierKey) => (
+                        <option key={tierKey} value={tierKey}>
+                          {priceTierLabels[tierKey]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <Button
                     variant="secondary"
                     className="h-fit self-end"
@@ -421,33 +500,45 @@ function NurseDashboard() {
         </div>
       ) : null}
 
-      <div className="card p-4">
-        <h2 className="text-lg font-semibold text-slate-800">Bemor Ma'lumoti</h2>
-        <p className="mb-4 text-sm text-slate-500">Chek chiqarishdan oldin kiriting.</p>
+      {hasAnySelection ? (
+        <div className="card p-4">
+          <h2 className="text-lg font-semibold text-slate-800">
+            3-qadam: Bemor ma'lumotini kiriting
+          </h2>
+          <p className="mb-4 text-sm text-slate-500">
+            Ism va familiyani kiriting, so'ng chek chiqaring.
+          </p>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          <Input
-            label="Ism"
-            value={patient.firstName}
-            onChange={(e) =>
-              setPatient((prev) => ({ ...prev, firstName: e.target.value }))
-            }
-          />
-          <Input
-            label="Familiya"
-            value={patient.lastName}
-            onChange={(e) =>
-              setPatient((prev) => ({ ...prev, lastName: e.target.value }))
-            }
-          />
-        </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <Input
+              label="Ism"
+              value={patient.firstName}
+              onChange={(e) =>
+                setPatient((prev) => ({ ...prev, firstName: e.target.value }))
+              }
+            />
+            <Input
+              label="Familiya"
+              value={patient.lastName}
+              onChange={(e) =>
+                setPatient((prev) => ({ ...prev, lastName: e.target.value }))
+              }
+            />
+          </div>
 
-        <div className="mt-4 flex justify-end">
-          <Button loading={submittingCheckout} onClick={handleCreateCheckout}>
-            Chek Chiqarish
-          </Button>
+          <div className="mt-4 flex justify-end">
+            <Button loading={submittingCheckout} onClick={handleCreateCheckout}>
+              Chek chiqarish
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="card p-4">
+          <p className="text-sm text-slate-600">
+            Pastdagi bemor ma'lumot bo'limi chiqishi uchun avval dori yoki xizmat tanlang.
+          </p>
+        </div>
+      )}
 
       <Alert type="success" message={success} />
       <Alert type="error" message={error} />

@@ -245,7 +245,7 @@ function LorServiceCreatePage() {
 
       <div className="card p-4 sm:p-5">
         <h2 className="mb-4 text-lg font-semibold text-slate-800">
-          Men qo'shgan LOR xizmatlari
+          LOR xizmatlari ro'yxati
         </h2>
         <Table
           data={lorServices}
@@ -255,11 +255,6 @@ function LorServiceCreatePage() {
               key: "price",
               label: "Narxi",
               render: (row) => formatCurrency(row.price)
-            },
-            {
-              key: "createdBy",
-              label: "Qo'shgan xodim",
-              render: (row) => row.createdBy?.name || "-"
             },
             {
               key: "actions",
