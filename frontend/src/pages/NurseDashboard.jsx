@@ -6,6 +6,7 @@ import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
+import BusyOverlay from "../components/BusyOverlay.jsx";
 import { extractErrorMessage, formatCurrency } from "../utils/format.js";
 import {
   closePrintTab,
@@ -199,9 +200,10 @@ function NurseDashboard() {
   };
 
   const handleCreateCheckout = async () => {
+    if (submittingCheckout) return;
     resetMessages();
     setSubmittingCheckout(true);
-    const printTab = openPendingPrintTab();
+    let printTab = null;
 
     try {
       const firstName = patient.firstName.trim();
@@ -259,6 +261,7 @@ function NurseDashboard() {
         };
       });
 
+      printTab = openPendingPrintTab();
       const result = await usageService.createCheckout({
         patient: {
           firstName,
@@ -268,18 +271,18 @@ function NurseDashboard() {
         services: servicePayload
       });
 
+      const written = writeCheckToPrintTab(printTab, result.check);
+      if (!written) {
+        setError("Brauzer yangi tabni blokladi. Pop-up ruxsatini yoqing.");
+      }
+
       setSuccess("Chek muvaffaqiyatli yaratildi.");
       setPatient(defaultPatient);
       setSelectedMedicineIds([]);
       setSelectedServiceIds([]);
       setMedicineInputs({});
       setServiceInputs({});
-      await loadData();
-
-      const written = writeCheckToPrintTab(printTab, result.check);
-      if (!written) {
-        setError("Brauzer yangi tabni blokladi. Pop-up ruxsatini yoqing.");
-      }
+      void loadData();
     } catch (err) {
       closePrintTab(printTab);
       setError(extractErrorMessage(err));
@@ -542,6 +545,7 @@ function NurseDashboard() {
 
       <Alert type="success" message={success} />
       <Alert type="error" message={error} />
+      <BusyOverlay show={submittingCheckout} text="Chek yaratilmoqda..." />
     </div>
   );
 }
