@@ -1,8 +1,15 @@
-function Table({ columns, data }) {
+function Table({
+  columns,
+  data,
+  headerClassName = "",
+  rowClassName = "",
+  cellClassName = "",
+  tableClassName = ""
+}) {
   return (
     <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
-      <table className="min-w-full table-auto bg-white text-sm">
-        <thead className="bg-slate-50 text-left text-slate-600">
+      <table className={`min-w-full table-auto bg-white text-sm ${tableClassName}`.trim()}>
+        <thead className={`bg-slate-50 text-left text-slate-600 ${headerClassName}`.trim()}>
           <tr>
             {columns.map((col) => (
               <th key={col.key} className="whitespace-nowrap px-3 py-3 font-semibold sm:px-4">
@@ -25,12 +32,12 @@ function Table({ columns, data }) {
             data.map((row, rowIndex) => (
               <tr
                 key={row._id || row.id || rowIndex}
-                className="border-t border-slate-100"
+                className={`border-t border-slate-100 ${rowClassName}`.trim()}
               >
                 {columns.map((col) => (
                   <td
                     key={col.key}
-                    className="whitespace-normal break-words px-3 py-3 align-top text-slate-700 sm:px-4"
+                    className={`whitespace-normal break-words px-3 py-3 align-top text-slate-700 sm:px-4 ${cellClassName}`.trim()}
                   >
                     {col.render ? col.render(row) : row[col.key]}
                   </td>
