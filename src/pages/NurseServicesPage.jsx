@@ -8,6 +8,44 @@ import Alert from "../components/Alert.jsx";
 import Table from "../components/Table.jsx";
 import { extractErrorMessage, formatCurrency } from "../utils/format.js";
 
+const emptyPriceForm = {
+  name: "",
+  first: "",
+  second: "",
+  third: ""
+};
+
+const parsePrice = (value) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed >= 1000000) {
+    throw new Error("Narx > 0 va < 1,000,000 bo'lishi kerak.");
+  }
+  return parsed;
+};
+
+const normalizePriceOptions = (form) => ({
+  first: parsePrice(form.first),
+  second: parsePrice(form.second),
+  third: parsePrice(form.third)
+});
+
+const getServicePriceOptions = (service) => {
+  if (service?.priceOptions?.first && service?.priceOptions?.second && service?.priceOptions?.third) {
+    return {
+      first: service.priceOptions.first,
+      second: service.priceOptions.second,
+      third: service.priceOptions.third
+    };
+  }
+
+  const fallback = Number(service?.price || 0);
+  return {
+    first: fallback,
+    second: fallback,
+    third: fallback
+  };
+};
+
 function NurseServicesPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -15,19 +53,17 @@ function NurseServicesPage() {
   const [updating, setUpdating] = useState(false);
   const [deletingId, setDeletingId] = useState("");
   const [services, setServices] = useState([]);
-  const [form, setForm] = useState({ name: "", price: "" });
+  const [form, setForm] = useState(emptyPriceForm);
   const [editingServiceId, setEditingServiceId] = useState("");
-  const [editForm, setEditForm] = useState({ name: "", price: "" });
+  const [editForm, setEditForm] = useState(emptyPriceForm);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const currentUserId = String(user?.id || user?._id || "");
 
-  const nurseServices = useMemo(() => {
-    return services.filter((item) => {
-      if (item.type !== "nurse") return false;
-      return true;
-    });
-  }, [services]);
+  const nurseServices = useMemo(
+    () => services.filter((item) => item.type === "nurse"),
+    [services]
+  );
 
   const canManageService = (service) =>
     !!service?.createdBy?.userId &&
@@ -62,23 +98,20 @@ function NurseServicesPage() {
 
     try {
       const safeName = form.name.trim();
-      const safePrice = Number(form.price);
-
       if (!safeName) {
         throw new Error("Xizmat nomini kiriting.");
       }
-      if (!Number.isFinite(safePrice) || safePrice <= 0 || safePrice >= 1000000) {
-        throw new Error("Narx > 0 va < 1,000,000 bo'lishi kerak.");
-      }
+
+      const priceOptions = normalizePriceOptions(form);
 
       await serviceService.createService({
         name: safeName,
         type: "nurse",
-        price: safePrice
+        priceOptions
       });
 
-      setSuccess("Yangi nurse xizmati qo'shildi.");
-      setForm({ name: "", price: "" });
+      setSuccess("Yangi hamshira xizmati qo'shildi.");
+      setForm(emptyPriceForm);
       await loadServices();
     } catch (err) {
       setError(extractErrorMessage(err));
@@ -93,17 +126,21 @@ function NurseServicesPage() {
       return;
     }
 
+    const options = getServicePriceOptions(service);
+
     setEditingServiceId(service._id);
     setEditForm({
       name: service.name || "",
-      price: service.price ? String(service.price) : ""
+      first: String(options.first || ""),
+      second: String(options.second || ""),
+      third: String(options.third || "")
     });
     resetMessages();
   };
 
   const handleCancelEdit = () => {
     setEditingServiceId("");
-    setEditForm({ name: "", price: "" });
+    setEditForm(emptyPriceForm);
   };
 
   const handleSaveEdit = async (e) => {
@@ -114,18 +151,15 @@ function NurseServicesPage() {
     setUpdating(true);
     try {
       const safeName = editForm.name.trim();
-      const safePrice = Number(editForm.price);
-
       if (!safeName) {
         throw new Error("Xizmat nomini kiriting.");
       }
-      if (!Number.isFinite(safePrice) || safePrice <= 0 || safePrice >= 1000000) {
-        throw new Error("Narx > 0 va < 1,000,000 bo'lishi kerak.");
-      }
+
+      const priceOptions = normalizePriceOptions(editForm);
 
       await serviceService.updateService(editingServiceId, {
         name: safeName,
-        price: safePrice
+        priceOptions
       });
 
       setSuccess("Xizmat ma'lumoti yangilandi.");
@@ -169,34 +203,45 @@ function NurseServicesPage() {
   };
 
   if (loading) {
-    return <Spinner text="Nurse xizmatlari yuklanmoqda..." />;
+    return <Spinner text="Hamshira xizmatlari yuklanmoqda..." />;
   }
 
   return (
     <div className="space-y-6">
       <div className="card p-4">
-        <h2 className="text-lg font-semibold text-slate-800">Xizmat Qoshish</h2>
+        <h2 className="text-lg font-semibold text-slate-800">Xizmat Qo'shish</h2>
         <p className="mb-4 text-sm text-slate-500">
-          Nurse uchun yangi xizmat va uning narxini kiriting.
+          Xizmat nomini va 1/2/3-marta narxlarini kiriting.
         </p>
-        <form
-          onSubmit={handleAddService}
-          className="grid gap-3 md:grid-cols-[1fr_180px_auto]"
-        >
+        <form onSubmit={handleAddService} className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           <Input
             label="Xizmat nomi"
             value={form.name}
             onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
           />
           <Input
-            label="Narxi"
+            label="1-marta narxi"
             type="number"
             min="1"
-            value={form.price}
-            onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
+            value={form.first}
+            onChange={(e) => setForm((prev) => ({ ...prev, first: e.target.value }))}
+          />
+          <Input
+            label="2-marta narxi"
+            type="number"
+            min="1"
+            value={form.second}
+            onChange={(e) => setForm((prev) => ({ ...prev, second: e.target.value }))}
+          />
+          <Input
+            label="3-marta narxi"
+            type="number"
+            min="1"
+            value={form.third}
+            onChange={(e) => setForm((prev) => ({ ...prev, third: e.target.value }))}
           />
           <Button type="submit" className="h-fit self-end" loading={saving}>
-            Qoshish
+            Qo'shish
           </Button>
         </form>
       </div>
@@ -206,7 +251,7 @@ function NurseServicesPage() {
           <h3 className="text-base font-semibold text-slate-800">Xizmatni tahrirlash</h3>
           <form
             onSubmit={handleSaveEdit}
-            className="mt-3 grid gap-3 md:grid-cols-[1fr_180px_auto_auto]"
+            className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-6"
           >
             <Input
               label="Xizmat nomi"
@@ -214,11 +259,25 @@ function NurseServicesPage() {
               onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
             />
             <Input
-              label="Narxi"
+              label="1-marta narxi"
               type="number"
               min="1"
-              value={editForm.price}
-              onChange={(e) => setEditForm((prev) => ({ ...prev, price: e.target.value }))}
+              value={editForm.first}
+              onChange={(e) => setEditForm((prev) => ({ ...prev, first: e.target.value }))}
+            />
+            <Input
+              label="2-marta narxi"
+              type="number"
+              min="1"
+              value={editForm.second}
+              onChange={(e) => setEditForm((prev) => ({ ...prev, second: e.target.value }))}
+            />
+            <Input
+              label="3-marta narxi"
+              type="number"
+              min="1"
+              value={editForm.third}
+              onChange={(e) => setEditForm((prev) => ({ ...prev, third: e.target.value }))}
             />
             <Button type="submit" className="h-fit self-end" loading={updating}>
               Saqlash
@@ -241,22 +300,26 @@ function NurseServicesPage() {
 
       <div className="card p-4">
         <h3 className="mb-4 text-base font-semibold text-slate-800">
-          Men qo'shgan nurse xizmatlari
+          Hamshira xizmatlari ro'yxati
         </h3>
         <Table
           data={nurseServices}
           columns={[
             { key: "name", label: "Xizmat" },
-            { key: "type", label: "Turi" },
             {
-              key: "createdBy",
-              label: "Qo'shgan",
-              render: (row) => row.createdBy?.name || "-"
+              key: "firstPrice",
+              label: "1-marta",
+              render: (row) => formatCurrency(getServicePriceOptions(row).first)
             },
             {
-              key: "price",
-              label: "Narxi",
-              render: (row) => formatCurrency(row.price)
+              key: "secondPrice",
+              label: "2-marta",
+              render: (row) => formatCurrency(getServicePriceOptions(row).second)
+            },
+            {
+              key: "thirdPrice",
+              label: "3-marta",
+              render: (row) => formatCurrency(getServicePriceOptions(row).third)
             },
             {
               key: "actions",

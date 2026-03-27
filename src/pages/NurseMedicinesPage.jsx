@@ -234,7 +234,7 @@ function NurseMedicinesPage() {
 
       <div className="card p-4">
         <h3 className="mb-4 text-base font-semibold text-slate-800">
-          Men qo'shgan dorilar
+          Dorilar ro'yxati
         </h3>
         <Table
           data={nurseMedicines}
@@ -244,11 +244,6 @@ function NurseMedicinesPage() {
               key: "price",
               label: "Narxi",
               render: (row) => formatCurrency(row.price)
-            },
-            {
-              key: "createdBy",
-              label: "Qo'shgan",
-              render: (row) => row.createdBy?.name || "-"
             },
             { key: "stock", label: "Qoldiq" },
             {
