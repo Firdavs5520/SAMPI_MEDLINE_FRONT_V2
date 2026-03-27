@@ -130,8 +130,12 @@ function NurseMedicinesPage() {
     resetMessages();
     setDeletingId(deleteTarget._id);
     try {
-      await medicineService.deleteMedicine(deleteTarget._id);
-      setSuccess("Dori o'chirildi.");
+      const result = await medicineService.deleteMedicine(deleteTarget._id);
+      if (result?.archived) {
+        setSuccess("Dori ishlatilganligi sabab arxivga olindi.");
+      } else {
+        setSuccess("Dori o'chirildi.");
+      }
 
       if (editingMedicineId === deleteTarget._id) {
         handleCancelEdit();
