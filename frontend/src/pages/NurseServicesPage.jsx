@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../context/AuthContext.jsx";
 import serviceService from "../services/serviceService.js";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
@@ -47,7 +46,6 @@ const getServicePriceOptions = (service) => {
 };
 
 function NurseServicesPage() {
-  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -58,16 +56,11 @@ function NurseServicesPage() {
   const [editForm, setEditForm] = useState(emptyPriceForm);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const currentUserId = String(user?.id || user?._id || "");
 
   const nurseServices = useMemo(
     () => services.filter((item) => item.type === "nurse"),
     [services]
   );
-
-  const canManageService = (service) =>
-    !!service?.createdBy?.userId &&
-    String(service.createdBy.userId) === currentUserId;
 
   const loadServices = async () => {
     setLoading(true);
@@ -121,11 +114,6 @@ function NurseServicesPage() {
   };
 
   const handleStartEdit = (service) => {
-    if (!canManageService(service)) {
-      setError("Faqat o'zingiz qo'shgan xizmatni tahrirlashingiz mumkin.");
-      return;
-    }
-
     const options = getServicePriceOptions(service);
 
     setEditingServiceId(service._id);
@@ -174,10 +162,6 @@ function NurseServicesPage() {
 
   const handleDelete = async (service) => {
     if (!service?._id) return;
-    if (!canManageService(service)) {
-      setError("Faqat o'zingiz qo'shgan xizmatni o'chirishingiz mumkin.");
-      return;
-    }
 
     const confirmed = window.confirm(
       `${service.name} xizmatini o'chirmoqchimisiz? Bu amal qaytarilmaydi.`
@@ -331,7 +315,7 @@ function NurseServicesPage() {
                     variant="secondary"
                     className="px-3 py-1.5 text-xs"
                     onClick={() => handleStartEdit(row)}
-                    disabled={deletingId === row._id || !canManageService(row)}
+                    disabled={deletingId === row._id}
                   >
                     Tahrirlash
                   </Button>
@@ -341,7 +325,6 @@ function NurseServicesPage() {
                     className="px-3 py-1.5 text-xs"
                     onClick={() => handleDelete(row)}
                     loading={deletingId === row._id}
-                    disabled={!canManageService(row)}
                   >
                     O'chirish
                   </Button>
