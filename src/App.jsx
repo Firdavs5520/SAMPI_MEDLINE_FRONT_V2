@@ -11,6 +11,7 @@ import LorChecksPage from "./pages/LorChecksPage.jsx";
 import LorServicesPage from "./pages/LorServicesPage.jsx";
 import LorServiceCreatePage from "./pages/LorServiceCreatePage.jsx";
 import DeliveryDashboard from "./pages/DeliveryDashboard.jsx";
+import CashierDashboard from "./pages/CashierDashboard.jsx";
 import ManagerDashboard from "./pages/ManagerDashboard.jsx";
 import ManagerStockPage from "./pages/ManagerStockPage.jsx";
 import ManagerMostUsedPage from "./pages/ManagerMostUsedPage.jsx";
@@ -68,6 +69,12 @@ function App() {
       <Route element={<ProtectedRoute allowedRoles={["delivery"]} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/delivery" element={<DeliveryDashboard />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={["cashier"]} />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/cashier" element={<CashierDashboard />} />
         </Route>
       </Route>
 

@@ -5,6 +5,7 @@ import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
+import BusyOverlay from "../components/BusyOverlay.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { extractErrorMessage, formatCurrency } from "../utils/format.js";
 import {
@@ -104,9 +105,10 @@ function LorServicesPage() {
   };
 
   const handleCreateCheckout = async () => {
+    if (submittingCheckout) return;
     resetMessages();
     setSubmittingCheckout(true);
-    const printTab = openPendingPrintTab();
+    let printTab = null;
 
     try {
       const firstName = patient.firstName.trim();
@@ -133,6 +135,7 @@ function LorServicesPage() {
         };
       });
 
+      printTab = openPendingPrintTab();
       const result = await usageService.createLorCheckout({
         services: servicesPayload,
         lorIdentity,
@@ -285,6 +288,7 @@ function LorServicesPage() {
 
       <Alert type="success" message={success} />
       <Alert type="error" message={error} />
+      <BusyOverlay show={submittingCheckout} text="Chek yaratilmoqda..." />
     </div>
   );
 }
