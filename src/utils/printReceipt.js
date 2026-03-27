@@ -45,8 +45,6 @@ const buildCheckPrintHtml = (check) => {
     <meta charset="UTF-8" />
     <title>Chek - ${escapeHtml(check.checkId)}</title>
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap");
-
       @page {
         size: 58mm auto;
         margin: 0;
@@ -61,7 +59,7 @@ const buildCheckPrintHtml = (check) => {
         padding: 0;
         width: 58mm;
         background: #fff;
-        font-family: "Golos Text", Arial, Helvetica, sans-serif;
+        font-family: "Courier New", Courier, monospace;
         color: #000;
         overflow: hidden;
       }
@@ -75,28 +73,28 @@ const buildCheckPrintHtml = (check) => {
       .check-inner {
         width: 48mm;
         margin: 0 auto;
-        padding: 4px 0;
+        padding: 1px 0;
       }
 
       .check-title {
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 900;
-        letter-spacing: 0.3px;
+        letter-spacing: 0.2px;
         white-space: nowrap;
       }
 
       .divider {
         border-top: 1px dashed #000;
-        margin: 4px 0;
+        margin: 3px 0;
       }
 
       .text {
-        font-size: 11px;
+        font-size: 13px;
         margin: 1px 0;
       }
 
       .section-title {
-        font-size: 13px;
+        font-size: 16px;
         font-weight: 700;
         margin-top: 2px;
       }
@@ -105,15 +103,15 @@ const buildCheckPrintHtml = (check) => {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        font-size: 11px;
+        font-size: 13px;
         margin: 1px 0;
-        gap: 2mm;
+        gap: 1.5mm;
       }
 
       .row span:first-child {
         flex: 1;
         min-width: 0;
-        max-width: 30mm;
+        max-width: 31mm;
         word-break: break-word;
         text-align: left;
       }
@@ -125,20 +123,14 @@ const buildCheckPrintHtml = (check) => {
       .jami {
         display: flex;
         justify-content: space-between;
-        font-size: 12px;
+        font-size: 15px;
         font-weight: 700;
         margin-top: 3px;
       }
 
-      .meta-line {
-        font-size: 11px;
-        margin: 1px 0;
-        word-break: break-all;
-      }
-
       .footer {
-        font-size: 11px;
-        margin-top: 10px;
+        font-size: 12px;
+        margin-top: 6px;
       }
     </style>
   </head>
@@ -182,8 +174,6 @@ const buildCheckPrintHtml = (check) => {
         </div>
 
         <div class="divider"></div>
-        <div class="meta-line">Chek: ${escapeHtml(check.checkId)}</div>
-        <div class="meta-line">Xodim: ${escapeHtml(check.createdBy?.name || "-")}</div>
         <div class="footer">Doimo sog'-salomat bo'ling</div>
       </div>
     </div>
@@ -224,7 +214,7 @@ export const openPendingPrintTab = () => {
 
   printTab.document.open();
   printTab.document.write(
-    "<!doctype html><html><head><title>Chek tayyorlanmoqda...</title><style>@import url(\"https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap\");</style></head><body style='font-family: \"Golos Text\", Arial, sans-serif; padding: 16px;'>Chek tayyorlanmoqda...</body></html>"
+    "<!doctype html><html><head><title>Chek tayyorlanmoqda...</title></head><body style='font-family: \"Courier New\", Courier, monospace; padding: 12px;'>Chek tayyorlanmoqda...</body></html>"
   );
   printTab.document.close();
   return printTab;
