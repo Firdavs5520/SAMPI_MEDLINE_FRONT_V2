@@ -21,14 +21,13 @@ function NurseMedicinesPage() {
   const [medicines, setMedicines] = useState([]);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const currentUserId = String(user?.id || user?._id || "");
 
-  const nurseMedicines = useMemo(() => {
-    const userId = String(user?.id || user?._id || "");
-    return medicines.filter((medicine) => {
-      if (!medicine.createdBy?.userId) return false;
-      return String(medicine.createdBy.userId) === userId;
-    });
-  }, [medicines, user?.id, user?._id]);
+  const nurseMedicines = useMemo(() => medicines, [medicines]);
+
+  const canManageMedicine = (medicine) =>
+    !!medicine?.createdBy?.userId &&
+    String(medicine.createdBy.userId) === currentUserId;
 
   const loadMedicines = async () => {
     setLoading(true);
@@ -80,6 +79,11 @@ function NurseMedicinesPage() {
   };
 
   const handleStartEdit = (medicine) => {
+    if (!canManageMedicine(medicine)) {
+      setError("Faqat o'zingiz qo'shgan dorini tahrirlashingiz mumkin.");
+      return;
+    }
+
     setEditingMedicineId(medicine._id);
     setEditForm({
       name: medicine.name || "",
@@ -127,6 +131,10 @@ function NurseMedicinesPage() {
 
   const handleDelete = async (medicine) => {
     if (!medicine?._id) return;
+    if (!canManageMedicine(medicine)) {
+      setError("Faqat o'zingiz qo'shgan dorini o'chirishingiz mumkin.");
+      return;
+    }
 
     const confirmed = window.confirm(
       `${medicine.name} dorisini o'chirmoqchimisiz? Bu amal qaytarilmaydi.`
@@ -237,6 +245,11 @@ function NurseMedicinesPage() {
               label: "Narxi",
               render: (row) => formatCurrency(row.price)
             },
+            {
+              key: "createdBy",
+              label: "Qo'shgan",
+              render: (row) => row.createdBy?.name || "-"
+            },
             { key: "stock", label: "Qoldiq" },
             {
               key: "status",
@@ -262,7 +275,7 @@ function NurseMedicinesPage() {
                     variant="secondary"
                     className="px-3 py-1.5 text-xs"
                     onClick={() => handleStartEdit(row)}
-                    disabled={deletingId === row._id}
+                    disabled={deletingId === row._id || !canManageMedicine(row)}
                   >
                     Tahrirlash
                   </Button>
@@ -272,6 +285,7 @@ function NurseMedicinesPage() {
                     className="px-3 py-1.5 text-xs"
                     onClick={() => handleDelete(row)}
                     loading={deletingId === row._id}
+                    disabled={!canManageMedicine(row)}
                   >
                     O'chirish
                   </Button>
