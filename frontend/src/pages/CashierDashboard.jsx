@@ -10,8 +10,8 @@ import { extractErrorMessage, formatCurrency } from "../utils/format.js";
 
 const SECTION_META = {
   "nurse-patients": {
-    title: "Nurse bo'limi",
-    subtitle: "Nurse bemorlarini qo'shish va hisobini yuritish.",
+    title: "PROTSEDURA (Nurse)",
+    subtitle: "Nurse protsedura yozuvlari va to'lov jurnali.",
     lockedType: "nurse",
     specialistLabel: "Medsestra"
   },
@@ -507,6 +507,73 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   }
 
   const specialistTitle = lockedType ? sectionMeta.specialistLabel : "Mutaxassis";
+  const entryTableHeaderClass =
+    lockedType === "nurse"
+      ? "bg-rose-100 text-rose-800"
+      : lockedType === "lor"
+        ? "bg-sky-100 text-sky-800"
+        : "bg-slate-100 text-slate-700";
+
+  const entryColumns = [
+    { key: "rowNumber", label: "No" },
+    { key: "patientName", label: "F.I.O bemor" },
+    {
+      key: "amount",
+      label: "Summa",
+      render: (row) => `${formatCurrency(row.amount)} so'm`
+    },
+    {
+      key: "paidAmount",
+      label: "To'langan",
+      render: (row) => `${formatCurrency(row.paidAmount ?? row.amount)} so'm`
+    },
+    {
+      key: "debtAmount",
+      label: "Qarz",
+      render: (row) => `${formatCurrency(row.debtAmount || 0)} so'm`
+    },
+    {
+      key: "paymentMethod",
+      label: "To'lov usuli",
+      render: (row) => paymentMethodLabels[row.paymentMethod] || row.paymentMethod
+    },
+    {
+      key: "specialistName",
+      label: specialistTitle
+    },
+    {
+      key: "patientPhone",
+      label: "Tel",
+      render: (row) => row.patientPhone || "-"
+    },
+    {
+      key: "entryDate",
+      label: "Sana",
+      render: (row) => formatDateInput(row.entryDate)
+    },
+    {
+      key: "actions",
+      label: "Amallar",
+      render: (row) => (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => startEditEntry(row)}
+            className="rounded-lg bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-300"
+          >
+            Tahrirlash
+          </button>
+          <button
+            type="button"
+            onClick={() => setDeleteEntryTarget(row)}
+            className="rounded-lg bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-200"
+          >
+            O'chirish
+          </button>
+        </div>
+      )
+    }
+  ];
 
   return (
     <div className="space-y-6">
@@ -786,66 +853,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         <div className="mt-4">
           <Table
             data={tableData}
-            columns={[
-              { key: "rowNumber", label: "No" },
-              { key: "patientName", label: "Bemor F.I.O" },
-              {
-                key: "specialistName",
-                label: specialistTitle
-              },
-              {
-                key: "amount",
-                label: "Jami",
-                render: (row) => `${formatCurrency(row.amount)} so'm`
-              },
-              {
-                key: "paidAmount",
-                label: "To'langan",
-                render: (row) => `${formatCurrency(row.paidAmount ?? row.amount)} so'm`
-              },
-              {
-                key: "debtAmount",
-                label: "Qarz",
-                render: (row) => `${formatCurrency(row.debtAmount || 0)} so'm`
-              },
-              {
-                key: "paymentMethod",
-                label: "To'lov usuli",
-                render: (row) => paymentMethodLabels[row.paymentMethod] || row.paymentMethod
-              },
-              {
-                key: "patientPhone",
-                label: "Tel",
-                render: (row) => row.patientPhone || "-"
-              },
-              {
-                key: "entryDate",
-                label: "Sana",
-                render: (row) => formatDateInput(row.entryDate)
-              },
-              {
-                key: "actions",
-                label: "Amallar",
-                render: (row) => (
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startEditEntry(row)}
-                      className="rounded-lg bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-300"
-                    >
-                      Tahrirlash
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteEntryTarget(row)}
-                      className="rounded-lg bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-200"
-                    >
-                      O'chirish
-                    </button>
-                  </div>
-                )
-              }
-            ]}
+            columns={entryColumns}
+            headerClassName={entryTableHeaderClass}
           />
         </div>
       </div>
