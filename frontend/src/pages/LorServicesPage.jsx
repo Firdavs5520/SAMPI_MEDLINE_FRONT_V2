@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import serviceService from "../services/serviceService.js";
 import usageService from "../services/usageService.js";
 import Input from "../components/Input.jsx";
@@ -16,12 +16,21 @@ import {
 function LorServicesPage() {
   const { user, lorIdentity } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [submittingId, setSubmittingId] = useState(null);
+  const [submittingCheckout, setSubmittingCheckout] = useState(false);
   const [services, setServices] = useState([]);
-  const [serviceForms, setServiceForms] = useState({});
+  const [selectedServiceIds, setSelectedServiceIds] = useState([]);
+  const [serviceInputs, setServiceInputs] = useState({});
   const [patient, setPatient] = useState({ firstName: "", lastName: "" });
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+
+  const sortedServices = useMemo(
+    () =>
+      [...services].sort((a, b) =>
+        String(a?.name || "").localeCompare(String(b?.name || ""), "uz")
+      ),
+    [services]
+  );
 
   const loadServices = async () => {
     setLoading(true);
@@ -48,33 +57,55 @@ function LorServicesPage() {
     loadServices();
   }, [user?.id, user?._id]);
 
-  const validate = (quantity) => {
-    const q = Number(quantity);
+  useEffect(() => {
+    setSelectedServiceIds((prev) =>
+      prev.filter((id) => sortedServices.some((item) => item._id === id))
+    );
+  }, [sortedServices]);
 
-    if (!q) {
-      throw new Error("Miqdor kiritilishi shart.");
-    }
-    if (q <= 0) {
-      throw new Error("Miqdor 0 dan katta bo'lishi kerak.");
-    }
-
-    return { q };
+  const resetMessages = () => {
+    setSuccess("");
+    setError("");
   };
 
-  const updateForm = (serviceId, value) => {
-    setServiceForms((prev) => ({
+  const toggleService = (serviceId) => {
+    setSelectedServiceIds((prev) => {
+      const exists = prev.includes(serviceId);
+      if (exists) {
+        return prev.filter((id) => id !== serviceId);
+      }
+
+      setServiceInputs((prevInputs) => ({
+        ...prevInputs,
+        [serviceId]: {
+          quantity: prevInputs[serviceId]?.quantity || "1"
+        }
+      }));
+
+      return [...prev, serviceId];
+    });
+  };
+
+  const updateServiceQuantity = (serviceId, value) => {
+    setServiceInputs((prev) => ({
       ...prev,
       [serviceId]: {
-        ...prev[serviceId],
         quantity: value
       }
     }));
   };
 
-  const handleUseService = async (serviceId) => {
-    setSuccess("");
-    setError("");
-    setSubmittingId(serviceId);
+  const validateQuantity = (quantity) => {
+    const parsed = Number(quantity);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      throw new Error("Miqdor 0 dan katta bo'lishi kerak.");
+    }
+    return parsed;
+  };
+
+  const handleCreateCheckout = async () => {
+    resetMessages();
+    setSubmittingCheckout(true);
     const printTab = openPendingPrintTab();
 
     try {
@@ -84,15 +115,26 @@ function LorServicesPage() {
         throw new Error("Bemor ismi va familiyasini kiriting.");
       }
       if (!lorIdentity) {
-        throw new Error("Avval LOR tanlash bo'limidan LOR 1 yoki LOR 2 ni tanlang.");
+        throw new Error("LOR tanlovi topilmadi. Qayta login qiling.");
+      }
+      if (selectedServiceIds.length === 0) {
+        throw new Error("Kamida bitta xizmat tanlang.");
       }
 
-      const form = serviceForms[serviceId] || {};
-      const { q } = validate(form.quantity);
+      const servicesPayload = selectedServiceIds.map((serviceId) => {
+        const service = sortedServices.find((item) => item._id === serviceId);
+        if (!service) {
+          throw new Error("Tanlangan xizmat topilmadi.");
+        }
+        const quantity = validateQuantity(serviceInputs[serviceId]?.quantity);
+        return {
+          serviceId,
+          quantity
+        };
+      });
 
-      const result = await usageService.useService({
-        serviceId,
-        quantity: q,
+      const result = await usageService.createLorCheckout({
+        services: servicesPayload,
         lorIdentity,
         patient: {
           firstName,
@@ -100,12 +142,10 @@ function LorServicesPage() {
         }
       });
 
-      setSuccess("Xizmat muvaffaqiyatli ishlatildi.");
-      setServiceForms((prev) => ({
-        ...prev,
-        [serviceId]: { quantity: "" }
-      }));
+      setSuccess("Chek muvaffaqiyatli yaratildi.");
       setPatient({ firstName: "", lastName: "" });
+      setSelectedServiceIds([]);
+      setServiceInputs({});
 
       const written = writeCheckToPrintTab(printTab, result.check);
       if (!written) {
@@ -115,7 +155,7 @@ function LorServicesPage() {
       closePrintTab(printTab);
       setError(extractErrorMessage(err));
     } finally {
-      setSubmittingId(null);
+      setSubmittingCheckout(false);
     }
   };
 
@@ -126,12 +166,99 @@ function LorServicesPage() {
   return (
     <div className="space-y-6 overflow-x-hidden">
       <div className="card p-4 sm:p-5">
-        <h2 className="text-lg font-semibold text-slate-800">Xizmatdan foydalanish</h2>
-        <p className="mb-4 text-sm text-slate-500">
-          Faqat o'zingiz qo'shgan xizmatlar chiqadi. Narx avtomatik olinadi.
+        <h2 className="text-lg font-semibold text-slate-800">1-qadam: Xizmat tanlash</h2>
+        <p className="mb-2 text-sm text-slate-500">
+          Xizmatlarni button orqali tez tanlang.
         </p>
         <p className="mb-4 text-xs font-semibold text-slate-500">
           Tanlangan LOR: {lorIdentity ? lorIdentity.toUpperCase() : "-"}
+        </p>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {sortedServices.length === 0 ? (
+            <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">
+              Hali xizmat yo'q. Avval "Xizmat qo'shish" bo'limida xizmat yarating.
+            </div>
+          ) : null}
+
+          {sortedServices.map((service) => {
+            const selected = selectedServiceIds.includes(service._id);
+            return (
+              <button
+                key={service._id}
+                type="button"
+                onClick={() => toggleService(service._id)}
+                className={`rounded-xl border px-3 py-3 text-left transition ${
+                  selected
+                    ? "border-primary bg-cyan-50"
+                    : "border-slate-200 bg-white hover:border-primary/50"
+                }`}
+              >
+                <p className="font-semibold text-slate-800">{service.name}</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Narx: {service.price ? formatCurrency(service.price) : "-"}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {selectedServiceIds.length > 0 ? (
+        <div className="card p-4 sm:p-5">
+          <h2 className="text-lg font-semibold text-slate-800">
+            2-qadam: Tanlangan xizmatlar miqdori
+          </h2>
+          <p className="mb-4 text-sm text-slate-500">
+            Har bir tanlangan xizmatga miqdor kiriting.
+          </p>
+
+          <div className="space-y-3">
+            {selectedServiceIds.map((serviceId) => {
+              const service = sortedServices.find((item) => item._id === serviceId);
+              return (
+                <div
+                  key={serviceId}
+                  className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_160px_auto]"
+                >
+                  <div>
+                    <p className="font-medium text-slate-800">{service?.name}</p>
+                    <p className="text-xs text-slate-500">
+                      Narx: {service?.price ? formatCurrency(service.price) : "-"}
+                    </p>
+                  </div>
+                  <Input
+                    label="Miqdor"
+                    type="number"
+                    min="1"
+                    value={serviceInputs[serviceId]?.quantity || ""}
+                    onChange={(e) => updateServiceQuantity(serviceId, e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-fit self-end"
+                    onClick={() => toggleService(serviceId)}
+                  >
+                    Olib tashlash
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="card p-4 sm:p-5">
+          <p className="text-sm text-slate-600">
+            Miqdor bo'limi chiqishi uchun avval xizmat tanlang.
+          </p>
+        </div>
+      )}
+
+      <div className="card p-4 sm:p-5">
+        <h2 className="text-lg font-semibold text-slate-800">3-qadam: Bemor ma'lumoti</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          Ism va familiya kiriting, keyin chekni bir marta bosib chiqaring.
         </p>
 
         <div className="mb-4 grid gap-3 md:grid-cols-2">
@@ -151,40 +278,9 @@ function LorServicesPage() {
           />
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {services.length === 0 ? (
-            <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">
-              Hali o'zingiz qo'shgan xizmat yo'q. Avval "Xizmat qo'shish" bo'limida xizmat yarating.
-            </div>
-          ) : null}
-          {services.map((service) => {
-            const form = serviceForms[service._id] || { quantity: "" };
-            return (
-              <div key={service._id} className="rounded-xl border border-slate-200 p-3">
-                <h3 className="font-semibold text-slate-800">{service.name}</h3>
-                <p className="mb-3 text-xs text-slate-500">
-                  Bazaviy narx: {service.price ? formatCurrency(service.price) : "-"}
-                </p>
-                <div className="space-y-2">
-                  <Input
-                    label="Miqdor"
-                    type="number"
-                    min="1"
-                    value={form.quantity}
-                    onChange={(e) => updateForm(service._id, e.target.value)}
-                  />
-                  <Button
-                    className="w-full"
-                    loading={submittingId === service._id}
-                    onClick={() => handleUseService(service._id)}
-                  >
-                    Xizmatni ishlatish
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <Button loading={submittingCheckout} onClick={handleCreateCheckout}>
+          Tez chek chiqarish
+        </Button>
       </div>
 
       <Alert type="success" message={success} />

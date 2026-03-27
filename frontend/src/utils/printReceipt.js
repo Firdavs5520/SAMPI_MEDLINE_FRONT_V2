@@ -197,7 +197,7 @@ const buildCheckPrintHtml = (check) => {
       }
 
       window.onload = function () {
-        setTimeout(runPrint, 180);
+        setTimeout(runPrint, 60);
       };
 
       document.addEventListener("keydown", function (event) {

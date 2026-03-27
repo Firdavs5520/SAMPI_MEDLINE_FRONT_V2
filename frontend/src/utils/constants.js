@@ -25,7 +25,6 @@ export const sidebarMenus = {
     { label: "Xizmat qo'shish", path: "/nurse/services" }
   ],
   lor: [
-    { label: "LOR tanlash", path: "/lor/select", end: true },
     { label: "Mening cheklarim", path: "/lor/checks", end: true },
     { label: "Xizmatdan foydalanish", path: "/lor/services", end: true },
     { label: "Xizmat qo'shish", path: "/lor/services/add", end: true }
