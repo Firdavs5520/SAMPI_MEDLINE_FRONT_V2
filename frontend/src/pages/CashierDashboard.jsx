@@ -83,14 +83,45 @@ const formatDateInput = (value) => {
   return `${year}-${month}-${day}`;
 };
 
+const toTitleCase = (value) =>
+  String(value || "")
+    .toLocaleLowerCase("uz-UZ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/(^|\s)(\p{L})/gu, (full, space, letter) => {
+      return `${space}${letter.toLocaleUpperCase("uz-UZ")}`;
+    });
+
+const formatMoneyInput = (value) => {
+  const digits = String(value || "").replace(/\D/g, "").slice(0, 6);
+  if (!digits) return "";
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+};
+
+const formatPhoneInput = (value) => {
+  let digits = String(value || "").replace(/\D/g, "");
+  if (digits.startsWith("998")) {
+    digits = digits.slice(3);
+  }
+
+  digits = digits.slice(0, 9);
+
+  const p1 = digits.slice(0, 2);
+  const p2 = digits.slice(2, 5);
+  const p3 = digits.slice(5, 7);
+  const p4 = digits.slice(7, 9);
+
+  return [p1, p2, p3, p4].filter(Boolean).join(" ");
+};
+
 const safeNumber = (value, fallback = 0) => {
-  const parsed = Number(value);
+  const normalized =
+    typeof value === "string" ? value.replace(/[^\d.-]/g, "") : value;
+  const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
 const createInitialForm = (type = "lor") => ({
   department: type,
-  specialistType: type,
   specialistId: "",
   patientName: "",
   amount: "",
@@ -174,9 +205,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   );
 
   const selectedTypeSpecialists = useMemo(() => {
-    const type = lockedType || form.specialistType;
+    const type = lockedType || form.department || "lor";
     return specialistsByType[type] || [];
-  }, [specialistsByType, form.specialistType, lockedType]);
+  }, [specialistsByType, form.department, lockedType]);
 
   const buildEffectiveFilters = (baseFilters) => {
     if (!lockedType) {
@@ -252,7 +283,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       setForm((prev) => ({
         ...prev,
         department: lockedType,
-        specialistType: lockedType
+        specialistId: ""
       }));
     }
   }, [lockedType]);
@@ -279,21 +310,35 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
   const resetForm = () => {
     setEditingEntry(null);
-    setForm(createInitialForm(lockedType || form.specialistType || "lor"));
+    setForm(createInitialForm(lockedType || form.department || "lor"));
   };
 
   const handleFormChange = (key, value) => {
-    if (lockedType && (key === "specialistType" || key === "department")) {
+    if (lockedType && key === "department") {
       return;
     }
 
-    if (key === "specialistType") {
+    if (key === "department") {
       setForm((prev) => ({
         ...prev,
-        specialistType: value,
         specialistId: "",
         department: value
       }));
+      return;
+    }
+
+    if (key === "patientName") {
+      setForm((prev) => ({ ...prev, patientName: toTitleCase(value) }));
+      return;
+    }
+
+    if (key === "patientPhone") {
+      setForm((prev) => ({ ...prev, patientPhone: formatPhoneInput(value) }));
+      return;
+    }
+
+    if (key === "amount" || key === "paidAmount") {
+      setForm((prev) => ({ ...prev, [key]: formatMoneyInput(value) }));
       return;
     }
 
@@ -306,7 +351,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     setSavingEntry(true);
 
     try {
-      const specialistType = lockedType || form.specialistType;
+      const specialistType = lockedType || form.department || "lor";
       const department = lockedType || form.department || specialistType;
       const selectedSpecialist = selectedTypeSpecialists.find((item) => item._id === form.specialistId);
 
@@ -320,7 +365,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
       const payload = {
         department,
-        specialistType,
         specialistId: form.specialistId,
         specialistName: selectedSpecialist.name,
         patientName: form.patientName.trim(),
@@ -352,26 +396,20 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const startEditEntry = (entry) => {
     resetMessages();
 
-    const inferredType =
-      entry.specialistType === "nurse" || entry.specialistType === "lor"
-        ? entry.specialistType
-        : entry.department === "nurse"
-          ? "nurse"
-          : "lor";
+    const inferredDepartment = entry.department === "nurse" ? "nurse" : "lor";
 
     setEditingEntry(entry);
     setForm({
-      department: lockedType || entry.department || inferredType,
-      specialistType: lockedType || inferredType,
+      department: lockedType || entry.department || inferredDepartment,
       specialistId: entry.specialistId || "",
       patientName: entry.patientName || "",
-      amount: safeNumber(entry.amount, "").toString(),
+      amount: formatMoneyInput(entry.amount),
       paidAmount:
         entry.paidAmount === undefined || entry.paidAmount === null
-          ? safeNumber(entry.amount, "").toString()
-          : safeNumber(entry.paidAmount, "").toString(),
+          ? formatMoneyInput(entry.amount)
+          : formatMoneyInput(entry.paidAmount),
       paymentMethod: entry.paymentMethod || "cash",
-      patientPhone: entry.patientPhone || "",
+      patientPhone: formatPhoneInput(entry.patientPhone || ""),
       note: entry.note || ""
     });
   };
@@ -634,7 +672,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                   <select
                     value={form.department}
                     onChange={(e) => handleFormChange("department", e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    className="sampi-select w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                   >
                     <option value="lor">LOR</option>
                     <option value="nurse">Nurse</option>
@@ -654,7 +692,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 <select
                   value={form.specialistId}
                   onChange={(e) => handleFormChange("specialistId", e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                  className="sampi-select w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                 >
                   <option value="">Ro'yxatdan tanlang</option>
                   {selectedTypeSpecialists.map((item) => (
@@ -675,24 +713,27 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
               />
               <Input
                 label="Jami summa"
-                type="number"
-                min="1"
-                max="999999"
+                type="text"
+                inputMode="numeric"
+                maxLength={7}
                 value={form.amount}
                 onChange={(e) => handleFormChange("amount", e.target.value)}
-                placeholder="Masalan: 120000"
+                placeholder="Masalan: 120 000"
               />
               <Input
                 label="To'langan summa"
-                type="number"
-                min="0"
-                max="999999"
+                type="text"
+                inputMode="numeric"
+                maxLength={7}
                 value={form.paidAmount}
                 onChange={(e) => handleFormChange("paidAmount", e.target.value)}
-                placeholder="Masalan: 100000"
+                placeholder="Masalan: 100 000"
               />
               <Input
                 label="Telefon"
+                type="text"
+                inputMode="numeric"
+                maxLength={12}
                 value={form.patientPhone}
                 onChange={(e) => handleFormChange("patientPhone", e.target.value)}
                 placeholder="Masalan: 90 123 45 67"
@@ -705,7 +746,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 <select
                   value={form.paymentMethod}
                   onChange={(e) => handleFormChange("paymentMethod", e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                  className="sampi-select w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                 >
                   <option value="cash">Naqd</option>
                   <option value="card">Karta</option>
@@ -764,7 +805,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                     onChange={(e) =>
                       setFilters((prev) => ({ ...prev, department: e.target.value }))
                     }
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    className="sampi-select w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                   >
                     <option value="all">Barchasi</option>
                     <option value="lor">LOR</option>
@@ -783,7 +824,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                     onChange={(e) =>
                       setFilters((prev) => ({ ...prev, specialistType: e.target.value }))
                     }
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    className="sampi-select w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                   >
                     <option value="all">Barchasi</option>
                     <option value="nurse">Nurse</option>
@@ -799,7 +840,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, paymentMethod: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                  className="sampi-select w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                 >
                   <option value="all">Barchasi</option>
                   <option value="cash">Naqd</option>
