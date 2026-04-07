@@ -717,12 +717,52 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const specialistCountHint = lockedType
     ? "Joriy ro'yxatdagi mutaxassislar soni"
     : "Mutaxassislar bo'yicha";
+  const sectionTheme =
+    lockedType === "nurse"
+      ? {
+          headerCard: "border-rose-200 bg-rose-50/70",
+          badge: "bg-rose-100 text-rose-800 border border-rose-200",
+          alertBox: "border-rose-200 bg-rose-50 text-rose-800",
+          formCard: "border-rose-200",
+          submitButton: "bg-rose-600 hover:bg-rose-700 focus:ring-rose-300"
+        }
+      : lockedType === "lor"
+        ? {
+            headerCard: "border-sky-200 bg-sky-50/70",
+            badge: "bg-sky-100 text-sky-800 border border-sky-200",
+            alertBox: "border-sky-200 bg-sky-50 text-sky-800",
+            formCard: "border-sky-200",
+            submitButton: "bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+          }
+        : {
+            headerCard: "",
+            badge: "bg-slate-100 text-slate-700 border border-slate-200",
+            alertBox: "border-slate-200 bg-slate-50 text-slate-700",
+            formCard: "",
+            submitButton: ""
+          };
+  const sectionLabel = lockedType ? `${departmentLabels[lockedType]} BO'LIMI` : "KASSA JURNALI";
+  const sectionWarningText = lockedType
+    ? `Diqqat: Siz hozir faqat ${departmentLabels[lockedType]} yozuvlari bilan ishlayapsiz.`
+    : "Umumiy jurnal rejimi: barcha bo'limlar ko'rinadi.";
 
   return (
     <div className="space-y-6">
-      <div className="card p-4 sm:p-5">
-        <h1 className="text-xl font-bold text-slate-800">{sectionMeta.title}</h1>
-        <p className="mt-1 text-sm text-slate-500">{sectionMeta.subtitle}</p>
+      <div className={`card p-4 sm:p-5 ${sectionTheme.headerCard}`}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-800">{sectionMeta.title}</h1>
+            <p className="mt-1 text-sm text-slate-500">{sectionMeta.subtitle}</p>
+          </div>
+          <span
+            className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-bold tracking-wide ${sectionTheme.badge}`}
+          >
+            {sectionLabel}
+          </span>
+        </div>
+        <div className={`mt-3 rounded-xl border px-3 py-2 text-sm font-medium ${sectionTheme.alertBox}`}>
+          {sectionWarningText}
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -751,7 +791,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       </div>
 
       {isFormSection ? (
-        <div className="card p-4 sm:p-5">
+        <div className={`card p-4 sm:p-5 ${sectionTheme.formCard}`}>
           <h2 className="text-lg font-semibold text-slate-800">
             {editingEntry ? "Yozuvni tahrirlash" : "Yangi bemor yozuvi"}
           </h2>
@@ -864,7 +904,11 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             </label>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Button type="submit" loading={savingEntry}>
+              <Button
+                type="submit"
+                loading={savingEntry}
+                className={sectionTheme.submitButton}
+              >
                 {editingEntry ? "Yangilash" : "Qo'shish"}
               </Button>
               {editingEntry ? (
@@ -881,6 +925,11 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         <>
           <div className="card p-4 sm:p-5">
             <h2 className="text-lg font-semibold text-slate-800">Filtrlar</h2>
+            {refreshing ? (
+              <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Ma'lumot yangilanmoqda...
+              </p>
+            ) : null}
             <div className="mt-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-800">
               {isHistorySection
                 ? `${shiftWindow.fromLabel} - ${shiftWindow.toLabel} oralig'idan tashqari yozuvlar tarixi.`
