@@ -5,6 +5,8 @@ import Alert from "../components/Alert.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Table from "../components/Table.jsx";
 import ConfirmActionModal from "../components/ConfirmActionModal.jsx";
+import SelectMenu from "../components/SelectMenu.jsx";
+import DatePickerField from "../components/DatePickerField.jsx";
 import cashierService from "../services/cashierService.js";
 import { extractErrorMessage, formatCurrency } from "../utils/format.js";
 
@@ -76,6 +78,25 @@ const paymentMethodLabels = {
   card: "Karta",
   transfer: "O'tkazma"
 };
+
+const paymentMethodOptions = [
+  { value: "all", label: "Barchasi" },
+  { value: "cash", label: "Naqd" },
+  { value: "card", label: "Karta" },
+  { value: "transfer", label: "O'tkazma" }
+];
+
+const departmentOptions = [
+  { value: "all", label: "Barchasi" },
+  { value: "lor", label: "LOR" },
+  { value: "nurse", label: "Nurse" }
+];
+
+const specialistTypeOptions = [
+  { value: "all", label: "Barchasi" },
+  { value: "nurse", label: "Nurse" },
+  { value: "lor", label: "LOR" }
+];
 
 const getTodayString = () => {
   const date = new Date();
@@ -936,64 +957,42 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 : `Joriy ro'yxat faqat ${shiftWindow.fromLabel} - ${shiftWindow.toLabel}. Qolgan yozuvlar tarix bo'limida saqlanadi.`}
             </div>
             <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-              <Input
+              <DatePickerField
                 label="Sana"
-                type="date"
                 value={filters.date}
-                onChange={(e) => setFilters((prev) => ({ ...prev, date: e.target.value || today }))}
+                onChange={(nextDate) => setFilters((prev) => ({ ...prev, date: nextDate || today }))}
               />
 
               {!lockedType ? (
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-slate-600">Bo'lim</span>
-                  <select
-                    value={filters.department}
-                    onChange={(e) =>
-                      setFilters((prev) => ({ ...prev, department: e.target.value }))
-                    }
-                    className="sampi-select w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
-                  >
-                    <option value="all">Barchasi</option>
-                    <option value="lor">LOR</option>
-                    <option value="nurse">Nurse</option>
-                  </select>
-                </label>
+                <SelectMenu
+                  label="Bo'lim"
+                  value={filters.department}
+                  options={departmentOptions}
+                  onChange={(nextValue) =>
+                    setFilters((prev) => ({ ...prev, department: nextValue }))
+                  }
+                />
               ) : null}
 
               {!lockedType ? (
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-slate-600">
-                    Mutaxassis turi
-                  </span>
-                  <select
-                    value={filters.specialistType}
-                    onChange={(e) =>
-                      setFilters((prev) => ({ ...prev, specialistType: e.target.value }))
-                    }
-                    className="sampi-select w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
-                  >
-                    <option value="all">Barchasi</option>
-                    <option value="nurse">Nurse</option>
-                    <option value="lor">LOR</option>
-                  </select>
-                </label>
+                <SelectMenu
+                  label="Mutaxassis turi"
+                  value={filters.specialistType}
+                  options={specialistTypeOptions}
+                  onChange={(nextValue) =>
+                    setFilters((prev) => ({ ...prev, specialistType: nextValue }))
+                  }
+                />
               ) : null}
 
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-slate-600">To'lov usuli</span>
-                <select
-                  value={filters.paymentMethod}
-                  onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, paymentMethod: e.target.value }))
-                  }
-                  className="sampi-select w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
-                >
-                  <option value="all">Barchasi</option>
-                  <option value="cash">Naqd</option>
-                  <option value="card">Karta</option>
-                  <option value="transfer">O'tkazma</option>
-                </select>
-              </label>
+              <SelectMenu
+                label="To'lov usuli"
+                value={filters.paymentMethod}
+                options={paymentMethodOptions}
+                onChange={(nextValue) =>
+                  setFilters((prev) => ({ ...prev, paymentMethod: nextValue }))
+                }
+              />
 
               <label className="flex items-end">
                 <span className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700">
