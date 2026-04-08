@@ -219,6 +219,11 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     forcedSection === "nurse-entries" ||
     forcedSection === "lor-entries" ||
     forcedSection === "journal";
+  const shouldShowSummaryCards =
+    forcedSection === "nurse-entries" ||
+    forcedSection === "nurse-history" ||
+    forcedSection === "lor-entries" ||
+    forcedSection === "lor-history";
   const specialistPageType = forcedSection === "nurse-specialists" ? "nurse" : "lor";
 
   const [loading, setLoading] = useState(true);
@@ -730,30 +735,32 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard
-          title="Jami summa"
-          value={`${formatCurrency(summary.totalAmount)} so'm`}
-          hint={`Yozuvlar: ${summary.totalEntries}`}
-          tone="primary"
-        />
-        <SummaryCard
-          title="To'langan"
-          value={`${formatCurrency(summary.totalPaidAmount)} so'm`}
-          hint="Amalda olingan to'lov"
-        />
-        <SummaryCard
-          title="Qarz"
-          value={`${formatCurrency(summary.totalDebtAmount)} so'm`}
-          hint="Qolgan qarzdorlik"
-          tone="accent"
-        />
-        <SummaryCard
-          title={specialistCountTitle}
-          value={specialistCountValue}
-          hint={specialistCountHint}
-        />
-      </div>
+      {shouldShowSummaryCards ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <SummaryCard
+            title="Jami summa"
+            value={`${formatCurrency(summary.totalAmount)} so'm`}
+            hint={`Yozuvlar: ${summary.totalEntries}`}
+            tone="primary"
+          />
+          <SummaryCard
+            title="To'langan"
+            value={`${formatCurrency(summary.totalPaidAmount)} so'm`}
+            hint="Amalda olingan to'lov"
+          />
+          <SummaryCard
+            title="Qarz"
+            value={`${formatCurrency(summary.totalDebtAmount)} so'm`}
+            hint="Qolgan qarzdorlik"
+            tone="accent"
+          />
+          <SummaryCard
+            title={specialistCountTitle}
+            value={specialistCountValue}
+            hint={specialistCountHint}
+          />
+        </div>
+      ) : null}
 
       {isFormSection ? (
         <div className={`card p-4 sm:p-5 ${sectionTheme.formCard}`}>
