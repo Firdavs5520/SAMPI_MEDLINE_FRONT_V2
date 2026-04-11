@@ -10,10 +10,31 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   font-family: "Golos Text", sans-serif;
+  scrollbar-width: thin;
+  scrollbar-color: #0f766e #e2e8f0;
 }
 
 #root {
   min-height: 100vh;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #0f766e, #0e7490);
+  border-radius: 999px;
+  border: 2px solid #e2e8f0;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #0d9488, #0284c7);
 }
 
 .card {

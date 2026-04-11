@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Sampi Medline">
-  <rect x="0" y="0" width="512" height="512" fill="#0ea5b8" />
+  <rect x="0" y="0" width="512" height="512" rx="170" fill="#1565d8" />
+  <rect x="12" y="12" width="488" height="488" rx="158" fill="#1976d2" />
   <circle cx="256" cy="256" r="170" fill="#d9e3f6" stroke="#ffffff" stroke-width="16" />
   <rect x="228" y="145" width="56" height="222" rx="28" fill="#ffffff" />
   <rect x="145" y="228" width="222" height="56" rx="28" fill="#ffffff" />
-  <circle cx="392" cy="120" r="56" fill="#f97316" />
+  <circle cx="392" cy="120" r="56" fill="#e53935" />
 </svg>
