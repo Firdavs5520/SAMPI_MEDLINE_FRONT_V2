@@ -26,6 +26,14 @@ const resolveItemType = (item, checkType) => {
   return "";
 };
 
+const formatLorIdentity = (value) => {
+  const raw = String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const match = raw.match(/lor(\d+)/);
+  if (match) return `Lor-${match[1]}`;
+  if (!raw) return "-";
+  return String(value || "-");
+};
+
 const buildItemRows = (items, itemType, checkType) => {
   return (items || [])
     .filter((item) => resolveItemType(item, checkType) === itemType)
@@ -58,13 +66,12 @@ const buildCheckPrintHtml = (check, options = {}) => {
     creatorRole === "nurse"
       ? `<div class="nurse-line">Hamshira: ${escapeHtml(check?.createdBy?.name || "-")}</div>`
       : creatorRole === "lor"
-        ? `<div class="nurse-line">Doktor: ${escapeHtml(check?.createdBy?.name || "-")}</div>
-           <div class="nurse-line">LOR: ${escapeHtml(
-             String(check?.createdBy?.lorIdentity || "-")
-               .toUpperCase()
-               .replace("LOR", "LOR-")
-           )}</div>`
+        ? `<div class="nurse-line">${escapeHtml(check?.createdBy?.name || "-")}</div>`
         : "";
+  const lorIdentityLine =
+    creatorRole === "lor"
+      ? `<div class="text">${escapeHtml(formatLorIdentity(check?.createdBy?.lorIdentity))}</div>`
+      : "";
 
   return `<!doctype html>
 <html lang="uz">
@@ -154,6 +161,7 @@ const buildCheckPrintHtml = (check, options = {}) => {
 
         <div class="text">Bemor: ${escapeHtml(check.patient?.fullName || "-")}</div>
         <div class="text">Sana: ${escapeHtml(formatCheckDate(check.createdAt))}</div>
+        ${lorIdentityLine}
 
         <div class="divider"></div>
         ${medicineSection}
@@ -165,8 +173,8 @@ const buildCheckPrintHtml = (check, options = {}) => {
         </div>
         <div class="divider"></div>
 
-        <div class="footer">Doimo sog'-salomat bo'ling</div>
         ${specialistLine}
+        <div class="footer">Doimo sog'-salomat bo'ling</div>
       </div>
     </div>
     ${
