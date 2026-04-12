@@ -53,10 +53,13 @@ const buildCheckPrintHtml = (check, options = {}) => {
     serviceRows.length > 0
       ? `<div class="section-title">Xizmatlar</div><div class="divider"></div>${serviceRows}<div class="divider"></div>`
       : "";
-  const nurseLine =
-    String(check?.createdBy?.role || "").toLowerCase() === "nurse"
+  const creatorRole = String(check?.createdBy?.role || "").toLowerCase();
+  const specialistLine =
+    creatorRole === "nurse"
       ? `<div class="nurse-line">Hamshira: ${escapeHtml(check?.createdBy?.name || "-")}</div>`
-      : "";
+      : creatorRole === "lor"
+        ? `<div class="nurse-line">Doktor: ${escapeHtml(check?.createdBy?.name || "-")}</div>`
+        : "";
 
   return `<!doctype html>
 <html lang="uz">
@@ -158,7 +161,7 @@ const buildCheckPrintHtml = (check, options = {}) => {
         <div class="divider"></div>
 
         <div class="footer">Doimo sog'-salomat bo'ling</div>
-        ${nurseLine}
+        ${specialistLine}
       </div>
     </div>
     ${

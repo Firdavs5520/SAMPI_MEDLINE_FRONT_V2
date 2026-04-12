@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import serviceService from "../services/serviceService.js";
 import usageService from "../services/usageService.js";
 import Input from "../components/Input.jsx";
@@ -7,6 +7,7 @@ import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
 import BusyOverlay from "../components/BusyOverlay.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
+import SelectMenu from "../components/SelectMenu.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
   extractErrorMessage,
@@ -20,29 +21,55 @@ import {
   writeCheckToPrintTab
 } from "../utils/printReceipt.js";
 
+const STEP_LABELS = ["1. Doktor", "2. Bemor", "3. Xizmatlar", "4. Chek preview"];
+
 const normalizeSearch = (value) =>
   String(value ?? "")
     .toLocaleLowerCase("uz-UZ")
     .trim();
 
+const safeQty = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return "1";
+  return String(Math.max(1, Math.floor(n)));
+};
+
 function LorServicesPage() {
   const { user, lorIdentity } = useAuth();
+
   const [loading, setLoading] = useState(true);
+  const [step, setStep] = useState(1);
   const [submittingCheckout, setSubmittingCheckout] = useState(false);
+  const [creatingSpecialist, setCreatingSpecialist] = useState(false);
+
   const [services, setServices] = useState([]);
+  const [specialists, setSpecialists] = useState([]);
+  const [selectedSpecialistId, setSelectedSpecialistId] = useState("");
+  const [newSpecialistName, setNewSpecialistName] = useState("");
+
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
   const [serviceInputs, setServiceInputs] = useState({});
   const [serviceSearch, setServiceSearch] = useState("");
   const [patient, setPatient] = useState({ fullName: "" });
+
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const sectionTheme = {
-    headerCard: "border-sky-200 bg-sky-50/70",
-    badge: "bg-sky-100 text-sky-800 border border-sky-200",
-    alertBox: "border-sky-200 bg-sky-50 text-sky-800",
-    formCard: "border-sky-200",
-    submitButton: "bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
-  };
+
+  const previewRef = useRef(null);
+
+  const specialistOptions = useMemo(
+    () =>
+      specialists.map((item) => ({
+        value: item._id,
+        label: item.name
+      })),
+    [specialists]
+  );
+
+  const selectedSpecialist = useMemo(
+    () => specialists.find((item) => item._id === selectedSpecialistId) || null,
+    [specialists, selectedSpecialistId]
+  );
 
   const sortedServices = useMemo(
     () =>
@@ -61,18 +88,62 @@ function LorServicesPage() {
     );
   }, [serviceSearch, sortedServices]);
 
-  const loadServices = async () => {
+  const previewServices = useMemo(
+    () =>
+      selectedServiceIds
+        .map((serviceId) => {
+          const service = sortedServices.find((item) => item._id === serviceId);
+          if (!service) return null;
+          const quantity = Number(serviceInputs[serviceId]?.quantity || 1);
+          const lineTotal = quantity * Number(service.price || 0);
+
+          return {
+            id: serviceId,
+            name: service.name,
+            quantity,
+            lineTotal
+          };
+        })
+        .filter(Boolean),
+    [selectedServiceIds, sortedServices, serviceInputs]
+  );
+
+  const previewTotal = useMemo(
+    () => previewServices.reduce((sum, item) => sum + item.lineTotal, 0),
+    [previewServices]
+  );
+
+  const resetMessages = () => {
+    setSuccess("");
+    setError("");
+  };
+
+  const loadSpecialists = async () => {
+    const data = await usageService.getRoleSpecialists();
+    setSpecialists(data);
+
+    setSelectedSpecialistId((prev) => {
+      if (prev && data.some((item) => item._id === prev)) return prev;
+      return data[0]?._id || "";
+    });
+  };
+
+  const loadData = async () => {
     setLoading(true);
     setError("");
+
     try {
-      const allServices = await serviceService.getAllServices();
       const currentUserId = String(user?.id || user?._id || "");
+      const [allServices] = await Promise.all([
+        serviceService.getAllServices(),
+        loadSpecialists()
+      ]);
+
       setServices(
         allServices.filter(
           (item) =>
             item.type === "lor" &&
-            (!item.createdBy?.userId ||
-              String(item.createdBy.userId) === currentUserId)
+            (!item.createdBy?.userId || String(item.createdBy.userId) === currentUserId)
         )
       );
     } catch (err) {
@@ -83,8 +154,14 @@ function LorServicesPage() {
   };
 
   useEffect(() => {
-    loadServices();
+    loadData();
   }, [user?.id, user?._id]);
+
+  useEffect(() => {
+    if (step === 4 && previewRef.current) {
+      previewRef.current.focus();
+    }
+  }, [step]);
 
   useEffect(() => {
     setSelectedServiceIds((prev) =>
@@ -92,9 +169,45 @@ function LorServicesPage() {
     );
   }, [sortedServices]);
 
-  const resetMessages = () => {
-    setSuccess("");
-    setError("");
+  const validateSpecialist = () => {
+    if (!selectedSpecialistId) {
+      throw new Error("Avval doktorni tanlang.");
+    }
+  };
+
+  const validatePatient = () => {
+    const normalizedPatient = splitFullName(patient.fullName);
+    const firstName = normalizedPatient.firstName.trim();
+    const lastName = normalizedPatient.lastName.trim();
+
+    if (!firstName || !lastName) {
+      throw new Error("Bemor F.I.O ni to'liq kiriting (ismi va familiyasi).");
+    }
+  };
+
+  const handleCreateSpecialist = async () => {
+    if (creatingSpecialist) return;
+
+    resetMessages();
+    const safeName = toTitleCaseName(newSpecialistName).trim();
+    if (!safeName) {
+      setError("Doktor nomini kiriting.");
+      return;
+    }
+
+    setCreatingSpecialist(true);
+    try {
+      const created = await usageService.createRoleSpecialist({ name: safeName });
+      const next = await usageService.getRoleSpecialists();
+      setSpecialists(next);
+      setSelectedSpecialistId(created?._id || next[0]?._id || "");
+      setNewSpecialistName("");
+      setSuccess("Yangi doktor qo'shildi.");
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    } finally {
+      setCreatingSpecialist(false);
+    }
   };
 
   const toggleService = (serviceId) => {
@@ -119,17 +232,9 @@ function LorServicesPage() {
     setServiceInputs((prev) => ({
       ...prev,
       [serviceId]: {
-        quantity: value
+        quantity: safeQty(value)
       }
     }));
-  };
-
-  const validateQuantity = (quantity) => {
-    const parsed = Number(quantity);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      throw new Error("Miqdor 0 dan katta bo'lishi kerak.");
-    }
-    return parsed;
   };
 
   const handleCreateCheckout = async () => {
@@ -139,25 +244,31 @@ function LorServicesPage() {
     let printTab = null;
 
     try {
-      const normalizedPatient = splitFullName(patient.fullName);
-      const firstName = normalizedPatient.firstName.trim();
-      const lastName = normalizedPatient.lastName.trim();
-      if (!firstName || !lastName) {
-        throw new Error("Bemor F.I.O ni to'liq kiriting (ismi va familiyasi).");
-      }
+      validateSpecialist();
+      validatePatient();
+
       if (!lorIdentity) {
         throw new Error("LOR tanlovi topilmadi. Qayta kirib chiqing.");
       }
+
       if (selectedServiceIds.length === 0) {
         throw new Error("Kamida bitta xizmat tanlang.");
       }
+
+      const normalizedPatient = splitFullName(patient.fullName);
+      const firstName = normalizedPatient.firstName.trim();
+      const lastName = normalizedPatient.lastName.trim();
 
       const servicesPayload = selectedServiceIds.map((serviceId) => {
         const service = sortedServices.find((item) => item._id === serviceId);
         if (!service) {
           throw new Error("Tanlangan xizmat topilmadi.");
         }
-        const quantity = validateQuantity(serviceInputs[serviceId]?.quantity);
+        const quantity = Number(serviceInputs[serviceId]?.quantity || 1);
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+          throw new Error("Miqdor 0 dan katta bo'lishi kerak.");
+        }
+
         return {
           serviceId,
           quantity
@@ -168,6 +279,8 @@ function LorServicesPage() {
       const result = await usageService.createLorCheckout({
         services: servicesPayload,
         lorIdentity,
+        specialistId: selectedSpecialistId,
+        specialistName: selectedSpecialist?.name || "",
         patient: {
           firstName,
           lastName
@@ -178,10 +291,12 @@ function LorServicesPage() {
       setPatient({ fullName: "" });
       setSelectedServiceIds([]);
       setServiceInputs({});
+      setServiceSearch("");
+      setStep(1);
 
       const written = writeCheckToPrintTab(printTab, result.check);
       if (!written) {
-        setError("Brauzer yangi oynani blokladi. Oynaga ruxsatni yo'qing.");
+        setError("Brauzer yangi oynani blokladi. Oynaga ruxsatni yoqing.");
       }
     } catch (err) {
       closePrintTab(printTab);
@@ -191,41 +306,143 @@ function LorServicesPage() {
     }
   };
 
+  const goNextFromSpecialist = () => {
+    resetMessages();
+    try {
+      validateSpecialist();
+      setStep(2);
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    }
+  };
+
+  const goNextFromPatient = () => {
+    resetMessages();
+    try {
+      validatePatient();
+      setStep(3);
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    }
+  };
+
   if (loading) {
     return <Spinner text="LOR xizmatlari yuklanmoqda..." />;
   }
 
   return (
     <div className="space-y-6 overflow-x-hidden">
-      <div className={`card p-4 sm:p-5 ${sectionTheme.headerCard}`}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-slate-800">LOR paneli</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              LOR xizmatlarini tanlab, bemor uchun tez chek chiqarish bo'limi.
-            </p>
-          </div>
-          <span
-            className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-bold tracking-wide ${sectionTheme.badge}`}
-          >
-            LOR BO'LIMI
-          </span>
+      <div className="card border-sky-200 bg-sky-50/70 p-4 sm:p-5">
+        <h1 className="text-xl font-bold text-slate-800">LOR paneli</h1>
+        <p className="mt-1 text-sm text-slate-600">Bosqichma-bosqich chek yaratish</p>
+
+        <div className="mt-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800">
+          Tanlangan LOR: {lorIdentity ? lorIdentity.toUpperCase() : "-"}
         </div>
-        <div className={`mt-3 rounded-xl border px-3 py-2 text-sm font-medium ${sectionTheme.alertBox}`}>
-          Tanlangan LOR: {lorIdentity ? lorIdentity.toUpperCase() : "-"}.
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-4">
+          {STEP_LABELS.map((label, index) => {
+            const n = index + 1;
+            const active = n === step;
+            const done = n < step;
+
+            return (
+              <div
+                key={label}
+                className={`rounded-xl border px-3 py-2 text-center text-xs font-semibold ${
+                  active
+                    ? "border-primary bg-cyan-50 text-primary"
+                    : done
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-slate-200 bg-white text-slate-500"
+                }`}
+              >
+                {label}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <div className={`card p-4 sm:p-5 ${sectionTheme.formCard}`}>
-        <h2 className="text-lg font-semibold text-slate-800">1-qadam: Xizmat tanlash</h2>
-        <p className="mb-2 text-sm text-slate-500">
-          Xizmatlarni tugma orqali tez tanlang.
-        </p>
-        <p className="mb-4 text-xs font-semibold text-slate-500">
-          Tanlangan LOR: {lorIdentity ? lorIdentity.toUpperCase() : "-"}
-        </p>
+      {step === 1 ? (
+        <div className="card border-sky-200 p-4 sm:p-5">
+          <h2 className="text-lg font-semibold">1-qadam: Doktor tanlash</h2>
+          <p className="mb-4 text-sm text-slate-600">
+            Avval chekni qaysi doktor nomidan chiqarishni tanlang yoki yangi doktor qo'shing.
+          </p>
 
-        <div className="mb-4">
+          <div className="grid gap-3 md:grid-cols-[1fr_220px_auto]">
+            <Input
+              label="Yangi doktor"
+              value={newSpecialistName}
+              placeholder="Masalan: Doktor Aziz"
+              onChange={(e) => setNewSpecialistName(toTitleCaseName(e.target.value))}
+            />
+            <div className="md:col-span-2 flex items-end">
+              <Button
+                type="button"
+                loading={creatingSpecialist}
+                className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+                onClick={handleCreateSpecialist}
+              >
+                Doktor qo'shish
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-4 max-w-xl">
+            <SelectMenu
+              label="Doktor ro'yxati"
+              value={selectedSpecialistId}
+              options={[{ value: "", label: "Ro'yxatdan tanlang" }, ...specialistOptions]}
+              onChange={setSelectedSpecialistId}
+            />
+          </div>
+
+          {!specialistOptions.length ? (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              Hozircha doktor yo'q. Avval yangi doktor qo'shing.
+            </div>
+          ) : null}
+
+          <div className="mt-4 flex justify-end">
+            <Button
+              className="bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+              onClick={goNextFromSpecialist}
+            >
+              Keyingi: Bemor
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {step === 2 ? (
+        <div className="card border-sky-200 p-4 sm:p-5">
+          <h2 className="text-lg font-semibold">2-qadam: Bemor F.I.O</h2>
+          <Input
+            label="Bemor F.I.O"
+            value={patient.fullName}
+            placeholder="Masalan: Ali Valiyev"
+            onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
+          />
+
+          <div className="mt-4 flex justify-between">
+            <Button variant="secondary" onClick={() => setStep(1)}>
+              Orqaga
+            </Button>
+            <Button
+              className="bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+              onClick={goNextFromPatient}
+            >
+              Keyingi: Xizmatlar
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {step === 3 ? (
+        <div className="card border-sky-200 p-4 sm:p-5">
+          <h2 className="text-lg font-semibold">3-qadam: Xizmat tanlash</h2>
           <QuickSearchInput
             label="Xizmat qidirish"
             placeholder="Masalan: Burun chayish"
@@ -238,129 +455,163 @@ function LorServicesPage() {
             }}
             emptyText="Mos xizmat topilmadi"
           />
-        </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {sortedServices.length === 0 ? (
-            <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">
-              Hali xizmat yo'q. Avval "Xizmat qo'shish" bo'limida xizmat yarating.
-            </div>
-          ) : null}
-          {sortedServices.length > 0 && filteredServices.length === 0 ? (
-            <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">
-              Qidiruv bo'yicha xizmat topilmadi.
-            </div>
-          ) : null}
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {sortedServices.length === 0 ? (
+              <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">
+                Hali xizmat yo'q. Avval "Xizmat qo'shish" bo'limida xizmat yarating.
+              </div>
+            ) : null}
 
-          {filteredServices.map((service) => {
-            const selected = selectedServiceIds.includes(service._id);
-            return (
-              <button
-                key={service._id}
-                type="button"
-                onClick={() => toggleService(service._id)}
-                className={`rounded-xl border px-3 py-3 text-left transition ${
-                  selected
-                    ? "border-primary bg-cyan-50"
-                    : "border-slate-200 bg-white hover:border-primary/50"
-                }`}
-              >
-                <p className="font-semibold text-slate-800">{service.name}</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Narx: {service.price ? formatCurrency(service.price) : "-"}
-                </p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+            {sortedServices.length > 0 && filteredServices.length === 0 ? (
+              <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">
+                Qidiruv bo'yicha xizmat topilmadi.
+              </div>
+            ) : null}
 
-      {selectedServiceIds.length > 0 ? (
-        <div className={`card p-4 sm:p-5 ${sectionTheme.formCard}`}>
-          <h2 className="text-lg font-semibold text-slate-800">
-            2-qadam: Tanlangan xizmatlar miqdori
-          </h2>
-          <p className="mb-4 text-sm text-slate-500">
-            Har bir tanlangan xizmatga miqdor kiriting.
-          </p>
-
-          <div className="space-y-3">
-            {selectedServiceIds.map((serviceId) => {
-              const service = sortedServices.find((item) => item._id === serviceId);
+            {filteredServices.map((service) => {
+              const selected = selectedServiceIds.includes(service._id);
               return (
-                <div
-                  key={serviceId}
-                  className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_160px_auto]"
+                <button
+                  key={service._id}
+                  type="button"
+                  onClick={() => toggleService(service._id)}
+                  className={`rounded-xl border px-3 py-3 text-left transition ${
+                    selected
+                      ? "border-primary bg-cyan-50"
+                      : "border-slate-200 bg-white hover:border-primary/50"
+                  }`}
                 >
-                  <div>
-                    <p className="font-medium text-slate-800">{service?.name}</p>
-                    <p className="text-xs text-slate-500">
-                      Narx: {service?.price ? formatCurrency(service.price) : "-"}
-                    </p>
-                  </div>
-                  <Input
-                    label="Miqdor"
-                    type="number"
-                    min="1"
-                    value={serviceInputs[serviceId]?.quantity || ""}
-                    onChange={(e) => updateServiceQuantity(serviceId, e.target.value)}
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="h-fit self-end"
-                    onClick={() => toggleService(serviceId)}
-                  >
-                    Olib tashlash
-                  </Button>
-                </div>
+                  <p className="font-semibold text-slate-800">{service.name}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Narx: {service.price ? formatCurrency(service.price) : "-"}
+                  </p>
+                </button>
               );
             })}
           </div>
-        </div>
-      ) : (
-        <div className={`card p-4 sm:p-5 ${sectionTheme.formCard}`}>
-          <p className="text-sm text-slate-600">
-            Miqdor bo'limi chiqishi uchun avval xizmat tanlang.
-          </p>
-        </div>
-      )}
 
-      <div className={`card p-4 sm:p-5 ${sectionTheme.formCard}`}>
-        <h2 className="text-lg font-semibold text-slate-800">3-qadam: Bemor ma'lumoti</h2>
-        <p className="mb-4 text-sm text-slate-500">
-          Bemor F.I.O ni kiriting, keyin chekni bir marta bosib chiqaring.
-        </p>
+          {selectedServiceIds.length > 0 ? (
+            <div className="mt-4 space-y-3">
+              {selectedServiceIds.map((serviceId) => {
+                const service = sortedServices.find((item) => item._id === serviceId);
+                return (
+                  <div
+                    key={serviceId}
+                    className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_160px_auto]"
+                  >
+                    <div>
+                      <p className="font-medium text-slate-800">{service?.name}</p>
+                      <p className="text-xs text-slate-500">
+                        Narx: {service?.price ? formatCurrency(service.price) : "-"}
+                      </p>
+                    </div>
+                    <Input
+                      label="Miqdor"
+                      type="number"
+                      min="1"
+                      value={serviceInputs[serviceId]?.quantity || ""}
+                      onChange={(e) => updateServiceQuantity(serviceId, e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="h-fit self-end"
+                      onClick={() => toggleService(serviceId)}
+                    >
+                      Olib tashlash
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
 
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            handleCreateCheckout();
+          <div className="mt-4 flex justify-between">
+            <Button variant="secondary" onClick={() => setStep(2)}>
+              Orqaga
+            </Button>
+            <Button
+              className="bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+              onClick={() => setStep(4)}
+            >
+              Keyingi: Preview
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {step === 4 ? (
+        <div
+          ref={previewRef}
+          tabIndex={0}
+          className="card border-sky-200 p-4 outline-none sm:p-5"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !submittingCheckout && selectedServiceIds.length > 0) {
+              event.preventDefault();
+              handleCreateCheckout();
+            }
           }}
         >
-          <div className="mb-4 grid gap-3 md:grid-cols-1">
-            <Input
-              label="Bemor F.I.O"
-              value={patient.fullName}
-              placeholder="Masalan: Ali Valiyev"
-              onChange={(e) =>
-                setPatient((prev) => ({
-                  ...prev,
-                  fullName: toTitleCaseName(e.target.value)
-                }))
-              }
-            />
+          <h2 className="text-lg font-semibold">4-qadam: Chek preview</h2>
+          <p className="mb-3 text-sm text-slate-600">Enter bosib chek chiqaring.</p>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm">
+              Doktor: <span className="font-semibold">{selectedSpecialist?.name || "-"}</span>
+            </p>
+            <p className="text-sm">
+              Bemor: <span className="font-semibold">{patient.fullName || "-"}</span>
+            </p>
+            <p className="text-sm">
+              LOR tanlovi: <span className="font-semibold">{lorIdentity ? lorIdentity.toUpperCase() : "-"}</span>
+            </p>
+
+            <div className="mt-3 space-y-1">
+              <p className="text-sm font-semibold">Xizmatlar</p>
+              {previewServices.length ? (
+                previewServices.map((item) => (
+                  <div key={item.id} className="flex justify-between text-sm">
+                    <span>
+                      {item.name} x{item.quantity}
+                    </span>
+                    <span className="font-semibold">{formatCurrency(item.lineTotal)}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-500">Tanlanmagan</p>
+              )}
+            </div>
+
+            <div className="mt-3 border-t border-dashed border-slate-300 pt-2">
+              <div className="flex justify-between text-base font-bold">
+                <span>Jami</span>
+                <span>{formatCurrency(previewTotal)}</span>
+              </div>
+            </div>
           </div>
 
-          <Button
-            type="submit"
-            loading={submittingCheckout}
-            className={sectionTheme.submitButton}
-          >
-            Tez chek chiqarish
-          </Button>
-        </form>
-      </div>
+          {!selectedServiceIds.length ? (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              Chek chiqarish uchun kamida bitta xizmat tanlanishi kerak.
+            </div>
+          ) : null}
+
+          <div className="mt-4 flex justify-between">
+            <Button variant="secondary" onClick={() => setStep(3)}>
+              Orqaga
+            </Button>
+            <Button
+              loading={submittingCheckout}
+              disabled={!selectedServiceIds.length}
+              className="bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+              onClick={handleCreateCheckout}
+            >
+              Chek chiqarish (Enter)
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <Alert type="success" message={success} />
       <Alert type="error" message={error} />
