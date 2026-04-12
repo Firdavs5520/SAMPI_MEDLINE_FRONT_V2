@@ -36,11 +36,11 @@ export const sidebarMenus = {
   ],
   delivery: [{ label: "Yetkazuvchi paneli", path: "/delivery", end: true, icon: "truck" }],
   cashier: [
-    { label: "Nurse bemor qo'shish", path: "/cashier/nurse-patients", end: true, group: "Nurse bo'limi", icon: "user-plus" },
+    { label: "Nurse chek qabuli", path: "/cashier/nurse-patients", end: true, group: "Nurse bo'limi", icon: "user-plus" },
     { label: "Nurse yozuvlari", path: "/cashier/nurse-entries", end: true, group: "Nurse bo'limi", icon: "list" },
     { label: "Nurse tarixi", path: "/cashier/nurse-history", end: true, group: "Nurse bo'limi", icon: "history" },
     { label: "Nurse shifokorlar", path: "/cashier/nurse-specialists", end: true, group: "Nurse bo'limi", icon: "users" },
-    { label: "LOR bemor qo'shish", path: "/cashier/lor-patients", end: true, group: "LOR bo'limi", icon: "user-plus" },
+    { label: "LOR chek qabuli", path: "/cashier/lor-patients", end: true, group: "LOR bo'limi", icon: "user-plus" },
     { label: "LOR yozuvlari", path: "/cashier/lor-entries", end: true, group: "LOR bo'limi", icon: "list" },
     { label: "LOR tarixi", path: "/cashier/lor-history", end: true, group: "LOR bo'limi", icon: "history" },
     { label: "LOR shifokorlar", path: "/cashier/lor-specialists", end: true, group: "LOR bo'limi", icon: "users" },
