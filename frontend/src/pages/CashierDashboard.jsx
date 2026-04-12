@@ -477,9 +477,15 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         throw new Error("To'langan summani kiriting.");
       }
 
+      const paidAmount = safeNumber(form.paidAmount);
+      const checkTotal = safeNumber(selectedPendingCheck.total);
+      if (paidAmount > checkTotal) {
+        throw new Error("To'langan summa chek summasidan oshmasligi kerak.");
+      }
+
       const payload = {
         checkRef: selectedPendingCheck._id,
-        paidAmount: safeNumber(form.paidAmount),
+        paidAmount,
         paymentMethod: form.paymentMethod,
         patientPhone: form.patientPhone.trim(),
         note: form.note.trim()
@@ -845,11 +851,21 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             >
               <div className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-3 text-sm text-cyan-900">
                 <p className="font-semibold">Qabul jarayoni boshlandi</p>
-                <p className="mt-1">
-                  Chek: <span className="font-semibold">{selectedPendingCheck?.checkId}</span>
-                </p>
                 <p>Bemor: {selectedPendingCheck?.patientName || "-"}</p>
                 <p>Jami: {formatCurrency(selectedPendingCheck?.total || 0)} so'm</p>
+                <p>Sana: {formatDateInput(selectedPendingCheck?.createdAt)}</p>
+                <p>
+                  {String(selectedPendingCheck?.creatorRole || "").toLowerCase() === "nurse"
+                    ? "Hamshira"
+                    : "Doktor"}
+                  : {selectedPendingCheck?.creatorName || "-"}
+                </p>
+                {String(selectedPendingCheck?.creatorRole || "").toLowerCase() === "lor" &&
+                selectedPendingCheck?.lorIdentity ? (
+                  <p>
+                    {String(selectedPendingCheck.lorIdentity).toUpperCase().replace("LOR", "LOR-")}
+                  </p>
+                ) : null}
                 <div className="mt-2">
                   <Button
                     type="button"
