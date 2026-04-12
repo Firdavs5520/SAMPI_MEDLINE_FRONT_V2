@@ -8,7 +8,7 @@ function Input({ label, error, className = "", inputRef = null, ...props }) {
       )}
       <input
         ref={inputRef}
-        className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 ${className}`}
+        className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 sm:text-sm ${className}`}
         {...props}
       />
       {error ? <p className="mt-1 text-xs text-rose-600">{error}</p> : null}
