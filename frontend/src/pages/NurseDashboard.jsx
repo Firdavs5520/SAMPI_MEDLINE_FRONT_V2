@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import medicineService from "../services/medicineService.js";
 import serviceService from "../services/serviceService.js";
 import usageService from "../services/usageService.js";
@@ -21,7 +21,13 @@ import {
   writeCheckToPrintTab
 } from "../utils/printReceipt.js";
 
-const STEP_LABELS = ["1. Bemor", "2. Dorilar", "3. Xizmatlar", "4. Chek preview"];
+const STEP_LABELS = [
+  "1. Hamshira",
+  "2. Bemor",
+  "3. Dorilar",
+  "4. Xizmatlar",
+  "5. Chek preview"
+];
 const PRICE_TIER_LABELS = { first: "1-marta", second: "2-marta", third: "3-marta" };
 const PRICE_TIER_ORDER = ["first", "second", "third"];
 const PRICE_TIER_OPTIONS = PRICE_TIER_ORDER.map((value) => ({
@@ -66,7 +72,12 @@ const getServicePrice = (service, tier) => {
 function NurseDashboard() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [creatingSpecialist, setCreatingSpecialist] = useState(false);
   const [step, setStep] = useState(1);
+
+  const [specialists, setSpecialists] = useState([]);
+  const [selectedSpecialistId, setSelectedSpecialistId] = useState("");
+  const [newSpecialistName, setNewSpecialistName] = useState("");
 
   const [medicines, setMedicines] = useState([]);
   const [services, setServices] = useState([]);
@@ -82,6 +93,20 @@ function NurseDashboard() {
   const previewRef = useRef(null);
 
   const hasAnySelection = selectedMedicineIds.length > 0 || selectedServiceIds.length > 0;
+
+  const specialistOptions = useMemo(
+    () =>
+      specialists.map((item) => ({
+        value: item._id,
+        label: item.name
+      })),
+    [specialists]
+  );
+
+  const selectedSpecialist = useMemo(
+    () => specialists.find((item) => item._id === selectedSpecialistId) || null,
+    [specialists, selectedSpecialistId]
+  );
 
   const filteredMedicines = useMemo(() => {
     const q = normalizeSearch(medicineSearch);
@@ -138,13 +163,25 @@ function NurseDashboard() {
     setError("");
   };
 
+  const loadSpecialists = async () => {
+    const data = await usageService.getRoleSpecialists();
+    setSpecialists(data);
+
+    setSelectedSpecialistId((prev) => {
+      if (prev && data.some((item) => item._id === prev)) return prev;
+      return data[0]?._id || "";
+    });
+  };
+
   const loadData = async () => {
     setLoading(true);
     setError("");
+
     try {
       const [medicineData, serviceData] = await Promise.all([
         medicineService.getAllMedicines(),
-        serviceService.getAllServices()
+        serviceService.getAllServices(),
+        loadSpecialists()
       ]);
       setMedicines(medicineData);
       setServices(serviceData.filter((item) => item.type === "nurse"));
@@ -160,7 +197,7 @@ function NurseDashboard() {
   }, []);
 
   useEffect(() => {
-    if (step === 4 && previewRef.current) previewRef.current.focus();
+    if (step === 5 && previewRef.current) previewRef.current.focus();
   }, [step]);
 
   useEffect(() => {
@@ -175,10 +212,41 @@ function NurseDashboard() {
     );
   }, [services]);
 
+  const validateSpecialist = () => {
+    if (!selectedSpecialistId) {
+      throw new Error("Avval hamshirani tanlang.");
+    }
+  };
+
   const validatePatient = () => {
     const { firstName, lastName } = splitFullName(patient.fullName);
     if (!firstName.trim() || !lastName.trim()) {
       throw new Error("Bemor F.I.O ni to'liq kiriting (ismi va familiyasi).");
+    }
+  };
+
+  const handleCreateSpecialist = async () => {
+    if (creatingSpecialist) return;
+
+    resetMessages();
+    const safeName = toTitleCaseName(newSpecialistName).trim();
+    if (!safeName) {
+      setError("Hamshira nomini kiriting.");
+      return;
+    }
+
+    setCreatingSpecialist(true);
+    try {
+      const created = await usageService.createRoleSpecialist({ name: safeName });
+      const next = await usageService.getRoleSpecialists();
+      setSpecialists(next);
+      setSelectedSpecialistId(created?._id || next[0]?._id || "");
+      setNewSpecialistName("");
+      setSuccess("Yangi hamshira qo'shildi.");
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    } finally {
+      setCreatingSpecialist(false);
     }
   };
 
@@ -203,6 +271,26 @@ function NurseDashboard() {
     });
   };
 
+  const goNextFromSpecialist = () => {
+    resetMessages();
+    try {
+      validateSpecialist();
+      setStep(2);
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    }
+  };
+
+  const goNextFromPatient = () => {
+    resetMessages();
+    try {
+      validatePatient();
+      setStep(3);
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    }
+  };
+
   const handleCheckout = async () => {
     if (submitting) return;
     resetMessages();
@@ -210,6 +298,7 @@ function NurseDashboard() {
     let printSession = null;
 
     try {
+      validateSpecialist();
       validatePatient();
       if (!hasAnySelection) throw new Error("Kamida bitta dori yoki xizmat tanlang.");
 
@@ -238,7 +327,12 @@ function NurseDashboard() {
 
       printSession = openPendingPrintTab();
       const result = await usageService.createCheckout({
-        patient: { firstName: parsedPatient.firstName.trim(), lastName: parsedPatient.lastName.trim() },
+        patient: {
+          firstName: parsedPatient.firstName.trim(),
+          lastName: parsedPatient.lastName.trim()
+        },
+        specialistId: selectedSpecialistId,
+        specialistName: selectedSpecialist?.name || "",
         medicines: medicinesPayload,
         services: servicesPayload
       });
@@ -270,7 +364,7 @@ function NurseDashboard() {
       <div className="card border-rose-200 bg-rose-50/70 p-4 sm:p-5">
         <h1 className="text-xl font-bold text-slate-800">Hamshira paneli</h1>
         <p className="mt-1 text-sm text-slate-600">Bosqichma-bosqich chek yaratish</p>
-        <div className="mt-4 grid gap-2 sm:grid-cols-4">
+        <div className="mt-4 grid gap-2 sm:grid-cols-5">
           {STEP_LABELS.map((label, i) => {
             const n = i + 1;
             const active = n === step;
@@ -289,27 +383,51 @@ function NurseDashboard() {
 
       {step === 1 ? (
         <div className="card border-rose-200 p-4 sm:p-5">
-          <h2 className="text-lg font-semibold">1-qadam: Bemor F.I.O</h2>
-          <Input
-            label="Bemor F.I.O"
-            value={patient.fullName}
-            placeholder="Masalan: Ali Valiyev"
-            onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
-          />
+          <h2 className="text-lg font-semibold">1-qadam: Hamshira tanlash</h2>
+          <p className="mb-4 text-sm text-slate-600">
+            Avval chekni kim yaratishini tanlang yoki yangi hamshira qo'shing.
+          </p>
+
+          <div className="grid gap-3 md:grid-cols-[1fr_220px_auto]">
+            <Input
+              label="Yangi hamshira"
+              value={newSpecialistName}
+              placeholder="Masalan: Malika"
+              onChange={(e) => setNewSpecialistName(toTitleCaseName(e.target.value))}
+            />
+            <div className="md:col-span-2 flex items-end">
+              <Button
+                type="button"
+                loading={creatingSpecialist}
+                className="w-full bg-rose-600 hover:bg-rose-700 focus:ring-rose-300"
+                onClick={handleCreateSpecialist}
+              >
+                Hamshira qo'shish
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-4 max-w-xl">
+            <SelectMenu
+              label="Hamshira ro'yxati"
+              value={selectedSpecialistId}
+              options={[{ value: "", label: "Ro'yxatdan tanlang" }, ...specialistOptions]}
+              onChange={setSelectedSpecialistId}
+            />
+          </div>
+
+          {!specialistOptions.length ? (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              Hozircha hamshira yo'q. Avval yangi hamshira qo'shing.
+            </div>
+          ) : null}
+
           <div className="mt-4 flex justify-end">
             <Button
               className="bg-rose-600 hover:bg-rose-700 focus:ring-rose-300"
-              onClick={() => {
-                resetMessages();
-                try {
-                  validatePatient();
-                  setStep(2);
-                } catch (err) {
-                  setError(extractErrorMessage(err));
-                }
-              }}
+              onClick={goNextFromSpecialist}
             >
-              Keyingi: Dorilar
+              Keyingi: Bemor
             </Button>
           </div>
         </div>
@@ -317,7 +435,30 @@ function NurseDashboard() {
 
       {step === 2 ? (
         <div className="card border-rose-200 p-4 sm:p-5">
-          <h2 className="text-lg font-semibold">2-qadam: Dorilar</h2>
+          <h2 className="text-lg font-semibold">2-qadam: Bemor F.I.O</h2>
+          <Input
+            label="Bemor F.I.O"
+            value={patient.fullName}
+            placeholder="Masalan: Ali Valiyev"
+            onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
+          />
+          <div className="mt-4 flex justify-between">
+            <Button variant="secondary" onClick={() => setStep(1)}>
+              Orqaga
+            </Button>
+            <Button
+              className="bg-rose-600 hover:bg-rose-700 focus:ring-rose-300"
+              onClick={goNextFromPatient}
+            >
+              Keyingi: Dorilar
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {step === 3 ? (
+        <div className="card border-rose-200 p-4 sm:p-5">
+          <h2 className="text-lg font-semibold">3-qadam: Dorilar</h2>
           <QuickSearchInput
             label="Dori qidirish"
             placeholder="Masalan: Paracetamol"
@@ -342,7 +483,9 @@ function NurseDashboard() {
                 >
                   <p className="font-semibold">{medicine.name}</p>
                   <p className="text-xs text-slate-600">Qoldiq: {medicine.stock}</p>
-                  <p className="text-xs text-slate-500">Narx: {isValidPrice(medicine.price) ? formatCurrency(medicine.price) : "-"}</p>
+                  <p className="text-xs text-slate-500">
+                    Narx: {isValidPrice(medicine.price) ? formatCurrency(medicine.price) : "-"}
+                  </p>
                 </button>
               );
             })}
@@ -353,7 +496,10 @@ function NurseDashboard() {
               {selectedMedicineIds.map((id) => {
                 const medicine = medicines.find((m) => m._id === id);
                 return (
-                  <div key={id} className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_180px_auto]">
+                  <div
+                    key={id}
+                    className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_180px_auto]"
+                  >
                     <div>
                       <p className="font-medium">{medicine?.name}</p>
                       <p className="text-xs text-slate-500">Qoldiq: {medicine?.stock}</p>
@@ -381,18 +527,34 @@ function NurseDashboard() {
           ) : null}
 
           <div className="mt-4 flex justify-between">
-            <Button variant="secondary" onClick={() => setStep(1)}>Orqaga</Button>
+            <Button variant="secondary" onClick={() => setStep(2)}>
+              Orqaga
+            </Button>
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => { setSelectedMedicineIds([]); setMedicineInputs({}); setStep(3); }}>Skip</Button>
-              <Button className="bg-rose-600 hover:bg-rose-700 focus:ring-rose-300" onClick={() => setStep(3)}>Keyingi</Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSelectedMedicineIds([]);
+                  setMedicineInputs({});
+                  setStep(4);
+                }}
+              >
+                Skip
+              </Button>
+              <Button
+                className="bg-rose-600 hover:bg-rose-700 focus:ring-rose-300"
+                onClick={() => setStep(4)}
+              >
+                Keyingi
+              </Button>
             </div>
           </div>
         </div>
       ) : null}
 
-      {step === 3 ? (
+      {step === 4 ? (
         <div className="card border-rose-200 p-4 sm:p-5">
-          <h2 className="text-lg font-semibold">3-qadam: Xizmatlar</h2>
+          <h2 className="text-lg font-semibold">4-qadam: Xizmatlar</h2>
           <QuickSearchInput
             label="Xizmat qidirish"
             placeholder="Masalan: Ukol qilish"
@@ -432,10 +594,15 @@ function NurseDashboard() {
                   ? serviceInputs[id]?.priceTier
                   : "first";
                 return (
-                  <div key={id} className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_160px_180px_auto]">
+                  <div
+                    key={id}
+                    className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_160px_180px_auto]"
+                  >
                     <div>
                       <p className="font-medium">{service?.name}</p>
-                      <p className="text-xs text-slate-500">Narx: {formatCurrency(getServicePrice(service, tier) || 0)}</p>
+                      <p className="text-xs text-slate-500">
+                        Narx: {formatCurrency(getServicePrice(service, tier) || 0)}
+                      </p>
                     </div>
                     <Input
                       label="Miqdor"
@@ -476,16 +643,32 @@ function NurseDashboard() {
           ) : null}
 
           <div className="mt-4 flex justify-between">
-            <Button variant="secondary" onClick={() => setStep(2)}>Orqaga</Button>
+            <Button variant="secondary" onClick={() => setStep(3)}>
+              Orqaga
+            </Button>
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => { setSelectedServiceIds([]); setServiceInputs({}); setStep(4); }}>Skip</Button>
-              <Button className="bg-rose-600 hover:bg-rose-700 focus:ring-rose-300" onClick={() => setStep(4)}>Keyingi</Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSelectedServiceIds([]);
+                  setServiceInputs({});
+                  setStep(5);
+                }}
+              >
+                Skip
+              </Button>
+              <Button
+                className="bg-rose-600 hover:bg-rose-700 focus:ring-rose-300"
+                onClick={() => setStep(5)}
+              >
+                Keyingi
+              </Button>
             </div>
           </div>
         </div>
       ) : null}
 
-      {step === 4 ? (
+      {step === 5 ? (
         <div
           ref={previewRef}
           tabIndex={0}
@@ -497,28 +680,45 @@ function NurseDashboard() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">4-qadam: Chek preview</h2>
+          <h2 className="text-lg font-semibold">5-qadam: Chek preview</h2>
           <p className="mb-3 text-sm text-slate-600">Enter bosib chek chiqaring.</p>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm">Bemor: <span className="font-semibold">{patient.fullName || "-"}</span></p>
+            <p className="text-sm">
+              Hamshira: <span className="font-semibold">{selectedSpecialist?.name || "-"}</span>
+            </p>
+            <p className="text-sm">
+              Bemor: <span className="font-semibold">{patient.fullName || "-"}</span>
+            </p>
             <div className="mt-3 space-y-1">
               <p className="text-sm font-semibold">Dorilar</p>
-              {previewMedicines.length ? previewMedicines.map((i) => (
-                <div key={i.id} className="flex justify-between text-sm">
-                  <span>{i.name} x{i.quantity}</span>
-                  <span className="font-semibold">{formatCurrency(i.lineTotal)}</span>
-                </div>
-              )) : <p className="text-sm text-slate-500">Tanlanmagan</p>}
+              {previewMedicines.length ? (
+                previewMedicines.map((item) => (
+                  <div key={item.id} className="flex justify-between text-sm">
+                    <span>
+                      {item.name} x{item.quantity}
+                    </span>
+                    <span className="font-semibold">{formatCurrency(item.lineTotal)}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-500">Tanlanmagan</p>
+              )}
             </div>
             <div className="mt-3 space-y-1">
               <p className="text-sm font-semibold">Xizmatlar</p>
-              {previewServices.length ? previewServices.map((i) => (
-                <div key={i.id} className="flex justify-between text-sm">
-                  <span>{i.name} ({PRICE_TIER_LABELS[i.tier]}) x{i.quantity}</span>
-                  <span className="font-semibold">{formatCurrency(i.lineTotal)}</span>
-                </div>
-              )) : <p className="text-sm text-slate-500">Tanlanmagan</p>}
+              {previewServices.length ? (
+                previewServices.map((item) => (
+                  <div key={item.id} className="flex justify-between text-sm">
+                    <span>
+                      {item.name} ({PRICE_TIER_LABELS[item.tier]}) x{item.quantity}
+                    </span>
+                    <span className="font-semibold">{formatCurrency(item.lineTotal)}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-500">Tanlanmagan</p>
+              )}
             </div>
             <div className="mt-3 border-t border-dashed border-slate-300 pt-2">
               <div className="flex justify-between text-base font-bold">
@@ -535,7 +735,9 @@ function NurseDashboard() {
           ) : null}
 
           <div className="mt-4 flex justify-between">
-            <Button variant="secondary" onClick={() => setStep(3)}>Orqaga</Button>
+            <Button variant="secondary" onClick={() => setStep(4)}>
+              Orqaga
+            </Button>
             <Button
               disabled={!hasAnySelection}
               loading={submitting}

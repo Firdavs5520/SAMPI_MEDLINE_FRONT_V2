@@ -21,6 +21,21 @@ const usageService = {
     return data.data;
   },
 
+  async getRoleSpecialists(search = "") {
+    const params = new URLSearchParams();
+    if (search?.trim()) {
+      params.set("search", search.trim());
+    }
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const { data } = await api.get(`/usage/specialists${query}`);
+    return data.data || [];
+  },
+
+  async createRoleSpecialist(payload) {
+    const { data } = await api.post("/usage/specialists", payload);
+    return data.data;
+  },
+
   async getMyChecks(search = "", lorIdentity = "") {
     const params = new URLSearchParams();
     if (search?.trim()) {
