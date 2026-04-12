@@ -42,7 +42,7 @@ const buildPrintHtml = (check) => {
 <html lang="uz">
   <head>
     <meta charset="UTF-8" />
-    <title>Chek - ${escapeHtml(check.checkId)}</title>
+    <title>Chek</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap");
 
@@ -61,14 +61,14 @@ const buildPrintHtml = (check) => {
       .inner { width: 48mm; margin: 0 auto; padding: 6px 0; }
       .check-title {
         text-align: center;
-        font-size: 23px;
+        font-size: 30px;
         font-weight: 900;
         letter-spacing: 0.5px;
         text-transform: uppercase;
       }
       .divider {
-        border-top: 2px dashed #000;
-        margin: 6px 0;
+        border-top: 4px dashed #000;
+        margin: 1px 0;
       }
       .text {
         text-align: center;
@@ -155,7 +155,13 @@ const buildPrintHtml = (check) => {
         ${
           String(check?.createdBy?.role || "").toLowerCase() === "nurse"
             ? `<div class="meta"><div>Hamshira: ${escapeHtml(check.createdBy?.name || "-")}</div></div>`
-            : ""
+            : String(check?.createdBy?.role || "").toLowerCase() === "lor"
+              ? `<div class="meta"><div>Doktor: ${escapeHtml(check.createdBy?.name || "-")}</div><div>LOR: ${escapeHtml(
+                  String(check?.createdBy?.lorIdentity || "-")
+                    .toUpperCase()
+                    .replace("LOR", "LOR-")
+                )}</div></div>`
+              : ""
         }
         <button id="printBtn" class="print-btn">Chop etish (Enter tugmasi)</button>
       </div>
@@ -306,6 +312,18 @@ function CheckModal({ open, check, onClose }) {
             <p className="mt-1 text-center text-sm font-semibold text-slate-700">
               Hamshira: {check.createdBy?.name || "-"}
             </p>
+          ) : String(check?.createdBy?.role || "").toLowerCase() === "lor" ? (
+            <>
+              <p className="mt-1 text-center text-sm font-semibold text-slate-700">
+                Doktor: {check.createdBy?.name || "-"}
+              </p>
+              <p className="mt-1 text-center text-sm font-semibold text-slate-700">
+                LOR:{" "}
+                {String(check?.createdBy?.lorIdentity || "-")
+                  .toUpperCase()
+                  .replace("LOR", "LOR-")}
+              </p>
+            </>
           ) : null}
         </div>
       </div>

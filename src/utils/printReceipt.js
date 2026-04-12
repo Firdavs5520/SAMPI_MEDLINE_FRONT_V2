@@ -58,14 +58,19 @@ const buildCheckPrintHtml = (check, options = {}) => {
     creatorRole === "nurse"
       ? `<div class="nurse-line">Hamshira: ${escapeHtml(check?.createdBy?.name || "-")}</div>`
       : creatorRole === "lor"
-        ? `<div class="nurse-line">Doktor: ${escapeHtml(check?.createdBy?.name || "-")}</div>`
+        ? `<div class="nurse-line">Doktor: ${escapeHtml(check?.createdBy?.name || "-")}</div>
+           <div class="nurse-line">LOR: ${escapeHtml(
+             String(check?.createdBy?.lorIdentity || "-")
+               .toUpperCase()
+               .replace("LOR", "LOR-")
+           )}</div>`
         : "";
 
   return `<!doctype html>
 <html lang="uz">
   <head>
     <meta charset="UTF-8" />
-    <title>Chek - ${escapeHtml(check.checkId)}</title>
+    <title>Chek</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap");
 

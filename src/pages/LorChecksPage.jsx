@@ -93,7 +93,14 @@ function LorChecksPage() {
         <Table
           data={checks}
           columns={[
-            { key: "checkId", label: "Chek ID" },
+            {
+              key: "lorIdentity",
+              label: "LOR",
+              render: (row) => {
+                const value = String(row?.createdBy?.lorIdentity || "");
+                return value ? value.toUpperCase().replace("LOR", "LOR-") : "-";
+              }
+            },
             {
               key: "patient",
               label: "Bemor",
