@@ -32,6 +32,15 @@ const cashierService = {
     return data.data;
   },
 
+  async getPendingChecks({ role = "all", search = "" } = {}) {
+    const params = new URLSearchParams();
+    if (role) params.set("role", role);
+    if (search?.trim()) params.set("search", search.trim());
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const { data } = await api.get(`/cashier/pending-checks${query}`);
+    return data.data || [];
+  },
+
   async getSpecialists({ type = "all", search = "" } = {}) {
     const params = new URLSearchParams();
     if (type) params.set("type", type);

@@ -4,6 +4,7 @@ import RequireLorIdentity from "./components/RequireLorIdentity.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import NurseDashboard from "./pages/NurseDashboard.jsx";
+import NurseChecksPage from "./pages/NurseChecksPage.jsx";
 import NurseMedicinesPage from "./pages/NurseMedicinesPage.jsx";
 import NurseServicesPage from "./pages/NurseServicesPage.jsx";
 import LorSelectPage from "./pages/LorSelectPage.jsx";
@@ -41,6 +42,7 @@ function App() {
       <Route element={<ProtectedRoute allowedRoles={["nurse"]} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/nurse" element={<NurseDashboard />} />
+          <Route path="/nurse/checks" element={<NurseChecksPage />} />
           <Route
             path="/nurse/specialists"
             element={<RoleSpecialistsPage mode="nurse" />}

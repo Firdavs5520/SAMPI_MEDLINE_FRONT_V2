@@ -5,7 +5,6 @@ import Alert from "../components/Alert.jsx";
 import Table from "../components/Table.jsx";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
 import { extractErrorMessage, formatCurrency, formatDateTime } from "../utils/format.js";
 
 const paymentMethodLabels = {
@@ -14,8 +13,7 @@ const paymentMethodLabels = {
   transfer: "O'tkazma"
 };
 
-function LorChecksPage() {
-  const { lorIdentity } = useAuth();
+function NurseChecksPage() {
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
@@ -29,7 +27,7 @@ function LorChecksPage() {
     }
     setError("");
     try {
-      const data = await usageService.getMyChecks(searchValue, lorIdentity);
+      const data = await usageService.getMyChecks(searchValue);
       setChecks(data);
     } catch (err) {
       setError(extractErrorMessage(err));
@@ -41,7 +39,7 @@ function LorChecksPage() {
 
   useEffect(() => {
     loadChecks("");
-  }, [lorIdentity]);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,16 +60,10 @@ function LorChecksPage() {
       <div className="card p-4 sm:p-5">
         <h1 className="text-xl font-bold text-slate-800">Mening cheklarim</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Faqat siz yaratgan cheklar chiqadi. Bemor ism-familiyasi bo'yicha qidiring.
-        </p>
-        <p className="mt-1 text-xs font-semibold text-slate-500">
-          Tanlangan LOR: {lorIdentity ? lorIdentity.toUpperCase() : "-"}
+          Faqat siz yaratgan nurse cheklari chiqadi. Bemor ism-familiyasi bo'yicha qidiring.
         </p>
 
-        <form
-          onSubmit={handleSubmit}
-          className="mt-4 grid gap-3 md:grid-cols-[1fr_auto_auto]"
-        >
+        <form onSubmit={handleSubmit} className="mt-4 grid gap-3 md:grid-cols-[1fr_auto_auto]">
           <Input
             label="Bemor ism-familiyasi"
             placeholder="Masalan: Ali Valiyev"
@@ -100,30 +92,9 @@ function LorChecksPage() {
           data={checks}
           columns={[
             {
-              key: "lorIdentity",
-              label: "LOR",
-              render: (row) => {
-                const value = String(row?.createdBy?.lorIdentity || "");
-                return value ? value.toUpperCase().replace("LOR", "LOR-") : "-";
-              }
-            },
-            {
               key: "patient",
               label: "Bemor",
               render: (row) => row.patient?.fullName || "-"
-            },
-            {
-              key: "items",
-              label: "Xizmatlar",
-              render: (row) => (
-                <div className="space-y-1">
-                  {(row.items || []).map((item, idx) => (
-                    <div key={`${item.name}-${idx}`} className="text-xs leading-5 text-slate-700">
-                      {item.name} x{item.quantity}
-                    </div>
-                  ))}
-                </div>
-              )
             },
             {
               key: "total",
@@ -184,4 +155,5 @@ function LorChecksPage() {
   );
 }
 
-export default LorChecksPage;
+export default NurseChecksPage;
+

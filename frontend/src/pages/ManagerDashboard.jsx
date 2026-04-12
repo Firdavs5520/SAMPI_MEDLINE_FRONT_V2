@@ -38,6 +38,10 @@ const emptyOverview = () => ({
     nurse: emptyRoleStats(),
     lor: emptyRoleStats()
   },
+  lorIdentities: {
+    lor1: { totalRevenue: 0, checksCount: 0 },
+    lor2: { totalRevenue: 0, checksCount: 0 }
+  },
   total: emptyRoleStats()
 });
 
@@ -130,6 +134,16 @@ function ManagerDashboard() {
         roles: {
           nurse: { ...emptyRoleStats(), ...(data?.roles?.nurse || {}) },
           lor: { ...emptyRoleStats(), ...(data?.roles?.lor || {}) }
+        },
+        lorIdentities: {
+          lor1: {
+            totalRevenue: Number(data?.lorIdentities?.lor1?.totalRevenue || 0),
+            checksCount: Number(data?.lorIdentities?.lor1?.checksCount || 0)
+          },
+          lor2: {
+            totalRevenue: Number(data?.lorIdentities?.lor2?.totalRevenue || 0),
+            checksCount: Number(data?.lorIdentities?.lor2?.checksCount || 0)
+          }
         },
         total: { ...emptyRoleStats(), ...(data?.total || {}) }
       });
@@ -243,6 +257,28 @@ function ManagerDashboard() {
           <RoleSummaryCard title="Hamshira (Nurse)" roleKey="nurse" stats={overview.roles.nurse} />
           <RoleSummaryCard title="LOR shifokor" roleKey="lor" stats={overview.roles.lor} />
           <RoleSummaryCard title="Jami" roleKey="total" stats={overview.total} />
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
+            <p className="text-sm font-bold text-slate-800">LOR-1</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">
+              {formatCurrency(overview.lorIdentities?.lor1?.totalRevenue || 0)}
+            </p>
+            <p className="mt-1 text-xs text-slate-600">
+              Cheklar: {overview.lorIdentities?.lor1?.checksCount || 0}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
+            <p className="text-sm font-bold text-slate-800">LOR-2</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">
+              {formatCurrency(overview.lorIdentities?.lor2?.totalRevenue || 0)}
+            </p>
+            <p className="mt-1 text-xs text-slate-600">
+              Cheklar: {overview.lorIdentities?.lor2?.checksCount || 0}
+            </p>
+          </div>
         </div>
       </section>
     </div>

@@ -139,6 +139,9 @@ const safeNumber = (value, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const formatCreatorRoleLabel = (value) =>
+  String(value || "").toLowerCase() === "nurse" ? "Nurse" : "LOR";
+
 const createInitialForm = (type = "lor") => ({
   department: type,
   specialistId: "",
@@ -208,8 +211,12 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [savingEntry, setSavingEntry] = useState(false);
   const [savingSpecialist, setSavingSpecialist] = useState(false);
+  const [pendingChecksLoading, setPendingChecksLoading] = useState(false);
   const [entries, setEntries] = useState([]);
   const [historyEntries, setHistoryEntries] = useState([]);
+  const [pendingChecks, setPendingChecks] = useState([]);
+  const [pendingSearch, setPendingSearch] = useState("");
+  const [selectedPendingCheck, setSelectedPendingCheck] = useState(null);
   const [shiftWindow, setShiftWindow] = useState({
     fromLabel: "08:00",
     toLabel: "02:00"
@@ -358,6 +365,26 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
   };
 
+  const loadPendingChecks = async ({ searchValue = "" } = {}) => {
+    if (!isFormSection) {
+      setPendingChecks([]);
+      return;
+    }
+
+    setPendingChecksLoading(true);
+    try {
+      const data = await cashierService.getPendingChecks({
+        role: lockedType || "all",
+        search: searchValue
+      });
+      setPendingChecks(data || []);
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    } finally {
+      setPendingChecksLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (lockedType) {
       setFilters((prev) => ({
@@ -399,8 +426,19 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     loadSpecialists();
   }, []);
 
+  useEffect(() => {
+    if (isFormSection) {
+      loadPendingChecks({ searchValue: pendingSearch });
+      return;
+    }
+
+    setPendingChecks([]);
+    setSelectedPendingCheck(null);
+  }, [isFormSection, lockedType]);
+
   const resetForm = () => {
     setEditingEntry(null);
+    setSelectedPendingCheck(null);
     setForm(createInitialForm(lockedType || form.department || "lor"));
   };
 
@@ -442,41 +480,57 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     setSavingEntry(true);
 
     try {
+      const isPendingCheckMode = Boolean(selectedPendingCheck?._id) && !editingEntry?._id;
       const specialistType = lockedType || form.department || "lor";
       const department = lockedType || form.department || specialistType;
       const selectedSpecialist = selectedTypeSpecialists.find((item) => item._id === form.specialistId);
+      let payload;
 
-      if (!form.patientName.trim()) {
-        throw new Error("Bemor F.I.O kiritilishi shart.");
+      if (isPendingCheckMode) {
+        payload = {
+          checkRef: selectedPendingCheck._id,
+          paidAmount:
+            form.paidAmount === "" ? safeNumber(form.amount) : safeNumber(form.paidAmount),
+          paymentMethod: form.paymentMethod,
+          patientPhone: form.patientPhone.trim(),
+          note: form.note.trim()
+        };
+      } else {
+        if (!form.patientName.trim()) {
+          throw new Error("Bemor F.I.O kiritilishi shart.");
+        }
+
+        if (!form.specialistId || !selectedSpecialist) {
+          throw new Error("Mutaxassis ro'yxatdan tanlanishi shart.");
+        }
+
+        payload = {
+          department,
+          specialistId: form.specialistId,
+          specialistName: selectedSpecialist.name,
+          patientName: form.patientName.trim(),
+          amount: safeNumber(form.amount),
+          paidAmount:
+            form.paidAmount === "" ? safeNumber(form.amount) : safeNumber(form.paidAmount),
+          paymentMethod: form.paymentMethod,
+          patientPhone: form.patientPhone.trim(),
+          note: form.note.trim()
+        };
       }
-
-      if (!form.specialistId || !selectedSpecialist) {
-        throw new Error("Mutaxassis ro'yxatdan tanlanishi shart.");
-      }
-
-      const payload = {
-        department,
-        specialistId: form.specialistId,
-        specialistName: selectedSpecialist.name,
-        patientName: form.patientName.trim(),
-        amount: safeNumber(form.amount),
-        paidAmount:
-          form.paidAmount === "" ? safeNumber(form.amount) : safeNumber(form.paidAmount),
-        paymentMethod: form.paymentMethod,
-        patientPhone: form.patientPhone.trim(),
-        note: form.note.trim()
-      };
 
       if (editingEntry?._id) {
         await cashierService.updateEntry(editingEntry._id, payload);
         setSuccess("Yozuv yangilandi.");
       } else {
         await cashierService.createEntry(payload);
-        setSuccess("Yozuv qo'shildi.");
+        setSuccess(isPendingCheckMode ? "Chek kassada qabul qilindi." : "Yozuv qo'shildi.");
       }
 
       resetForm();
       await loadEntries({ silent: true });
+      if (isFormSection) {
+        await loadPendingChecks({ searchValue: pendingSearch.trim() });
+      }
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -486,6 +540,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
   const startEditEntry = (entry) => {
     resetMessages();
+    setSelectedPendingCheck(null);
 
     const inferredDepartment = entry.department === "nurse" ? "nurse" : "lor";
 
@@ -508,6 +563,36 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const handleSearchSubmit = (event) => {
     event.preventDefault();
     setFilters((prev) => ({ ...prev, search: searchInput.trim() }));
+  };
+
+  const handlePendingSearchSubmit = async (event) => {
+    event.preventDefault();
+    await loadPendingChecks({ searchValue: pendingSearch.trim() });
+  };
+
+  const handlePickPendingCheck = (check) => {
+    const roleType = String(check?.creatorRole || "").toLowerCase() === "nurse" ? "nurse" : "lor";
+    const roleSpecialists = specialistsByType[roleType] || [];
+    const foundSpecialist = roleSpecialists.find((item) => item.name === check.creatorName);
+
+    setSelectedPendingCheck(check);
+    setEditingEntry(null);
+    setForm({
+      department: roleType,
+      specialistId: foundSpecialist?._id || "",
+      patientName: toTitleCaseName(String(check.patientName || "")),
+      amount: formatMoneyInput(check.total),
+      paidAmount: formatMoneyInput(check.total),
+      paymentMethod: "cash",
+      patientPhone: "",
+      note: ""
+    });
+    resetMessages();
+  };
+
+  const clearPendingCheckSelection = () => {
+    setSelectedPendingCheck(null);
+    resetForm();
   };
 
   const handleAddSpecialist = async () => {
@@ -692,6 +777,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const sectionWarningText = lockedType
     ? `Diqqat: Siz hozir faqat ${departmentLabels[lockedType]} yozuvlari bilan ishlayapsiz.`
     : "Umumiy jurnal rejimi: barcha bo'limlar ko'rinadi.";
+  const isPendingCheckMode = Boolean(selectedPendingCheck?._id) && !editingEntry?._id;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -740,10 +826,99 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       ) : null}
 
       {isFormSection ? (
+        <div className="card p-4 sm:p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-800">Qabul qilinmagan cheklar</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Nurse/LOR tomonidan yuborilgan chekni bu yerdan kassada qabul qiling.
+              </p>
+            </div>
+            {pendingChecksLoading ? (
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Yuklanmoqda...
+              </span>
+            ) : null}
+          </div>
+
+          <form className="mt-3 flex flex-col gap-2 sm:flex-row" onSubmit={handlePendingSearchSubmit}>
+            <input
+              value={pendingSearch}
+              onChange={(e) => setPendingSearch(e.target.value)}
+              placeholder="Chek ID yoki bemor F.I.O bo'yicha qidirish..."
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
+            />
+            <Button type="submit" variant="secondary" className="w-full sm:w-auto">
+              Qidirish
+            </Button>
+          </form>
+
+          <div className="mt-3">
+            <Table
+              data={pendingChecks}
+              columns={[
+                { key: "checkId", label: "Chek ID" },
+                { key: "patientName", label: "Bemor F.I.O" },
+                {
+                  key: "total",
+                  label: "Jami summa",
+                  render: (row) => `${formatCurrency(row.total)} so'm`
+                },
+                {
+                  key: "creatorRole",
+                  label: "Kim yubordi",
+                  render: (row) =>
+                    `${formatCreatorRoleLabel(row.creatorRole)}: ${row.creatorName || "-"}${
+                      String(row.creatorRole).toLowerCase() === "lor" && row.lorIdentity
+                        ? ` (${String(row.lorIdentity).toUpperCase().replace("LOR", "LOR-")})`
+                        : ""
+                    }`
+                },
+                {
+                  key: "createdAt",
+                  label: "Yuborilgan vaqt",
+                  render: (row) => formatDateInput(row.createdAt)
+                },
+                {
+                  key: "actions",
+                  label: "Amallar",
+                  render: (row) => (
+                    <Button
+                      type="button"
+                      className="px-3 py-1.5 text-xs"
+                      onClick={() => handlePickPendingCheck(row)}
+                    >
+                      Qabul qilish
+                    </Button>
+                  )
+                }
+              ]}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {isFormSection ? (
         <div className={`card p-4 sm:p-5 ${sectionTheme.formCard}`}>
           <h2 className="text-lg font-semibold text-slate-800">
-            {editingEntry ? "Yozuvni tahrirlash" : "Yangi bemor yozuvi"}
+            {editingEntry
+              ? "Yozuvni tahrirlash"
+              : isPendingCheckMode
+                ? "Chekni kassada qabul qilish"
+                : "Yangi bemor yozuvi"}
           </h2>
+          {isPendingCheckMode ? (
+            <div className="mt-3 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-800">
+              Tanlangan chek: <span className="font-semibold">{selectedPendingCheck.checkId}</span>
+              <button
+                type="button"
+                onClick={clearPendingCheckSelection}
+                className="ml-2 text-xs font-semibold underline"
+              >
+                Bekor qilish
+              </button>
+            </div>
+          ) : null}
 
           <form className="mt-4 space-y-3" onSubmit={handleSaveEntry}>
             <div className="grid gap-3 md:grid-cols-2">
@@ -753,6 +928,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                   value={form.department}
                   options={departmentFormOptions}
                   onChange={(nextValue) => handleFormChange("department", nextValue)}
+                  disabled={isPendingCheckMode}
                 />
               ) : (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
@@ -761,18 +937,27 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 </div>
               )}
 
-              <SelectMenu
-                label={`${specialistTitle} ro'yxati`}
-                value={form.specialistId}
-                options={[
-                  { value: "", label: "Ro'yxatdan tanlang" },
-                  ...selectedTypeSpecialists.map((item) => ({
-                    value: item._id,
-                    label: item.name
-                  }))
-                ]}
-                onChange={(nextValue) => handleFormChange("specialistId", nextValue)}
-              />
+              {isPendingCheckMode ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                  <p className="text-xs text-slate-500">Mutaxassis</p>
+                  <p className="text-sm font-semibold text-slate-800">
+                    {selectedPendingCheck?.creatorName || "-"}
+                  </p>
+                </div>
+              ) : (
+                <SelectMenu
+                  label={`${specialistTitle} ro'yxati`}
+                  value={form.specialistId}
+                  options={[
+                    { value: "", label: "Ro'yxatdan tanlang" },
+                    ...selectedTypeSpecialists.map((item) => ({
+                      value: item._id,
+                      label: item.name
+                    }))
+                  ]}
+                  onChange={(nextValue) => handleFormChange("specialistId", nextValue)}
+                />
+              )}
             </div>
 
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -781,6 +966,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 value={form.patientName}
                 onChange={(e) => handleFormChange("patientName", e.target.value)}
                 placeholder="Masalan: Ali Valiyev"
+                readOnly={isPendingCheckMode}
               />
               <Input
                 label="Jami summa"
@@ -790,6 +976,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 value={form.amount}
                 onChange={(e) => handleFormChange("amount", e.target.value)}
                 placeholder="Masalan: 120 000"
+                readOnly={isPendingCheckMode}
               />
               <Input
                 label="To'langan summa"
@@ -842,9 +1029,13 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 loading={savingEntry}
                 className={`w-full sm:w-auto ${sectionTheme.submitButton}`}
               >
-                {editingEntry ? "Yangilash" : "Qo'shish"}
+                {editingEntry
+                  ? "Yangilash"
+                  : isPendingCheckMode
+                    ? "Chekni qabul qilish"
+                    : "Qo'shish"}
               </Button>
-              {editingEntry ? (
+              {editingEntry || isPendingCheckMode ? (
                 <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={resetForm}>
                   Bekor qilish
                 </Button>
