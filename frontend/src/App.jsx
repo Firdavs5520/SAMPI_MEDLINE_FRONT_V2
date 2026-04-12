@@ -122,6 +122,10 @@ function App() {
             path="/cashier/journal"
             element={<CashierDashboard forcedSection="journal" />}
           />
+          <Route
+            path="/cashier/debts"
+            element={<CashierDashboard forcedSection="debts" />}
+          />
         </Route>
       </Route>
 

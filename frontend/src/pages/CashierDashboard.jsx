@@ -59,6 +59,12 @@ const SECTION_META = {
     lockedType: null,
     specialistLabel: "Mutaxassis"
   },
+  debts: {
+    title: "Qarzdorlar ro'yxati",
+    subtitle: "Qarz qolgan yozuvlarni yakuniy to'lash bo'limi.",
+    lockedType: null,
+    specialistLabel: "Mutaxassis"
+  },
   "nurse-specialists": {
     title: "Nurse shifokorlar",
     subtitle: "Nurse mutaxassislar ro'yxatini boshqarish.",
@@ -184,12 +190,14 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     forcedSection === "nurse-specialists" || forcedSection === "lor-specialists";
   const isFormSection = forcedSection === "nurse-patients" || forcedSection === "lor-patients";
   const isHistorySection = forcedSection === "nurse-history" || forcedSection === "lor-history";
+  const isDebtSection = forcedSection === "debts";
   const isEntriesSection =
     forcedSection === "nurse-entries" ||
     forcedSection === "nurse-history" ||
     forcedSection === "lor-entries" ||
     forcedSection === "lor-history" ||
-    forcedSection === "journal";
+    forcedSection === "journal" ||
+    isDebtSection;
   const isCurrentEntriesSection =
     forcedSection === "nurse-entries" ||
     forcedSection === "lor-entries" ||
@@ -199,7 +207,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     forcedSection === "nurse-history" ||
     forcedSection === "lor-entries" ||
     forcedSection === "lor-history" ||
-    forcedSection === "journal";
+    forcedSection === "journal" ||
+    isDebtSection;
   const specialistPageType = forcedSection === "nurse-specialists" ? "nurse" : "lor";
 
   const [loading, setLoading] = useState(true);
@@ -224,12 +233,13 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     department: lockedType || "all",
     specialistType: lockedType || "all",
     paymentMethod: "all",
-    debtOnly: false,
+    debtOnly: isDebtSection,
     search: ""
   });
   const [searchInput, setSearchInput] = useState("");
   const [form, setForm] = useState(createInitialForm(lockedType || "lor"));
   const [specialistNameInput, setSpecialistNameInput] = useState("");
+  const [closingDebtId, setClosingDebtId] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const isPendingCheckMode = Boolean(selectedPendingCheck?._id);
@@ -243,18 +253,24 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   );
 
   const buildEffectiveFilters = (baseFilters) => {
-    if (!lockedType) {
-      return baseFilters;
+    const nextFilters = { ...baseFilters };
+
+    if (lockedType) {
+      nextFilters.department = lockedType;
+      nextFilters.specialistType = lockedType;
     }
 
-    return {
-      ...baseFilters,
-      department: lockedType,
-      specialistType: lockedType
-    };
+    if (isDebtSection) {
+      nextFilters.debtOnly = true;
+    }
+
+    return nextFilters;
   };
 
-  const effectiveFilters = useMemo(() => buildEffectiveFilters(filters), [filters, lockedType]);
+  const effectiveFilters = useMemo(
+    () => buildEffectiveFilters(filters),
+    [filters, lockedType, isDebtSection]
+  );
 
   const calculatedDebt = useMemo(() => {
     const amount = safeNumber(form.amount, 0);
@@ -330,7 +346,22 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
     try {
       if (isEntriesSection) {
-        if (isHistorySection) {
+        if (isDebtSection) {
+          const [entriesPayload, summaryPayload] = await Promise.all([
+            cashierService.getEntries({ ...effectiveFilters, timeScope: "all", debtOnly: true }),
+            cashierService.getSummary({ ...effectiveFilters, timeScope: "all", debtOnly: true })
+          ]);
+
+          setEntries(entriesPayload?.entries || []);
+          setHistoryEntries([]);
+          setShiftWindow(
+            entriesPayload?.shift || {
+              fromLabel: "08:00",
+              toLabel: "02:00"
+            }
+          );
+          setSummary(summaryPayload || emptySummary);
+        } else if (isHistorySection) {
           const [historyPayload, summaryPayload] = await Promise.all([
             cashierService.getEntries({ ...effectiveFilters, timeScope: "history" }),
             cashierService.getSummary({ ...effectiveFilters, timeScope: "history" })
@@ -434,6 +465,12 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   }, [lockedType]);
 
   useEffect(() => {
+    if (isDebtSection) {
+      setFilters((prev) => ({ ...prev, debtOnly: true }));
+    }
+  }, [isDebtSection]);
+
+  useEffect(() => {
     if (!isSpecialistSection) {
       loadEntries();
     } else {
@@ -443,6 +480,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       setRefreshing(false);
     }
   }, [
+    isDebtSection,
     isHistorySection,
     isEntriesSection,
     isSpecialistSection,
@@ -598,6 +636,39 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     resetForm();
   };
 
+  const handleMarkDebtAsPaid = async (entry) => {
+    if (!entry?._id) return;
+
+    const currentDebt = safeNumber(entry.debtAmount, 0);
+    if (currentDebt <= 0) {
+      setSuccess("Bu yozuvda qarz qolmagan.");
+      return;
+    }
+
+    resetMessages();
+    setClosingDebtId(entry._id);
+
+    try {
+      const totalAmount = safeNumber(entry.amount, 0);
+      if (totalAmount <= 0) {
+        throw new Error("Yozuv summasi noto'g'ri.");
+      }
+
+      await cashierService.updateEntry(entry._id, {
+        paidAmount: totalAmount,
+        paymentMethod: entry.paymentMethod || "cash",
+        note: entry.note || ""
+      });
+
+      setSuccess("Qarz to'landi. Yozuv oddiy ro'yxatga o'tdi.");
+      await loadEntries({ silent: true });
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    } finally {
+      setClosingDebtId("");
+    }
+  };
+
   const handleAddSpecialist = async () => {
     resetMessages();
     setSavingSpecialist(true);
@@ -725,23 +796,48 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     {
       key: "actions",
       label: "Amallar",
-      render: () => <span className="text-xs text-slate-400">-</span>
+      render: (row) =>
+        isDebtSection && safeNumber(row.debtAmount, 0) > 0 ? (
+          <Button
+            type="button"
+            className="px-3 py-1.5 text-xs"
+            loading={closingDebtId === row._id}
+            onClick={() => handleMarkDebtAsPaid(row)}
+          >
+            To'landi
+          </Button>
+        ) : (
+          <span className="text-xs text-slate-400">-</span>
+        )
     }
   ];
 
-  const specialistCountValue = lockedType
-    ? `${summary.bySpecialistType?.[lockedType]?.count || 0}`
-    : `${summary.bySpecialistType?.nurse?.count || 0} / ${
-        summary.bySpecialistType?.lor?.count || 0
-      }`;
-  const specialistCountTitle = lockedType
-    ? `${departmentLabels[lockedType]} yozuvlari`
-    : "Nurse / LOR";
-  const specialistCountHint = lockedType
-    ? "Joriy ro'yxatdagi mutaxassislar soni"
-    : "Mutaxassislar bo'yicha";
-  const sectionTheme =
-    lockedType === "nurse"
+  const specialistCountValue = isDebtSection
+    ? `${summary.totalEntries || 0}`
+    : lockedType
+      ? `${summary.bySpecialistType?.[lockedType]?.count || 0}`
+      : `${summary.bySpecialistType?.nurse?.count || 0} / ${
+          summary.bySpecialistType?.lor?.count || 0
+        }`;
+  const specialistCountTitle = isDebtSection
+    ? "Qarzdorlar soni"
+    : lockedType
+      ? `${departmentLabels[lockedType]} yozuvlari`
+      : "Nurse / LOR";
+  const specialistCountHint = isDebtSection
+    ? "Qarz qolgan yozuvlar"
+    : lockedType
+      ? "Joriy ro'yxatdagi mutaxassislar soni"
+      : "Mutaxassislar bo'yicha";
+  const sectionTheme = isDebtSection
+    ? {
+        headerCard: "border-amber-200 bg-amber-50/80",
+        badge: "bg-amber-100 text-amber-800 border border-amber-200",
+        alertBox: "border-amber-200 bg-amber-50 text-amber-800",
+        formCard: "",
+        submitButton: ""
+      }
+    : lockedType === "nurse"
       ? {
           headerCard: "border-rose-200 bg-rose-50/70",
           badge: "bg-rose-100 text-rose-800 border border-rose-200",
@@ -764,10 +860,16 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             formCard: "",
             submitButton: ""
           };
-  const sectionLabel = lockedType ? `${departmentLabels[lockedType]} BO'LIMI` : "KASSA JURNALI";
-  const sectionWarningText = lockedType
-    ? `Diqqat: Siz hozir faqat ${departmentLabels[lockedType]} yozuvlari bilan ishlayapsiz.`
-    : "Umumiy jurnal rejimi: barcha bo'limlar ko'rinadi.";
+  const sectionLabel = isDebtSection
+    ? "QARZDORLAR BO'LIMI"
+    : lockedType
+      ? `${departmentLabels[lockedType]} BO'LIMI`
+      : "KASSA JURNALI";
+  const sectionWarningText = isDebtSection
+    ? "Bu bo'limda qarzi qolgan yozuvlar chiqadi. To'liq to'langanda \"To'landi\" ni bosing."
+    : lockedType
+      ? `Diqqat: Siz hozir faqat ${departmentLabels[lockedType]} yozuvlari bilan ishlayapsiz.`
+      : "Umumiy jurnal rejimi: barcha bo'limlar ko'rinadi.";
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -1067,7 +1169,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
               </p>
             ) : null}
             <div className="mt-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-800">
-              {isHistorySection
+              {isDebtSection
+                ? "Faqat qarzdorlar ko'rsatiladi. Qarz yopilgach yozuv oddiy ro'yxatga qaytadi."
+                : isHistorySection
                 ? `${shiftWindow.fromLabel} - ${shiftWindow.toLabel} oralig'idan tashqari yozuvlar tarixi.`
                 : `Joriy ro'yxat faqat ${shiftWindow.fromLabel} - ${shiftWindow.toLabel}. Qolgan yozuvlar tarix bo'limida saqlanadi.`}
             </div>
@@ -1113,12 +1217,13 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 <span className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700">
                   <input
                     type="checkbox"
-                    checked={filters.debtOnly}
+                    checked={isDebtSection ? true : filters.debtOnly}
+                    disabled={isDebtSection}
                     onChange={(e) =>
                       setFilters((prev) => ({ ...prev, debtOnly: e.target.checked }))
                     }
                   />
-                  Faqat qarzdorlar
+                  {isDebtSection ? "Qarz filtri doim yoqilgan" : "Faqat qarzdorlar"}
                 </span>
               </label>
             </div>
@@ -1137,7 +1242,21 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             </div>
           </div>
 
-          {isCurrentEntriesSection ? (
+          {isDebtSection ? (
+            <div className="card p-4 sm:p-5">
+              <h2 className="text-lg font-semibold text-slate-800">Qarzdorlar ro'yxati</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Qarz to'liq yopilganda <strong>To'landi</strong> tugmasini bosing.
+              </p>
+              <div className="mt-4">
+                <Table
+                  data={tableData}
+                  columns={entryColumns}
+                  headerClassName="bg-amber-100 text-amber-900"
+                />
+              </div>
+            </div>
+          ) : isCurrentEntriesSection ? (
             <div className="card p-4 sm:p-5">
               <h2 className="text-lg font-semibold text-slate-800">
                 Joriy yozuvlar ({shiftWindow.fromLabel} - {shiftWindow.toLabel})
