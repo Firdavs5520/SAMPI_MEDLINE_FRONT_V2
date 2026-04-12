@@ -155,6 +155,15 @@ const createInitialForm = (type = "lor") => ({
   note: ""
 });
 
+const createInitialFilters = ({ today, lockedType, isDebtSection }) => ({
+  date: today,
+  department: lockedType || "all",
+  specialistType: lockedType || "all",
+  paymentMethod: "all",
+  debtOnly: Boolean(isDebtSection),
+  search: ""
+});
+
 const emptySummary = {
   totalAmount: 0,
   totalPaidAmount: 0,
@@ -228,14 +237,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   });
   const [summary, setSummary] = useState(emptySummary);
   const [specialists, setSpecialists] = useState([]);
-  const [filters, setFilters] = useState({
-    date: today,
-    department: lockedType || "all",
-    specialistType: lockedType || "all",
-    paymentMethod: "all",
-    debtOnly: isDebtSection,
-    search: ""
-  });
+  const [filters, setFilters] = useState(() =>
+    createInitialFilters({ today, lockedType, isDebtSection })
+  );
   const [searchInput, setSearchInput] = useState("");
   const [form, setForm] = useState(createInitialForm(lockedType || "lor"));
   const [specialistNameInput, setSpecialistNameInput] = useState("");
@@ -484,6 +488,15 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       setFilters((prev) => ({ ...prev, debtOnly: true }));
     }
   }, [isDebtSection]);
+
+  useEffect(() => {
+    setFilters(createInitialFilters({ today, lockedType, isDebtSection }));
+    setSearchInput("");
+    setPendingSearch("");
+    setSelectedPendingCheck(null);
+    setSuccess("");
+    setError("");
+  }, [forcedSection, today, lockedType, isDebtSection]);
 
   useEffect(() => {
     if (lockedType) return;
