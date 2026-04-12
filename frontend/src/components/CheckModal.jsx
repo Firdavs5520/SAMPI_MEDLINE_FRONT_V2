@@ -14,6 +14,13 @@ const getItemType = (item, checkType) => String(item?.itemType || checkType || "
 const getItemsByType = (check, type) =>
   (check?.items || []).filter((item) => getItemType(item, check.type) === type);
 const getLineTotal = (item) => (Number(item?.price) || 0) * (Number(item?.quantity) || 0);
+const formatLorIdentity = (value) => {
+  const raw = String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const match = raw.match(/lor(\d+)/);
+  if (match) return `Lor-${match[1]}`;
+  if (!raw) return "-";
+  return String(value || "-");
+};
 
 const buildRowsHtml = (items, checkType) =>
   items
@@ -52,7 +59,7 @@ const buildPrintHtml = (check) => {
         padding: 0;
         width: 58mm;
         font-family: "Golos Text", sans-serif;
-        font-size: 12px;
+        font-size: 13px;
         color: #000;
         background: #fff;
       }
@@ -140,6 +147,11 @@ const buildPrintHtml = (check) => {
 
         <div class="text">Bemor: ${escapeHtml(check.patient?.fullName || "-")}</div>
         <div class="text">Sana: ${escapeHtml(formatDateTime(check.createdAt))}</div>
+        ${
+          String(check?.createdBy?.role || "").toLowerCase() === "lor"
+            ? `<div class="text">${escapeHtml(formatLorIdentity(check?.createdBy?.lorIdentity))}</div>`
+            : ""
+        }
 
         <div class="divider"></div>
         ${medicineSection}
@@ -151,18 +163,14 @@ const buildPrintHtml = (check) => {
         </div>
         <div class="divider"></div>
 
-        <div class="footer">Doimo sog'-salomat bo'ling</div>
         ${
           String(check?.createdBy?.role || "").toLowerCase() === "nurse"
             ? `<div class="meta"><div>Hamshira: ${escapeHtml(check.createdBy?.name || "-")}</div></div>`
             : String(check?.createdBy?.role || "").toLowerCase() === "lor"
-              ? `<div class="meta"><div>Doktor: ${escapeHtml(check.createdBy?.name || "-")}</div><div>LOR: ${escapeHtml(
-                  String(check?.createdBy?.lorIdentity || "-")
-                    .toUpperCase()
-                    .replace("LOR", "LOR-")
-                )}</div></div>`
+              ? `<div class="meta"><div>${escapeHtml(check.createdBy?.name || "-")}</div></div>`
               : ""
         }
+        <div class="footer">Doimo sog'-salomat bo'ling</div>
         <button id="printBtn" class="print-btn">Chop etish (Enter tugmasi)</button>
       </div>
     </div>
@@ -248,6 +256,9 @@ function CheckModal({ open, check, onClose }) {
           <div className="mt-3 space-y-1 text-base text-slate-700">
             <p className="text-center">Bemor: {check.patient?.fullName || "-"}</p>
             <p className="text-center">Sana: {formatDateTime(check.createdAt)}</p>
+            {String(check?.createdBy?.role || "").toLowerCase() === "lor" ? (
+              <p className="text-center">{formatLorIdentity(check?.createdBy?.lorIdentity)}</p>
+            ) : null}
           </div>
 
           <div className="mt-3 border-t border-dashed border-slate-300" />
@@ -305,9 +316,6 @@ function CheckModal({ open, check, onClose }) {
             </div>
           </div>
 
-          <p className="mt-4 text-center text-base text-slate-700">
-            Doimo sog'-salomat bo'ling
-          </p>
           {String(check?.createdBy?.role || "").toLowerCase() === "nurse" ? (
             <p className="mt-1 text-center text-sm font-semibold text-slate-700">
               Hamshira: {check.createdBy?.name || "-"}
@@ -315,16 +323,13 @@ function CheckModal({ open, check, onClose }) {
           ) : String(check?.createdBy?.role || "").toLowerCase() === "lor" ? (
             <>
               <p className="mt-1 text-center text-sm font-semibold text-slate-700">
-                Doktor: {check.createdBy?.name || "-"}
-              </p>
-              <p className="mt-1 text-center text-sm font-semibold text-slate-700">
-                LOR:{" "}
-                {String(check?.createdBy?.lorIdentity || "-")
-                  .toUpperCase()
-                  .replace("LOR", "LOR-")}
+                {check.createdBy?.name || "-"}
               </p>
             </>
           ) : null}
+          <p className="mt-4 text-center text-base text-slate-700">
+            Doimo sog'-salomat bo'ling
+          </p>
         </div>
       </div>
     </Modal>
