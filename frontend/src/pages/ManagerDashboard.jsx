@@ -45,6 +45,7 @@ function StatCard({ title, value, hint = "", tone = "default" }) {
   const tones = {
     default: "border-slate-200 bg-white text-slate-800",
     primary: "border-cyan-200 bg-cyan-50 text-cyan-800",
+    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
     accent: "border-orange-200 bg-orange-50 text-orange-800",
     danger: "border-rose-200 bg-rose-50 text-rose-700"
   };
@@ -210,7 +211,7 @@ function ManagerDashboard() {
             title="Jami daromad"
             value={formatCurrency(overview.total.totalRevenue)}
             hint={`${periodHint} davr bo'yicha`}
-            tone="accent"
+            tone="success"
           />
           <StatCard
             title="Jami cheklar"
