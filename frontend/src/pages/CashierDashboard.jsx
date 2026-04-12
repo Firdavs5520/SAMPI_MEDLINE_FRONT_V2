@@ -17,14 +17,14 @@ import {
 
 const SECTION_META = {
   "nurse-patients": {
-    title: "PROTSEDURA (Nurse)",
-    subtitle: "Nurse protsedura yozuvlari va to'lov jurnali.",
+    title: "Nurse cheklar qabuli",
+    subtitle: "Nurse yuborgan cheklar kassada qabul qilinadi.",
     lockedType: "nurse",
     specialistLabel: "Medsestra"
   },
   "lor-patients": {
-    title: "LOR bo'limi",
-    subtitle: "LOR bemorlarini qo'shish va hisobini yuritish.",
+    title: "LOR cheklar qabuli",
+    subtitle: "LOR yuborgan cheklar kassada qabul qilinadi.",
     lockedType: "lor",
     specialistLabel: "Vrach"
   },
@@ -99,11 +99,6 @@ const paymentMethodFormOptions = [
 
 const departmentOptions = [
   { value: "all", label: "Barchasi" },
-  { value: "lor", label: "LOR" },
-  { value: "nurse", label: "Nurse" }
-];
-
-const departmentFormOptions = [
   { value: "lor", label: "LOR" },
   { value: "nurse", label: "Nurse" }
 ];
@@ -233,7 +228,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   });
   const [searchInput, setSearchInput] = useState("");
   const [form, setForm] = useState(createInitialForm(lockedType || "lor"));
-  const [editingEntry, setEditingEntry] = useState(null);
   const [specialistNameInput, setSpecialistNameInput] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -245,11 +239,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }),
     [specialists]
   );
-
-  const selectedTypeSpecialists = useMemo(() => {
-    const type = lockedType || form.department || "lor";
-    return specialistsByType[type] || [];
-  }, [specialistsByType, form.department, lockedType]);
 
   const buildEffectiveFilters = (baseFilters) => {
     if (!lockedType) {
@@ -267,7 +256,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
   const calculatedDebt = useMemo(() => {
     const amount = safeNumber(form.amount, 0);
-    const paid = form.paidAmount === "" ? amount : safeNumber(form.paidAmount, 0);
+    const paid = form.paidAmount === "" ? 0 : safeNumber(form.paidAmount, 0);
     if (!Number.isFinite(amount) || amount <= 0) return 0;
     if (!Number.isFinite(paid) || paid < 0) return amount;
     return Math.max(amount - Math.min(paid, amount), 0);
@@ -437,9 +426,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   }, [isFormSection, lockedType]);
 
   const resetForm = () => {
-    setEditingEntry(null);
     setSelectedPendingCheck(null);
-    setForm(createInitialForm(lockedType || form.department || "lor"));
+    setForm(createInitialForm(lockedType || "lor"));
   };
 
   const handleFormChange = (key, value) => {
@@ -480,51 +468,25 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     setSavingEntry(true);
 
     try {
-      const isPendingCheckMode = Boolean(selectedPendingCheck?._id) && !editingEntry?._id;
-      const specialistType = lockedType || form.department || "lor";
-      const department = lockedType || form.department || specialistType;
-      const selectedSpecialist = selectedTypeSpecialists.find((item) => item._id === form.specialistId);
-      let payload;
-
-      if (isPendingCheckMode) {
-        payload = {
-          checkRef: selectedPendingCheck._id,
-          paidAmount:
-            form.paidAmount === "" ? safeNumber(form.amount) : safeNumber(form.paidAmount),
-          paymentMethod: form.paymentMethod,
-          patientPhone: form.patientPhone.trim(),
-          note: form.note.trim()
-        };
-      } else {
-        if (!form.patientName.trim()) {
-          throw new Error("Bemor F.I.O kiritilishi shart.");
-        }
-
-        if (!form.specialistId || !selectedSpecialist) {
-          throw new Error("Mutaxassis ro'yxatdan tanlanishi shart.");
-        }
-
-        payload = {
-          department,
-          specialistId: form.specialistId,
-          specialistName: selectedSpecialist.name,
-          patientName: form.patientName.trim(),
-          amount: safeNumber(form.amount),
-          paidAmount:
-            form.paidAmount === "" ? safeNumber(form.amount) : safeNumber(form.paidAmount),
-          paymentMethod: form.paymentMethod,
-          patientPhone: form.patientPhone.trim(),
-          note: form.note.trim()
-        };
+      const isPendingCheckMode = Boolean(selectedPendingCheck?._id);
+      if (!isPendingCheckMode) {
+        throw new Error("Avval qabul qilinadigan chekni tanlang.");
       }
 
-      if (editingEntry?._id) {
-        await cashierService.updateEntry(editingEntry._id, payload);
-        setSuccess("Yozuv yangilandi.");
-      } else {
-        await cashierService.createEntry(payload);
-        setSuccess(isPendingCheckMode ? "Chek kassada qabul qilindi." : "Yozuv qo'shildi.");
+      if (String(form.paidAmount || "").trim() === "") {
+        throw new Error("To'langan summani kiriting.");
       }
+
+      const payload = {
+        checkRef: selectedPendingCheck._id,
+        paidAmount: safeNumber(form.paidAmount),
+        paymentMethod: form.paymentMethod,
+        patientPhone: form.patientPhone.trim(),
+        note: form.note.trim()
+      };
+
+      await cashierService.createEntry(payload);
+      setSuccess("Chek kassada qabul qilindi.");
 
       resetForm();
       await loadEntries({ silent: true });
@@ -536,28 +498,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     } finally {
       setSavingEntry(false);
     }
-  };
-
-  const startEditEntry = (entry) => {
-    resetMessages();
-    setSelectedPendingCheck(null);
-
-    const inferredDepartment = entry.department === "nurse" ? "nurse" : "lor";
-
-    setEditingEntry(entry);
-    setForm({
-      department: lockedType || entry.department || inferredDepartment,
-      specialistId: entry.specialistId || "",
-      patientName: entry.patientName || "",
-      amount: formatMoneyInput(entry.amount),
-      paidAmount:
-        entry.paidAmount === undefined || entry.paidAmount === null
-          ? formatMoneyInput(entry.amount)
-          : formatMoneyInput(entry.paidAmount),
-      paymentMethod: entry.paymentMethod || "cash",
-      patientPhone: formatPhoneInput(entry.patientPhone || ""),
-      note: entry.note || ""
-    });
   };
 
   const handleSearchSubmit = (event) => {
@@ -576,13 +516,12 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     const foundSpecialist = roleSpecialists.find((item) => item.name === check.creatorName);
 
     setSelectedPendingCheck(check);
-    setEditingEntry(null);
     setForm({
       department: roleType,
       specialistId: foundSpecialist?._id || "",
       patientName: toTitleCaseName(String(check.patientName || "")),
       amount: formatMoneyInput(check.total),
-      paidAmount: formatMoneyInput(check.total),
+      paidAmount: "",
       paymentMethod: "cash",
       patientPhone: "",
       note: ""
@@ -722,19 +661,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     {
       key: "actions",
       label: "Amallar",
-      render: (row) => (
-        <div className="flex flex-wrap gap-2">
-          {isFormSection ? (
-            <button
-              type="button"
-              onClick={() => startEditEntry(row)}
-              className="rounded-lg bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-300"
-            >
-              Tahrirlash
-            </button>
-          ) : null}
-        </div>
-      )
+      render: () => <span className="text-xs text-slate-400">-</span>
     }
   ];
 
@@ -777,7 +704,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const sectionWarningText = lockedType
     ? `Diqqat: Siz hozir faqat ${departmentLabels[lockedType]} yozuvlari bilan ishlayapsiz.`
     : "Umumiy jurnal rejimi: barcha bo'limlar ko'rinadi.";
-  const isPendingCheckMode = Boolean(selectedPendingCheck?._id) && !editingEntry?._id;
+  const isPendingCheckMode = Boolean(selectedPendingCheck?._id);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -826,222 +753,230 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       ) : null}
 
       {isFormSection ? (
-        <div className="card p-4 sm:p-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-800">Qabul qilinmagan cheklar</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Nurse/LOR tomonidan yuborilgan chekni bu yerdan kassada qabul qiling.
-              </p>
+        <div className="space-y-4 sm:space-y-5">
+          <div
+            className={`card p-4 sm:p-5 transition-all duration-300 ${
+              isPendingCheckMode ? "border-cyan-300 ring-2 ring-cyan-100" : ""
+            }`}
+          >
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-800">Qabul qilinadigan cheklar</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Kassir yangi yozuv yaratmaydi, faqat nurse/LOR yuborgan chekni qabul qiladi.
+                </p>
+              </div>
+              {pendingChecksLoading ? (
+                <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Yuklanmoqda...
+                </span>
+              ) : null}
             </div>
-            {pendingChecksLoading ? (
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Yuklanmoqda...
-              </span>
-            ) : null}
-          </div>
 
-          <form className="mt-3 flex flex-col gap-2 sm:flex-row" onSubmit={handlePendingSearchSubmit}>
-            <input
-              value={pendingSearch}
-              onChange={(e) => setPendingSearch(e.target.value)}
-              placeholder="Chek ID yoki bemor F.I.O bo'yicha qidirish..."
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
-            />
-            <Button type="submit" variant="secondary" className="w-full sm:w-auto">
-              Qidirish
-            </Button>
-          </form>
-
-          <div className="mt-3">
-            <Table
-              data={pendingChecks}
-              columns={[
-                { key: "checkId", label: "Chek ID" },
-                { key: "patientName", label: "Bemor F.I.O" },
-                {
-                  key: "total",
-                  label: "Jami summa",
-                  render: (row) => `${formatCurrency(row.total)} so'm`
-                },
-                {
-                  key: "creatorRole",
-                  label: "Kim yubordi",
-                  render: (row) =>
-                    `${formatCreatorRoleLabel(row.creatorRole)}: ${row.creatorName || "-"}${
-                      String(row.creatorRole).toLowerCase() === "lor" && row.lorIdentity
-                        ? ` (${String(row.lorIdentity).toUpperCase().replace("LOR", "LOR-")})`
-                        : ""
-                    }`
-                },
-                {
-                  key: "createdAt",
-                  label: "Yuborilgan vaqt",
-                  render: (row) => formatDateInput(row.createdAt)
-                },
-                {
-                  key: "actions",
-                  label: "Amallar",
-                  render: (row) => (
-                    <Button
-                      type="button"
-                      className="px-3 py-1.5 text-xs"
-                      onClick={() => handlePickPendingCheck(row)}
-                    >
-                      Qabul qilish
-                    </Button>
-                  )
-                }
-              ]}
-            />
-          </div>
-        </div>
-      ) : null}
-
-      {isFormSection ? (
-        <div className={`card p-4 sm:p-5 ${sectionTheme.formCard}`}>
-          <h2 className="text-lg font-semibold text-slate-800">
-            {editingEntry
-              ? "Yozuvni tahrirlash"
-              : isPendingCheckMode
-                ? "Chekni kassada qabul qilish"
-                : "Yangi bemor yozuvi"}
-          </h2>
-          {isPendingCheckMode ? (
-            <div className="mt-3 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-800">
-              Tanlangan chek: <span className="font-semibold">{selectedPendingCheck.checkId}</span>
-              <button
-                type="button"
-                onClick={clearPendingCheckSelection}
-                className="ml-2 text-xs font-semibold underline"
-              >
-                Bekor qilish
-              </button>
-            </div>
-          ) : null}
-
-          <form className="mt-4 space-y-3" onSubmit={handleSaveEntry}>
-            <div className="grid gap-3 md:grid-cols-2">
-              {!lockedType ? (
-                <SelectMenu
-                  label="Bo'lim"
-                  value={form.department}
-                  options={departmentFormOptions}
-                  onChange={(nextValue) => handleFormChange("department", nextValue)}
-                  disabled={isPendingCheckMode}
+            <div
+              className={`overflow-hidden transition-all duration-500 ${
+                isPendingCheckMode
+                  ? "pointer-events-none max-h-0 opacity-0"
+                  : "mt-3 max-h-[1200px] opacity-100"
+              }`}
+            >
+              <form className="flex flex-col gap-2 sm:flex-row" onSubmit={handlePendingSearchSubmit}>
+                <input
+                  value={pendingSearch}
+                  onChange={(e) => setPendingSearch(e.target.value)}
+                  placeholder="Chek ID yoki bemor F.I.O bo'yicha qidirish..."
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
                 />
-              ) : (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-                  <p className="text-xs text-slate-500">Bo'lim</p>
-                  <p className="text-sm font-semibold text-slate-800">{departmentLabels[lockedType]}</p>
-                </div>
-              )}
+                <Button type="submit" variant="secondary" className="w-full sm:w-auto">
+                  Qidirish
+                </Button>
+              </form>
 
-              {isPendingCheckMode ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-                  <p className="text-xs text-slate-500">Mutaxassis</p>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {selectedPendingCheck?.creatorName || "-"}
-                  </p>
-                </div>
-              ) : (
-                <SelectMenu
-                  label={`${specialistTitle} ro'yxati`}
-                  value={form.specialistId}
-                  options={[
-                    { value: "", label: "Ro'yxatdan tanlang" },
-                    ...selectedTypeSpecialists.map((item) => ({
-                      value: item._id,
-                      label: item.name
-                    }))
+              <div className="mt-3">
+                <Table
+                  data={pendingChecks}
+                  columns={[
+                    { key: "checkId", label: "Chek ID" },
+                    { key: "patientName", label: "Bemor F.I.O" },
+                    {
+                      key: "total",
+                      label: "Jami summa",
+                      render: (row) => `${formatCurrency(row.total)} so'm`
+                    },
+                    {
+                      key: "creatorRole",
+                      label: "Kim yubordi",
+                      render: (row) =>
+                        `${formatCreatorRoleLabel(row.creatorRole)}: ${row.creatorName || "-"}${
+                          String(row.creatorRole).toLowerCase() === "lor" && row.lorIdentity
+                            ? ` (${String(row.lorIdentity).toUpperCase().replace("LOR", "LOR-")})`
+                            : ""
+                        }`
+                    },
+                    {
+                      key: "createdAt",
+                      label: "Yuborilgan vaqt",
+                      render: (row) => formatDateInput(row.createdAt)
+                    },
+                    {
+                      key: "actions",
+                      label: "Amallar",
+                      render: (row) => (
+                        <Button
+                          type="button"
+                          className="px-3 py-1.5 text-xs"
+                          onClick={() => handlePickPendingCheck(row)}
+                        >
+                          Qabul qilish
+                        </Button>
+                      )
+                    }
                   ]}
-                  onChange={(nextValue) => handleFormChange("specialistId", nextValue)}
                 />
-              )}
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <Input
-                label="Bemor F.I.O"
-                value={form.patientName}
-                onChange={(e) => handleFormChange("patientName", e.target.value)}
-                placeholder="Masalan: Ali Valiyev"
-                readOnly={isPendingCheckMode}
-              />
-              <Input
-                label="Jami summa"
-                type="text"
-                inputMode="numeric"
-                maxLength={7}
-                value={form.amount}
-                onChange={(e) => handleFormChange("amount", e.target.value)}
-                placeholder="Masalan: 120 000"
-                readOnly={isPendingCheckMode}
-              />
-              <Input
-                label="To'langan summa"
-                type="text"
-                inputMode="numeric"
-                maxLength={7}
-                value={form.paidAmount}
-                onChange={(e) => handleFormChange("paidAmount", e.target.value)}
-                placeholder="Masalan: 100 000"
-              />
-              <Input
-                label="Telefon"
-                type="text"
-                inputMode="numeric"
-                maxLength={12}
-                value={form.patientPhone}
-                onChange={(e) => handleFormChange("patientPhone", e.target.value)}
-                placeholder="Masalan: 90 123 45 67"
-              />
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              <SelectMenu
-                label="To'lov usuli"
-                value={form.paymentMethod}
-                options={paymentMethodFormOptions}
-                onChange={(nextValue) => handleFormChange("paymentMethod", nextValue)}
-              />
-
-              <div className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2.5">
-                <p className="text-xs font-semibold uppercase tracking-wide text-orange-700">Qarz</p>
-                <p className="mt-1 text-lg font-bold text-orange-800">{formatCurrency(calculatedDebt)} so'm</p>
               </div>
             </div>
 
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-slate-600">Izoh</span>
-              <textarea
-                value={form.note}
-                onChange={(e) => handleFormChange("note", e.target.value)}
-                rows={2}
-                placeholder="Qo'shimcha izoh (ixtiyoriy)"
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
-              />
-            </label>
-
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-              <Button
-                type="submit"
-                loading={savingEntry}
-                className={`w-full sm:w-auto ${sectionTheme.submitButton}`}
-              >
-                {editingEntry
-                  ? "Yangilash"
-                  : isPendingCheckMode
-                    ? "Chekni qabul qilish"
-                    : "Qo'shish"}
-              </Button>
-              {editingEntry || isPendingCheckMode ? (
-                <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={resetForm}>
-                  Bekor qilish
-                </Button>
-              ) : null}
+            <div
+              className={`overflow-hidden transition-all duration-500 ${
+                isPendingCheckMode
+                  ? "mt-3 max-h-80 opacity-100"
+                  : "pointer-events-none max-h-0 opacity-0"
+              }`}
+            >
+              <div className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-3 text-sm text-cyan-900">
+                <p className="font-semibold">Qabul jarayoni boshlandi</p>
+                <p className="mt-1">
+                  Chek: <span className="font-semibold">{selectedPendingCheck?.checkId}</span>
+                </p>
+                <p>Bemor: {selectedPendingCheck?.patientName || "-"}</p>
+                <p>Jami: {formatCurrency(selectedPendingCheck?.total || 0)} so'm</p>
+                <div className="mt-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full sm:w-auto"
+                    onClick={clearPendingCheckSelection}
+                  >
+                    Boshqa chekni tanlash
+                  </Button>
+                </div>
+              </div>
             </div>
-          </form>
+          </div>
+
+          <div
+            className={`card p-4 sm:p-5 ${sectionTheme.formCard} transition-all duration-300 ${
+              isPendingCheckMode ? "opacity-100" : "opacity-80"
+            }`}
+          >
+            <h2 className="text-lg font-semibold text-slate-800">Chekni kassada qabul qilish</h2>
+
+            {!isPendingCheckMode ? (
+              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+                Avval yuqoridagi ro'yxatdan bitta chek tanlang. Shundan keyin qabul qilish formasi ochiladi.
+              </div>
+            ) : (
+              <form className="mt-4 space-y-3" onSubmit={handleSaveEntry}>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                    <p className="text-xs text-slate-500">Bo'lim</p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {departmentLabels[lockedType || form.department || "lor"]}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                    <p className="text-xs text-slate-500">Mutaxassis</p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {selectedPendingCheck?.creatorName || "-"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <Input
+                    label="Bemor F.I.O"
+                    value={form.patientName}
+                    onChange={(e) => handleFormChange("patientName", e.target.value)}
+                    placeholder="Masalan: Ali Valiyev"
+                    readOnly
+                  />
+                  <Input
+                    label="Jami summa"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={7}
+                    value={form.amount}
+                    onChange={(e) => handleFormChange("amount", e.target.value)}
+                    placeholder="Masalan: 120 000"
+                    readOnly
+                  />
+                  <Input
+                    label="To'langan summa"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={7}
+                    value={form.paidAmount}
+                    onChange={(e) => handleFormChange("paidAmount", e.target.value)}
+                    placeholder="Masalan: 100 000"
+                  />
+                  <Input
+                    label="Telefon"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={12}
+                    value={form.patientPhone}
+                    onChange={(e) => handleFormChange("patientPhone", e.target.value)}
+                    placeholder="Masalan: 90 123 45 67"
+                  />
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  <SelectMenu
+                    label="To'lov usuli"
+                    value={form.paymentMethod}
+                    options={paymentMethodFormOptions}
+                    onChange={(nextValue) => handleFormChange("paymentMethod", nextValue)}
+                  />
+
+                  <div className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2.5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-orange-700">Qarz</p>
+                    <p className="mt-1 text-lg font-bold text-orange-800">
+                      {formatCurrency(calculatedDebt)} so'm
+                    </p>
+                  </div>
+                </div>
+
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-medium text-slate-600">Izoh</span>
+                  <textarea
+                    value={form.note}
+                    onChange={(e) => handleFormChange("note", e.target.value)}
+                    rows={2}
+                    placeholder="Qo'shimcha izoh (ixtiyoriy)"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                  />
+                </label>
+
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                  <Button
+                    type="submit"
+                    loading={savingEntry}
+                    className={`w-full sm:w-auto ${sectionTheme.submitButton}`}
+                  >
+                    Chekni qabul qilish
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full sm:w-auto"
+                    onClick={clearPendingCheckSelection}
+                  >
+                    Bekor qilish
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
       ) : null}
 
