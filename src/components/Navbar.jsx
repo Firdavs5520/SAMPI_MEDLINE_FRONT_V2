@@ -61,7 +61,7 @@ function Navbar({ onMenuOpen }) {
           <button
             type="button"
             onClick={handleGoHome}
-            className="min-w-0 rounded-lg px-2 py-1 text-left text-sm text-slate-600 hover:bg-slate-100"
+            className="sampi-navbar-user min-w-0 rounded-lg px-2 py-1 text-left text-sm text-slate-600"
           >
             <div className="truncate font-semibold text-slate-800">{displayName}</div>
             <div className="hidden truncate text-xs sm:block">{roleLabels[user?.role] || "-"}</div>

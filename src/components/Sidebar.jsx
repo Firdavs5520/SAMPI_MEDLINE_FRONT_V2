@@ -155,7 +155,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
       <div className="flex h-full flex-col">
         <div className={`flex items-center border-b border-slate-200 py-4 ${compact ? "justify-center px-2" : "justify-between px-4 sm:px-5"}`}>
           <div className={`flex items-center gap-2 ${compact ? "lg:justify-center lg:w-full" : ""}`}>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-sm font-extrabold text-primary">
+            <div className="sampi-brand-mark flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-sm font-extrabold text-primary">
               SM
             </div>
             <h2 className={`text-lg font-bold text-slate-800 ${compact ? "lg:hidden" : ""}`}>
@@ -195,7 +195,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
             ? groupedMenus.map((group) => (
                 <div
                   key={group.name}
-                  className={`rounded-2xl p-2 ${compact ? "lg:border-0 lg:bg-transparent lg:px-0" : "border border-slate-200/80 bg-slate-50/80"}`}
+                  className={`sampi-sidebar-group rounded-2xl p-2 ${compact ? "lg:border-0 lg:bg-transparent lg:px-0" : "border border-slate-200/80 bg-slate-50/80"}`}
                 >
                   <p
                     className={`px-2 pb-1 pt-0.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 ${compact ? "lg:hidden" : ""}`}
