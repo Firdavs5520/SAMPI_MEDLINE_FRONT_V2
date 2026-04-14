@@ -357,7 +357,15 @@ select {
     box-shadow 200ms ease;
 }
 
-.sampi-table-row::before {
+.sampi-table-row:hover {
+  box-shadow: inset 0 0 0 1px rgba(203, 213, 225, 0.4);
+}
+
+.sampi-table-row > td:first-child {
+  position: relative;
+}
+
+.sampi-table-row > td:first-child::before {
   content: "";
   position: absolute;
   left: 0;
@@ -371,13 +379,9 @@ select {
   transition: opacity 180ms ease, transform 180ms ease;
 }
 
-.sampi-table-row:hover::before {
+.sampi-table-row:hover > td:first-child::before {
   opacity: 1;
   transform: scaleY(1);
-}
-
-.sampi-table-row:hover {
-  box-shadow: inset 0 0 0 1px rgba(203, 213, 225, 0.4);
 }
 
 .sampi-alert {
