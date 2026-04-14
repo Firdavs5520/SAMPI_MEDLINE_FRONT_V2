@@ -7,7 +7,7 @@ function Table({
   tableClassName = ""
 }) {
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
+    <div className="sampi-dropdown w-full overflow-x-auto rounded-xl border border-slate-200">
       <table className={`w-full min-w-[720px] table-auto bg-white text-sm ${tableClassName}`.trim()}>
         <thead className={`bg-slate-50 text-left text-slate-600 ${headerClassName}`.trim()}>
           <tr>

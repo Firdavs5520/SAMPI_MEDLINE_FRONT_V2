@@ -8,7 +8,7 @@ function Alert({ type = "info", message }) {
   };
 
   return (
-    <div className={`rounded-xl border px-4 py-3 text-sm ${variants[type]}`}>
+    <div className={`sampi-alert rounded-xl border px-4 py-3 text-sm ${variants[type]}`}>
       {message}
     </div>
   );

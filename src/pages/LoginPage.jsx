@@ -38,7 +38,7 @@ function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-cyan-50 to-orange-50 p-4">
+    <div className="route-enter flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-cyan-50 to-orange-50 p-4">
       <div className="w-full max-w-md card p-6">
         <h1 className="text-2xl font-bold text-slate-800">Sampi Medline</h1>
         <p className="mt-1 text-sm text-slate-500">Tizimga kirish</p>
