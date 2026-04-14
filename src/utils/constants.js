@@ -1,7 +1,8 @@
 export const storageKeys = {
   token: "sampi_token",
   user: "sampi_user",
-  lorIdentity: "sampi_lor_identity"
+  lorIdentity: "sampi_lor_identity",
+  themeMode: "sampi_theme_mode"
 };
 
 export const roleHomePath = {

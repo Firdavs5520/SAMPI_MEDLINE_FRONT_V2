@@ -6,6 +6,7 @@ import { roleHomePath } from "../utils/constants.js";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Alert from "../components/Alert.jsx";
+import ThemeModeSwitch from "../components/ThemeModeSwitch.jsx";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -38,7 +39,10 @@ function LoginPage() {
   };
 
   return (
-    <div className="route-enter flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-cyan-50 to-orange-50 p-4">
+    <div className="sampi-login-shell route-enter flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-cyan-50 to-orange-50 p-4">
+      <div className="absolute right-4 top-4 z-10">
+        <ThemeModeSwitch />
+      </div>
       <div className="w-full max-w-md card p-6">
         <h1 className="text-2xl font-bold text-slate-800">Sampi Medline</h1>
         <p className="mt-1 text-sm text-slate-500">Tizimga kirish</p>

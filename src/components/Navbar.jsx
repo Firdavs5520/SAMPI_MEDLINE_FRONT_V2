@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { roleHomePath, roleLabels } from "../utils/constants.js";
 import Button from "./Button.jsx";
+import ThemeModeSwitch from "./ThemeModeSwitch.jsx";
 
 const LEGACY_NAME_MAP = {
   "Nurse User": "Hamshira",
@@ -67,13 +68,16 @@ function Navbar({ onMenuOpen }) {
             <div className="hidden truncate text-xs sm:block">{roleLabels[user?.role] || "-"}</div>
           </button>
         </div>
-        <Button
-          variant="secondary"
-          onClick={handleLogout}
-          className="shrink-0 px-3 py-2 text-xs sm:text-sm"
-        >
-          Chiqish
-        </Button>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeModeSwitch compact />
+          <Button
+            variant="secondary"
+            onClick={handleLogout}
+            className="shrink-0 px-3 py-2 text-xs sm:text-sm"
+          >
+            Chiqish
+          </Button>
+        </div>
       </div>
     </header>
   );

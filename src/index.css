@@ -8,6 +8,15 @@
   --sampi-primary: #0e7490;
   --sampi-accent: #f97316;
   --sampi-surface: #f1f5f9;
+  color-scheme: light;
+}
+
+html.theme-light {
+  color-scheme: light;
+}
+
+html.theme-dark {
+  color-scheme: dark;
 }
 
 body {
@@ -18,6 +27,12 @@ body {
   font-family: "Golos Text", sans-serif;
   scrollbar-width: thin;
   scrollbar-color: #0f766e #e2e8f0;
+}
+
+html.theme-dark body {
+  background: #060d1a;
+  color: #e2e8f0;
+  scrollbar-color: #0ea5a2 #0f172a;
 }
 
 #root {
@@ -57,6 +72,12 @@ select {
   @apply relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200;
 }
 
+html.theme-dark .card {
+  border-color: #1f2c3e;
+  background: #0f1a2c;
+  box-shadow: 0 20px 30px -24px rgba(2, 6, 23, 0.95);
+}
+
 .card::before {
   content: "";
   position: absolute;
@@ -72,6 +93,20 @@ select {
     radial-gradient(circle at 8% -8%, rgba(14, 116, 144, 0.12), transparent 36%),
     radial-gradient(circle at 90% 0%, rgba(249, 115, 22, 0.1), transparent 30%),
     var(--sampi-surface);
+}
+
+html.theme-dark .app-shell {
+  background:
+    radial-gradient(circle at 8% -8%, rgba(14, 116, 144, 0.2), transparent 40%),
+    radial-gradient(circle at 90% 0%, rgba(249, 115, 22, 0.14), transparent 34%),
+    #060d1a;
+}
+
+html.theme-dark .sampi-login-shell {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(14, 165, 233, 0.22), transparent 42%),
+    radial-gradient(circle at 88% 90%, rgba(249, 115, 22, 0.18), transparent 38%),
+    #060d1a;
 }
 
 .route-enter {
@@ -112,6 +147,15 @@ select {
   box-shadow: 0 6px 20px -18px rgba(15, 23, 42, 0.6);
 }
 
+html.theme-dark .sampi-navbar {
+  background: linear-gradient(
+    180deg,
+    rgba(10, 17, 30, 0.98) 0%,
+    rgba(10, 17, 30, 0.92) 100%
+  );
+  border-color: #1f2c3e;
+}
+
 .sampi-navbar-user {
   transition: transform 160ms ease, background-color 170ms ease, box-shadow 190ms ease;
 }
@@ -129,6 +173,13 @@ select {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.96)),
     radial-gradient(circle at 0% 0%, rgba(14, 116, 144, 0.08), transparent 45%);
+}
+
+html.theme-dark .sampi-sidebar {
+  background:
+    linear-gradient(180deg, rgba(8, 14, 25, 0.98), rgba(8, 14, 25, 0.95)),
+    radial-gradient(circle at 0% 0%, rgba(14, 116, 144, 0.2), transparent 45%);
+  border-color: #1f2c3e;
 }
 
 .sampi-brand-mark {
@@ -664,6 +715,87 @@ select {
 .sampi-select option {
   color: #0f172a;
   background: #ffffff;
+}
+
+html.theme-dark .sampi-select option {
+  color: #e2e8f0;
+  background: #0b1526;
+}
+
+html.theme-dark .sampi-control {
+  border-color: #32455f;
+  background: #0b1526;
+  color: #e2e8f0;
+}
+
+html.theme-dark .sampi-control::placeholder {
+  color: #7f91a8;
+}
+
+html.theme-dark .sampi-dropdown {
+  border-color: #2d3b51;
+  background: #0e1728;
+  box-shadow:
+    0 10px 24px -20px rgba(2, 6, 23, 0.9),
+    0 10px 24px -16px rgba(14, 116, 144, 0.18);
+}
+
+html.theme-dark .sampi-mobile-actions {
+  border-top-color: rgba(51, 65, 85, 0.95);
+  background: rgba(8, 14, 25, 0.95);
+}
+
+html.theme-dark .sampi-filter-chip {
+  border-color: #304257;
+  background: #0d1728;
+  color: #c7d2e3;
+}
+
+html.theme-dark .sampi-filter-chip strong {
+  color: #f1f5f9;
+}
+
+html.theme-dark .text-slate-900 {
+  color: #f8fafc !important;
+}
+
+html.theme-dark .text-slate-800 {
+  color: #f1f5f9 !important;
+}
+
+html.theme-dark .text-slate-700 {
+  color: #d6e0ec !important;
+}
+
+html.theme-dark .text-slate-600 {
+  color: #b7c4d7 !important;
+}
+
+html.theme-dark .text-slate-500,
+html.theme-dark .text-slate-400 {
+  color: #91a3ba !important;
+}
+
+html.theme-dark .bg-white {
+  background-color: #0f1a2c !important;
+}
+
+html.theme-dark .bg-slate-50 {
+  background-color: #0f1d31 !important;
+}
+
+html.theme-dark .bg-slate-100 {
+  background-color: #0b1526 !important;
+}
+
+html.theme-dark .border-slate-100,
+html.theme-dark .border-slate-200,
+html.theme-dark .border-slate-300 {
+  border-color: #2f4056 !important;
+}
+
+html.theme-dark .hover\:bg-slate-100:hover {
+  background-color: #16243a !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
