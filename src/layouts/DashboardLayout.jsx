@@ -14,6 +14,15 @@ const getWindowScrollTop = () =>
   document.body.scrollTop ||
   0;
 
+const isInteractiveTarget = (target) => {
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest(
+      "input, textarea, select, button, a, [role='button'], [contenteditable='true']"
+    )
+  );
+};
+
 function DashboardLayout() {
   const location = useLocation();
   const { role } = useAuth();
@@ -58,10 +67,12 @@ function DashboardLayout() {
 
     const onTouchStart = (event) => {
       if (event.touches.length !== 1 || isRefreshingRef.current) return;
+      if (isInteractiveTarget(event.target)) return;
+
       const currentTop = getWindowScrollTop();
       const touchY = event.touches[0]?.clientY ?? 0;
 
-      if (currentTop <= 0 && touchY <= 120) {
+      if (currentTop <= 0 && touchY <= 72) {
         pullStartYRef.current = touchY;
         isPullingRef.current = true;
       }
@@ -76,6 +87,7 @@ function DashboardLayout() {
       const delta = currentY - pullStartYRef.current;
 
       if (delta <= 0) {
+        stopPulling();
         setPullDistance(0);
         setPullReady(false);
         return;
