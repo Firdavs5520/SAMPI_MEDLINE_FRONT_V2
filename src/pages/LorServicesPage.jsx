@@ -7,6 +7,7 @@ import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
 import BusyOverlay from "../components/BusyOverlay.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
+import MobileActionBar from "../components/MobileActionBar.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
   extractErrorMessage,
@@ -322,7 +323,7 @@ function LorServicesPage() {
   }
 
   return (
-    <div className="space-y-4 overflow-x-hidden sm:space-y-6">
+    <div className="space-y-4 overflow-x-hidden sm:space-y-6 sampi-mobile-safe">
       <div className="card border-sky-200 bg-sky-50/70 p-4 sm:p-5">
         <h1 className="text-xl font-bold text-slate-800">LOR paneli</h1>
         <p className="mt-1 text-sm text-slate-600">Bosqichma-bosqich chek yaratish</p>
@@ -420,7 +421,7 @@ function LorServicesPage() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 hidden justify-end sm:flex">
             <Button
               className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
               onClick={goNextFromSpecialist}
@@ -428,6 +429,14 @@ function LorServicesPage() {
               Keyingi: Bemor
             </Button>
           </div>
+          <MobileActionBar>
+            <Button
+              className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+              onClick={goNextFromSpecialist}
+            >
+              Keyingi: Bemor
+            </Button>
+          </MobileActionBar>
         </div>
       ) : null}
 
@@ -450,7 +459,7 @@ function LorServicesPage() {
             onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
           />
 
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 hidden flex-col-reverse gap-2 sm:flex sm:flex-row sm:items-center sm:justify-between">
             <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(1)}>
               Orqaga
             </Button>
@@ -461,6 +470,17 @@ function LorServicesPage() {
               Keyingi: Xizmatlar
             </Button>
           </div>
+          <MobileActionBar>
+            <Button variant="secondary" className="flex-1" onClick={() => setStep(1)}>
+              Orqaga
+            </Button>
+            <Button
+              className="flex-1 bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+              onClick={goNextFromPatient}
+            >
+              Keyingi
+            </Button>
+          </MobileActionBar>
         </div>
       ) : null}
 
@@ -560,7 +580,7 @@ function LorServicesPage() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 hidden flex-col-reverse gap-2 sm:flex sm:flex-row sm:items-center sm:justify-between">
             <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(2)}>
               Orqaga
             </Button>
@@ -571,6 +591,17 @@ function LorServicesPage() {
               Keyingi: Preview
             </Button>
           </div>
+          <MobileActionBar>
+            <Button variant="secondary" className="flex-1" onClick={() => setStep(2)}>
+              Orqaga
+            </Button>
+            <Button
+              className="flex-1 bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+              onClick={goNextFromServices}
+            >
+              Keyingi
+            </Button>
+          </MobileActionBar>
         </div>
       ) : null}
 
@@ -630,7 +661,7 @@ function LorServicesPage() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 hidden flex-col-reverse gap-2 sm:flex sm:flex-row sm:items-center sm:justify-between">
             <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(3)}>
               Orqaga
             </Button>
@@ -643,6 +674,19 @@ function LorServicesPage() {
               Chek chiqarish (Enter)
             </Button>
           </div>
+          <MobileActionBar>
+            <Button variant="secondary" className="flex-1" onClick={() => setStep(3)}>
+              Orqaga
+            </Button>
+            <Button
+              loading={submittingCheckout}
+              disabled={!selectedServiceIds.length}
+              className="flex-1 bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+              onClick={handleCreateCheckout}
+            >
+              Chek chiqarish
+            </Button>
+          </MobileActionBar>
         </div>
       ) : null}
 

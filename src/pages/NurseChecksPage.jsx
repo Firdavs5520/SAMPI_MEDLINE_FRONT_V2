@@ -5,6 +5,7 @@ import Alert from "../components/Alert.jsx";
 import Table from "../components/Table.jsx";
 import Button from "../components/Button.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
+import StatusBadge from "../components/StatusBadge.jsx";
 import { extractErrorMessage, formatCurrency, formatDateTime } from "../utils/format.js";
 
 const paymentMethodLabels = {
@@ -100,6 +101,9 @@ function NurseChecksPage() {
       <div className="card p-4 sm:p-5">
         <Table
           data={checks}
+          stickyHeader
+          emptyTitle="Cheklar topilmadi"
+          emptyDescription="Hozircha siz yaratgan nurse cheklari mavjud emas."
           columns={[
             {
               key: "patient",
@@ -109,6 +113,7 @@ function NurseChecksPage() {
             {
               key: "total",
               label: "Jami",
+              hideOnMobile: true,
               render: (row) => `${formatCurrency(row.total)} so'm`
             },
             {
@@ -117,21 +122,16 @@ function NurseChecksPage() {
               render: (row) => {
                 const accepted = Boolean(row?.cashierStatus?.accepted);
                 return (
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      accepted
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-amber-100 text-amber-700"
-                    }`}
-                  >
+                  <StatusBadge tone={accepted ? "success" : "warn"}>
                     {accepted ? "Qabul qilingan" : "Kutilmoqda"}
-                  </span>
+                  </StatusBadge>
                 );
               }
             },
             {
               key: "paidAmount",
               label: "To'langan",
+              hideOnMobile: true,
               render: (row) =>
                 row?.cashierStatus?.accepted
                   ? `${formatCurrency(row.cashierStatus.paidAmount || 0)} so'm`
@@ -140,6 +140,7 @@ function NurseChecksPage() {
             {
               key: "debtAmount",
               label: "Qarz",
+              hideOnMobile: true,
               render: (row) =>
                 row?.cashierStatus?.accepted
                   ? `${formatCurrency(row.cashierStatus.debtAmount || 0)} so'm`
@@ -148,6 +149,7 @@ function NurseChecksPage() {
             {
               key: "paymentMethod",
               label: "To'lov",
+              hideOnTablet: true,
               render: (row) =>
                 row?.cashierStatus?.accepted
                   ? paymentMethodLabels[row.cashierStatus.paymentMethod] || row.cashierStatus.paymentMethod
@@ -156,6 +158,7 @@ function NurseChecksPage() {
             {
               key: "createdAt",
               label: "Sana",
+              hideOnMobile: true,
               render: (row) => formatDateTime(row.createdAt)
             }
           ]}

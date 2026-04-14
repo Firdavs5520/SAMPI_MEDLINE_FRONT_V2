@@ -9,6 +9,7 @@ import Alert from "../components/Alert.jsx";
 import BusyOverlay from "../components/BusyOverlay.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
 import SelectMenu from "../components/SelectMenu.jsx";
+import MobileActionBar from "../components/MobileActionBar.jsx";
 import {
   extractErrorMessage,
   formatCurrency,
@@ -361,7 +362,7 @@ function NurseDashboard() {
   if (loading) return <Spinner text="Hamshira paneli yuklanmoqda..." />;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-6 sampi-mobile-safe">
       <div className="card border-rose-200 bg-rose-50/70 p-4 sm:p-5">
         <h1 className="text-xl font-bold text-slate-800">Hamshira paneli</h1>
         <p className="mt-1 text-sm text-slate-600">Bosqichma-bosqich chek yaratish</p>
@@ -447,7 +448,7 @@ function NurseDashboard() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 hidden justify-end sm:flex">
             <Button
               className="w-full bg-rose-600 hover:bg-rose-700 focus:ring-rose-300 sm:w-auto"
               onClick={goNextFromSpecialist}
@@ -455,6 +456,14 @@ function NurseDashboard() {
               Keyingi: Bemor
             </Button>
           </div>
+          <MobileActionBar>
+            <Button
+              className="w-full bg-rose-600 hover:bg-rose-700 focus:ring-rose-300"
+              onClick={goNextFromSpecialist}
+            >
+              Keyingi: Bemor
+            </Button>
+          </MobileActionBar>
         </div>
       ) : null}
 
@@ -476,7 +485,7 @@ function NurseDashboard() {
             inputRef={patientInputRef}
             onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
           />
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 hidden flex-col-reverse gap-2 sm:flex sm:flex-row sm:items-center sm:justify-between">
             <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(1)}>
               Orqaga
             </Button>
@@ -487,6 +496,17 @@ function NurseDashboard() {
               Keyingi: Dorilar
             </Button>
           </div>
+          <MobileActionBar>
+            <Button variant="secondary" className="flex-1" onClick={() => setStep(1)}>
+              Orqaga
+            </Button>
+            <Button
+              className="flex-1 bg-rose-600 hover:bg-rose-700 focus:ring-rose-300"
+              onClick={goNextFromPatient}
+            >
+              Keyingi
+            </Button>
+          </MobileActionBar>
         </div>
       ) : null}
 
@@ -569,7 +589,7 @@ function NurseDashboard() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 hidden flex-col-reverse gap-2 sm:flex sm:flex-row sm:items-center sm:justify-between">
             <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(2)}>
               Orqaga
             </Button>
@@ -593,6 +613,29 @@ function NurseDashboard() {
               </Button>
             </div>
           </div>
+          <MobileActionBar>
+            <div className="grid w-full grid-cols-3 gap-2">
+              <Button variant="secondary" onClick={() => setStep(2)}>
+                Orqaga
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSelectedMedicineIds([]);
+                  setMedicineInputs({});
+                  setStep(4);
+                }}
+              >
+                Skip
+              </Button>
+              <Button
+                className="bg-rose-600 hover:bg-rose-700 focus:ring-rose-300"
+                onClick={goNextFromMedicines}
+              >
+                Keyingi
+              </Button>
+            </div>
+          </MobileActionBar>
         </div>
       ) : null}
 
@@ -695,7 +738,7 @@ function NurseDashboard() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 hidden flex-col-reverse gap-2 sm:flex sm:flex-row sm:items-center sm:justify-between">
             <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(3)}>
               Orqaga
             </Button>
@@ -719,6 +762,29 @@ function NurseDashboard() {
               </Button>
             </div>
           </div>
+          <MobileActionBar>
+            <div className="grid w-full grid-cols-3 gap-2">
+              <Button variant="secondary" onClick={() => setStep(3)}>
+                Orqaga
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSelectedServiceIds([]);
+                  setServiceInputs({});
+                  setStep(5);
+                }}
+              >
+                Skip
+              </Button>
+              <Button
+                className="bg-rose-600 hover:bg-rose-700 focus:ring-rose-300"
+                onClick={goNextFromServices}
+              >
+                Keyingi
+              </Button>
+            </div>
+          </MobileActionBar>
         </div>
       ) : null}
 
@@ -788,7 +854,7 @@ function NurseDashboard() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 hidden flex-col-reverse gap-2 sm:flex sm:flex-row sm:items-center sm:justify-between">
             <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(4)}>
               Orqaga
             </Button>
@@ -801,6 +867,19 @@ function NurseDashboard() {
               Chek chiqarish (Enter)
             </Button>
           </div>
+          <MobileActionBar>
+            <Button variant="secondary" className="flex-1" onClick={() => setStep(4)}>
+              Orqaga
+            </Button>
+            <Button
+              disabled={!hasAnySelection}
+              loading={submitting}
+              className="flex-1 bg-rose-600 hover:bg-rose-700 focus:ring-rose-300"
+              onClick={handleCheckout}
+            >
+              Chek chiqarish
+            </Button>
+          </MobileActionBar>
         </div>
       ) : null}
 

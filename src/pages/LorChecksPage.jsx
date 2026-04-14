@@ -5,6 +5,7 @@ import Alert from "../components/Alert.jsx";
 import Table from "../components/Table.jsx";
 import Button from "../components/Button.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
+import StatusBadge from "../components/StatusBadge.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { extractErrorMessage, formatCurrency, formatDateTime } from "../utils/format.js";
 
@@ -105,10 +106,14 @@ function LorChecksPage() {
       <div className="card p-4 sm:p-5">
         <Table
           data={checks}
+          stickyHeader
+          emptyTitle="Cheklar topilmadi"
+          emptyDescription="Hozircha siz yaratgan LOR cheklari mavjud emas."
           columns={[
             {
               key: "lorIdentity",
               label: "LOR",
+              hideOnMobile: true,
               render: (row) => {
                 const value = String(row?.createdBy?.lorIdentity || "");
                 return value ? value.toUpperCase().replace("LOR", "LOR-") : "-";
@@ -122,6 +127,8 @@ function LorChecksPage() {
             {
               key: "items",
               label: "Xizmatlar",
+              hideOnMobile: true,
+              nowrap: false,
               render: (row) => (
                 <div className="space-y-1">
                   {(row.items || []).map((item, idx) => (
@@ -135,6 +142,7 @@ function LorChecksPage() {
             {
               key: "total",
               label: "Jami",
+              hideOnMobile: true,
               render: (row) => `${formatCurrency(row.total)} so'm`
             },
             {
@@ -143,21 +151,16 @@ function LorChecksPage() {
               render: (row) => {
                 const accepted = Boolean(row?.cashierStatus?.accepted);
                 return (
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      accepted
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-amber-100 text-amber-700"
-                    }`}
-                  >
+                  <StatusBadge tone={accepted ? "success" : "warn"}>
                     {accepted ? "Qabul qilingan" : "Kutilmoqda"}
-                  </span>
+                  </StatusBadge>
                 );
               }
             },
             {
               key: "paidAmount",
               label: "To'langan",
+              hideOnMobile: true,
               render: (row) =>
                 row?.cashierStatus?.accepted
                   ? `${formatCurrency(row.cashierStatus.paidAmount || 0)} so'm`
@@ -166,6 +169,7 @@ function LorChecksPage() {
             {
               key: "debtAmount",
               label: "Qarz",
+              hideOnMobile: true,
               render: (row) =>
                 row?.cashierStatus?.accepted
                   ? `${formatCurrency(row.cashierStatus.debtAmount || 0)} so'm`
@@ -174,6 +178,7 @@ function LorChecksPage() {
             {
               key: "paymentMethod",
               label: "To'lov",
+              hideOnTablet: true,
               render: (row) =>
                 row?.cashierStatus?.accepted
                   ? paymentMethodLabels[row.cashierStatus.paymentMethod] || row.cashierStatus.paymentMethod
@@ -182,6 +187,7 @@ function LorChecksPage() {
             {
               key: "createdAt",
               label: "Sana",
+              hideOnMobile: true,
               render: (row) => formatDateTime(row.createdAt)
             }
           ]}

@@ -197,11 +197,17 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
                   key={group.name}
                   className={`sampi-sidebar-group rounded-2xl p-2 ${compact ? "lg:border-0 lg:bg-transparent lg:px-0" : "border border-slate-200/80 bg-slate-50/80"}`}
                 >
-                  <p
-                    className={`px-2 pb-1 pt-0.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 ${compact ? "lg:hidden" : ""}`}
-                  >
-                    {group.name}
-                  </p>
+                  <div className={`px-2 pb-1 pt-0.5 ${compact ? "lg:hidden" : ""}`}>
+                    <div className="sampi-group-title">
+                      <span className="sampi-group-icon">
+                        {String(group.name || "?").slice(0, 1)}
+                      </span>
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                        {group.name}
+                      </p>
+                    </div>
+                    <div className="sampi-group-divider" />
+                  </div>
                   <div className="space-y-1.5">
                     {group.items.map((item) => (
                       <NavLink

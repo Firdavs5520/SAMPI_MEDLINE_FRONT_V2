@@ -6,6 +6,7 @@ import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
 import Table from "../components/Table.jsx";
 import ConfirmActionModal from "../components/ConfirmActionModal.jsx";
+import StatusBadge from "../components/StatusBadge.jsx";
 import {
   extractErrorMessage,
   formatCurrency,
@@ -247,6 +248,9 @@ function NurseMedicinesPage() {
         </h3>
         <Table
           data={nurseMedicines}
+          stickyHeader
+          emptyTitle="Dorilar mavjud emas"
+          emptyDescription="Yangi dori qo'shish formasi orqali dorini yarating."
           columns={[
             { key: "name", label: "Dori" },
             {
@@ -260,13 +264,9 @@ function NurseMedicinesPage() {
               label: "Holat",
               render: (row) =>
                 row.stock <= 0 ? (
-                  <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
-                    QOLMADI
-                  </span>
+                  <StatusBadge tone="error">QOLMADI</StatusBadge>
                 ) : (
-                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                    Mavjud
-                  </span>
+                  <StatusBadge tone="success">Mavjud</StatusBadge>
                 )
             },
             {

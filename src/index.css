@@ -54,7 +54,7 @@ select {
 }
 
 .card {
-  @apply relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300;
+  @apply relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200;
 }
 
 .card::before {
@@ -75,12 +75,12 @@ select {
 }
 
 .route-enter {
-  animation: page-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: page-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .route-enter > div > * {
   opacity: 0;
-  animation: section-appear 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: section-appear 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .route-enter > div > *:nth-child(1) {
@@ -136,7 +136,37 @@ select {
 }
 
 .sampi-sidebar-group {
-  animation: section-appear 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: section-appear 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sampi-sidebar-group + .sampi-sidebar-group {
+  margin-top: 0.55rem;
+}
+
+.sampi-group-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.sampi-group-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(14, 116, 144, 0.16), rgba(249, 115, 22, 0.2));
+  color: #0f172a;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.sampi-group-divider {
+  margin-top: 0.4rem;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.5), rgba(148, 163, 184, 0.12));
+  border-radius: 999px;
 }
 
 .sampi-sidebar-group:nth-child(1) {
@@ -178,7 +208,7 @@ select {
 }
 
 .route-enter .card {
-  animation: card-appear 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: card-appear 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .route-enter .card:hover {
@@ -311,6 +341,11 @@ select {
     0 10px 24px -16px rgba(14, 116, 144, 0.2);
 }
 
+.sampi-dropdown thead.sticky {
+  backdrop-filter: blur(6px);
+  background: rgba(248, 250, 252, 0.96);
+}
+
 .sampi-control {
   transition:
     border-color 170ms ease,
@@ -342,7 +377,7 @@ select {
   inset: 0;
   background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.18) 50%, transparent 100%);
   transform: translateX(-140%);
-  transition: transform 420ms ease;
+  transition: transform 220ms ease;
 }
 
 .sampi-btn:hover::after {
@@ -353,8 +388,8 @@ select {
   position: relative;
   transition:
     background-color 180ms ease,
-    transform 170ms ease,
-    box-shadow 200ms ease;
+    transform 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .sampi-table-row:hover {
@@ -385,7 +420,7 @@ select {
 }
 
 .sampi-alert {
-  animation: toast-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: toast-enter 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .sampi-modal-overlay {
@@ -393,15 +428,98 @@ select {
 }
 
 .sampi-modal-panel {
-  animation: modal-appear 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: modal-appear 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .sampi-busy-panel {
-  animation: modal-appear 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: modal-appear 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .sampi-spin-dot {
   animation: spin 900ms linear infinite;
+}
+
+.sampi-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.62rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+}
+
+.sampi-status-success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.sampi-status-warn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.sampi-status-error {
+  background: #ffe4e6;
+  color: #be123c;
+}
+
+.sampi-status-info {
+  background: #e0f2fe;
+  color: #0c4a6e;
+}
+
+.sampi-filter-toggle {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.sampi-filter-toggle:hover {
+  border-color: rgba(14, 116, 144, 0.45);
+  background: #f8fafc;
+}
+
+.sampi-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid #dbe5ee;
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.28rem 0.62rem;
+  color: #334155;
+  font-size: 0.73rem;
+  font-weight: 600;
+}
+
+.sampi-filter-chip strong {
+  color: #0f172a;
+}
+
+.sampi-mobile-actions {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  border-top: 1px solid rgba(203, 213, 225, 0.95);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 -16px 28px -26px rgba(15, 23, 42, 0.85);
+}
+
+.sampi-mobile-actions .sampi-btn {
+  min-height: 2.75rem;
+}
+
+.sampi-highlight {
+  border-radius: 0.2rem;
+  padding: 0 0.1rem;
+  background: rgba(14, 116, 144, 0.18);
+  color: #0f172a;
+  font-weight: 800;
 }
 
 @keyframes page-enter {
@@ -521,6 +639,10 @@ select {
 
   .lor-select-card {
     border-radius: 1rem;
+  }
+
+  .sampi-mobile-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.2rem);
   }
 }
 

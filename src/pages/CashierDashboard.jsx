@@ -246,6 +246,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const [closingDebtId, setClosingDebtId] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [filtersExpanded, setFiltersExpanded] = useState(true);
   const isPendingCheckMode = Boolean(selectedPendingCheck?._id);
 
   const specialistsByType = useMemo(
@@ -290,6 +291,69 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
     return specialistTypeOptions;
   }, [lockedType, filters.department]);
+
+  const activeFilterChips = useMemo(() => {
+    if (!isEntriesSection) return [];
+
+    const chips = [{ key: "date", label: "Sana", value: formatDateInput(filters.date) }];
+
+    if (!lockedType && filters.department !== "all") {
+      chips.push({
+        key: "department",
+        label: "Bo'lim",
+        value: departmentOptions.find((item) => item.value === filters.department)?.label || filters.department
+      });
+    }
+
+    if (!lockedType && filters.specialistType !== "all") {
+      chips.push({
+        key: "specialistType",
+        label: "Mutaxassis turi",
+        value:
+          specialistTypeOptions.find((item) => item.value === filters.specialistType)?.label ||
+          filters.specialistType
+      });
+    }
+
+    if (filters.paymentMethod !== "all") {
+      chips.push({
+        key: "paymentMethod",
+        label: "To'lov",
+        value:
+          paymentMethodOptions.find((item) => item.value === filters.paymentMethod)?.label ||
+          filters.paymentMethod
+      });
+    }
+
+    if (isDebtSection || filters.debtOnly) {
+      chips.push({
+        key: "debt",
+        label: "Qarz",
+        value: "Faqat qarzdorlar"
+      });
+    }
+
+    const searchValue = searchInput.trim();
+    if (searchValue) {
+      chips.push({
+        key: "search",
+        label: "Qidiruv",
+        value: searchValue
+      });
+    }
+
+    return chips;
+  }, [
+    filters.date,
+    filters.department,
+    filters.specialistType,
+    filters.paymentMethod,
+    filters.debtOnly,
+    searchInput,
+    isEntriesSection,
+    lockedType,
+    isDebtSection
+  ]);
 
   const calculatedDebt = useMemo(() => {
     const amount = safeNumber(form.amount, 0);
@@ -496,6 +560,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     setSelectedPendingCheck(null);
     setSuccess("");
     setError("");
+    setFiltersExpanded(true);
   }, [forcedSection, today, lockedType, isDebtSection]);
 
   useEffect(() => {
@@ -731,6 +796,11 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
   };
 
+  const handleResetFilters = () => {
+    setFilters(createInitialFilters({ today, lockedType, isDebtSection }));
+    setSearchInput("");
+  };
+
   if (loading) {
     return <Spinner text="Kassa paneli yuklanmoqda..." />;
   }
@@ -798,7 +868,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         : "bg-slate-100 text-slate-700";
 
   const entryColumns = [
-    { key: "rowNumber", label: "No" },
+    { key: "rowNumber", label: "No", hideOnMobile: true },
     { key: "patientName", label: "F.I.O bemor" },
     {
       key: "amount",
@@ -818,6 +888,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     {
       key: "paymentMethod",
       label: "To'lov usuli",
+      hideOnMobile: true,
       render: (row) => paymentMethodLabels[row.paymentMethod] || row.paymentMethod
     },
     {
@@ -827,6 +898,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     {
       key: "patientPhone",
       label: "Tel",
+      hideOnTablet: true,
       render: (row) => row.patientPhone || "-"
     },
     {
@@ -1006,7 +1078,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 <Table
                   data={pendingChecks}
                   columns={[
-                    { key: "checkId", label: "Chek ID" },
+                    { key: "checkId", label: "Chek ID", hideOnMobile: true },
                     { key: "patientName", label: "Bemor F.I.O" },
                     {
                       key: "total",
@@ -1026,6 +1098,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                     {
                       key: "createdAt",
                       label: "Yuborilgan vaqt",
+                      hideOnMobile: true,
                       render: (row) => formatDateInput(row.createdAt)
                     },
                     {
@@ -1042,6 +1115,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                       )
                     }
                   ]}
+                  stickyHeader
+                  emptyTitle="Qabul qilinadigan chek topilmadi"
+                  emptyDescription="Nurse yoki LOR yangi chek yuborganda shu yerda ko'rinadi."
                 />
               </div>
             </div>
@@ -1203,7 +1279,25 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       {isEntriesSection ? (
         <>
           <div className="card p-4 sm:p-5">
-            <h2 className="text-lg font-semibold text-slate-800">Filtrlar</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-lg font-semibold text-slate-800">Filtrlar</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFiltersExpanded((prev) => !prev)}
+                  className="sampi-filter-toggle inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700"
+                >
+                  {filtersExpanded ? "Yig'ish" : "Kengaytirish"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                  Tozalash
+                </button>
+              </div>
+            </div>
             {refreshing ? (
               <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Ma'lumot yangilanmoqda...
@@ -1216,80 +1310,97 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 ? `${shiftWindow.fromLabel} - ${shiftWindow.toLabel} oralig'idan tashqari yozuvlar tarixi.`
                 : `Joriy ro'yxat faqat ${shiftWindow.fromLabel} - ${shiftWindow.toLabel}. Qolgan yozuvlar tarix bo'limida saqlanadi.`}
             </div>
-            <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-              <DatePickerField
-                label="Sana"
-                value={filters.date}
-                onChange={(nextDate) => setFilters((prev) => ({ ...prev, date: nextDate || today }))}
-              />
 
-              {!lockedType ? (
-                <SelectMenu
-                  label="Bo'lim"
-                  value={filters.department}
-                  options={departmentOptions}
-                  onChange={(nextValue) =>
-                    setFilters((prev) => {
-                      const next = { ...prev, department: nextValue };
+            {activeFilterChips.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {activeFilterChips.map((chip) => (
+                  <span key={chip.key} className="sampi-filter-chip">
+                    {chip.label}: <strong>{chip.value}</strong>
+                  </span>
+                ))}
+              </div>
+            ) : null}
 
-                      if (nextValue === "lor" && prev.specialistType === "nurse") {
-                        next.specialistType = "lor";
-                      } else if (nextValue === "nurse" && prev.specialistType === "lor") {
-                        next.specialistType = "nurse";
-                      }
-
-                      return next;
-                    })
-                  }
+            <div
+              className={`overflow-hidden transition-all duration-200 ${
+                filtersExpanded ? "max-h-[700px] opacity-100" : "max-h-0 opacity-0"
+              }`}
+            >
+              <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                <DatePickerField
+                  label="Sana"
+                  value={filters.date}
+                  onChange={(nextDate) => setFilters((prev) => ({ ...prev, date: nextDate || today }))}
                 />
-              ) : null}
 
-              {!lockedType ? (
-                <SelectMenu
-                  label="Mutaxassis turi"
-                  value={filters.specialistType}
-                  options={availableSpecialistTypeOptions}
-                  onChange={(nextValue) =>
-                    setFilters((prev) => ({ ...prev, specialistType: nextValue }))
-                  }
-                />
-              ) : null}
+                {!lockedType ? (
+                  <SelectMenu
+                    label="Bo'lim"
+                    value={filters.department}
+                    options={departmentOptions}
+                    onChange={(nextValue) =>
+                      setFilters((prev) => {
+                        const next = { ...prev, department: nextValue };
 
-              <SelectMenu
-                label="To'lov usuli"
-                value={filters.paymentMethod}
-                options={paymentMethodOptions}
-                onChange={(nextValue) =>
-                  setFilters((prev) => ({ ...prev, paymentMethod: nextValue }))
-                }
-              />
+                        if (nextValue === "lor" && prev.specialistType === "nurse") {
+                          next.specialistType = "lor";
+                        } else if (nextValue === "nurse" && prev.specialistType === "lor") {
+                          next.specialistType = "nurse";
+                        }
 
-              <label className="flex items-end">
-                <span className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={isDebtSection ? true : filters.debtOnly}
-                    disabled={isDebtSection}
-                    onChange={(e) =>
-                      setFilters((prev) => ({ ...prev, debtOnly: e.target.checked }))
+                        return next;
+                      })
                     }
                   />
-                  {isDebtSection ? "Qarz filtri doim yoqilgan" : "Faqat qarzdorlar"}
-                </span>
-              </label>
-            </div>
+                ) : null}
 
-            <div className="mt-3">
-              <QuickSearchInput
-                label="Bemor yoki mutaxassis qidirish"
-                placeholder="Bemor yoki mutaxassis bo'yicha qidirish..."
-                value={searchInput}
-                onChange={setSearchInput}
-                items={entrySuggestionItems}
-                getItemLabel={(item) => item?.label || ""}
-                onPick={(item) => setSearchInput(item?.label || "")}
-                emptyText="Mos yozuv topilmadi"
-              />
+                {!lockedType ? (
+                  <SelectMenu
+                    label="Mutaxassis turi"
+                    value={filters.specialistType}
+                    options={availableSpecialistTypeOptions}
+                    onChange={(nextValue) =>
+                      setFilters((prev) => ({ ...prev, specialistType: nextValue }))
+                    }
+                  />
+                ) : null}
+
+                <SelectMenu
+                  label="To'lov usuli"
+                  value={filters.paymentMethod}
+                  options={paymentMethodOptions}
+                  onChange={(nextValue) =>
+                    setFilters((prev) => ({ ...prev, paymentMethod: nextValue }))
+                  }
+                />
+
+                <label className="flex items-end">
+                  <span className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={isDebtSection ? true : filters.debtOnly}
+                      disabled={isDebtSection}
+                      onChange={(e) =>
+                        setFilters((prev) => ({ ...prev, debtOnly: e.target.checked }))
+                      }
+                    />
+                    {isDebtSection ? "Qarz filtri doim yoqilgan" : "Faqat qarzdorlar"}
+                  </span>
+                </label>
+              </div>
+
+              <div className="mt-3">
+                <QuickSearchInput
+                  label="Bemor yoki mutaxassis qidirish"
+                  placeholder="Bemor yoki mutaxassis bo'yicha qidirish..."
+                  value={searchInput}
+                  onChange={setSearchInput}
+                  items={entrySuggestionItems}
+                  getItemLabel={(item) => item?.label || ""}
+                  onPick={(item) => setSearchInput(item?.label || "")}
+                  emptyText="Mos yozuv topilmadi"
+                />
+              </div>
             </div>
           </div>
 
@@ -1304,6 +1415,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                   data={tableData}
                   columns={entryColumns}
                   headerClassName="bg-amber-100 text-amber-900"
+                  stickyHeader
                 />
               </div>
             </div>
@@ -1317,6 +1429,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                   data={tableData}
                   columns={entryColumns}
                   headerClassName={entryTableHeaderClass}
+                  stickyHeader
                 />
               </div>
             </div>
@@ -1331,6 +1444,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                   data={historyTableData}
                   columns={entryColumns}
                   headerClassName="bg-slate-100 text-slate-700"
+                  stickyHeader
                 />
               </div>
             </div>

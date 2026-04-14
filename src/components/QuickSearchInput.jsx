@@ -5,6 +5,27 @@ const normalizeText = (value) =>
     .toLocaleLowerCase("uz-UZ")
     .trim();
 
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const renderHighlightedLabel = (labelText, query) => {
+  const safeLabel = String(labelText || "");
+  const safeQuery = String(query || "").trim();
+  if (!safeQuery) return safeLabel;
+
+  const pattern = new RegExp(`(${escapeRegExp(safeQuery)})`, "ig");
+  const parts = safeLabel.split(pattern);
+
+  return parts.map((part, index) =>
+    part.toLocaleLowerCase("uz-UZ") === safeQuery.toLocaleLowerCase("uz-UZ") ? (
+      <mark key={`${part}-${index}`} className="sampi-highlight">
+        {part}
+      </mark>
+    ) : (
+      <span key={`${part}-${index}`}>{part}</span>
+    )
+  );
+};
+
 function QuickSearchInput({
   label = "Qidirish",
   placeholder = "Qidirish...",
@@ -63,13 +84,13 @@ function QuickSearchInput({
                 key={`${entry.item?._id || entry.labelText}-${entry.index}`}
                 type="button"
                 className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100"
-                onMouseDown={(event) => {
+              onMouseDown={(event) => {
                   event.preventDefault();
                   onPick?.(entry.item);
                   setOpen(false);
                 }}
               >
-                <span className="truncate">{entry.labelText}</span>
+                <span className="truncate">{renderHighlightedLabel(entry.labelText, query)}</span>
                 <span className="ml-2 text-xs text-slate-400">Tanlash</span>
               </button>
             ))
