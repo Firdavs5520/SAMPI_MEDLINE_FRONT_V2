@@ -1,6 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-function SelectMenu({ label, value, options, onChange, disabled = false }) {
+function SelectMenu({
+  label,
+  value,
+  options,
+  onChange,
+  disabled = false,
+  className = "",
+  buttonClassName = "",
+  menuClassName = "",
+  labelClassName = "",
+  title = ""
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -34,13 +45,18 @@ function SelectMenu({ label, value, options, onChange, disabled = false }) {
   }, [open]);
 
   return (
-    <label className="relative block" ref={ref}>
-      {label ? <span className="mb-1.5 block text-sm font-medium text-slate-600">{label}</span> : null}
+    <label className={`relative block ${className}`} ref={ref}>
+      {label ? (
+        <span className={`mb-1.5 block text-sm font-medium text-slate-600 ${labelClassName}`}>
+          {label}
+        </span>
+      ) : null}
       <button
         type="button"
         disabled={disabled}
+        title={title}
         onClick={() => setOpen((prev) => !prev)}
-        className="sampi-control flex w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-slate-100"
+        className={`sampi-control flex w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-slate-100 ${buttonClassName}`}
       >
         <span>{selected?.label || "Tanlang"}</span>
         <svg
@@ -57,7 +73,9 @@ function SelectMenu({ label, value, options, onChange, disabled = false }) {
       </button>
 
       {open ? (
-        <div className="animate-dropdown-pop sampi-dropdown absolute z-40 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+        <div
+          className={`animate-dropdown-pop sampi-dropdown absolute z-40 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg ${menuClassName}`}
+        >
           {options.map((option) => {
             const active = option.value === value;
             return (
