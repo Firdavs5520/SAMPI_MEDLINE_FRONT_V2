@@ -182,6 +182,11 @@ html.theme-dark .sampi-sidebar {
   border-color: #1f2c3e;
 }
 
+html.theme-dark .sampi-sidebar-group-card {
+  border-color: rgba(51, 65, 85, 0.92);
+  background: rgba(12, 22, 38, 0.9);
+}
+
 .sampi-brand-mark {
   box-shadow: inset 0 0 0 1px rgba(14, 116, 144, 0.12), 0 6px 16px -12px rgba(14, 116, 144, 0.65);
 }
@@ -192,6 +197,11 @@ html.theme-dark .sampi-sidebar {
 
 .sampi-sidebar-group + .sampi-sidebar-group {
   margin-top: 0.55rem;
+}
+
+.sampi-sidebar-group-card {
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  background: rgba(248, 250, 252, 0.82);
 }
 
 .sampi-group-title {
@@ -834,12 +844,32 @@ html.theme-dark .text-emerald-800 {
   color: #86efac !important;
 }
 
+html.theme-dark .text-cyan-900,
+html.theme-dark .text-cyan-800,
+html.theme-dark .text-cyan-700 {
+  color: #a5f3fc !important;
+}
+
+html.theme-dark .text-orange-900,
+html.theme-dark .text-orange-800,
+html.theme-dark .text-orange-700 {
+  color: #fdba74 !important;
+}
+
 html.theme-dark .bg-white {
   background-color: #0f1a2c !important;
 }
 
 html.theme-dark .bg-slate-50 {
   background-color: #0f1d31 !important;
+}
+
+html.theme-dark .bg-slate-50\/80 {
+  background-color: rgba(12, 22, 38, 0.88) !important;
+}
+
+html.theme-dark .bg-slate-50\/35 {
+  background-color: rgba(15, 29, 49, 0.45) !important;
 }
 
 html.theme-dark .bg-slate-100 {
@@ -874,6 +904,10 @@ html.theme-dark .border-slate-100,
 html.theme-dark .border-slate-200,
 html.theme-dark .border-slate-300 {
   border-color: #2f4056 !important;
+}
+
+html.theme-dark .border-slate-200\/80 {
+  border-color: rgba(51, 65, 85, 0.82) !important;
 }
 
 html.theme-dark .border-cyan-200 {

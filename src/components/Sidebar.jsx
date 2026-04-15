@@ -195,7 +195,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
             ? groupedMenus.map((group) => (
                 <div
                   key={group.name}
-                  className={`sampi-sidebar-group rounded-2xl p-2 ${compact ? "lg:border-0 lg:bg-transparent lg:px-0" : "border border-slate-200/80 bg-slate-50/80"}`}
+                  className={`sampi-sidebar-group rounded-2xl p-2 ${compact ? "lg:border-0 lg:bg-transparent lg:px-0" : "sampi-sidebar-group-card"}`}
                 >
                   <div className={`px-2 pb-1 pt-0.5 ${compact ? "lg:hidden" : ""}`}>
                     <div className="sampi-group-title">
