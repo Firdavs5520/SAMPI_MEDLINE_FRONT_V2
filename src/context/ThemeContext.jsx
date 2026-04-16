@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { storageKeys } from "../utils/constants.js";
 
@@ -16,35 +17,32 @@ const detectSystemTheme = () => {
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 };
 
-const resolveTheme = (mode) => (mode === "system" ? detectSystemTheme() : mode);
-
 export function ThemeProvider({ children }) {
   const [mode, setModeState] = useState(readStoredMode);
-  const [resolvedTheme, setResolvedTheme] = useState(resolveTheme(readStoredMode()));
+  const [systemTheme, setSystemTheme] = useState(detectSystemTheme);
+  const resolvedTheme = useMemo(
+    () => (mode === "system" ? systemTheme : mode),
+    [mode, systemTheme]
+  );
 
   useEffect(() => {
-    const nextResolved = resolveTheme(mode);
-    setResolvedTheme(nextResolved);
-
     if (typeof document !== "undefined") {
       const root = document.documentElement;
       root.classList.remove("theme-light", "theme-dark");
-      root.classList.add(nextResolved === "dark" ? "theme-dark" : "theme-light");
+      root.classList.add(resolvedTheme === "dark" ? "theme-dark" : "theme-light");
     }
 
     if (typeof window !== "undefined") {
       localStorage.setItem(storageKeys.themeMode, mode);
     }
-  }, [mode]);
+  }, [mode, resolvedTheme]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
 
-    const syncSystemTheme = () => {
-      if (mode === "system") {
-        setResolvedTheme(detectSystemTheme());
-      }
+    const syncSystemTheme = (event) => {
+      setSystemTheme(event.matches ? "dark" : "light");
     };
 
     if (typeof media.addEventListener === "function") {
@@ -54,7 +52,7 @@ export function ThemeProvider({ children }) {
 
     media.addListener(syncSystemTheme);
     return () => media.removeListener(syncSystemTheme);
-  }, [mode]);
+  }, []);
 
   const setMode = (nextMode) => {
     const safeMode = String(nextMode || "").toLowerCase();

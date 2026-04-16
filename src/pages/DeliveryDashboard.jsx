@@ -198,11 +198,10 @@ function DeliveryDashboard() {
                 key={medicine._id}
                 type="button"
                 onClick={() => toggleMedicine(medicine._id)}
-                className={`rounded-xl border px-3 py-3 text-left transition ${
-                  selected
-                    ? "border-primary bg-cyan-50"
-                    : "border-slate-200 bg-white hover:border-primary/50"
+                className={`px-3 py-3 text-left transition ${
+                  selected ? "sampi-choice-card is-selected" : "sampi-choice-card"
                 }`}
+                style={{ touchAction: "pan-y" }}
               >
                 <p className="font-semibold text-slate-800">{medicine.name}</p>
                 <p className="mt-1 text-xs text-slate-600">

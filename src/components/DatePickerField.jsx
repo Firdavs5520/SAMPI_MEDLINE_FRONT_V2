@@ -60,13 +60,6 @@ function DatePickerField({ label, value, onChange }) {
   );
 
   useEffect(() => {
-    if (!value) return;
-    const parsed = parseYmd(value);
-    if (!parsed) return;
-    setViewMonth(new Date(parsed.getFullYear(), parsed.getMonth(), 1));
-  }, [value]);
-
-  useEffect(() => {
     if (!open) return undefined;
 
     const closeOnOutside = (event) => {
@@ -106,7 +99,17 @@ function DatePickerField({ label, value, onChange }) {
       {label ? <span className="mb-1.5 block text-sm font-medium text-slate-600">{label}</span> : null}
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => {
+          setOpen((prev) => {
+            const nextOpen = !prev;
+            if (nextOpen) {
+              const parsed = parseYmd(value);
+              const base = parsed || new Date();
+              setViewMonth(new Date(base.getFullYear(), base.getMonth(), 1));
+            }
+            return nextOpen;
+          });
+        }}
         className="sampi-control flex w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
       >
         <span>{formatDisplayDate(value)}</span>

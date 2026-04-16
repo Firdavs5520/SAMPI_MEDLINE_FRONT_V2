@@ -4,6 +4,7 @@ import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
 import ConfirmActionModal from "../components/ConfirmActionModal.jsx";
+import QuickSearchInput from "../components/QuickSearchInput.jsx";
 import usageService from "../services/usageService.js";
 import { extractErrorMessage, toTitleCaseName } from "../utils/format.js";
 
@@ -49,6 +50,18 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
     if (!q) return specialists;
     return specialists.filter((item) => normalizeSearch(item?.name).includes(q));
   }, [specialists, search]);
+  const specialistSuggestions = useMemo(() => {
+    const uniq = new Map();
+    specialists.forEach((item) => {
+      const safeName = String(item?.name || "").trim();
+      if (!safeName) return;
+      const key = safeName.toLocaleLowerCase("uz-UZ");
+      if (!uniq.has(key)) {
+        uniq.set(key, { id: key, name: safeName });
+      }
+    });
+    return Array.from(uniq.values());
+  }, [specialists]);
 
   const resetMessages = () => {
     setSuccess("");
@@ -180,11 +193,15 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
 
       <div className="card p-4 sm:p-5">
         <div className="mb-4 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
-          <Input
+          <QuickSearchInput
             label={`${roleLabel} qidirish`}
             value={search}
             placeholder={`Masalan: ${roleLabel} 1`}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={setSearch}
+            items={specialistSuggestions}
+            getItemLabel={(item) => item?.name || ""}
+            onPick={(item) => setSearch(item?.name || "")}
+            emptyText="Mos mutaxassis topilmadi"
           />
           <Button type="button" variant="secondary" className="h-fit w-full md:w-auto" onClick={() => setSearch("")}>
             Tozalash

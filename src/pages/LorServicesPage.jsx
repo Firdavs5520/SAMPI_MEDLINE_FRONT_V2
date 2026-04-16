@@ -163,7 +163,7 @@ function LorServicesPage() {
         try {
           element.focus();
           if (typeof element.select === "function") element.select();
-        } catch (error) {
+        } catch {
           // no-op
         }
       }, 0);
@@ -400,9 +400,10 @@ function LorServicesPage() {
                     onClick={() => setSelectedSpecialistId(item._id)}
                     className={`rounded-xl border px-3 py-3 text-left transition ${
                       selected
-                        ? "border-primary bg-cyan-50"
-                        : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-primary/50"
+                        ? "sampi-choice-card is-selected"
+                        : "sampi-choice-card"
                     }`}
+                    style={{ touchAction: "pan-y" }}
                   >
                     <p className="font-semibold text-slate-800">{item.name}</p>
                     <p className="mt-1 text-xs font-medium text-slate-500">
@@ -529,11 +530,10 @@ function LorServicesPage() {
                   key={service._id}
                   type="button"
                   onClick={() => toggleService(service._id)}
-                  className={`rounded-xl border px-3 py-3 text-left transition ${
-                    selected
-                      ? "border-primary bg-cyan-50"
-                      : "border-slate-200 bg-white hover:border-primary/50"
+                  className={`px-3 py-3 text-left transition ${
+                    selected ? "sampi-choice-card is-selected" : "sampi-choice-card"
                   }`}
+                  style={{ touchAction: "pan-y" }}
                 >
                   <p className="font-semibold text-slate-800">{service.name}</p>
                   <p className="mt-1 text-xs text-slate-500">

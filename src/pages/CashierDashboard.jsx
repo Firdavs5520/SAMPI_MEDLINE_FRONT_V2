@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Alert from "../components/Alert.jsx";
@@ -248,6 +248,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const [error, setError] = useState("");
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const isPendingCheckMode = Boolean(selectedPendingCheck?._id);
+  const entriesRequestRef = useRef(0);
+  const pendingChecksRequestRef = useRef(0);
 
   const specialistsByType = useMemo(
     () => ({
@@ -419,6 +421,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   };
 
   const loadEntries = async ({ silent = false } = {}) => {
+    const requestId = entriesRequestRef.current + 1;
+    entriesRequestRef.current = requestId;
     const shouldUseSilent = silent || hasLoadedOnce;
 
     if (!shouldUseSilent) {
@@ -435,6 +439,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             cashierService.getSummary({ ...effectiveFilters, timeScope: "all", debtOnly: true })
           ]);
 
+          if (requestId !== entriesRequestRef.current) return;
+
           setEntries(entriesPayload?.entries || []);
           setHistoryEntries([]);
           setShiftWindow(
@@ -450,6 +456,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             cashierService.getSummary({ ...effectiveFilters, timeScope: "history" })
           ]);
 
+          if (requestId !== entriesRequestRef.current) return;
+
           setEntries([]);
           setHistoryEntries(historyPayload?.entries || []);
           setShiftWindow(
@@ -464,6 +472,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             cashierService.getEntries({ ...effectiveFilters, timeScope: "active" }),
             cashierService.getSummary({ ...effectiveFilters, timeScope: "active" })
           ]);
+
+          if (requestId !== entriesRequestRef.current) return;
 
           setEntries(activePayload?.entries || []);
           setHistoryEntries([]);
@@ -481,6 +491,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
           cashierService.getSummary({ ...effectiveFilters, timeScope: "active" })
         ]);
 
+        if (requestId !== entriesRequestRef.current) return;
+
         setEntries(entriesPayload?.entries || []);
         setHistoryEntries([]);
         setShiftWindow(
@@ -491,14 +503,20 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         );
         setSummary(summaryPayload || emptySummary);
       }
-      setHasLoadedOnce(true);
-    } catch (err) {
-      setError(extractErrorMessage(err));
-    } finally {
-      if (!shouldUseSilent) {
-        setLoading(false);
+      if (requestId === entriesRequestRef.current) {
+        setHasLoadedOnce(true);
       }
-      setRefreshing(false);
+    } catch (err) {
+      if (requestId === entriesRequestRef.current) {
+        setError(extractErrorMessage(err));
+      }
+    } finally {
+      if (requestId === entriesRequestRef.current) {
+        if (!shouldUseSilent) {
+          setLoading(false);
+        }
+        setRefreshing(false);
+      }
     }
   };
 
@@ -516,6 +534,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       setPendingChecks([]);
       return;
     }
+    const requestId = pendingChecksRequestRef.current + 1;
+    pendingChecksRequestRef.current = requestId;
 
     setPendingChecksLoading(true);
     try {
@@ -523,11 +543,17 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         role: lockedType || "all",
         search: searchValue
       });
-      setPendingChecks(data || []);
+      if (requestId === pendingChecksRequestRef.current) {
+        setPendingChecks(data || []);
+      }
     } catch (err) {
-      setError(extractErrorMessage(err));
+      if (requestId === pendingChecksRequestRef.current) {
+        setError(extractErrorMessage(err));
+      }
     } finally {
-      setPendingChecksLoading(false);
+      if (requestId === pendingChecksRequestRef.current) {
+        setPendingChecksLoading(false);
+      }
     }
   };
 
@@ -561,6 +587,12 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     setSuccess("");
     setError("");
     setFiltersExpanded(true);
+    setEntries([]);
+    setHistoryEntries([]);
+    setSummary(emptySummary);
+    setHasLoadedOnce(false);
+    entriesRequestRef.current += 1;
+    pendingChecksRequestRef.current += 1;
   }, [forcedSection, today, lockedType, isDebtSection]);
 
   useEffect(() => {

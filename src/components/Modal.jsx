@@ -27,7 +27,7 @@ function Modal({
   if (!open) return null;
 
   const modalNode = (
-    <div className="sampi-modal-overlay fixed inset-0 z-[1000] flex min-h-dvh w-screen items-center justify-center bg-slate-900/55 p-3 sm:p-4 backdrop-blur-[1px]">
+    <div className="sampi-modal-overlay fixed inset-0 z-[1200] flex min-h-dvh w-full items-center justify-center bg-slate-950/62 p-3 sm:p-4 backdrop-blur-[2px]">
       <div className={`sampi-modal-panel w-full max-w-2xl rounded-2xl bg-white shadow-xl ${panelClassName}`}>
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
           <h3 className="text-lg font-semibold text-slate-800">{title}</h3>

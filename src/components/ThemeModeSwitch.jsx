@@ -53,16 +53,22 @@ function ThemeModeSwitch({ compact = false }) {
 
   return (
     <div className={`flex items-center gap-2 ${compact ? "" : "w-full sm:w-auto"}`}>
-      {!compact ? <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tema</span> : null}
+      {!compact ? (
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tema</span>
+      ) : null}
       <button
         type="button"
         onClick={handleToggle}
-        className={`sampi-theme-toggle sampi-control inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10 ${compact ? "min-w-[108px] justify-center px-2.5" : "w-full sm:min-w-[138px] sm:justify-start"}`}
+        className={`sampi-theme-toggle sampi-control inline-flex items-center rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10 ${
+          compact
+            ? "h-10 w-10 justify-center px-0"
+            : "w-full gap-2 px-3 py-2 sm:min-w-[138px] sm:justify-start"
+        }`}
         title={`Joriy: ${THEME_LABELS[mode]} | Bosganda: ${THEME_LABELS[nextMode()]}`}
         aria-label={`Tema: ${THEME_LABELS[mode]}`}
       >
         <span className="inline-flex items-center justify-center text-primary">{THEME_ICONS[mode]}</span>
-        <span>{THEME_LABELS[mode]}</span>
+        {!compact ? <span>{THEME_LABELS[mode]}</span> : null}
       </button>
     </div>
   );

@@ -187,6 +187,19 @@ html.theme-dark .sampi-sidebar-group-card {
   background: rgba(12, 22, 38, 0.9);
 }
 
+html.theme-dark .sampi-sidebar-compact-heading {
+  color: #cbd5e1;
+  background: linear-gradient(135deg, rgba(14, 116, 144, 0.25), rgba(249, 115, 22, 0.2));
+}
+
+html.theme-dark .sampi-sidebar-compact-link {
+  color: #c5d4e9;
+}
+
+html.theme-dark .sampi-sidebar-compact-link:hover {
+  background: rgba(30, 41, 59, 0.92);
+}
+
 .sampi-brand-mark {
   box-shadow: inset 0 0 0 1px rgba(14, 116, 144, 0.12), 0 6px 16px -12px rgba(14, 116, 144, 0.65);
 }
@@ -202,6 +215,41 @@ html.theme-dark .sampi-sidebar-group-card {
 .sampi-sidebar-group-card {
   border: 1px solid rgba(203, 213, 225, 0.9);
   background: rgba(248, 250, 252, 0.82);
+}
+
+.sampi-sidebar-compact-group {
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 0.35rem 0;
+}
+
+.sampi-sidebar-compact-heading {
+  margin: 0 auto 0.28rem;
+  width: 1.85rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #475569;
+  background: linear-gradient(135deg, rgba(14, 116, 144, 0.12), rgba(249, 115, 22, 0.14));
+}
+
+.sampi-sidebar-compact-link {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  border-radius: 0.85rem;
+  padding: 0.62rem 0.5rem;
+  transition: transform 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.sampi-sidebar-compact-link:hover {
+  transform: translateY(-1px);
 }
 
 .sampi-group-title {
@@ -266,6 +314,52 @@ html.theme-dark .sampi-sidebar-group-card {
 .sampi-sidebar-link:hover::after {
   opacity: 1;
   transform: scaleX(1);
+}
+
+.sampi-choice-card {
+  border-radius: 0.9rem;
+  border: 1px solid #d4dee9;
+  background: #ffffff;
+  transition:
+    transform 160ms ease,
+    border-color 170ms ease,
+    background-color 170ms ease,
+    box-shadow 180ms ease;
+}
+
+.sampi-choice-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(14, 116, 144, 0.44);
+  box-shadow: 0 12px 20px -20px rgba(2, 132, 199, 0.6);
+}
+
+.sampi-choice-card.is-selected {
+  border-color: rgba(14, 116, 144, 0.86);
+  background: linear-gradient(180deg, #ecfeff, #f0f9ff);
+  box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.26);
+}
+
+.sampi-choice-card.is-disabled {
+  border-color: #fecdd3;
+  background: #fff1f2;
+  opacity: 0.92;
+}
+
+html.theme-dark .sampi-choice-card {
+  border-color: #304257;
+  background: #0d1728;
+  color: #e2e8f0;
+}
+
+html.theme-dark .sampi-choice-card.is-selected {
+  border-color: #0891b2;
+  background: linear-gradient(180deg, rgba(8, 145, 178, 0.22), rgba(14, 116, 144, 0.18));
+  box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.24);
+}
+
+html.theme-dark .sampi-choice-card.is-disabled {
+  border-color: #57354a;
+  background: rgba(67, 32, 47, 0.52);
 }
 
 .route-enter .card {
@@ -405,6 +499,15 @@ html.theme-dark .sampi-sidebar-group-card {
 .sampi-dropdown thead.sticky {
   backdrop-filter: blur(6px);
   background: rgba(248, 250, 252, 0.96);
+}
+
+.sampi-dropdown-item {
+  border-radius: 0.6rem;
+  transition: background-color 170ms ease, color 170ms ease, transform 170ms ease;
+}
+
+.sampi-dropdown-item:hover {
+  transform: translateX(1px);
 }
 
 .sampi-control {
@@ -783,6 +886,14 @@ html.theme-dark .sampi-dropdown {
   box-shadow:
     0 10px 24px -20px rgba(2, 6, 23, 0.9),
     0 10px 24px -16px rgba(14, 116, 144, 0.18);
+}
+
+html.theme-dark .sampi-dropdown-item {
+  color: #dbe7f7;
+}
+
+html.theme-dark .sampi-dropdown-item:hover {
+  background: rgba(30, 41, 59, 0.95);
 }
 
 html.theme-dark .sampi-mobile-actions {

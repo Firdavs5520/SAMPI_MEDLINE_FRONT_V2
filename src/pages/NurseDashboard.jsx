@@ -204,7 +204,7 @@ function NurseDashboard() {
         try {
           element.focus();
           if (typeof element.select === "function") element.select();
-        } catch (error) {
+        } catch {
           // no-op
         }
       }, 0);
@@ -427,9 +427,10 @@ function NurseDashboard() {
                     onClick={() => setSelectedSpecialistId(item._id)}
                     className={`rounded-xl border px-3 py-3 text-left transition ${
                       selected
-                        ? "border-primary bg-cyan-50"
-                        : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-primary/50"
+                        ? "sampi-choice-card is-selected"
+                        : "sampi-choice-card"
                     }`}
+                    style={{ touchAction: "pan-y" }}
                   >
                     <p className="font-semibold text-slate-800">{item.name}</p>
                     <p className="mt-1 text-xs font-medium text-slate-500">
@@ -542,7 +543,14 @@ function NurseDashboard() {
                   type="button"
                   disabled={blocked}
                   onClick={() => toggleMedicine(medicine._id, !blocked)}
-                  className={`rounded-xl border px-3 py-3 text-left ${selected ? "border-primary bg-cyan-50" : blocked ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-white"}`}
+                  className={`px-3 py-3 text-left ${
+                    selected
+                      ? "sampi-choice-card is-selected"
+                      : blocked
+                        ? "sampi-choice-card is-disabled"
+                        : "sampi-choice-card"
+                  }`}
+                  style={{ touchAction: "pan-y" }}
                 >
                   <p className="font-semibold">{medicine.name}</p>
                   <p className="text-xs text-slate-600">Qoldiq: {medicine.stock}</p>
@@ -671,7 +679,14 @@ function NurseDashboard() {
                   type="button"
                   disabled={blocked}
                   onClick={() => toggleService(service._id, !blocked)}
-                  className={`rounded-xl border px-3 py-3 text-left ${selected ? "border-primary bg-cyan-50" : blocked ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-white"}`}
+                  className={`px-3 py-3 text-left ${
+                    selected
+                      ? "sampi-choice-card is-selected"
+                      : blocked
+                        ? "sampi-choice-card is-disabled"
+                        : "sampi-choice-card"
+                  }`}
+                  style={{ touchAction: "pan-y" }}
                 >
                   <p className="font-semibold">{service.name}</p>
                   <p className="text-xs text-slate-500">

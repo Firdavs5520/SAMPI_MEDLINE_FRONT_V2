@@ -42,7 +42,16 @@ function QuickSearchInput({
   const query = normalizeText(value);
 
   const suggestions = useMemo(() => {
-    if (!query) return [];
+    if (!query) {
+      return items
+        .map((item) => {
+          const labelText = String(getItemLabel(item) || "");
+          return { item, labelText, index: 0 };
+        })
+        .filter((entry) => entry.labelText.trim().length > 0)
+        .sort((a, b) => a.labelText.localeCompare(b.labelText, "uz"))
+        .slice(0, maxSuggestions);
+    }
 
     return items
       .map((item) => {
@@ -76,14 +85,14 @@ function QuickSearchInput({
         />
       </label>
 
-      {open && query ? (
+      {open && suggestions.length > 0 ? (
         <div className="animate-dropdown-pop sampi-dropdown absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
           {suggestions.length > 0 ? (
             suggestions.map((entry) => (
               <button
                 key={`${entry.item?._id || entry.labelText}-${entry.index}`}
                 type="button"
-                className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100"
+                className="sampi-dropdown-item flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100"
               onMouseDown={(event) => {
                   event.preventDefault();
                   onPick?.(entry.item);

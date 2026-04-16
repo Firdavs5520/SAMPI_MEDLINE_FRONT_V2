@@ -86,7 +86,7 @@ function SelectMenu({
                   onChange(option.value);
                   setOpen(false);
                 }}
-                className={`block w-full px-3 py-2 text-left text-sm transition ${
+                className={`sampi-dropdown-item block w-full px-3 py-2 text-left text-sm transition ${
                   active ? "bg-primary/10 font-semibold text-primary" : "text-slate-700 hover:bg-slate-100"
                 }`}
               >
