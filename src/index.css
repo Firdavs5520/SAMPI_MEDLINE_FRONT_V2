@@ -73,8 +73,8 @@ select {
 }
 
 html.theme-dark .card {
-  border-color: #1f2c3e;
-  background: #0f1a2c;
+  border-color: #1f2c3e !important;
+  background-color: #0f1a2c !important;
   box-shadow: 0 20px 30px -24px rgba(2, 6, 23, 0.95);
 }
 
@@ -873,8 +873,8 @@ html.theme-dark .sampi-select option {
 }
 
 html.theme-dark .sampi-control {
-  border-color: #32455f;
-  background: #0b1526;
+  border-color: #32455f !important;
+  background-color: #0b1526 !important;
   color: #e2e8f0;
 }
 
@@ -919,6 +919,25 @@ html.theme-dark .sampi-theme-toggle::before {
     rgba(14, 116, 144, 0.22),
     rgba(249, 115, 22, 0.18)
   );
+}
+
+html.theme-dark .lor-select-card {
+  border-color: #2f4056;
+  background: rgba(10, 22, 36, 0.92);
+}
+
+html.theme-dark .lor-choice-card {
+  border-color: #31445d;
+  background: linear-gradient(180deg, #0f1d31, #0c1626);
+}
+
+html.theme-dark .lor-choice-badge {
+  background: rgba(14, 116, 144, 0.3);
+  color: #9ee6ff;
+}
+
+html.theme-dark .lor-choice-action {
+  color: #8fdaf5;
 }
 
 html.theme-dark .text-slate-900 {

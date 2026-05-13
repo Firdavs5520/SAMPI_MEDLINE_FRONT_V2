@@ -45,14 +45,7 @@ function QuickSearchInput({
 
   const suggestions = useMemo(() => {
     if (!query) {
-      return items
-        .map((item) => {
-          const labelText = String(getItemLabel(item) || "");
-          return { item, labelText, index: 0 };
-        })
-        .filter((entry) => entry.labelText.trim().length > 0)
-        .sort((a, b) => a.labelText.localeCompare(b.labelText, "uz"))
-        .slice(0, maxSuggestions);
+      return [];
     }
 
     return items
@@ -70,7 +63,7 @@ function QuickSearchInput({
       .slice(0, maxSuggestions);
   }, [getItemLabel, items, maxSuggestions, query]);
 
-  const shouldShowMenu = open && (hasQuery || suggestions.length > 0);
+  const shouldShowMenu = open && hasQuery;
 
   return (
     <div className="relative">
