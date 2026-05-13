@@ -283,7 +283,7 @@ function LorServicesPage() {
 
       const written = writeCheckToPrintTab(printTab, result.check);
       if (!written) {
-        setError("Brauzer yangi oynani blokladi. Oynaga ruxsatni yoqing.");
+        setError("Chek yaratildi, lekin avtomatik print ochilmadi. \"Mening cheklarim\" bo'limidan qayta chiqaring.");
       }
     } catch (err) {
       closePrintTab(printTab);

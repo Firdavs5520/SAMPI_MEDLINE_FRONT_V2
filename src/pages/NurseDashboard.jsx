@@ -340,7 +340,9 @@ function NurseDashboard() {
       });
 
       const printed = writeCheckToPrintTab(printSession, result.check);
-      if (!printed) setError("Brauzer yangi oynani blokladi. Ruxsat bering.");
+      if (!printed) {
+        setError("Chek yaratildi, lekin avtomatik print ochilmadi. \"Mening cheklarim\" bo'limidan qayta chiqaring.");
+      }
       setSuccess("Chek muvaffaqiyatli yaratildi.");
       setPatient({ fullName: "" });
       setSelectedMedicineIds([]);

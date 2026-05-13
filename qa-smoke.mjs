@@ -1087,7 +1087,7 @@ async function scenarioParallelMultiRoleFlow(browser) {
       lor1Page.getByText("LOR paneli").waitFor(),
       lor2Page.getByText("LOR paneli").waitFor(),
       deliveryPage.getByText("Kuryer paneli").waitFor(),
-      managerPage.getByText("Umumiy statistika").waitFor()
+      managerPage.getByRole("heading", { name: "Umumiy statistika" }).waitFor()
     ]);
 
     const nurseFlow = async () => {
