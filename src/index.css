@@ -1063,6 +1063,11 @@ html.theme-dark .hover\:bg-slate-300:hover {
     animation: none !important;
     transition: none !important;
   }
+
+  .route-enter > div > * {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 @media print {
