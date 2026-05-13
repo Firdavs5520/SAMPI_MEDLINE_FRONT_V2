@@ -114,8 +114,8 @@ html.theme-dark .sampi-login-shell {
 }
 
 .route-enter > div > * {
-  opacity: 0;
   animation: section-appear 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
 }
 
 .route-enter > div > *:nth-child(1) {
@@ -241,6 +241,7 @@ html.theme-dark .sampi-sidebar-compact-link:hover {
   position: relative;
   display: inline-flex;
   width: 100%;
+  min-height: 44px;
   justify-content: center;
   align-items: center;
   border-radius: 0.85rem;
@@ -707,6 +708,7 @@ html.theme-dark .sampi-choice-card.is-disabled {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(6px);
   box-shadow: 0 -16px 28px -26px rgba(15, 23, 42, 0.85);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .sampi-mobile-actions .sampi-btn {

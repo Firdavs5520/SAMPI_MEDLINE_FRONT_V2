@@ -147,7 +147,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
     : menus.map((item) => ({ ...item, __groupName: item.group || "" }));
 
   const linkClassName = ({ isActive }) =>
-    `sampi-sidebar-link flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out ${
+    `sampi-sidebar-link flex min-h-[44px] items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out ${
       compact ? "lg:justify-center lg:px-2" : "gap-2"
     } ${
       isActive ? "bg-primary text-white shadow-sm" : "text-slate-700 hover:bg-slate-100"
@@ -169,7 +169,8 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
           </div>
           <button
             type="button"
-            className="rounded-lg p-1 text-slate-500 hover:bg-slate-100 lg:hidden"
+            aria-label="Yon panelni yopish"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 lg:hidden"
             onClick={onClose}
           >
             X
@@ -178,7 +179,8 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
 
         <button
           type="button"
-          className="absolute -right-3 top-20 hidden h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:scale-105 hover:bg-slate-50 lg:inline-flex"
+          aria-label={compact ? "To'liq menyu" : "Faqat ikonlar"}
+          className="absolute -right-4 top-20 hidden h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:scale-105 hover:bg-slate-50 lg:inline-flex"
           title={compact ? "To'liq menyu" : "Faqat ikonlar"}
           onClick={onToggleCompact}
         >
@@ -233,6 +235,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
                           end={item.end === true}
                           onClick={onClose}
                           title={item.label}
+                          aria-label={item.label}
                           className={({ isActive }) =>
                             compact
                               ? `sampi-sidebar-compact-link ${
@@ -278,6 +281,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
                           end={item.end === true}
                           onClick={onClose}
                           title={item.label}
+                          aria-label={item.label}
                           className={linkClassName}
                         >
                           <MenuIcon name={item.icon} />
@@ -297,6 +301,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
                 end={item.end === true}
                 onClick={onClose}
                 title={item.label}
+                aria-label={item.label}
                 className={({ isActive }) =>
                   compact
                     ? `sampi-sidebar-compact-link ${

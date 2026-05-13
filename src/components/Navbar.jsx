@@ -36,13 +36,16 @@ function Navbar({ onMenuOpen }) {
   };
 
   return (
-    <header className="sampi-navbar sticky top-0 z-20 border-b border-slate-200 backdrop-blur">
+    <header
+      className="sampi-navbar sticky top-0 z-20 border-b border-slate-200 backdrop-blur"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
       <div className="flex min-w-0 items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-4 lg:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={onMenuOpen}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 lg:hidden"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 lg:hidden"
             aria-label="Menyuni ochish"
           >
             <svg

@@ -39,8 +39,17 @@ function LoginPage() {
   };
 
   return (
-    <div className="sampi-login-shell route-enter flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-cyan-50 to-orange-50 p-4">
-      <div className="absolute right-4 top-4 z-10">
+    <div
+      className="sampi-login-shell flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-cyan-50 to-orange-50 p-4"
+      style={{
+        paddingTop: "max(1rem, env(safe-area-inset-top, 0px))",
+        paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))"
+      }}
+    >
+      <div
+        className="absolute right-4 z-10"
+        style={{ top: "max(1rem, calc(env(safe-area-inset-top, 0px) + 0.5rem))" }}
+      >
         <ThemeModeSwitch />
       </div>
       <div className="w-full max-w-md card p-6">

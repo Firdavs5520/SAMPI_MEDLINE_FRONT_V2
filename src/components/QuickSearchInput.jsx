@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 
 const normalizeText = (value) =>
   String(value ?? "")
@@ -39,7 +39,9 @@ function QuickSearchInput({
   emptyText = "Mos natija topilmadi"
 }) {
   const [open, setOpen] = useState(false);
+  const listboxId = useId();
   const query = normalizeText(value);
+  const hasQuery = query.length > 0;
 
   const suggestions = useMemo(() => {
     if (!query) {
@@ -68,6 +70,8 @@ function QuickSearchInput({
       .slice(0, maxSuggestions);
   }, [getItemLabel, items, maxSuggestions, query]);
 
+  const shouldShowMenu = open && (hasQuery || suggestions.length > 0);
+
   return (
     <div className="relative">
       <label className="block">
@@ -77,23 +81,40 @@ function QuickSearchInput({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onFocus={() => setOpen(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              setOpen(false);
+            }
+          }}
           onBlur={() => {
             setTimeout(() => setOpen(false), 120);
           }}
+          role="combobox"
+          aria-autocomplete="list"
+          aria-haspopup="listbox"
+          aria-expanded={shouldShowMenu}
+          aria-controls={listboxId}
           placeholder={placeholder}
           className="sampi-control w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 sm:text-sm"
         />
       </label>
 
-      {open && suggestions.length > 0 ? (
-        <div className="animate-dropdown-pop sampi-dropdown absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+      {shouldShowMenu ? (
+        <div
+          id={listboxId}
+          role="listbox"
+          className="animate-dropdown-pop sampi-dropdown absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-lg"
+        >
           {suggestions.length > 0 ? (
-            suggestions.map((entry) => (
+            suggestions.map((entry, index) => (
               <button
                 key={`${entry.item?._id || entry.labelText}-${entry.index}`}
+                id={`${listboxId}-option-${index}`}
                 type="button"
+                role="option"
+                aria-selected="false"
                 className="sampi-dropdown-item flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100"
-              onMouseDown={(event) => {
+                onMouseDown={(event) => {
                   event.preventDefault();
                   onPick?.(entry.item);
                   setOpen(false);
