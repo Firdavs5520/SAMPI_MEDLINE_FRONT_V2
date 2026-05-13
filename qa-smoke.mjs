@@ -796,29 +796,36 @@ function attachErrorCollectors(page, bucket, prefix) {
   });
 }
 
-async function authContext(browser, role, options = {}) {
+async function authContext(browser, role, options = {}, authOptions = {}) {
   const context = await browser.newContext(options);
   await installMockApi(context);
+  const lorIdentityValue =
+    role === "lor" ? String(authOptions.lorIdentity || "lor1").trim().toLowerCase() || "lor1" : "";
 
   const userMap = {
     nurse: { _id: "nurse-user-1", id: "nurse-user-1", role: "nurse", name: "Malika Nurse" },
-    lor: { _id: "lor-user-1", id: "lor-user-1", role: "lor", name: "Aziz Lor" },
+    lor: {
+      _id: authOptions.userId || "lor-user-1",
+      id: authOptions.userId || "lor-user-1",
+      role: "lor",
+      name: authOptions.userName || (lorIdentityValue === "lor2" ? "Sherzod Lor" : "Aziz Lor")
+    },
     cashier: { _id: "cashier-user-1", id: "cashier-user-1", role: "cashier", name: "Cashier User" },
     manager: { _id: "manager-user-1", id: "manager-user-1", role: "manager", name: "Manager User" },
     delivery: { _id: "delivery-user-1", id: "delivery-user-1", role: "delivery", name: "Delivery User" }
   };
 
   await context.addInitScript(
-    ({ roleValue, user }) => {
+    ({ roleValue, user, lorIdentity }) => {
       localStorage.setItem("sampi_token", `${roleValue}-token`);
       localStorage.setItem("sampi_user", JSON.stringify(user));
       if (roleValue === "lor") {
-        sessionStorage.setItem("sampi_lor_identity", "lor1");
+        sessionStorage.setItem("sampi_lor_identity", lorIdentity || "lor1");
       } else {
         sessionStorage.removeItem("sampi_lor_identity");
       }
     },
-    { roleValue: role, user: userMap[role] }
+    { roleValue: role, user: userMap[role], lorIdentity: lorIdentityValue }
   );
 
   return context;
@@ -1041,6 +1048,128 @@ async function scenarioRolePagesSmoke(browser, role, pages) {
   await context.close();
 }
 
+async function scenarioParallelMultiRoleFlow(browser) {
+  const checkCountBefore = state.checks.length;
+  const med2Before = safeNum(state.medicines.find((m) => m._id === "med2")?.stock);
+
+  const [nurseCtx, lor1Ctx, lor2Ctx, deliveryCtx, managerCtx] = await Promise.all([
+    authContext(browser, "nurse"),
+    authContext(browser, "lor", {}, { lorIdentity: "lor1", userId: "lor-user-1", userName: "Aziz Lor" }),
+    authContext(browser, "lor", {}, { lorIdentity: "lor2", userId: "lor-user-1", userName: "Aziz Lor" }),
+    authContext(browser, "delivery"),
+    authContext(browser, "manager")
+  ]);
+
+  const nursePage = await nurseCtx.newPage();
+  const lor1Page = await lor1Ctx.newPage();
+  const lor2Page = await lor2Ctx.newPage();
+  const deliveryPage = await deliveryCtx.newPage();
+  const managerPage = await managerCtx.newPage();
+  const errors = [];
+
+  try {
+    attachErrorCollectors(nursePage, errors, "parallel-nurse");
+    attachErrorCollectors(lor1Page, errors, "parallel-lor1");
+    attachErrorCollectors(lor2Page, errors, "parallel-lor2");
+    attachErrorCollectors(deliveryPage, errors, "parallel-delivery");
+    attachErrorCollectors(managerPage, errors, "parallel-manager");
+
+    await Promise.all([
+      nursePage.goto(`${BASE_URL}/nurse`, { waitUntil: "domcontentloaded" }),
+      lor1Page.goto(`${BASE_URL}/lor/services`, { waitUntil: "domcontentloaded" }),
+      lor2Page.goto(`${BASE_URL}/lor/services`, { waitUntil: "domcontentloaded" }),
+      deliveryPage.goto(`${BASE_URL}/delivery`, { waitUntil: "domcontentloaded" }),
+      managerPage.goto(`${BASE_URL}/manager`, { waitUntil: "domcontentloaded" })
+    ]);
+
+    await Promise.all([
+      nursePage.getByText("Hamshira paneli").waitFor(),
+      lor1Page.getByText("LOR paneli").waitFor(),
+      lor2Page.getByText("LOR paneli").waitFor(),
+      deliveryPage.getByText("Kuryer paneli").waitFor(),
+      managerPage.getByText("Umumiy statistika").waitFor()
+    ]);
+
+    const nurseFlow = async () => {
+      await nursePage.getByRole("button", { name: "Keyingi: Bemor" }).first().click();
+      await nursePage.getByLabel("Bemor F.I.O").fill("Parallel Nurse");
+      await nursePage.getByRole("button", { name: "Keyingi: Dorilar" }).first().click();
+      await nursePage.getByRole("button", { name: "Skip" }).first().click();
+      await nursePage.getByRole("button", { name: /Ukol qilish/ }).first().click();
+      await nursePage.getByRole("button", { name: "Keyingi" }).first().click();
+      await nursePage.getByRole("button", { name: /Chek chiqarish/ }).first().click();
+      await nursePage.getByText("Chek muvaffaqiyatli yaratildi.").waitFor({ timeout: 12000 });
+    };
+
+    const lor1Flow = async () => {
+      await lor1Page.getByRole("button", { name: "Keyingi: Bemor" }).first().click();
+      await lor1Page.getByLabel("Bemor F.I.O").fill("Parallel Lor1");
+      await lor1Page.getByRole("button", { name: "Keyingi: Xizmatlar" }).first().click();
+      await lor1Page.getByRole("button", { name: /Burun chayish/ }).first().click();
+      await lor1Page.getByRole("button", { name: /Keyingi: Preview|Keyingi/ }).first().click();
+      await lor1Page.getByRole("button", { name: /Chek chiqarish/ }).first().click();
+      await lor1Page.getByText("Chek muvaffaqiyatli yaratildi.").waitFor({ timeout: 12000 });
+    };
+
+    const lor2Flow = async () => {
+      await lor2Page.getByRole("button", { name: "Keyingi: Bemor" }).first().click();
+      await lor2Page.getByLabel("Bemor F.I.O").fill("Parallel Lor2");
+      await lor2Page.getByRole("button", { name: "Keyingi: Xizmatlar" }).first().click();
+      await lor2Page.locator("button.sampi-choice-card").first().click();
+      await lor2Page.getByRole("button", { name: /Keyingi: Preview|Keyingi/ }).first().click();
+      await lor2Page.getByRole("button", { name: /Chek chiqarish/ }).first().click();
+      await lor2Page.getByText("Chek muvaffaqiyatli yaratildi.").waitFor({ timeout: 12000 });
+    };
+
+    const deliveryFlow = async () => {
+      const selectorCard = deliveryPage.locator("div.card").filter({ hasText: "1-qadam: Dorilarni tanlang" }).first();
+      await selectorCard.getByRole("button", { name: /Ibuprofen/ }).first().click();
+      await deliveryPage.getByLabel("Keltirilgan miqdor").first().fill("6");
+      await deliveryPage.getByRole("button", { name: "Omborga qo'shish" }).first().click();
+      await deliveryPage.getByText(/ombor qoldig'i muvaffaqiyatli oshirildi/i).waitFor({ timeout: 12000 });
+    };
+
+    await Promise.all([nurseFlow(), lor1Flow(), lor2Flow(), deliveryFlow()]);
+
+    await managerPage.getByRole("button", { name: "Yangilash" }).click();
+    await managerPage.getByText("LOR-2").first().waitFor({ timeout: 12000 });
+
+    const checkCountAfter = state.checks.length;
+    const med2After = safeNum(state.medicines.find((m) => m._id === "med2")?.stock);
+    const hasParallelNurse = state.checks.some((c) => c.patient?.fullName === "Parallel Nurse" && c.creatorRole === "nurse");
+    const hasParallelLor1 = state.checks.some(
+      (c) => c.patient?.fullName === "Parallel Lor1" && c.creatorRole === "lor" && c.lorIdentity === "lor1"
+    );
+    const hasParallelLor2 = state.checks.some(
+      (c) => c.patient?.fullName === "Parallel Lor2" && c.creatorRole === "lor" && c.lorIdentity === "lor2"
+    );
+
+    const lor2ChecksCount = state.checks.filter((c) => c.creatorRole === "lor" && c.lorIdentity === "lor2").length;
+
+    if (checkCountAfter < checkCountBefore + 3) {
+      throw new Error(`Parallel oqimda yetarli chek yaralmadi: oldin=${checkCountBefore}, keyin=${checkCountAfter}`);
+    }
+    if (!hasParallelNurse) throw new Error("Parallel nurse chek topilmadi");
+    if (!hasParallelLor1) throw new Error("Parallel LOR-1 chek topilmadi");
+    if (!hasParallelLor2) throw new Error("Parallel LOR-2 chek topilmadi");
+    if (med2After < med2Before + 6) {
+      throw new Error(`Delivery parallel restock ishlamadi: oldin=${med2Before}, keyin=${med2After}`);
+    }
+    if (lor2ChecksCount < 1) {
+      throw new Error("LOR-2 uchun kamida bitta chek bo'lishi kerak edi");
+    }
+    if (errors.length > 0) throw new Error(errors.join("\n"));
+  } finally {
+    await Promise.allSettled([
+      nurseCtx.close(),
+      lor1Ctx.close(),
+      lor2Ctx.close(),
+      deliveryCtx.close(),
+      managerCtx.close()
+    ]);
+  }
+}
+
 async function run() {
   const browser = await chromium.launch({ headless: true });
   const results = [];
@@ -1101,6 +1230,12 @@ async function run() {
         { path: "/cashier/journal", text: "Kassa jurnali" },
         { path: "/cashier/debts", text: "Qarzdorlar ro'yxati" }
       ]),
+    results
+  );
+
+  await withScenario(
+    "Parallel Nurse/LOR1/LOR2/Manager/Delivery",
+    async () => scenarioParallelMultiRoleFlow(browser),
     results
   );
 
