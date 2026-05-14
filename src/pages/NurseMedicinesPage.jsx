@@ -30,6 +30,21 @@ function NurseMedicinesPage() {
   const [error, setError] = useState("");
 
   const nurseMedicines = useMemo(() => medicines, [medicines]);
+  const medicineStats = useMemo(() => {
+    const total = nurseMedicines.length;
+    const empty = nurseMedicines.filter((item) => Number(item?.stock || 0) <= 0).length;
+    const low = nurseMedicines.filter((item) => {
+      const stock = Number(item?.stock || 0);
+      return stock > 0 && stock <= 10;
+    }).length;
+    const totalValue = nurseMedicines.reduce((sum, item) => sum + Number(item?.price || 0), 0);
+    return {
+      total,
+      empty,
+      low,
+      avgPrice: total ? Math.round(totalValue / total) : 0
+    };
+  }, [nurseMedicines]);
 
   const loadMedicines = async () => {
     setLoading(true);
@@ -162,9 +177,33 @@ function NurseMedicinesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="card p-4">
-        <h2 className="text-lg font-semibold text-slate-800">Dori Qoshish</h2>
+    <div className="nurse-theme-shell space-y-6">
+      <div className="card nurse-hero-card p-4 sm:p-5">
+        <p className="nurse-hero-badge">Nurse Pharmacy</p>
+        <h1 className="nurse-hero-title">Dori boshqaruvi</h1>
+        <p className="nurse-hero-subtitle">Nurse uchun dorilar nomenklaturasi va narxlarini boshqaring.</p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="nurse-hero-kpi">
+            <span>Jami dori</span>
+            <strong>{medicineStats.total}</strong>
+          </div>
+          <div className="nurse-hero-kpi">
+            <span>Kam qolgan</span>
+            <strong>{medicineStats.low}</strong>
+          </div>
+          <div className="nurse-hero-kpi">
+            <span>Qolmagan</span>
+            <strong>{medicineStats.empty}</strong>
+          </div>
+          <div className="nurse-hero-kpi">
+            <span>O'rtacha narx</span>
+            <strong>{formatCurrency(medicineStats.avgPrice)}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div className="card nurse-work-card p-4">
+        <h2 className="text-lg font-semibold text-slate-800">Dori Qo'shish</h2>
         <p className="mb-4 text-sm text-slate-500">
           Bu bo'limda nurse yangi dori nomlarini qo'shadi.
         </p>
@@ -187,14 +226,14 @@ function NurseMedicinesPage() {
             onChange={(e) => setNewMedicinePrice(formatMoneyInput(e.target.value))}
             placeholder="Masalan: 12 000"
           />
-          <Button type="submit" className="h-fit self-end" loading={saving}>
+          <Button type="submit" className="nurse-accent-btn h-fit self-end" loading={saving}>
             Qoshish
           </Button>
         </form>
       </div>
 
       {editingMedicineId ? (
-        <div className="card p-4">
+        <div className="card nurse-work-card p-4">
           <h3 className="text-base font-semibold text-slate-800">Dorini tahrirlash</h3>
           <form
             onSubmit={handleSaveEdit}
@@ -223,7 +262,7 @@ function NurseMedicinesPage() {
                 }))
               }
             />
-            <Button type="submit" className="h-fit self-end" loading={updating}>
+            <Button type="submit" className="nurse-accent-btn h-fit self-end" loading={updating}>
               Saqlash
             </Button>
             <Button
@@ -242,7 +281,7 @@ function NurseMedicinesPage() {
       <Alert type="success" message={success} />
       <Alert type="error" message={error} />
 
-      <div className="card p-4">
+      <div className="card nurse-work-card p-4">
         <h3 className="mb-4 text-base font-semibold text-slate-800">
           Dorilar ro'yxati
         </h3>

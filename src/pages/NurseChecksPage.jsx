@@ -32,6 +32,24 @@ function NurseChecksPage() {
     });
     return Array.from(uniq.values());
   }, [checks]);
+  const acceptedCount = useMemo(
+    () => checks.filter((item) => Boolean(item?.cashierStatus?.accepted)).length,
+    [checks]
+  );
+  const pendingCount = useMemo(() => checks.length - acceptedCount, [checks.length, acceptedCount]);
+  const totalAmount = useMemo(
+    () => checks.reduce((sum, item) => sum + Number(item?.total || 0), 0),
+    [checks]
+  );
+  const totalDebt = useMemo(
+    () =>
+      checks.reduce(
+        (sum, item) =>
+          sum + (item?.cashierStatus?.accepted ? Number(item?.cashierStatus?.debtAmount || 0) : 0),
+        0
+      ),
+    [checks]
+  );
 
   const loadChecks = async (searchValue = "") => {
     const isInitial = loading;
@@ -66,13 +84,34 @@ function NurseChecksPage() {
   }
 
   return (
-    <div className="space-y-6 overflow-x-hidden">
-      <div className="card p-4 sm:p-5">
-        <h1 className="text-xl font-bold text-slate-800">Mening cheklarim</h1>
-        <p className="mt-1 text-sm text-slate-500">
+    <div className="nurse-theme-shell space-y-6 overflow-x-hidden">
+      <div className="card nurse-hero-card p-4 sm:p-5">
+        <p className="nurse-hero-badge">Nurse Checks</p>
+        <h1 className="nurse-hero-title">Mening cheklarim</h1>
+        <p className="nurse-hero-subtitle">
           Faqat siz yaratgan nurse cheklari chiqadi. Bemor ism-familiyasi bo'yicha qidiring.
         </p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="nurse-hero-kpi">
+            <span>Jami cheklar</span>
+            <strong>{checks.length}</strong>
+          </div>
+          <div className="nurse-hero-kpi">
+            <span>Qabul qilingan</span>
+            <strong>{acceptedCount}</strong>
+          </div>
+          <div className="nurse-hero-kpi">
+            <span>Jami summa</span>
+            <strong>{formatCurrency(totalAmount)}</strong>
+          </div>
+          <div className="nurse-hero-kpi">
+            <span>Jami qarz</span>
+            <strong>{formatCurrency(totalDebt)}</strong>
+          </div>
+        </div>
+      </div>
 
+      <div className="card nurse-work-card p-4 sm:p-5">
         <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
           <QuickSearchInput
             label="Bemor ism-familiyasi"
@@ -94,11 +133,15 @@ function NurseChecksPage() {
             Tozalash
           </Button>
         </div>
+        <div className="nurse-inline-info mt-4">
+          <span>Qidiruv natijasi: {checks.length} ta</span>
+          <strong>Kutilayotgan: {pendingCount} ta</strong>
+        </div>
       </div>
 
       <Alert type="error" message={error} />
 
-      <div className="card p-4 sm:p-5">
+      <div className="card nurse-work-card p-4 sm:p-5">
         <Table
           data={checks}
           stickyHeader

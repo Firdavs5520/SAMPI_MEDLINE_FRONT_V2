@@ -62,6 +62,8 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
     });
     return Array.from(uniq.values());
   }, [specialists]);
+  const totalCount = specialists.length;
+  const filteredCount = filtered.length;
 
   const resetMessages = () => {
     setSuccess("");
@@ -168,15 +170,37 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className={`card p-4 sm:p-5 ${theme.header}`}>
-        <h1 className="text-xl font-bold text-slate-800">{sectionLabel}</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Bu bo'limda {roleLabel.toLowerCase()} qo'shish, tahrirlash va o'chirish mumkin.
-        </p>
+    <div className={`${isNurse ? "nurse-theme-shell " : ""}space-y-6`}>
+      <div className={`card p-4 sm:p-5 ${isNurse ? "nurse-hero-card" : theme.header}`}>
+        {isNurse ? (
+          <>
+            <p className="nurse-hero-badge">Nurse Team</p>
+            <h1 className="nurse-hero-title">{sectionLabel}</h1>
+            <p className="nurse-hero-subtitle">
+              Bu bo'limda {roleLabel.toLowerCase()} qo'shish, tahrirlash va o'chirish mumkin.
+            </p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <div className="nurse-hero-kpi">
+                <span>Jami hamshira</span>
+                <strong>{totalCount}</strong>
+              </div>
+              <div className="nurse-hero-kpi">
+                <span>Filtr natijasi</span>
+                <strong>{filteredCount}</strong>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <h1 className="text-xl font-bold text-slate-800">{sectionLabel}</h1>
+            <p className="mt-1 text-sm text-slate-600">
+              Bu bo'limda {roleLabel.toLowerCase()} qo'shish, tahrirlash va o'chirish mumkin.
+            </p>
+          </>
+        )}
       </div>
 
-      <div className="card p-4 sm:p-5">
+      <div className={`card p-4 sm:p-5 ${isNurse ? "nurse-work-card" : ""}`}>
         <h2 className="text-lg font-semibold text-slate-800">Yangi {roleLabel.toLowerCase()} qo'shish</h2>
         <form className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={handleAdd}>
           <Input
@@ -185,13 +209,17 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
             placeholder={`Masalan: ${roleLabel} Aziz`}
             onChange={(e) => setNewName(toTitleCaseName(e.target.value))}
           />
-          <Button type="submit" loading={saving} className={`h-fit w-full self-end ${theme.accent} md:w-auto`}>
+          <Button
+            type="submit"
+            loading={saving}
+            className={`h-fit w-full self-end ${isNurse ? "nurse-accent-btn" : theme.accent} md:w-auto`}
+          >
             Qo'shish
           </Button>
         </form>
       </div>
 
-      <div className="card p-4 sm:p-5">
+      <div className={`card p-4 sm:p-5 ${isNurse ? "nurse-work-card" : ""}`}>
         <div className="mb-4 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
           <QuickSearchInput
             label={`${roleLabel} qidirish`}
@@ -232,7 +260,7 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
                         <Button
                           type="button"
                           loading={updating}
-                          className={`px-3 py-1.5 text-xs ${theme.accent}`}
+                          className={`px-3 py-1.5 text-xs ${isNurse ? "nurse-accent-btn" : theme.accent}`}
                           onClick={() => saveEdit(item._id)}
                         >
                           Saqlash
