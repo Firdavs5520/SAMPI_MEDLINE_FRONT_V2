@@ -913,6 +913,16 @@ html.theme-dark .sampi-filter-chip strong {
   color: #f1f5f9;
 }
 
+html.theme-dark .sampi-filter-toggle {
+  border-color: #2f4056;
+  background: #0f1a2c;
+}
+
+html.theme-dark .sampi-filter-toggle:hover {
+  border-color: rgba(56, 189, 248, 0.55);
+  background: #16243a;
+}
+
 html.theme-dark .sampi-theme-toggle::before {
   background: linear-gradient(
     120deg,
@@ -1032,6 +1042,10 @@ html.theme-dark .bg-amber-50 {
   background-color: #38280f !important;
 }
 
+html.theme-dark .bg-orange-50 {
+  background-color: #2f2113 !important;
+}
+
 html.theme-dark .border-slate-100,
 html.theme-dark .border-slate-200,
 html.theme-dark .border-slate-300 {
@@ -1055,6 +1069,10 @@ html.theme-dark .border-rose-200 {
 }
 
 html.theme-dark .border-amber-200 {
+  border-color: #5b4320 !important;
+}
+
+html.theme-dark .border-orange-200 {
   border-color: #5b4320 !important;
 }
 
