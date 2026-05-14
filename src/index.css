@@ -802,14 +802,15 @@ html.theme-dark .sampi-choice-card.is-disabled {
 }
 
 .nurse-accent-btn {
-  background: linear-gradient(95deg, #0ea5e9, #0284c7 52%, #f97316) !important;
-  border: 1px solid transparent !important;
+  background: linear-gradient(180deg, #0ea5e9, #0284c7) !important;
+  border: 1px solid #0369a1 !important;
   color: #ffffff !important;
-  box-shadow: 0 10px 14px -14px rgba(2, 132, 199, 0.6);
+  box-shadow: 0 10px 14px -14px rgba(2, 132, 199, 0.42);
 }
 
 .nurse-accent-btn:hover {
-  filter: saturate(1.08) brightness(1.04);
+  filter: none;
+  background: #0369a1 !important;
 }
 
 html.theme-dark .nurse-hero-card {
@@ -896,6 +897,17 @@ html.theme-dark .nurse-preview-surface {
   background:
     radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.16), transparent 44%),
     linear-gradient(180deg, #0d1728, #0b1526);
+}
+
+html.theme-dark .nurse-accent-btn {
+  background: linear-gradient(95deg, #0ea5e9, #0284c7 52%, #f97316) !important;
+  border-color: rgba(56, 189, 248, 0.34) !important;
+  box-shadow: 0 10px 14px -14px rgba(14, 165, 233, 0.65);
+}
+
+html.theme-dark .nurse-accent-btn:hover {
+  filter: saturate(1.08) brightness(1.04);
+  background: linear-gradient(95deg, #0ea5e9, #0284c7 52%, #f97316) !important;
 }
 
 @media (max-width: 1023px) {
