@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { sidebarMenus } from "../utils/constants.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -124,6 +125,11 @@ function MenuIcon({ name, className = "h-5 w-5" }) {
 
 function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
   const { role } = useAuth();
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.matchMedia("(min-width: 1024px)").matches;
+  });
+  const isCompact = compact && isDesktop;
   const menus = sidebarMenus[role] || [];
   const hasGroups = menus.some((item) => item.group);
   const groupedMenus = hasGroups
@@ -148,22 +154,37 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
 
   const linkClassName = ({ isActive }) =>
     `sampi-sidebar-link flex min-h-[44px] items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out ${
-      compact ? "lg:justify-center lg:px-2" : "gap-2"
+      isCompact ? "gap-2 lg:justify-center lg:px-2 lg:gap-0" : "gap-2"
     } ${
       isActive ? "bg-primary text-white shadow-sm" : "text-slate-700 hover:bg-slate-100"
     }`;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const media = window.matchMedia("(min-width: 1024px)");
+    const sync = (event) => setIsDesktop(event.matches);
+    setIsDesktop(media.matches);
+
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", sync);
+      return () => media.removeEventListener("change", sync);
+    }
+
+    media.addListener(sync);
+    return () => media.removeListener(sync);
+  }, []);
 
   return (
     <aside
       className={`sampi-sidebar fixed inset-y-0 left-0 z-40 w-[88vw] max-w-[22rem] transform border-r border-slate-200 transition lg:static lg:max-w-none lg:translate-x-0 lg:transition-all lg:duration-300 lg:ease-out ${compact ? "lg:w-20" : "lg:w-64"} ${open ? "translate-x-0" : "-translate-x-full"}`}
     >
       <div className="flex h-full flex-col">
-        <div className={`flex items-center border-b border-slate-200 py-4 ${compact ? "justify-center px-2" : "justify-between px-4 sm:px-5"}`}>
-          <div className={`flex items-center gap-2 ${compact ? "lg:justify-center lg:w-full" : ""}`}>
+        <div className={`flex items-center border-b border-slate-200 py-4 ${isCompact ? "justify-center px-2" : "justify-between px-4 sm:px-5"}`}>
+          <div className={`flex items-center gap-2 ${isCompact ? "lg:justify-center lg:w-full" : ""}`}>
             <div className="sampi-brand-mark flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-sm font-extrabold text-primary">
               SM
             </div>
-            <h2 className={`text-lg font-bold text-slate-800 ${compact ? "lg:hidden" : ""}`}>
+            <h2 className={`text-lg font-bold text-slate-800 ${isCompact ? "lg:hidden" : ""}`}>
               Sampi Medline
             </h2>
           </div>
@@ -179,13 +200,13 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
 
         <button
           type="button"
-          aria-label={compact ? "To'liq menyu" : "Faqat ikonlar"}
+          aria-label={isCompact ? "To'liq menyu" : "Faqat ikonlar"}
           className="absolute -right-4 top-20 hidden h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:scale-105 hover:bg-slate-50 lg:inline-flex"
-          title={compact ? "To'liq menyu" : "Faqat ikonlar"}
+          title={isCompact ? "To'liq menyu" : "Faqat ikonlar"}
           onClick={onToggleCompact}
         >
           <svg
-            className={`h-4 w-4 transition-transform duration-300 ${compact ? "rotate-180" : ""}`}
+            className={`h-4 w-4 transition-transform duration-300 ${isCompact ? "rotate-180" : ""}`}
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -197,7 +218,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
           </svg>
         </button>
 
-        <nav className={`overflow-y-auto p-4 ${compact ? "space-y-2" : "space-y-3"}`}>
+        <nav className={`overflow-y-auto p-4 ${isCompact ? "space-y-2" : "space-y-3"}`}>
           {hasGroups ? (
             <>
               <div className="hidden space-y-3 lg:block">
@@ -205,11 +226,11 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
                   <div
                     key={group.name}
                     className={`sampi-sidebar-group rounded-2xl p-2 ${
-                      compact ? "sampi-sidebar-compact-group" : "sampi-sidebar-group-card"
+                      isCompact ? "sampi-sidebar-compact-group" : "sampi-sidebar-group-card"
                     }`}
                     style={{ animationDelay: `${30 + index * 28}ms` }}
                   >
-                    {!compact ? (
+                    {!isCompact ? (
                       <div className="px-2 pb-1 pt-0.5">
                         <div className="sampi-group-title">
                           <span className="sampi-group-icon">
@@ -227,7 +248,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
                       </div>
                     )}
 
-                    <div className={`space-y-1.5 ${compact ? "mt-1" : ""}`}>
+                    <div className={`space-y-1.5 ${isCompact ? "mt-1" : ""}`}>
                       {group.items.map((item) => (
                         <NavLink
                           key={item.path}
@@ -237,7 +258,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
                           title={item.label}
                           aria-label={item.label}
                           className={({ isActive }) =>
-                            compact
+                            isCompact
                               ? `sampi-sidebar-compact-link ${
                                   isActive
                                     ? "bg-primary text-white shadow-sm"
@@ -247,7 +268,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
                           }
                         >
                           <MenuIcon name={item.icon} />
-                          {!compact ? <span className="truncate">{item.label}</span> : null}
+                          {!isCompact ? <span className="truncate">{item.label}</span> : null}
                         </NavLink>
                       ))}
                     </div>
@@ -303,7 +324,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
                 title={item.label}
                 aria-label={item.label}
                 className={({ isActive }) =>
-                  compact
+                  isCompact
                     ? `sampi-sidebar-compact-link ${
                         isActive
                           ? "bg-primary text-white shadow-sm"
@@ -313,7 +334,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
                 }
               >
                 <MenuIcon name={item.icon} />
-                {!compact ? <span className="truncate">{item.label}</span> : null}
+                {!isCompact ? <span className="truncate">{item.label}</span> : null}
               </NavLink>
             ))
           )}

@@ -604,6 +604,53 @@ html.theme-dark .sampi-sidebar-compact-link:hover {
   transform: scaleX(1);
 }
 
+@media (max-width: 1023px) {
+  .sampi-sidebar {
+    box-shadow: 22px 0 36px -24px rgba(15, 23, 42, 0.46);
+    background:
+      radial-gradient(circle at 0% 0%, rgba(14, 116, 144, 0.16), transparent 42%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(248, 250, 252, 0.98));
+  }
+
+  .sampi-sidebar-group-card {
+    border-radius: 1rem;
+    border-color: rgba(148, 163, 184, 0.38);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.12), transparent 46%),
+      rgba(255, 255, 255, 0.88);
+  }
+
+  .sampi-sidebar-link {
+    min-height: 48px;
+    gap: 0.65rem;
+    padding: 0.72rem 0.82rem;
+    font-size: 0.95rem;
+  }
+
+  .sampi-sidebar-link > svg {
+    width: 1.12rem;
+    height: 1.12rem;
+  }
+
+  .sampi-sidebar-link::after {
+    display: none;
+  }
+
+  html.theme-dark .sampi-sidebar {
+    box-shadow: 22px 0 40px -28px rgba(2, 6, 23, 0.9);
+    background:
+      radial-gradient(circle at 0% 0%, rgba(14, 165, 233, 0.22), transparent 42%),
+      linear-gradient(180deg, rgba(8, 14, 25, 0.99), rgba(8, 14, 25, 0.97));
+  }
+
+  html.theme-dark .sampi-sidebar-group-card {
+    border-color: rgba(56, 189, 248, 0.2);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.18), transparent 46%),
+      rgba(12, 22, 38, 0.9);
+  }
+}
+
 .sampi-choice-card {
   border-radius: 0.9rem;
   border: 1px solid #d4dee9;
