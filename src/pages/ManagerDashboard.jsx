@@ -103,7 +103,7 @@ function RoleSummaryCard({ title, roleKey, stats = emptyRoleStats() }) {
       </div>
 
       <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-white/80 p-3">
-        <p className="text-xs text-slate-500">Eng ko'p ishlatilgan item</p>
+        <p className="text-xs text-slate-500">Eng ko'p ishlatilgan element</p>
         <p className="mt-1 break-words text-sm font-semibold text-slate-900">{topItem.title}</p>
         <p className="mt-1 text-xs text-slate-600">{topItem.subtitle}</p>
       </div>
@@ -182,7 +182,7 @@ function ManagerDashboard() {
           <div className="min-w-0">
             <h1 className="text-xl font-bold text-slate-800">Umumiy statistika</h1>
             <p className="break-words text-sm text-slate-500">
-              Nurse, LOR va jami bo'yicha alohida statistika ko'rinadi.
+              Hamshira, LOR va jami bo'yicha alohida statistika ko'rinadi.
             </p>
           </div>
 
@@ -254,7 +254,7 @@ function ManagerDashboard() {
         </p>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-3">
-          <RoleSummaryCard title="Hamshira (Nurse)" roleKey="nurse" stats={overview.roles.nurse} />
+          <RoleSummaryCard title="Hamshira" roleKey="nurse" stats={overview.roles.nurse} />
           <RoleSummaryCard title="LOR shifokor" roleKey="lor" stats={overview.roles.lor} />
           <RoleSummaryCard title="Jami" roleKey="total" stats={overview.total} />
         </div>

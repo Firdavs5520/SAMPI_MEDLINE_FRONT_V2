@@ -15,8 +15,8 @@ const normalizeSearch = (value) =>
 
 function RoleSpecialistsPage({ mode = "nurse" }) {
   const isNurse = mode === "nurse";
-  const roleLabel = isNurse ? "Hamshira" : "Doktor";
-  const sectionLabel = isNurse ? "Hamshiralarni boshqarish" : "Doktorlarni boshqarish";
+  const roleLabel = isNurse ? "Hamshira" : "Shifokor";
+  const sectionLabel = isNurse ? "Hamshiralarni boshqarish" : "Shifokorlarni boshqarish";
   const theme = isNurse
     ? {
         header: "border-rose-200 bg-rose-50/70",
@@ -174,7 +174,7 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
       <div className={`card p-4 sm:p-5 ${isNurse ? "nurse-hero-card" : theme.header}`}>
         {isNurse ? (
           <>
-            <p className="nurse-hero-badge">Nurse Team</p>
+            <p className="nurse-hero-badge">Hamshira jamoasi</p>
             <h1 className="nurse-hero-title">{sectionLabel}</h1>
             <p className="nurse-hero-subtitle">
               Bu bo'limda {roleLabel.toLowerCase()} qo'shish, tahrirlash va o'chirish mumkin.

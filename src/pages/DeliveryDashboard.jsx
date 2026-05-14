@@ -139,7 +139,7 @@ function DeliveryDashboard() {
   };
 
   if (loading) {
-    return <Spinner text="Delivery panel yuklanmoqda..." />;
+    return <Spinner text="Yetkazuvchi paneli yuklanmoqda..." />;
   }
 
   return (
@@ -147,7 +147,7 @@ function DeliveryDashboard() {
       <div className={`card p-4 sm:p-5 ${sectionTheme.headerCard}`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-800">Kuryer paneli</h1>
+            <h1 className="text-xl font-bold text-slate-800">Yetkazuvchi paneli</h1>
             <p className="mt-1 text-sm text-slate-500">
               Ombordagi dorilarni tez tanlash va ko'p miqdorda qoldiq qo'shish bo'limi.
             </p>
@@ -155,7 +155,7 @@ function DeliveryDashboard() {
           <span
             className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-bold tracking-wide ${sectionTheme.badge}`}
           >
-            DELIVERY BO'LIMI
+            YETKAZUVCHI BO'LIMI
           </span>
         </div>
         <div className={`mt-3 rounded-xl border px-3 py-2 text-sm font-medium ${sectionTheme.alertBox}`}>
@@ -172,7 +172,7 @@ function DeliveryDashboard() {
         <div className="mb-4">
           <QuickSearchInput
             label="Dori qidirish"
-            placeholder="Masalan: Ceftriaxone"
+            placeholder="Masalan: Seftriakson"
             value={medicineSearch}
             onChange={setMedicineSearch}
             items={sortedMedicines}
@@ -205,7 +205,7 @@ function DeliveryDashboard() {
               >
                 <p className="font-semibold text-slate-800">{medicine.name}</p>
                 <p className="mt-1 text-xs text-slate-600">
-                  Ho'zirgi qoldiq: {formatCurrency(medicine.stock)}
+                  Hozirgi qoldiq: {formatCurrency(medicine.stock)}
                 </p>
                 <p className="text-xs text-slate-500">
                   Narx: {medicine.price ? formatCurrency(medicine.price) : "-"}
@@ -238,7 +238,7 @@ function DeliveryDashboard() {
                   <div>
                     <p className="font-medium text-slate-800">{medicine?.name}</p>
                     <p className="text-xs text-slate-500">
-                      Ho'zirgi qoldiq: {formatCurrency(medicine?.stock)}
+                      Hozirgi qoldiq: {formatCurrency(medicine?.stock)}
                     </p>
                   </div>
 
@@ -314,7 +314,7 @@ function DeliveryDashboard() {
           ]}
           stickyHeader
           emptyTitle="Dorilar ro'yxati bo'sh"
-          emptyDescription="Nurse yangi dori qo'shgandan keyin bu yerda ko'rinadi."
+          emptyDescription="Hamshira yangi dori qo'shgandan keyin bu yerda ko'rinadi."
         />
       </div>
 

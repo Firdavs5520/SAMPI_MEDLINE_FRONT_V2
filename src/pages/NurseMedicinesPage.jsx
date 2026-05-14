@@ -84,7 +84,7 @@ function NurseMedicinesPage() {
       }
 
       await medicineService.addMedicine({ name: safeName, price: safePrice });
-      setSuccess("Yangi dori qo'shildi. Delivery stock olib kelganda yangilanadi.");
+      setSuccess("Yangi dori qo'shildi. Yetkazuvchi ombor qoldig'ini kiritganda yangilanadi.");
       setNewMedicineName("");
       setNewMedicinePrice("");
       await loadMedicines();
@@ -173,15 +173,15 @@ function NurseMedicinesPage() {
   };
 
   if (loading) {
-    return <Spinner text="Nurse dorilari yuklanmoqda..." />;
+    return <Spinner text="Hamshira dorilari yuklanmoqda..." />;
   }
 
   return (
     <div className="nurse-theme-shell space-y-6">
       <div className="card nurse-hero-card p-4 sm:p-5">
-        <p className="nurse-hero-badge">Nurse Pharmacy</p>
+        <p className="nurse-hero-badge">Hamshira dorixonasi</p>
         <h1 className="nurse-hero-title">Dori boshqaruvi</h1>
-        <p className="nurse-hero-subtitle">Nurse uchun dorilar nomenklaturasi va narxlarini boshqaring.</p>
+        <p className="nurse-hero-subtitle">Hamshira uchun dorilar nomenklaturasi va narxlarini boshqaring.</p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="nurse-hero-kpi">
             <span>Jami dori</span>
@@ -205,7 +205,7 @@ function NurseMedicinesPage() {
       <div className="card nurse-work-card p-4">
         <h2 className="text-lg font-semibold text-slate-800">Dori Qo'shish</h2>
         <p className="mb-4 text-sm text-slate-500">
-          Bu bo'limda nurse yangi dori nomlarini qo'shadi.
+          Bu bo'limda hamshira yangi dori nomlarini qo'shadi.
         </p>
         <form
           onSubmit={handleAddMedicine}
@@ -227,7 +227,7 @@ function NurseMedicinesPage() {
             placeholder="Masalan: 12 000"
           />
           <Button type="submit" className="nurse-accent-btn h-fit self-end" loading={saving}>
-            Qoshish
+            Qo'shish
           </Button>
         </form>
       </div>

@@ -27,7 +27,7 @@ const STEP_ITEMS = [
   { label: "2. Bemor", icon: "patient" },
   { label: "3. Dorilar", icon: "pill" },
   { label: "4. Xizmatlar", icon: "stethoscope" },
-  { label: "5. Chek preview", icon: "receipt" }
+  { label: "5. Chek ko'rinishi", icon: "receipt" }
 ];
 const PRICE_TIER_LABELS = { first: "1-marta", second: "2-marta", third: "3-marta" };
 const PRICE_TIER_ORDER = ["first", "second", "third"];
@@ -423,7 +423,7 @@ function NurseDashboard() {
       <div className="card nurse-hero-card p-4 sm:p-5">
         <div className="nurse-hero-head gap-4">
           <div>
-            <p className="nurse-hero-badge">Nurse Workflow</p>
+            <p className="nurse-hero-badge">Hamshira jarayoni</p>
             <h1 className="nurse-hero-title">Hamshira paneli</h1>
             <p className="nurse-hero-subtitle">Bosqichma-bosqich chek yaratish</p>
           </div>
@@ -437,7 +437,7 @@ function NurseDashboard() {
               <strong>{hasPatientName ? "Tayyor" : "Kutilmoqda"}</strong>
             </div>
             <div className="nurse-hero-kpi">
-              <span>Jami preview</span>
+              <span>Jami ko'rinish</span>
               <strong>{formatCurrency(previewTotal)}</strong>
             </div>
           </div>
@@ -692,7 +692,7 @@ function NurseDashboard() {
                   setStep(4);
                 }}
               >
-                Skip
+                O'tkazish
               </Button>
               <Button
                 className="nurse-accent-btn w-full sm:w-auto"
@@ -715,7 +715,7 @@ function NurseDashboard() {
                   setStep(4);
                 }}
               >
-                Skip
+                O'tkazish
               </Button>
               <Button
                 className="nurse-accent-btn"
@@ -849,7 +849,7 @@ function NurseDashboard() {
                   setStep(5);
                 }}
               >
-                Skip
+                O'tkazish
               </Button>
               <Button
                 className="nurse-accent-btn w-full sm:w-auto"
@@ -872,7 +872,7 @@ function NurseDashboard() {
                   setStep(5);
                 }}
               >
-                Skip
+                O'tkazish
               </Button>
               <Button
                 className="nurse-accent-btn"
@@ -898,7 +898,7 @@ function NurseDashboard() {
           }}
         >
           <p className="nurse-block-tag">5-bosqich</p>
-          <h2 className="nurse-block-title">Chek preview</h2>
+          <h2 className="nurse-block-title">Chek ko'rinishi</h2>
           <p className="mb-3 text-sm text-slate-600">Enter bosib chek chiqaring.</p>
 
           <div className="nurse-preview-surface">

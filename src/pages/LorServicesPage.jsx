@@ -21,7 +21,7 @@ import {
   writeCheckToPrintTab
 } from "../utils/printReceipt.js";
 
-const STEP_LABELS = ["1. Doktor", "2. Bemor", "3. Xizmatlar", "4. Chek preview"];
+const STEP_LABELS = ["1. Shifokor", "2. Bemor", "3. Xizmatlar", "4. Chek ko'rinishi"];
 
 const normalizeSearch = (value) =>
   String(value ?? "")
@@ -183,7 +183,7 @@ function LorServicesPage() {
 
   const validateSpecialist = () => {
     if (!selectedSpecialistId) {
-      throw new Error("Avval doktorni tanlang.");
+      throw new Error("Avval shifokorni tanlang.");
     }
   };
 
@@ -366,15 +366,15 @@ function LorServicesPage() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">1-qadam: Doktor tanlash</h2>
+          <h2 className="text-lg font-semibold">1-qadam: Shifokor tanlash</h2>
           <p className="mb-4 text-sm text-slate-600">
-            Avval chekni qaysi doktor nomidan chiqarishni tanlang. Yangi doktor qo'shish
-            uchun chap menyudan "Doktorlarni boshqarish" ga o'ting.
+            Avval chekni qaysi shifokor nomidan chiqarishni tanlang. Yangi shifokor qo'shish
+            uchun chap menyudan "Shifokorlarni boshqarish" ga o'ting.
           </p>
 
           <div className="mt-4">
             <QuickSearchInput
-              label="Doktor qidirish"
+              label="Shifokor qidirish"
               placeholder="Masalan: Aziz"
               value={specialistSearch}
               onChange={setSpecialistSearch}
@@ -385,7 +385,7 @@ function LorServicesPage() {
                 setSelectedSpecialistId(item?._id || "");
                 setSpecialistSearch(item?.name || "");
               }}
-              emptyText="Mos doktor topilmadi"
+              emptyText="Mos shifokor topilmadi"
             />
           </div>
 
@@ -417,8 +417,8 @@ function LorServicesPage() {
 
           {!specialists.length ? (
             <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              Hozircha doktor yo'q. Chap menyudan "Doktorlarni boshqarish" bo'limida
-              yangi doktor qo'shing.
+              Hozircha shifokor yo'q. Chap menyudan "Shifokorlarni boshqarish" bo'limida
+              yangi shifokor qo'shing.
             </div>
           ) : null}
 
@@ -588,7 +588,7 @@ function LorServicesPage() {
               className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
               onClick={goNextFromServices}
             >
-              Keyingi: Preview
+              Keyingi: Ko'rinish
             </Button>
           </div>
           <MobileActionBar>
@@ -617,12 +617,12 @@ function LorServicesPage() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">4-qadam: Chek preview</h2>
+          <h2 className="text-lg font-semibold">4-qadam: Chek ko'rinishi</h2>
           <p className="mb-3 text-sm text-slate-600">Enter bosib chek chiqaring.</p>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm">
-              Doktor: <span className="font-semibold">{selectedSpecialist?.name || "-"}</span>
+              Shifokor: <span className="font-semibold">{selectedSpecialist?.name || "-"}</span>
             </p>
             <p className="text-sm">
               Bemor: <span className="font-semibold">{patient.fullName || "-"}</span>

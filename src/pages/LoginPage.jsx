@@ -26,7 +26,7 @@ function LoginPage() {
     setError("");
 
     if (!form.email || !form.password) {
-      setError("Email va parol kiritilishi shart.");
+      setError("Elektron pochta va parol kiritilishi shart.");
       return;
     }
 
@@ -57,20 +57,20 @@ function LoginPage() {
       </div>
       <div className="sampi-login-stage relative z-10 grid w-full max-w-6xl gap-5 lg:grid-cols-[1.05fr_0.95fr]">
         <section className="sampi-login-story order-2 lg:order-1">
-          <p className="sampi-login-eyebrow">Sampi Medline Platform</p>
+          <p className="sampi-login-eyebrow">Sampi Medline tizimi</p>
           <h1 className="sampi-login-title">
             Klinikadagi oqimni
             <span> bitta markazda boshqaring</span>
           </h1>
           <p className="sampi-login-subtitle">
-            Qabul, checkout, kassa va hisobotlar bir xil ritmda ishlashi uchun yaratilgan real
+            Qabul, chek, kassa va hisobotlar bir xil ritmda ishlashi uchun yaratilgan real
             vaqtli boshqaruv paneli.
           </p>
 
           <div className="sampi-login-flow">
             <div className="sampi-login-flow-item">
               <span className="sampi-login-flow-dot" />
-              Nurse va LOR checkout bir tizimda
+              Hamshira va LOR cheklari bitta tizimda
             </div>
             <div className="sampi-login-flow-item">
               <span className="sampi-login-flow-dot" />
@@ -78,15 +78,15 @@ function LoginPage() {
             </div>
             <div className="sampi-login-flow-item">
               <span className="sampi-login-flow-dot" />
-              Delivery va manager uchun jonli monitoring
+              Yetkazuvchi va menejer uchun jonli monitoring
             </div>
           </div>
 
           <div className="sampi-login-role-strip" aria-hidden="true">
-            <span>Nurse</span>
+            <span>Hamshira</span>
             <span>LOR</span>
             <span>Kassir</span>
-            <span>Delivery</span>
+            <span>Yetkazuvchi</span>
             <span>Menejer</span>
           </div>
         </section>
@@ -102,10 +102,10 @@ function LoginPage() {
 
           <form onSubmit={handleSubmit} autoComplete="off" className="mt-7 space-y-4">
             <Input
-              label="Email"
+              label="Elektron pochta"
               type="email"
               className="sampi-login-input"
-              placeholder="Emailingizni kiriting"
+              placeholder="Elektron pochtangizni kiriting"
               autoComplete="off"
               value={form.email}
               onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}

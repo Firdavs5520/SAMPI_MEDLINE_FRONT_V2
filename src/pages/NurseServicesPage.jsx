@@ -213,9 +213,9 @@ function NurseServicesPage() {
   return (
     <div className="nurse-theme-shell space-y-6">
       <div className="card nurse-hero-card p-4 sm:p-5">
-        <p className="nurse-hero-badge">Nurse Services</p>
+        <p className="nurse-hero-badge">Hamshira xizmatlari</p>
         <h1 className="nurse-hero-title">Xizmat konfiguratsiyasi</h1>
-        <p className="nurse-hero-subtitle">1/2/3-marta narxlar bilan nurse xizmatlarini boshqaring.</p>
+        <p className="nurse-hero-subtitle">1/2/3-marta narxlar bilan hamshira xizmatlarini boshqaring.</p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           <div className="nurse-hero-kpi">
             <span>Jami xizmat</span>

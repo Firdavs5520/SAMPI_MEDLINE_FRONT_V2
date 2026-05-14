@@ -18,40 +18,40 @@ import {
 
 const SECTION_META = {
   "nurse-patients": {
-    title: "Nurse cheklar qabuli",
-    subtitle: "Nurse yuborgan cheklar kassada qabul qilinadi.",
+    title: "Hamshira cheklari qabuli",
+    subtitle: "Hamshira yuborgan cheklar kassada qabul qilinadi.",
     lockedType: "nurse",
-    specialistLabel: "Medsestra"
+    specialistLabel: "Hamshira"
   },
   "lor-patients": {
     title: "LOR cheklar qabuli",
     subtitle: "LOR yuborgan cheklar kassada qabul qilinadi.",
     lockedType: "lor",
-    specialistLabel: "Vrach"
+    specialistLabel: "Shifokor"
   },
   "nurse-entries": {
-    title: "Nurse yozuvlari",
+    title: "Hamshira yozuvlari",
     subtitle: "Joriy ro'yxat 08:00-02:00 oralig'ida ko'rsatiladi.",
     lockedType: "nurse",
-    specialistLabel: "Medsestra"
+    specialistLabel: "Hamshira"
   },
   "nurse-history": {
-    title: "Nurse tarixi",
-    subtitle: "Nurse bo'yicha 08:00-02:00 dan tashqari yozuvlar tarixi.",
+    title: "Hamshira tarixi",
+    subtitle: "Hamshira bo'yicha 08:00-02:00 dan tashqari yozuvlar tarixi.",
     lockedType: "nurse",
-    specialistLabel: "Medsestra"
+    specialistLabel: "Hamshira"
   },
   "lor-entries": {
     title: "LOR yozuvlari",
     subtitle: "Joriy ro'yxat 08:00-02:00 oralig'ida ko'rsatiladi.",
     lockedType: "lor",
-    specialistLabel: "Vrach"
+    specialistLabel: "Shifokor"
   },
   "lor-history": {
     title: "LOR tarixi",
     subtitle: "LOR bo'yicha 08:00-02:00 dan tashqari yozuvlar tarixi.",
     lockedType: "lor",
-    specialistLabel: "Vrach"
+    specialistLabel: "Shifokor"
   },
   journal: {
     title: "Kassa jurnali",
@@ -66,23 +66,23 @@ const SECTION_META = {
     specialistLabel: "Mutaxassis"
   },
   "nurse-specialists": {
-    title: "Nurse shifokorlar",
-    subtitle: "Nurse mutaxassislar ro'yxatini boshqarish.",
+    title: "Hamshira mutaxassislari",
+    subtitle: "Hamshira mutaxassislar ro'yxatini boshqarish.",
     lockedType: "nurse",
-    specialistLabel: "Medsestra"
+    specialistLabel: "Hamshira"
   },
   "lor-specialists": {
     title: "LOR shifokorlar",
     subtitle: "LOR mutaxassislar ro'yxatini boshqarish.",
     lockedType: "lor",
-    specialistLabel: "Vrach"
+    specialistLabel: "Shifokor"
   }
 };
 
 const departmentLabels = {
   lor: "LOR",
-  nurse: "Nurse",
-  procedure: "Nurse"
+  nurse: "Hamshira",
+  procedure: "Hamshira"
 };
 
 const paymentMethodLabels = {
@@ -107,12 +107,12 @@ const paymentMethodFormOptions = [
 const departmentOptions = [
   { value: "all", label: "Barchasi" },
   { value: "lor", label: "LOR" },
-  { value: "nurse", label: "Nurse" }
+  { value: "nurse", label: "Hamshira" }
 ];
 
 const specialistTypeOptions = [
   { value: "all", label: "Barchasi" },
-  { value: "nurse", label: "Nurse" },
+  { value: "nurse", label: "Hamshira" },
   { value: "lor", label: "LOR" }
 ];
 
@@ -142,7 +142,7 @@ const safeNumber = (value, fallback = 0) => {
 };
 
 const formatCreatorRoleLabel = (value) =>
-  String(value || "").toLowerCase() === "nurse" ? "Nurse" : "LOR";
+  String(value || "").toLowerCase() === "nurse" ? "Hamshira" : "LOR";
 
 const createInitialForm = (type = "lor") => ({
   department: type,
@@ -839,7 +839,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
   if (isSpecialistSection) {
     const specialistsData = specialistsByType[specialistPageType] || [];
-    const specialistRoleLabel = specialistPageType === "nurse" ? "Nurse" : "LOR";
+    const specialistRoleLabel = specialistPageType === "nurse" ? "Hamshira" : "LOR";
 
     return (
       <div className="space-y-4 sm:space-y-6">
@@ -968,7 +968,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     ? "Qarzdorlar soni"
     : lockedType
       ? `${departmentLabels[lockedType]} yozuvlari`
-      : "Nurse / LOR";
+      : "Hamshira / LOR";
   const specialistCountHint = isDebtSection
     ? "Qarz qolgan yozuvlar"
     : lockedType
@@ -1073,7 +1073,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
               <div>
                 <h2 className="text-lg font-semibold text-slate-800">Qabul qilinadigan cheklar</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Kassir yangi yozuv yaratmaydi, faqat nurse/LOR yuborgan chekni qabul qiladi.
+                  Kassir yangi yozuv yaratmaydi, faqat hamshira/LOR yuborgan chekni qabul qiladi.
                 </p>
               </div>
               {pendingChecksLoading ? (
@@ -1093,7 +1093,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
               <div className="mt-2">
                 <QuickSearchInput
                   label="Chek qidirish"
-                  placeholder="Chek ID yoki bemor F.I.O bo'yicha qidirish..."
+                  placeholder="Chek raqami yoki bemor F.I.O bo'yicha qidirish..."
                   value={pendingSearch}
                   onChange={setPendingSearch}
                   items={pendingSuggestionItems}
@@ -1110,7 +1110,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 <Table
                   data={pendingChecks}
                   columns={[
-                    { key: "checkId", label: "Chek ID", hideOnMobile: true },
+                    { key: "checkId", label: "Chek raqami", hideOnMobile: true },
                     { key: "patientName", label: "Bemor F.I.O" },
                     {
                       key: "total",
@@ -1149,7 +1149,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                   ]}
                   stickyHeader
                   emptyTitle="Qabul qilinadigan chek topilmadi"
-                  emptyDescription="Nurse yoki LOR yangi chek yuborganda shu yerda ko'rinadi."
+                  emptyDescription="Hamshira yoki LOR yangi chek yuborganda shu yerda ko'rinadi."
                 />
               </div>
             </div>
@@ -1169,7 +1169,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 <p>
                   {String(selectedPendingCheck?.creatorRole || "").toLowerCase() === "nurse"
                     ? "Hamshira"
-                    : "Doktor"}
+                    : "Shifokor"}
                   : {selectedPendingCheck?.creatorName || "-"}
                 </p>
                 {String(selectedPendingCheck?.creatorRole || "").toLowerCase() === "lor" &&

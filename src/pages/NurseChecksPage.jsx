@@ -86,10 +86,10 @@ function NurseChecksPage() {
   return (
     <div className="nurse-theme-shell space-y-6 overflow-x-hidden">
       <div className="card nurse-hero-card p-4 sm:p-5">
-        <p className="nurse-hero-badge">Nurse Checks</p>
+        <p className="nurse-hero-badge">Hamshira cheklari</p>
         <h1 className="nurse-hero-title">Mening cheklarim</h1>
         <p className="nurse-hero-subtitle">
-          Faqat siz yaratgan nurse cheklari chiqadi. Bemor ism-familiyasi bo'yicha qidiring.
+          Faqat siz yaratgan hamshira cheklari chiqadi. Bemor ism-familiyasi bo'yicha qidiring.
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="nurse-hero-kpi">
@@ -146,7 +146,7 @@ function NurseChecksPage() {
           data={checks}
           stickyHeader
           emptyTitle="Cheklar topilmadi"
-          emptyDescription="Hozircha siz yaratgan nurse cheklari mavjud emas."
+          emptyDescription="Hozircha siz yaratgan hamshira cheklari mavjud emas."
           columns={[
             {
               key: "patient",
