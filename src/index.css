@@ -1,4 +1,4 @@
-﻿@import url("https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap");
+﻿@import url("https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&family=Sora:wght@400;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -102,12 +102,282 @@ html.theme-dark .app-shell {
     #060d1a;
 }
 
+.sampi-login-shell {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(14, 116, 144, 0.12), transparent 36%),
+    radial-gradient(circle at 92% 100%, rgba(249, 115, 22, 0.12), transparent 40%),
+    linear-gradient(140deg, #ecfeff 0%, #f8fafc 48%, #fff7ed 100%);
+}
+
+.sampi-login-shell::before,
+.sampi-login-shell::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+  filter: blur(10px);
+}
+
+.sampi-login-shell::before {
+  width: min(38vw, 420px);
+  height: min(38vw, 420px);
+  left: -9%;
+  top: -11%;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.22), transparent 70%);
+}
+
+.sampi-login-shell::after {
+  width: min(34vw, 380px);
+  height: min(34vw, 380px);
+  right: -8%;
+  bottom: -15%;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.24), transparent 72%);
+}
+
+.sampi-login-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(15, 23, 42, 0.22) 0.5px, transparent 0.5px);
+  background-size: 3px 3px;
+}
+
 html.theme-dark .sampi-login-shell {
   background:
-    radial-gradient(circle at 10% 0%, rgba(14, 165, 233, 0.22), transparent 42%),
-    radial-gradient(circle at 88% 90%, rgba(249, 115, 22, 0.18), transparent 38%),
+    radial-gradient(circle at 10% 0%, rgba(14, 165, 233, 0.3), transparent 42%),
+    radial-gradient(circle at 88% 90%, rgba(249, 115, 22, 0.24), transparent 38%),
     #060d1a;
 }
+
+html.theme-dark .sampi-login-noise {
+  opacity: 0.16;
+  background-image: radial-gradient(rgba(219, 234, 254, 0.38) 0.5px, transparent 0.5px);
+}
+
+.sampi-login-stage {
+  align-items: stretch;
+}
+
+.sampi-login-story {
+  position: relative;
+  border-radius: 1.5rem;
+  padding: 1.4rem 1.25rem;
+  border: 1px solid rgba(14, 116, 144, 0.18);
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.7)),
+    radial-gradient(circle at 18% 10%, rgba(14, 165, 233, 0.11), transparent 52%);
+  box-shadow: 0 30px 45px -38px rgba(14, 116, 144, 0.5);
+  animation: login-float 7.6s ease-in-out infinite;
+}
+
+.sampi-login-eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.sampi-login-title {
+  margin: 0.75rem 0 0;
+  font-family: "Sora", "Golos Text", sans-serif;
+  font-size: clamp(1.45rem, 3vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.08;
+  color: #0f172a;
+  text-wrap: balance;
+}
+
+.sampi-login-title span {
+  display: block;
+  background: linear-gradient(120deg, #0ea5e9 10%, #0284c7 44%, #f97316 88%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.sampi-login-subtitle {
+  margin: 0.95rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.52;
+  color: #475569;
+  max-width: 44ch;
+}
+
+.sampi-login-flow {
+  margin-top: 1.2rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.sampi-login-flow-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.sampi-login-flow-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0ea5e9, #f97316);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.18);
+}
+
+.sampi-login-role-strip {
+  margin-top: 1.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.sampi-login-role-strip span {
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid rgba(14, 116, 144, 0.22);
+  background: rgba(255, 255, 255, 0.78);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #155e75;
+}
+
+.sampi-login-panel {
+  border-radius: 1.55rem !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(248, 250, 252, 0.94)),
+    radial-gradient(circle at 92% -4%, rgba(14, 165, 233, 0.12), transparent 46%) !important;
+}
+
+.sampi-login-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.sampi-login-brand-badge {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.22), rgba(249, 115, 22, 0.25));
+  color: #0f172a;
+  font-size: 0.85rem;
+  font-weight: 900;
+  box-shadow: inset 0 0 0 1px rgba(14, 116, 144, 0.25);
+}
+
+.sampi-login-input {
+  min-height: 3.2rem;
+  border-radius: 0.95rem !important;
+}
+
+.sampi-login-submit {
+  min-height: 3.1rem;
+  border-radius: 0.95rem !important;
+  font-size: 1.05rem;
+  font-weight: 800;
+  background: linear-gradient(95deg, #0891b2, #0284c7 54%, #ea580c) !important;
+  box-shadow: 0 20px 24px -24px rgba(2, 132, 199, 0.75);
+}
+
+.sampi-login-submit:hover {
+  filter: saturate(1.08) brightness(1.04);
+}
+
+.sampi-login-hint {
+  margin: 0.15rem 0 0;
+  text-align: center;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #0e7490;
+}
+
+html.theme-dark .sampi-login-story {
+  border-color: rgba(56, 189, 248, 0.25);
+  background:
+    linear-gradient(140deg, rgba(9, 22, 40, 0.92), rgba(10, 20, 36, 0.76)),
+    radial-gradient(circle at 16% 8%, rgba(14, 165, 233, 0.22), transparent 50%);
+  box-shadow: 0 40px 50px -44px rgba(2, 132, 199, 0.6);
+}
+
+html.theme-dark .sampi-login-eyebrow {
+  color: #67e8f9;
+}
+
+html.theme-dark .sampi-login-title {
+  color: #e2e8f0;
+}
+
+html.theme-dark .sampi-login-subtitle {
+  color: #9fb2cb;
+}
+
+html.theme-dark .sampi-login-flow-item {
+  color: #d2deef;
+}
+
+html.theme-dark .sampi-login-flow-dot {
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.26);
+}
+
+html.theme-dark .sampi-login-role-strip span {
+  border-color: rgba(56, 189, 248, 0.34);
+  background: rgba(8, 20, 35, 0.8);
+  color: #9edfff;
+}
+
+html.theme-dark .sampi-login-panel {
+  border-color: #26405d !important;
+  background:
+    linear-gradient(180deg, rgba(10, 24, 42, 0.97), rgba(8, 20, 35, 0.94)),
+    radial-gradient(circle at 92% -4%, rgba(14, 165, 233, 0.18), transparent 46%) !important;
+}
+
+html.theme-dark .sampi-login-brand-badge {
+  color: #e2e8f0;
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.28);
+}
+
+html.theme-dark .sampi-login-hint {
+  color: #8de6ff;
+}
+
+@media (max-width: 1023px) {
+  .sampi-login-story {
+    padding: 1.2rem 1.05rem;
+  }
+
+  .sampi-login-title span {
+    display: inline;
+  }
+}
+
+@media (max-width: 640px) {
+  .sampi-login-story {
+    padding: 1rem 0.9rem;
+  }
+
+  .sampi-login-subtitle {
+    font-size: 0.88rem;
+  }
+
+  .sampi-login-flow {
+    display: none;
+  }
+
+  .sampi-login-role-strip {
+    display: none;
+  }
+}
+
 
 .route-enter {
   animation: page-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -723,6 +993,17 @@ html.theme-dark .sampi-choice-card.is-disabled {
   font-weight: 800;
 }
 
+
+@keyframes login-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
 @keyframes page-enter {
   from {
     opacity: 0;
@@ -1207,6 +1488,7 @@ html.theme-dark .hover\:bg-slate-50\/80:hover {
   .route-enter,
   .route-enter > div > *,
   .route-enter .card,
+  .sampi-login-story,
   .lor-select-glow,
   .sampi-sidebar-group,
   .lor-choice-card,
