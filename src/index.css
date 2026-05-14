@@ -1460,15 +1460,96 @@ html.theme-dark .nurse-accent-btn:hover {
 }
 
 @media (max-width: 640px) {
+  body {
+    font-size: 16.5px;
+    line-height: 1.56;
+    text-rendering: optimizeLegibility;
+  }
+
   .card {
-    border-radius: 1rem;
+    border-radius: 1.06rem;
   }
 
   input,
   select,
   textarea,
   button {
-    font-size: 16px;
+    font-size: 16.5px;
+  }
+
+  .text-xs {
+    font-size: 0.82rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  .text-sm {
+    font-size: 0.98rem !important;
+    line-height: 1.46rem !important;
+  }
+
+  .text-base {
+    font-size: 1.05rem !important;
+    line-height: 1.58rem !important;
+  }
+
+  .text-lg {
+    font-size: 1.22rem !important;
+    line-height: 1.74rem !important;
+  }
+
+  .text-xl {
+    font-size: 1.44rem !important;
+    line-height: 1.95rem !important;
+  }
+
+  .sampi-navbar-user {
+    padding: 0.5rem 0.65rem;
+  }
+
+  .sampi-sidebar-link {
+    min-height: 50px;
+    padding: 0.76rem 0.9rem;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .sampi-group-title p {
+    font-size: 0.8rem !important;
+    letter-spacing: 0.08em;
+  }
+
+  .sampi-login-title {
+    font-size: 1.72rem;
+    line-height: 1.13;
+  }
+
+  .sampi-login-subtitle {
+    font-size: 0.96rem;
+    line-height: 1.56;
+  }
+
+  .sampi-login-panel-head h2 {
+    font-size: 1.92rem !important;
+  }
+
+  .nurse-hero-title {
+    font-size: 1.68rem;
+    line-height: 1.14;
+  }
+
+  .nurse-hero-subtitle {
+    font-size: 0.99rem;
+    line-height: 1.55;
+  }
+
+  .nurse-block-title {
+    font-size: 1.36rem;
+    line-height: 1.3;
+  }
+
+  .nurse-step-icon-wrap em {
+    font-size: 0.82rem;
   }
 
   *::-webkit-scrollbar {
