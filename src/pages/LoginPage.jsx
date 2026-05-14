@@ -100,12 +100,13 @@ function LoginPage() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+          <form onSubmit={handleSubmit} autoComplete="off" className="mt-7 space-y-4">
             <Input
               label="Email"
               type="email"
               className="sampi-login-input"
-              placeholder="nurse@mail.com"
+              placeholder="Emailingizni kiriting"
+              autoComplete="off"
               value={form.email}
               onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
             />
@@ -113,7 +114,8 @@ function LoginPage() {
               label="Parol"
               type="password"
               className="sampi-login-input"
-              placeholder="********"
+              placeholder="Parolingizni kiriting"
+              autoComplete="new-password"
               value={form.password}
               onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
             />
@@ -124,7 +126,7 @@ function LoginPage() {
               Kirish
             </Button>
 
-            <p className="sampi-login-hint">Barcha bo‘limlar uchun yagona xavfsiz kirish</p>
+            <p className="sampi-login-hint">Barcha bo'limlar uchun yagona xavfsiz kirish</p>
           </form>
         </section>
       </div>
