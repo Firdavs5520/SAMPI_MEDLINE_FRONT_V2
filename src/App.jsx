@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import RequireLorIdentity from "./components/RequireLorIdentity.jsx";
@@ -24,6 +25,48 @@ import { roleHomePath } from "./utils/constants.js";
 
 function App() {
   const { token, role, lorIdentity } = useAuth();
+
+  useEffect(() => {
+    const allowCopyForTarget = (target) => {
+      if (!(target instanceof Element)) return false;
+      return Boolean(
+        target.closest(
+          "input, textarea, [contenteditable='true'], [data-allow-copy='true'], .allow-copy, .allow-select"
+        )
+      );
+    };
+
+    const onKeyDown = (event) => {
+      const isCopyShortcut =
+        (event.ctrlKey || event.metaKey) &&
+        (event.key?.toLowerCase() === "c" || event.code === "KeyC");
+      if (isCopyShortcut && !allowCopyForTarget(event.target)) {
+        event.preventDefault();
+      }
+    };
+
+    const onCopy = (event) => {
+      if (!allowCopyForTarget(event.target)) {
+        event.preventDefault();
+      }
+    };
+
+    const onSelectStart = (event) => {
+      if (!allowCopyForTarget(event.target)) {
+        event.preventDefault();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("copy", onCopy);
+    document.addEventListener("selectstart", onSelectStart);
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("copy", onCopy);
+      document.removeEventListener("selectstart", onSelectStart);
+    };
+  }, []);
 
   const home =
     token && role
