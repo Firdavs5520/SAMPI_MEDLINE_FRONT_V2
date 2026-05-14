@@ -950,6 +950,12 @@ html.theme-dark .lor-choice-action {
   color: #8fdaf5;
 }
 
+html.theme-dark .sampi-brand-mark {
+  background: rgba(56, 189, 248, 0.22) !important;
+  border: 1px solid rgba(56, 189, 248, 0.32);
+  color: #c9f3ff !important;
+}
+
 html.theme-dark .text-slate-900 {
   color: #f8fafc !important;
 }
@@ -972,10 +978,14 @@ html.theme-dark .text-slate-400 {
 }
 
 html.theme-dark .text-rose-700,
-html.theme-dark .text-rose-800 {
+html.theme-dark .text-rose-800,
+html.theme-dark .text-rose-600,
+html.theme-dark .text-rose-500 {
   color: #fda4af !important;
 }
 
+html.theme-dark .text-amber-900,
+html.theme-dark .text-amber-600,
 html.theme-dark .text-amber-700,
 html.theme-dark .text-amber-800 {
   color: #fcd34d !important;
@@ -984,6 +994,15 @@ html.theme-dark .text-amber-800 {
 html.theme-dark .text-emerald-700,
 html.theme-dark .text-emerald-800 {
   color: #86efac !important;
+}
+
+html.theme-dark .text-primary {
+  color: #8ae6ff !important;
+}
+
+html.theme-dark .text-sky-700,
+html.theme-dark .text-sky-800 {
+  color: #9fdfff !important;
 }
 
 html.theme-dark .text-cyan-900,
@@ -1000,6 +1019,10 @@ html.theme-dark .text-orange-700 {
 
 html.theme-dark .bg-white {
   background-color: #0f1a2c !important;
+}
+
+html.theme-dark .bg-white\/80 {
+  background-color: rgba(15, 26, 44, 0.86) !important;
 }
 
 html.theme-dark .bg-slate-50 {
@@ -1030,6 +1053,18 @@ html.theme-dark .bg-cyan-50 {
   background-color: #0e2a40 !important;
 }
 
+html.theme-dark .bg-cyan-50\/70 {
+  background-color: rgba(14, 42, 64, 0.82) !important;
+}
+
+html.theme-dark .bg-cyan-100 {
+  background-color: #14344d !important;
+}
+
+html.theme-dark .bg-blue-50 {
+  background-color: #132b44 !important;
+}
+
 html.theme-dark .bg-emerald-50 {
   background-color: #102f24 !important;
 }
@@ -1038,12 +1073,60 @@ html.theme-dark .bg-rose-50 {
   background-color: #351c2a !important;
 }
 
+html.theme-dark .bg-rose-50\/70 {
+  background-color: rgba(53, 28, 42, 0.82) !important;
+}
+
+html.theme-dark .bg-rose-50\/40 {
+  background-color: rgba(53, 28, 42, 0.56) !important;
+}
+
+html.theme-dark .bg-rose-100 {
+  background-color: #45293c !important;
+}
+
 html.theme-dark .bg-amber-50 {
   background-color: #38280f !important;
 }
 
+html.theme-dark .bg-amber-50\/80 {
+  background-color: rgba(56, 40, 15, 0.84) !important;
+}
+
+html.theme-dark .bg-amber-100 {
+  background-color: #49361e !important;
+}
+
 html.theme-dark .bg-orange-50 {
   background-color: #2f2113 !important;
+}
+
+html.theme-dark .bg-orange-300 {
+  background-color: #6f4e27 !important;
+}
+
+html.theme-dark .bg-sky-50 {
+  background-color: #112b43 !important;
+}
+
+html.theme-dark .bg-sky-50\/70 {
+  background-color: rgba(17, 43, 67, 0.82) !important;
+}
+
+html.theme-dark .bg-sky-100 {
+  background-color: #15354f !important;
+}
+
+html.theme-dark .bg-indigo-50 {
+  background-color: #1d2848 !important;
+}
+
+html.theme-dark .bg-rose-300 {
+  background-color: #6f3c55 !important;
+}
+
+html.theme-dark .bg-primary\/10 {
+  background-color: rgba(56, 189, 248, 0.22) !important;
 }
 
 html.theme-dark .border-slate-100,
@@ -1060,12 +1143,28 @@ html.theme-dark .border-cyan-200 {
   border-color: #1f4966 !important;
 }
 
+html.theme-dark .border-cyan-300 {
+  border-color: #255a7d !important;
+}
+
+html.theme-dark .border-blue-200 {
+  border-color: #2b5878 !important;
+}
+
 html.theme-dark .border-emerald-200 {
   border-color: #1b4d35 !important;
 }
 
 html.theme-dark .border-rose-200 {
   border-color: #5a3046 !important;
+}
+
+html.theme-dark .border-rose-300 {
+  border-color: #6a3a53 !important;
+}
+
+html.theme-dark .border-rose-500 {
+  border-color: #a44b6f !important;
 }
 
 html.theme-dark .border-amber-200 {
@@ -1076,12 +1175,32 @@ html.theme-dark .border-orange-200 {
   border-color: #5b4320 !important;
 }
 
+html.theme-dark .border-sky-200 {
+  border-color: #2b5a79 !important;
+}
+
+html.theme-dark .border-indigo-200 {
+  border-color: #3a4f78 !important;
+}
+
+html.theme-dark .text-blue-700 {
+  color: #9ec5ff !important;
+}
+
 html.theme-dark .hover\:bg-slate-100:hover {
   background-color: #16243a !important;
 }
 
 html.theme-dark .hover\:bg-slate-300:hover {
   background-color: #2b405a !important;
+}
+
+html.theme-dark .hover\:bg-slate-50:hover {
+  background-color: #15243a !important;
+}
+
+html.theme-dark .hover\:bg-slate-50\/80:hover {
+  background-color: rgba(16, 30, 50, 0.88) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
