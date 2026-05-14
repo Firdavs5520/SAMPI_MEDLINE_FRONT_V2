@@ -54,6 +54,14 @@ const getMonitoring = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data });
 });
 
+const resetTodayOperationalData = asyncHandler(async (req, res) => {
+  const data = await reportService.resetTodayOperationalData({
+    confirm: req.body?.confirm
+  });
+
+  res.status(200).json({ success: true, data });
+});
+
 module.exports = {
   getAllChecks,
   getRevenue,
@@ -62,5 +70,6 @@ module.exports = {
   getCurrentStock,
   getMostUsedMedicines,
   getShiftCloseReport,
-  getMonitoring
+  getMonitoring,
+  resetTodayOperationalData
 };
