@@ -739,6 +739,24 @@ html.theme-dark .sampi-choice-card.is-disabled {
   transition: border-color 130ms ease, background-color 130ms ease, color 130ms ease;
 }
 
+.nurse-step-text {
+  display: inline;
+}
+
+.nurse-step-icon-wrap {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.32rem;
+  color: inherit;
+}
+
+.nurse-step-icon-wrap em {
+  font-style: normal;
+  font-weight: 800;
+  font-size: 0.74rem;
+}
+
 .nurse-step-pill.is-active {
   border-color: rgba(14, 116, 144, 0.72);
   background: linear-gradient(180deg, #ecfeff, #f0f9ff);
@@ -928,6 +946,18 @@ html.theme-dark .nurse-accent-btn:hover {
   .nurse-inline-info {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .nurse-step-text {
+    display: none;
+  }
+
+  .nurse-step-icon-wrap {
+    display: inline-flex;
+  }
+
+  .nurse-step-pill {
+    padding: 0.5rem 0.35rem;
   }
 }
 

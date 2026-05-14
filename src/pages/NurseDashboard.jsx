@@ -22,12 +22,12 @@ import {
   writeCheckToPrintTab
 } from "../utils/printReceipt.js";
 
-const STEP_LABELS = [
-  "1. Hamshira",
-  "2. Bemor",
-  "3. Dorilar",
-  "4. Xizmatlar",
-  "5. Chek preview"
+const STEP_ITEMS = [
+  { label: "1. Hamshira", icon: "user" },
+  { label: "2. Bemor", icon: "patient" },
+  { label: "3. Dorilar", icon: "pill" },
+  { label: "4. Xizmatlar", icon: "stethoscope" },
+  { label: "5. Chek preview", icon: "receipt" }
 ];
 const PRICE_TIER_LABELS = { first: "1-marta", second: "2-marta", third: "3-marta" };
 const PRICE_TIER_ORDER = ["first", "second", "third"];
@@ -69,6 +69,60 @@ const getServicePrice = (service, tier) => {
   if (!tiers) return null;
   return tiers[PRICE_TIER_ORDER.includes(tier) ? tier : "first"];
 };
+
+function StepIcon({ name }) {
+  const common = {
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "1.9",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    className: "h-4 w-4"
+  };
+
+  if (name === "user") {
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="7" r="4" />
+        <path d="M5 21a7 7 0 0 1 14 0" />
+      </svg>
+    );
+  }
+  if (name === "patient") {
+    return (
+      <svg {...common}>
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M19 8v6M16 11h6" />
+      </svg>
+    );
+  }
+  if (name === "pill") {
+    return (
+      <svg {...common}>
+        <path d="M8 4a4 4 0 0 1 5.7 0l6.3 6.3a4 4 0 0 1-5.7 5.7L8 9.7A4 4 0 0 1 8 4z" />
+        <path d="M9 9l6 6" />
+      </svg>
+    );
+  }
+  if (name === "stethoscope") {
+    return (
+      <svg {...common}>
+        <path d="M6 4v5a4 4 0 0 0 8 0V4" />
+        <path d="M10 13v2a4 4 0 1 0 8 0v-1" />
+        <circle cx="19" cy="12" r="2" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...common}>
+      <path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V3z" />
+      <path d="M9 8h6M9 12h6M9 16h4" />
+    </svg>
+  );
+}
 
 function NurseDashboard() {
   const [loading, setLoading] = useState(true);
@@ -390,16 +444,21 @@ function NurseDashboard() {
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5 nurse-step-grid">
-          {STEP_LABELS.map((label, i) => {
+          {STEP_ITEMS.map((item, i) => {
             const n = i + 1;
             const active = n === step;
             const done = n < step;
             return (
               <div
-                key={label}
+                key={item.label}
                 className={`nurse-step-pill ${active ? "is-active" : done ? "is-done" : ""}`}
               >
-                {label}
+                <span className="nurse-step-text">{item.label}</span>
+                <span className="nurse-step-icon-wrap" aria-hidden="true">
+                  <StepIcon name={item.icon} />
+                  <em>{n}</em>
+                </span>
+                <span className="sr-only">{item.label}</span>
               </div>
             );
           })}
