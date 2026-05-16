@@ -154,15 +154,17 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
     >
       <div className="flex h-full flex-col">
         <div className={`flex items-center border-b border-slate-200 py-4 ${compact ? "justify-center px-2" : "justify-between px-4 sm:px-5"}`}>
-          <div className={`flex min-w-0 items-center gap-2 ${compact ? "lg:justify-center lg:w-full" : ""}`}>
+          <div
+            className={`sampi-sidebar-brand-row min-w-0 items-center ${
+              compact ? "sampi-sidebar-brand-row-compact lg:w-full" : ""
+            }`}
+          >
             <div className="sampi-brand-mark flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-sm font-extrabold text-primary">
               SM
             </div>
             <h2
               className={`sampi-brand-title text-lg font-bold leading-tight text-slate-800 ${
-                compact
-                  ? "lg:pointer-events-none lg:max-w-0 lg:translate-x-1 lg:opacity-0"
-                  : "lg:max-w-[12rem] lg:translate-x-0 lg:opacity-100"
+                compact ? "lg:pointer-events-none" : ""
               }`}
             >
               Sampi Medline
