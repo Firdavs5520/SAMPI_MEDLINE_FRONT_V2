@@ -22,7 +22,7 @@ const formatLorIdentity = (value) => {
   return String(value || "-");
 };
 
-const buildRowsHtml = (items) =>
+const buildRowsHtml = (items, checkType) =>
   items
     .map((item) => {
       const line = `${escapeHtml(item.name)} x${escapeHtml(item.quantity)}`;
@@ -37,12 +37,12 @@ const buildPrintHtml = (check) => {
 
   const medicineSection =
     medicineItems.length > 0
-      ? `<div class="section-title">Dorilar</div><div class="divider"></div>${buildRowsHtml(medicineItems)}<div class="divider"></div>`
+      ? `<div class="section-title">Dorilar</div><div class="divider"></div>${buildRowsHtml(medicineItems, check.type)}<div class="divider"></div>`
       : "";
 
   const serviceSection =
     serviceItems.length > 0
-      ? `<div class="section-title">Xizmatlar</div><div class="divider"></div>${buildRowsHtml(serviceItems)}<div class="divider"></div>`
+      ? `<div class="section-title">Xizmatlar</div><div class="divider"></div>${buildRowsHtml(serviceItems, check.type)}<div class="divider"></div>`
       : "";
 
   return `<!doctype html>

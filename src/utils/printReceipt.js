@@ -226,7 +226,7 @@ const isStandalonePwa = () => {
       window.navigator.standalone === true ||
       document.referrer.startsWith("android-app://")
     );
-  } catch {
+  } catch (error) {
     return false;
   }
 };
@@ -289,7 +289,7 @@ const printInsideCurrentApp = (check) => {
       try {
         frameWindow.focus();
         frameWindow.print();
-      } catch {
+      } catch (error) {
         cleanup();
       }
     }, 120);
@@ -309,19 +309,17 @@ export const openPendingPrintTab = () => {
     return openInlinePrintSession();
   }
 
-  return openBrowserPrintTab() || openInlinePrintSession();
+  return openBrowserPrintTab();
 };
 
 export const writeCheckToPrintTab = (printSession, check) => {
-  if (!printSession) return printInsideCurrentApp(check);
+  if (!printSession) return false;
 
   if (printSession.__inlinePrint) {
     return printInsideCurrentApp(check);
   }
 
-  if (!printSession.tab || printSession.tab.closed) {
-    return printInsideCurrentApp(check);
-  }
+  if (!printSession.tab || printSession.tab.closed) return false;
 
   printSession.tab.document.open();
   printSession.tab.document.write(buildCheckPrintHtml(check));

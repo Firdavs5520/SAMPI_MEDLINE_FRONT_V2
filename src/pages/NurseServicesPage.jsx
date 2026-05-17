@@ -69,17 +69,6 @@ function NurseServicesPage() {
     () => services.filter((item) => item.type === "nurse"),
     [services]
   );
-  const serviceStats = useMemo(() => {
-    const total = nurseServices.length;
-    const optionsList = nurseServices.map((item) => getServicePriceOptions(item));
-    const firstSum = optionsList.reduce((sum, item) => sum + Number(item?.first || 0), 0);
-    const maxThird = optionsList.reduce((max, item) => Math.max(max, Number(item?.third || 0)), 0);
-    return {
-      total,
-      avgFirst: total ? Math.round(firstSum / total) : 0,
-      maxThird
-    };
-  }, [nurseServices]);
 
   const loadServices = async () => {
     setLoading(true);
@@ -211,28 +200,8 @@ function NurseServicesPage() {
   }
 
   return (
-    <div className="nurse-theme-shell space-y-6">
-      <div className="card nurse-hero-card p-4 sm:p-5">
-        <p className="nurse-hero-badge">Hamshira xizmatlari</p>
-        <h1 className="nurse-hero-title">Xizmat konfiguratsiyasi</h1>
-        <p className="nurse-hero-subtitle">1/2/3-marta narxlar bilan hamshira xizmatlarini boshqaring.</p>
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          <div className="nurse-hero-kpi">
-            <span>Jami xizmat</span>
-            <strong>{serviceStats.total}</strong>
-          </div>
-          <div className="nurse-hero-kpi">
-            <span>1-marta o'rtacha</span>
-            <strong>{formatCurrency(serviceStats.avgFirst)}</strong>
-          </div>
-          <div className="nurse-hero-kpi">
-            <span>3-marta maksimal</span>
-            <strong>{formatCurrency(serviceStats.maxThird)}</strong>
-          </div>
-        </div>
-      </div>
-
-      <div className="card nurse-work-card p-4">
+    <div className="space-y-6">
+      <div className="card p-4">
         <h2 className="text-lg font-semibold text-slate-800">Xizmat Qo'shish</h2>
         <p className="mb-4 text-sm text-slate-500">
           Xizmat nomini va 1/2/3-marta narxlarini kiriting.
@@ -275,14 +244,14 @@ function NurseServicesPage() {
               setForm((prev) => ({ ...prev, third: formatMoneyInput(e.target.value) }))
             }
           />
-          <Button type="submit" className="nurse-accent-btn h-fit self-end" loading={saving}>
+          <Button type="submit" className="h-fit self-end" loading={saving}>
             Qo'shish
           </Button>
         </form>
       </div>
 
       {editingServiceId ? (
-        <div className="card nurse-work-card p-4">
+        <div className="card p-4">
           <h3 className="text-base font-semibold text-slate-800">Xizmatni tahrirlash</h3>
           <form
             onSubmit={handleSaveEdit}
@@ -337,7 +306,7 @@ function NurseServicesPage() {
                 }))
               }
             />
-            <Button type="submit" className="nurse-accent-btn h-fit self-end" loading={updating}>
+            <Button type="submit" className="h-fit self-end" loading={updating}>
               Saqlash
             </Button>
             <Button
@@ -356,7 +325,7 @@ function NurseServicesPage() {
       <Alert type="success" message={success} />
       <Alert type="error" message={error} />
 
-      <div className="card nurse-work-card p-4">
+      <div className="card p-4">
         <h3 className="mb-4 text-base font-semibold text-slate-800">
           Hamshira xizmatlari ro'yxati
         </h3>

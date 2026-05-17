@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import authService from "../services/authService.js";
 import { storageKeys } from "../utils/constants.js";
