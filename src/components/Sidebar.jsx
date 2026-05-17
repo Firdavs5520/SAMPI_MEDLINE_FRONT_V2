@@ -202,7 +202,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
         <button
           type="button"
           aria-label={isCompact ? "To'liq menyu" : "Faqat ikonlar"}
-          className="sampi-sidebar-toggle absolute -right-5 top-24 hidden h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-md transition hover:scale-105 hover:bg-slate-50 lg:inline-flex"
+          className="sampi-sidebar-toggle absolute right-3 top-[5.15rem] z-10 hidden h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-md transition hover:scale-105 hover:bg-slate-50 lg:inline-flex"
           title={isCompact ? "To'liq menyu" : "Faqat ikonlar"}
           onClick={onToggleCompact}
         >
