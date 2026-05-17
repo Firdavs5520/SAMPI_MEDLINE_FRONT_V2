@@ -1,7 +1,8 @@
 export const storageKeys = {
   token: "sampi_token",
   user: "sampi_user",
-  lorIdentity: "sampi_lor_identity"
+  lorIdentity: "sampi_lor_identity",
+  themeMode: "sampi_theme_mode"
 };
 
 export const roleHomePath = {
@@ -31,15 +32,15 @@ export const sidebarMenus = {
   lor: [
     { label: "Mening cheklarim", path: "/lor/checks", end: true, icon: "receipt" },
     { label: "Xizmatdan foydalanish", path: "/lor/services", end: true, icon: "stethoscope" },
-    { label: "Doktorlarni boshqarish", path: "/lor/specialists", end: true, icon: "users" },
+    { label: "Shifokorlarni boshqarish", path: "/lor/specialists", end: true, icon: "users" },
     { label: "Xizmat qo'shish", path: "/lor/services/add", end: true, icon: "plus" }
   ],
   delivery: [{ label: "Yetkazuvchi paneli", path: "/delivery", end: true, icon: "truck" }],
   cashier: [
-    { label: "Nurse chek qabuli", path: "/cashier/nurse-patients", end: true, group: "Nurse bo'limi", icon: "user-plus" },
-    { label: "Nurse yozuvlari", path: "/cashier/nurse-entries", end: true, group: "Nurse bo'limi", icon: "list" },
-    { label: "Nurse tarixi", path: "/cashier/nurse-history", end: true, group: "Nurse bo'limi", icon: "history" },
-    { label: "Nurse shifokorlar", path: "/cashier/nurse-specialists", end: true, group: "Nurse bo'limi", icon: "users" },
+    { label: "Hamshira cheklari qabuli", path: "/cashier/nurse-patients", end: true, group: "Hamshira bo'limi", icon: "user-plus" },
+    { label: "Hamshira yozuvlari", path: "/cashier/nurse-entries", end: true, group: "Hamshira bo'limi", icon: "list" },
+    { label: "Hamshira tarixi", path: "/cashier/nurse-history", end: true, group: "Hamshira bo'limi", icon: "history" },
+    { label: "Hamshira mutaxassislari", path: "/cashier/nurse-specialists", end: true, group: "Hamshira bo'limi", icon: "users" },
     { label: "LOR chek qabuli", path: "/cashier/lor-patients", end: true, group: "LOR bo'limi", icon: "user-plus" },
     { label: "LOR yozuvlari", path: "/cashier/lor-entries", end: true, group: "LOR bo'limi", icon: "list" },
     { label: "LOR tarixi", path: "/cashier/lor-history", end: true, group: "LOR bo'limi", icon: "history" },

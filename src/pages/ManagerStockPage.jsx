@@ -4,17 +4,18 @@ import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
 import Table from "../components/Table.jsx";
 import Button from "../components/Button.jsx";
+import StatusBadge from "../components/StatusBadge.jsx";
 import { extractErrorMessage } from "../utils/format.js";
 
 function getStockStatus(stockValue) {
   const safeStock = Number(stockValue) || 0;
   if (safeStock <= 0) {
-    return { label: "Qolmadi", className: "bg-rose-100 text-rose-700" };
+    return { label: "Qolmadi", tone: "error" };
   }
   if (safeStock <= 10) {
-    return { label: "Kam qoldi", className: "bg-amber-100 text-amber-700" };
+    return { label: "Kam qoldi", tone: "warn" };
   }
-  return { label: "Mavjud", className: "bg-emerald-100 text-emerald-700" };
+  return { label: "Mavjud", tone: "success" };
 }
 
 function ManagerStockPage() {
@@ -87,6 +88,7 @@ function ManagerStockPage() {
 
         <Table
           data={stock}
+          stickyHeader
           columns={[
             { key: "name", label: "Dori nomi" },
             {
@@ -100,11 +102,7 @@ function ManagerStockPage() {
               render: (row) => {
                 const status = getStockStatus(row.stock);
                 return (
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}
-                  >
-                    {status.label}
-                  </span>
+                  <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
                 );
               }
             }

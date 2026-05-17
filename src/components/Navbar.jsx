@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { roleHomePath, roleLabels } from "../utils/constants.js";
 import Button from "./Button.jsx";
+import ThemeModeSwitch from "./ThemeModeSwitch.jsx";
 
 const LEGACY_NAME_MAP = {
   "Nurse User": "Hamshira",
@@ -35,13 +36,16 @@ function Navbar({ onMenuOpen }) {
   };
 
   return (
-    <header className="sampi-navbar sticky top-0 z-20 border-b border-slate-200 backdrop-blur">
+    <header
+      className="sampi-navbar sticky top-0 z-20 border-b border-slate-200 backdrop-blur"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
       <div className="flex min-w-0 items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-4 lg:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={onMenuOpen}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 lg:hidden"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 lg:hidden"
             aria-label="Menyuni ochish"
           >
             <svg
@@ -61,21 +65,22 @@ function Navbar({ onMenuOpen }) {
           <button
             type="button"
             onClick={handleGoHome}
-            className="sampi-navbar-user min-w-0 rounded-xl px-2.5 py-1.5 text-left text-sm"
+            className="sampi-navbar-user min-w-0 rounded-lg px-2 py-1 text-left text-sm text-slate-600"
           >
-            <div className="sampi-navbar-user-name truncate font-semibold">{displayName}</div>
-            <div className="sampi-navbar-user-role hidden truncate text-xs sm:block">
-              {roleLabels[user?.role] || "-"}
-            </div>
+            <div className="truncate font-semibold text-slate-800">{displayName}</div>
+            <div className="hidden truncate text-xs sm:block">{roleLabels[user?.role] || "-"}</div>
           </button>
         </div>
-        <Button
-          variant="secondary"
-          onClick={handleLogout}
-          className="shrink-0 px-3 py-2 text-xs sm:text-sm"
-        >
-          Chiqish
-        </Button>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeModeSwitch compact />
+          <Button
+            variant="secondary"
+            onClick={handleLogout}
+            className="shrink-0 px-3 py-2 text-xs sm:text-sm"
+          >
+            Chiqish
+          </Button>
+        </div>
       </div>
     </header>
   );

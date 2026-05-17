@@ -7,6 +7,7 @@ import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
 import BusyOverlay from "../components/BusyOverlay.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
+import MobileActionBar from "../components/MobileActionBar.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
   extractErrorMessage,
@@ -20,7 +21,7 @@ import {
   writeCheckToPrintTab
 } from "../utils/printReceipt.js";
 
-const STEP_LABELS = ["1. Doktor", "2. Bemor", "3. Xizmatlar", "4. Chek preview"];
+const STEP_LABELS = ["1. Shifokor", "2. Bemor", "3. Xizmatlar", "4. Chek ko'rinishi"];
 
 const normalizeSearch = (value) =>
   String(value ?? "")
@@ -162,7 +163,7 @@ function LorServicesPage() {
         try {
           element.focus();
           if (typeof element.select === "function") element.select();
-        } catch (error) {
+        } catch {
           // no-op
         }
       }, 0);
@@ -182,7 +183,7 @@ function LorServicesPage() {
 
   const validateSpecialist = () => {
     if (!selectedSpecialistId) {
-      throw new Error("Avval doktorni tanlang.");
+      throw new Error("Avval shifokorni tanlang.");
     }
   };
 
@@ -282,7 +283,7 @@ function LorServicesPage() {
 
       const written = writeCheckToPrintTab(printTab, result.check);
       if (!written) {
-        setError("Brauzer yangi oynani blokladi. Oynaga ruxsatni yoqing.");
+        setError("Chek yaratildi, lekin avtomatik print ochilmadi. \"Mening cheklarim\" bo'limidan qayta chiqaring.");
       }
     } catch (err) {
       closePrintTab(printTab);
@@ -322,7 +323,7 @@ function LorServicesPage() {
   }
 
   return (
-    <div className="space-y-4 overflow-x-hidden sm:space-y-6">
+    <div className="space-y-4 overflow-x-hidden sm:space-y-6 sampi-mobile-safe">
       <div className="card border-sky-200 bg-sky-50/70 p-4 sm:p-5">
         <h1 className="text-xl font-bold text-slate-800">LOR paneli</h1>
         <p className="mt-1 text-sm text-slate-600">Bosqichma-bosqich chek yaratish</p>
@@ -365,15 +366,15 @@ function LorServicesPage() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">1-qadam: Doktor tanlash</h2>
+          <h2 className="text-lg font-semibold">1-qadam: Shifokor tanlash</h2>
           <p className="mb-4 text-sm text-slate-600">
-            Avval chekni qaysi doktor nomidan chiqarishni tanlang. Yangi doktor qo'shish
-            uchun chap menyudan "Doktorlarni boshqarish" ga o'ting.
+            Avval chekni qaysi shifokor nomidan chiqarishni tanlang. Yangi shifokor qo'shish
+            uchun chap menyudan "Shifokorlarni boshqarish" ga o'ting.
           </p>
 
           <div className="mt-4">
             <QuickSearchInput
-              label="Doktor qidirish"
+              label="Shifokor qidirish"
               placeholder="Masalan: Aziz"
               value={specialistSearch}
               onChange={setSpecialistSearch}
@@ -384,7 +385,7 @@ function LorServicesPage() {
                 setSelectedSpecialistId(item?._id || "");
                 setSpecialistSearch(item?.name || "");
               }}
-              emptyText="Mos doktor topilmadi"
+              emptyText="Mos shifokor topilmadi"
             />
           </div>
 
@@ -399,9 +400,10 @@ function LorServicesPage() {
                     onClick={() => setSelectedSpecialistId(item._id)}
                     className={`rounded-xl border px-3 py-3 text-left transition ${
                       selected
-                        ? "border-primary bg-cyan-50"
-                        : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-primary/50"
+                        ? "sampi-choice-card is-selected"
+                        : "sampi-choice-card"
                     }`}
+                    style={{ touchAction: "pan-y" }}
                   >
                     <p className="font-semibold text-slate-800">{item.name}</p>
                     <p className="mt-1 text-xs font-medium text-slate-500">
@@ -415,12 +417,12 @@ function LorServicesPage() {
 
           {!specialists.length ? (
             <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              Hozircha doktor yo'q. Chap menyudan "Doktorlarni boshqarish" bo'limida
-              yangi doktor qo'shing.
+              Hozircha shifokor yo'q. Chap menyudan "Shifokorlarni boshqarish" bo'limida
+              yangi shifokor qo'shing.
             </div>
           ) : null}
 
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 hidden justify-end sm:flex">
             <Button
               className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
               onClick={goNextFromSpecialist}
@@ -428,6 +430,14 @@ function LorServicesPage() {
               Keyingi: Bemor
             </Button>
           </div>
+          <MobileActionBar>
+            <Button
+              className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+              onClick={goNextFromSpecialist}
+            >
+              Keyingi: Bemor
+            </Button>
+          </MobileActionBar>
         </div>
       ) : null}
 
@@ -450,7 +460,7 @@ function LorServicesPage() {
             onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
           />
 
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 hidden flex-col-reverse gap-2 sm:flex sm:flex-row sm:items-center sm:justify-between">
             <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(1)}>
               Orqaga
             </Button>
@@ -461,6 +471,17 @@ function LorServicesPage() {
               Keyingi: Xizmatlar
             </Button>
           </div>
+          <MobileActionBar>
+            <Button variant="secondary" className="flex-1" onClick={() => setStep(1)}>
+              Orqaga
+            </Button>
+            <Button
+              className="flex-1 bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+              onClick={goNextFromPatient}
+            >
+              Keyingi
+            </Button>
+          </MobileActionBar>
         </div>
       ) : null}
 
@@ -509,11 +530,10 @@ function LorServicesPage() {
                   key={service._id}
                   type="button"
                   onClick={() => toggleService(service._id)}
-                  className={`rounded-xl border px-3 py-3 text-left transition ${
-                    selected
-                      ? "border-primary bg-cyan-50"
-                      : "border-slate-200 bg-white hover:border-primary/50"
+                  className={`px-3 py-3 text-left transition ${
+                    selected ? "sampi-choice-card is-selected" : "sampi-choice-card"
                   }`}
+                  style={{ touchAction: "pan-y" }}
                 >
                   <p className="font-semibold text-slate-800">{service.name}</p>
                   <p className="mt-1 text-xs text-slate-500">
@@ -560,7 +580,7 @@ function LorServicesPage() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 hidden flex-col-reverse gap-2 sm:flex sm:flex-row sm:items-center sm:justify-between">
             <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(2)}>
               Orqaga
             </Button>
@@ -568,9 +588,20 @@ function LorServicesPage() {
               className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
               onClick={goNextFromServices}
             >
-              Keyingi: Preview
+              Keyingi: Ko'rinish
             </Button>
           </div>
+          <MobileActionBar>
+            <Button variant="secondary" className="flex-1" onClick={() => setStep(2)}>
+              Orqaga
+            </Button>
+            <Button
+              className="flex-1 bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+              onClick={goNextFromServices}
+            >
+              Keyingi
+            </Button>
+          </MobileActionBar>
         </div>
       ) : null}
 
@@ -586,12 +617,12 @@ function LorServicesPage() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">4-qadam: Chek preview</h2>
+          <h2 className="text-lg font-semibold">4-qadam: Chek ko'rinishi</h2>
           <p className="mb-3 text-sm text-slate-600">Enter bosib chek chiqaring.</p>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm">
-              Doktor: <span className="font-semibold">{selectedSpecialist?.name || "-"}</span>
+              Shifokor: <span className="font-semibold">{selectedSpecialist?.name || "-"}</span>
             </p>
             <p className="text-sm">
               Bemor: <span className="font-semibold">{patient.fullName || "-"}</span>
@@ -630,7 +661,7 @@ function LorServicesPage() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 hidden flex-col-reverse gap-2 sm:flex sm:flex-row sm:items-center sm:justify-between">
             <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(3)}>
               Orqaga
             </Button>
@@ -643,6 +674,19 @@ function LorServicesPage() {
               Chek chiqarish (Enter)
             </Button>
           </div>
+          <MobileActionBar>
+            <Button variant="secondary" className="flex-1" onClick={() => setStep(3)}>
+              Orqaga
+            </Button>
+            <Button
+              loading={submittingCheckout}
+              disabled={!selectedServiceIds.length}
+              className="flex-1 bg-sky-600 hover:bg-sky-700 focus:ring-sky-300"
+              onClick={handleCreateCheckout}
+            >
+              Chek chiqarish
+            </Button>
+          </MobileActionBar>
         </div>
       ) : null}
 

@@ -1,13 +1,5 @@
 import api from "./api.js";
 
-const createIdempotencyKey = (prefix = "checkout") => {
-  const randomPart =
-    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  return `${prefix}-${randomPart}`;
-};
-
 const usageService = {
   async useMedicine(payload) {
     const { data } = await api.post("/usage/medicine", payload);
@@ -20,20 +12,12 @@ const usageService = {
   },
 
   async createCheckout(payload) {
-    const { data } = await api.post("/usage/checkout", payload, {
-      headers: {
-        "X-Idempotency-Key": createIdempotencyKey("nurse")
-      }
-    });
+    const { data } = await api.post("/usage/checkout", payload);
     return data.data;
   },
 
   async createLorCheckout(payload) {
-    const { data } = await api.post("/usage/lor-checkout", payload, {
-      headers: {
-        "X-Idempotency-Key": createIdempotencyKey("lor")
-      }
-    });
+    const { data } = await api.post("/usage/lor-checkout", payload);
     return data.data;
   },
 

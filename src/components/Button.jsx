@@ -11,7 +11,7 @@ function Button({
     primary:
       "bg-primary text-white hover:bg-primary-dark focus:ring-primary/40 disabled:bg-slate-300",
     secondary:
-      "bg-slate-200 text-slate-700 hover:bg-slate-300 focus:ring-slate-300 disabled:bg-slate-100",
+      "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus:ring-slate-300 disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400",
     danger:
       "bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-300 disabled:bg-rose-300",
     accent:
