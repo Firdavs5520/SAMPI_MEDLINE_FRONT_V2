@@ -25,6 +25,7 @@ const getDoctorInitials = (value) => {
 };
 
 const STEP_SWITCH_DELAY_MS = 540;
+const DOCTOR_CONFIRM_DELAY_MS = 460;
 
 function LorSelectPage() {
   const navigate = useNavigate();
@@ -35,9 +36,11 @@ function LorSelectPage() {
   const [specialists, setSpecialists] = useState([]);
   const [doctorSearch, setDoctorSearch] = useState("");
   const [transitioningLor, setTransitioningLor] = useState("");
+  const [confirmingDoctorId, setConfirmingDoctorId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const switchTimerRef = useRef(null);
+  const doctorTimerRef = useRef(null);
 
   const returnPath = location.state?.from?.pathname || "/lor/checks";
   const selectedLorLabel = selectedLor ? selectedLor.toUpperCase() : "";
@@ -71,6 +74,9 @@ function LorSelectPage() {
       if (switchTimerRef.current) {
         window.clearTimeout(switchTimerRef.current);
       }
+      if (doctorTimerRef.current) {
+        window.clearTimeout(doctorTimerRef.current);
+      }
     },
     []
   );
@@ -99,16 +105,29 @@ function LorSelectPage() {
       window.clearTimeout(switchTimerRef.current);
       switchTimerRef.current = null;
     }
+    if (doctorTimerRef.current) {
+      window.clearTimeout(doctorTimerRef.current);
+      doctorTimerRef.current = null;
+    }
     setTransitioningLor("");
+    setConfirmingDoctorId("");
     setSelectedLor("");
     setDoctorSearch("");
     setLorIdentity("");
   };
 
   const chooseDoctor = (doctor) => {
-    if (!selectedLor) return;
-    setLorDoctor({ id: doctor?._id, name: doctor?.name });
-    navigate(returnPath, { replace: true });
+    if (!selectedLor || confirmingDoctorId) return;
+    const doctorId = doctor?._id;
+    if (!doctorId) return;
+
+    setConfirmingDoctorId(doctorId);
+    doctorTimerRef.current = window.setTimeout(() => {
+      setLorDoctor({ id: doctorId, name: doctor?.name });
+      setConfirmingDoctorId("");
+      doctorTimerRef.current = null;
+      navigate(returnPath, { replace: true });
+    }, DOCTOR_CONFIRM_DELAY_MS);
   };
 
   const goManageDoctors = () => {
@@ -124,7 +143,11 @@ function LorSelectPage() {
   }
 
   return (
-    <div className="lor-select-shell">
+    <div
+      className={`lor-select-shell ${
+        transitioningLor || confirmingDoctorId ? "lor-select-shell-switching" : ""
+      }`}
+    >
       <div className="lor-select-glow" />
       <div className="lor-select-card lor-ios-card route-enter">
         <div className="lor-select-header">
@@ -250,11 +273,15 @@ function LorSelectPage() {
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {filteredSpecialists.map((doctor, index) => {
                     const selected = lorDoctor?.id === doctor._id;
+                    const confirming = confirmingDoctorId === doctor._id;
                     return (
                       <button
                         key={doctor._id}
                         type="button"
-                        className={`lor-doctor-card ${selected ? "lor-doctor-card-selected" : ""}`}
+                        className={`lor-doctor-card ${
+                          selected ? "lor-doctor-card-selected" : ""
+                        } ${confirming ? "lor-doctor-card-confirming" : ""}`}
+                        disabled={Boolean(confirmingDoctorId)}
                         style={{ "--item-index": index }}
                         onClick={() => chooseDoctor(doctor)}
                       >
@@ -264,7 +291,11 @@ function LorSelectPage() {
                             {doctor.name}
                           </span>
                           <span className="mt-1 block text-xs font-bold text-slate-500">
-                            {selected ? "Hozir tanlangan" : "Shu doktor bilan ishlash"}
+                            {confirming
+                              ? "Ochilmoqda"
+                              : selected
+                                ? "Hozir tanlangan"
+                                : "Shu doktor bilan ishlash"}
                           </span>
                         </span>
                       </button>
