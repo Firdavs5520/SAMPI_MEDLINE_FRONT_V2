@@ -569,6 +569,7 @@ html.theme-dark .sampi-cashier-popover {
   display: grid;
   place-items: center;
   padding: clamp(1rem, 2.2vw, 2rem);
+  perspective: 1200px;
   border-radius: 1.5rem;
   overflow: hidden;
   background:
@@ -580,6 +581,7 @@ html.theme-dark .sampi-cashier-popover {
 
 .lor-select-glow {
   position: absolute;
+  pointer-events: none;
   width: min(78vw, 640px);
   height: 280px;
   border-radius: 999px;
@@ -602,6 +604,11 @@ html.theme-dark .sampi-cashier-popover {
   overflow: hidden;
 }
 
+.lor-ios-card {
+  transform-origin: 50% 48%;
+  animation: ios-card-arrive 560ms cubic-bezier(0.18, 0.9, 0.22, 1.08) both;
+}
+
 .lor-select-card::before {
   content: "";
   position: absolute;
@@ -610,7 +617,26 @@ html.theme-dark .sampi-cashier-popover {
   background: linear-gradient(90deg, #0891b2, #f97316, #22c55e);
 }
 
+.lor-select-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    118deg,
+    transparent 0%,
+    transparent 34%,
+    rgba(255, 255, 255, 0.5) 45%,
+    transparent 58%,
+    transparent 100%
+  );
+  transform: translateX(-140%);
+  animation: ios-soft-sheen 3.4s cubic-bezier(0.2, 0.8, 0.2, 1) 640ms infinite;
+}
+
 .lor-select-header {
+  position: relative;
+  z-index: 1;
   text-align: center;
 }
 
@@ -625,13 +651,15 @@ html.theme-dark .sampi-cashier-popover {
   padding: 0.32rem 0.74rem;
   font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   text-transform: uppercase;
   margin-bottom: 0.75rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .lor-choice-card {
   position: relative;
+  overflow: hidden;
   display: block;
   text-align: left;
   border-radius: 1.05rem;
@@ -639,12 +667,38 @@ html.theme-dark .sampi-cashier-popover {
   background: linear-gradient(180deg, #ffffff, #f8fbff);
   min-height: 11.6rem;
   padding: 1.25rem;
-  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  transform: translateZ(0);
+  transition:
+    transform 260ms cubic-bezier(0.2, 0.9, 0.2, 1.08),
+    box-shadow 260ms ease,
+    border-color 220ms ease,
+    background 220ms ease;
+  will-change: transform;
+}
+
+.lor-choice-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.75), transparent 42%),
+    linear-gradient(180deg, transparent, rgba(14, 116, 144, 0.06));
+  opacity: 0;
+  transition: opacity 220ms ease;
 }
 
 .lor-choice-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 24px -20px rgba(15, 23, 42, 0.55);
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 0 24px 34px -24px rgba(15, 23, 42, 0.6);
+}
+
+.lor-choice-card:hover::before {
+  opacity: 1;
+}
+
+.lor-choice-card:active {
+  transform: translateY(-1px) scale(0.985);
 }
 
 .lor-choice-primary:hover {
@@ -663,7 +717,7 @@ html.theme-dark .sampi-cashier-popover {
   color: #0e7490;
   font-size: 0.73rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   text-transform: uppercase;
   padding: 0.28rem 0.62rem;
 }
@@ -695,6 +749,8 @@ html.theme-dark .sampi-cashier-popover {
 }
 
 .lor-step-track {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -714,12 +770,19 @@ html.theme-dark .sampi-cashier-popover {
   padding: 0.45rem 0.85rem;
   font-size: 0.72rem;
   font-weight: 900;
+  transition:
+    transform 260ms cubic-bezier(0.2, 0.9, 0.2, 1.08),
+    border-color 220ms ease,
+    background-color 220ms ease,
+    color 220ms ease;
 }
 
 .lor-step-dot-active {
   border-color: rgba(8, 145, 178, 0.55);
   background: #ecfeff;
   color: #0e7490;
+  transform: translateY(-1px) scale(1.035);
+  box-shadow: 0 12px 24px -22px rgba(8, 145, 178, 0.9);
 }
 
 .lor-step-dot-done {
@@ -733,10 +796,12 @@ html.theme-dark .sampi-cashier-popover {
   height: 2px;
   border-radius: 999px;
   background: rgba(148, 163, 184, 0.32);
+  overflow: hidden;
 }
 
 .lor-step-line-done {
   background: linear-gradient(90deg, #0891b2, #22c55e);
+  animation: ios-progress-fill 460ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
 
 .lor-select-section {
@@ -751,10 +816,15 @@ html.theme-dark .sampi-cashier-popover {
 }
 
 .lor-select-stage {
+  position: relative;
+  z-index: 1;
   max-width: 780px;
   margin-inline: auto;
   padding: clamp(1rem, 2.2vw, 1.6rem);
-  animation: card-appear 260ms ease both;
+}
+
+.lor-stage-in {
+  animation: ios-stage-rise 480ms cubic-bezier(0.18, 0.9, 0.22, 1.08) both;
 }
 
 .lor-doctor-stage {
@@ -770,7 +840,7 @@ html.theme-dark .sampi-cashier-popover {
   color: #0e7490;
   font-size: 0.7rem;
   font-weight: 900;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -794,6 +864,8 @@ html.theme-dark .sampi-cashier-popover {
 }
 
 .lor-doctor-card {
+  position: relative;
+  overflow: hidden;
   display: flex;
   min-width: 0;
   align-items: center;
@@ -808,15 +880,36 @@ html.theme-dark .sampi-cashier-popover {
   text-align: left;
   transition:
     border-color 180ms ease,
-    box-shadow 200ms ease,
-    transform 170ms ease,
+    box-shadow 240ms ease,
+    transform 240ms cubic-bezier(0.2, 0.9, 0.2, 1.08),
     background-color 180ms ease;
+  animation: ios-list-pop 420ms cubic-bezier(0.18, 0.9, 0.22, 1.08) both;
+  animation-delay: calc(var(--item-index, 0) * 46ms);
+  will-change: transform;
+}
+
+.lor-doctor-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.55), transparent 48%);
+  opacity: 0;
+  transition: opacity 200ms ease;
 }
 
 .lor-doctor-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px) scale(1.01);
   border-color: rgba(14, 116, 144, 0.5);
   box-shadow: 0 18px 34px -28px rgba(14, 116, 144, 0.82);
+}
+
+.lor-doctor-card:hover::before {
+  opacity: 1;
+}
+
+.lor-doctor-card:active {
+  transform: translateY(-1px) scale(0.985);
 }
 
 .lor-doctor-card-selected {
@@ -840,6 +933,11 @@ html.theme-dark .sampi-cashier-popover {
   font-size: 0.72rem;
   font-weight: 900;
   box-shadow: 0 12px 22px -18px rgba(14, 116, 144, 0.95);
+  transition: transform 240ms cubic-bezier(0.2, 0.9, 0.2, 1.08);
+}
+
+.lor-doctor-card-selected .lor-doctor-avatar {
+  animation: ios-avatar-breathe 1.8s ease-in-out infinite;
 }
 
 .lor-doctor-empty {
@@ -1096,6 +1194,86 @@ html.theme-dark .sampi-table-row:hover td {
   }
 }
 
+@keyframes ios-card-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.965) rotateX(4deg);
+  }
+  64% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.006) rotateX(0deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotateX(0deg);
+  }
+}
+
+@keyframes ios-stage-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.972);
+    filter: blur(7px);
+  }
+  62% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.004);
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes ios-list-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.965);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.004);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ios-soft-sheen {
+  0%,
+  58% {
+    transform: translateX(-145%);
+  }
+  82%,
+  100% {
+    transform: translateX(145%);
+  }
+}
+
+@keyframes ios-progress-fill {
+  from {
+    opacity: 0.25;
+    transform: scaleX(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes ios-avatar-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
+}
+
 @keyframes cashier-pop {
   from {
     opacity: 0;
@@ -1260,6 +1438,17 @@ html.theme-dark .lor-select-card {
   box-shadow: 0 24px 48px -32px rgba(0, 0, 0, 0.82);
 }
 
+html.theme-dark .lor-select-card::after {
+  background: linear-gradient(
+    118deg,
+    transparent 0%,
+    transparent 36%,
+    rgba(125, 211, 252, 0.13) 48%,
+    transparent 60%,
+    transparent 100%
+  );
+}
+
 html.theme-dark .lor-select-chip,
 html.theme-dark .lor-step-dot-active {
   border-color: rgba(34, 211, 238, 0.36);
@@ -1382,9 +1571,17 @@ html.theme-dark .hover\:bg-slate-50\/85:hover {
   .route-enter > div > *,
   .route-enter .card,
   .lor-select-glow,
+  .lor-ios-card,
+  .lor-select-card::after,
+  .lor-stage-in,
+  .lor-step-line-done,
   .sampi-sidebar-group,
   .lor-choice-card,
+  .lor-choice-card::before,
   .lor-choice-action::after,
+  .lor-doctor-card,
+  .lor-doctor-card::before,
+  .lor-doctor-avatar,
   .animate-dropdown-pop,
   .sampi-cashier-popover,
   .sampi-btn::after,
