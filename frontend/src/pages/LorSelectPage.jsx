@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Alert from "../components/Alert.jsx";
 import Button from "../components/Button.jsx";
@@ -24,6 +24,8 @@ const getDoctorInitials = (value) => {
   return `${words[0][0] || ""}${words[1][0] || ""}`.toUpperCase();
 };
 
+const STEP_SWITCH_DELAY_MS = 540;
+
 function LorSelectPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,11 +34,14 @@ function LorSelectPage() {
   const [selectedLor, setSelectedLor] = useState(lorIdentity || "");
   const [specialists, setSpecialists] = useState([]);
   const [doctorSearch, setDoctorSearch] = useState("");
+  const [transitioningLor, setTransitioningLor] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const switchTimerRef = useRef(null);
 
   const returnPath = location.state?.from?.pathname || "/lor/checks";
   const selectedLorLabel = selectedLor ? selectedLor.toUpperCase() : "";
+  const isMovingToDoctor = Boolean(selectedLor || transitioningLor);
 
   const filteredSpecialists = useMemo(() => {
     const query = normalizeSearch(doctorSearch);
@@ -61,13 +66,40 @@ function LorSelectPage() {
     loadSpecialists();
   }, []);
 
+  useEffect(
+    () => () => {
+      if (switchTimerRef.current) {
+        window.clearTimeout(switchTimerRef.current);
+      }
+    },
+    []
+  );
+
   const chooseLor = (value) => {
-    setSelectedLor(value);
+    if (transitioningLor || selectedLor === value) return;
+
+    if (switchTimerRef.current) {
+      window.clearTimeout(switchTimerRef.current);
+    }
+
+    setError("");
     setDoctorSearch("");
-    setLorIdentity(value);
+    setTransitioningLor(value);
+
+    switchTimerRef.current = window.setTimeout(() => {
+      setSelectedLor(value);
+      setLorIdentity(value);
+      setTransitioningLor("");
+      switchTimerRef.current = null;
+    }, STEP_SWITCH_DELAY_MS);
   };
 
   const changeCabinet = () => {
+    if (switchTimerRef.current) {
+      window.clearTimeout(switchTimerRef.current);
+      switchTimerRef.current = null;
+    }
+    setTransitioningLor("");
     setSelectedLor("");
     setDoctorSearch("");
     setLorIdentity("");
@@ -114,13 +146,13 @@ function LorSelectPage() {
         <div className="lor-step-track" aria-label="LOR tanlash bosqichlari">
           <span
             className={`lor-step-dot ${
-              selectedLor ? "lor-step-dot-done" : "lor-step-dot-active"
+              isMovingToDoctor ? "lor-step-dot-done" : "lor-step-dot-active"
             }`}
           >
             1. Kabinet
           </span>
-          <span className={`lor-step-line ${selectedLor ? "lor-step-line-done" : ""}`} />
-          <span className={`lor-step-dot ${selectedLor ? "lor-step-dot-active" : ""}`}>
+          <span className={`lor-step-line ${isMovingToDoctor ? "lor-step-line-done" : ""}`} />
+          <span className={`lor-step-dot ${isMovingToDoctor ? "lor-step-dot-active" : ""}`}>
             2. Doktor
           </span>
         </div>
@@ -137,7 +169,10 @@ function LorSelectPage() {
               <div className="mt-5 grid gap-4 md:grid-cols-2">
                 <button
                   type="button"
-                  className="lor-choice-card lor-choice-primary"
+                  className={`lor-choice-card lor-choice-primary ${
+                    transitioningLor === "lor1" ? "lor-choice-card-selecting" : ""
+                  }`}
+                  disabled={Boolean(transitioningLor)}
                   onClick={() => chooseLor("lor1")}
                 >
                   <div className="lor-choice-badge">LOR-1</div>
@@ -145,12 +180,17 @@ function LorSelectPage() {
                   <p className="mt-1 text-sm text-slate-600">
                     Bemor qabulini LOR-1 nomida yuritish
                   </p>
-                  <span className="lor-choice-action">Tanlash</span>
+                  <span className="lor-choice-action">
+                    {transitioningLor === "lor1" ? "Ochilyapti" : "Tanlash"}
+                  </span>
                 </button>
 
                 <button
                   type="button"
-                  className="lor-choice-card lor-choice-secondary"
+                  className={`lor-choice-card lor-choice-secondary ${
+                    transitioningLor === "lor2" ? "lor-choice-card-selecting" : ""
+                  }`}
+                  disabled={Boolean(transitioningLor)}
                   onClick={() => chooseLor("lor2")}
                 >
                   <div className="lor-choice-badge">LOR-2</div>
@@ -158,7 +198,9 @@ function LorSelectPage() {
                   <p className="mt-1 text-sm text-slate-600">
                     Bemor qabulini LOR-2 nomida yuritish
                   </p>
-                  <span className="lor-choice-action">Tanlash</span>
+                  <span className="lor-choice-action">
+                    {transitioningLor === "lor2" ? "Ochilyapti" : "Tanlash"}
+                  </span>
                 </button>
               </div>
             </section>
