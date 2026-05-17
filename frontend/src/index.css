@@ -307,39 +307,6 @@ html.theme-dark .sampi-theme-toggle::before {
   background: linear-gradient(120deg, rgba(14, 116, 144, 0.24), rgba(249, 115, 22, 0.18));
 }
 
-.sampi-debt-radar::before {
-  content: "";
-  position: absolute;
-  inset: -40% auto auto -8%;
-  width: 14rem;
-  height: 14rem;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(248, 113, 113, 0.28), transparent 62%);
-  animation: debt-radar 2.8s ease-in-out infinite;
-}
-
-.sampi-debt-row {
-  position: relative;
-}
-
-.sampi-debt-row::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgba(220, 38, 38, 0.1), transparent 34%);
-}
-
-.sampi-debt-orbit {
-  box-shadow:
-    0 0 0 3px rgba(254, 202, 202, 0.95),
-    0 0 0 7px rgba(254, 226, 226, 0.55);
-}
-
-.sampi-debt-pill {
-  box-shadow: 0 8px 18px -14px rgba(185, 28, 28, 0.9);
-}
-
 .sampi-cashier-popover {
   animation: cashier-pop 140ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
@@ -366,13 +333,6 @@ html.theme-dark .sampi-theme-toggle::before {
   rotate: 225deg;
 }
 
-html.theme-dark .sampi-debt-radar {
-  border-color: #7f1d1d !important;
-  background: linear-gradient(135deg, rgba(69, 10, 10, 0.96), rgba(45, 18, 30, 0.94)) !important;
-  color: #fee2e2 !important;
-}
-
-html.theme-dark .sampi-debt-radar .bg-white\/80,
 html.theme-dark .sampi-cashier-popover .bg-white\/70 {
   background-color: rgba(15, 26, 44, 0.76) !important;
 }
@@ -708,18 +668,6 @@ html.theme-dark .sampi-table-row:hover td {
   }
 }
 
-@keyframes debt-radar {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(0.92);
-  }
-  50% {
-    opacity: 0.95;
-    transform: scale(1.08);
-  }
-}
-
 @keyframes cashier-pop {
   from {
     opacity: 0;
@@ -912,7 +860,6 @@ html.theme-dark .hover\:bg-slate-50\/85:hover {
   .lor-choice-card,
   .lor-choice-action::after,
   .animate-dropdown-pop,
-  .sampi-debt-radar::before,
   .sampi-cashier-popover,
   .sampi-btn::after,
   .sampi-theme-toggle svg,

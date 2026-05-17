@@ -56,21 +56,6 @@ function LorChecksPage() {
     return Array.from(uniq.values());
   }, [checks]);
 
-  const debtSummary = useMemo(
-    () =>
-      checks.reduce(
-        (acc, row) => {
-          if (!hasDebt(row)) return acc;
-          return {
-            count: acc.count + 1,
-            totalDebt: acc.totalDebt + getDebtAmount(row)
-          };
-        },
-        { count: 0, totalDebt: 0 }
-      ),
-    [checks]
-  );
-
   const prioritizedChecks = useMemo(
     () =>
       checks
@@ -214,41 +199,10 @@ function LorChecksPage() {
       <Alert type="error" message={error} />
 
       <div className="card p-4 sm:p-5">
-        {debtSummary.count > 0 && (
-          <div className="sampi-debt-radar sticky top-20 z-10 mb-4 overflow-hidden rounded-xl border-2 border-red-400 bg-red-50 p-4 text-red-950 shadow-[0_18px_35px_-28px_rgba(220,38,38,0.9)]">
-            <div className="relative z-[1] grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
-              <div>
-                <p className="text-sm font-black uppercase tracking-wide text-red-700">
-                  Qarzdor bemorlar yuqorida ushlab turildi
-                </p>
-                <p className="mt-1 text-sm font-semibold">
-                  Qarz yopilmaguncha bu qatorlar qizil signal bilan ajralib turadi.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-center">
-                <div className="rounded-lg border border-red-200 bg-white/80 px-3 py-2">
-                  <p className="text-[10px] font-black uppercase tracking-wide text-red-600">Soni</p>
-                  <p className="text-lg font-black text-red-800">{debtSummary.count}</p>
-                </div>
-                <div className="rounded-lg border border-red-200 bg-white/80 px-3 py-2">
-                  <p className="text-[10px] font-black uppercase tracking-wide text-red-600">Jami qarz</p>
-                  <p className="text-lg font-black text-red-800">
-                    {formatCurrency(debtSummary.totalDebt)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
         <div onMouseLeave={() => clearHoverPreview({ delay: 180 })}>
           <Table
             data={prioritizedChecks}
             rowClassName={(row, rowIndex) => {
-              const debt = hasDebt(row);
-              if (debt) {
-                return "sampi-debt-row bg-red-50/95 shadow-[inset_6px_0_0_#dc2626] ring-2 ring-inset ring-red-300 hover:bg-red-100/95";
-              }
-
               if (row?.cashierStatus?.accepted) {
                 return rowIndex % 2 === 0
                   ? "bg-sky-50/55 hover:bg-sky-100/70"
@@ -287,23 +241,18 @@ function LorChecksPage() {
                     <div className="flex items-center gap-2.5">
                       <span
                         className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[10px] font-black tracking-wide text-white ${
-                          debt ? "sampi-debt-orbit bg-red-700" : "bg-slate-800"
+                          debt ? "bg-slate-900" : "bg-slate-800"
                         }`}
                       >
                         {getPatientInitials(patientName)}
                       </span>
                       <div className="min-w-0">
                         <div className="flex min-w-0 items-center gap-2">
-                          <p className={`truncate text-sm font-black ${debt ? "text-red-900" : "text-slate-800"}`}>
+                          <p className="truncate text-sm font-black text-slate-800">
                             {patientName}
                           </p>
-                          {debt ? (
-                            <span className="sampi-debt-pill shrink-0 rounded-full bg-red-700 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">
-                              Qarz yopilmagan
-                            </span>
-                          ) : null}
                         </div>
-                        <p className={`truncate text-[11px] font-bold ${debt ? "text-red-700" : "text-slate-500"}`}>
+                        <p className="truncate text-[11px] font-bold text-slate-500">
                           Chek: {row.checkId || "-"} {isQueued ? "- kassa tafsiloti ochiq" : ""}
                         </p>
                       </div>
@@ -340,7 +289,7 @@ function LorChecksPage() {
                   <span
                     className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
                       debt
-                        ? "bg-red-700 text-white"
+                        ? "bg-amber-100 text-amber-700"
                         : accepted
                         ? "bg-emerald-100 text-emerald-700"
                         : "bg-amber-100 text-amber-700"
@@ -370,8 +319,8 @@ function LorChecksPage() {
                 }
 
                 return (
-                  <span className="inline-flex animate-pulse items-center rounded-md border-2 border-red-500 bg-red-700 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-white shadow-sm">
-                    Qarzdor: {formatCurrency(debt)} so'm
+                  <span className="inline-flex items-center rounded-md border border-red-400 bg-red-600 px-2 py-1 text-xs font-black text-white shadow-sm">
+                    Qarz: {formatCurrency(debt)} so'm
                   </span>
                 );
               }
