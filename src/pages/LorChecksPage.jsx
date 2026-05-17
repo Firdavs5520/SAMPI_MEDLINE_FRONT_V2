@@ -152,22 +152,33 @@ function LorChecksPage() {
     }
 
     const rect = event.currentTarget.getBoundingClientRect();
-    const tableRect = event.currentTarget.closest(".sampi-dropdown")?.getBoundingClientRect();
     const cardWidth = Math.min(304, window.innerWidth - 32);
-    const cardHeight = 188;
+    const cardHeight = 176;
     const topSafe = 76;
     const bottomSafe = window.innerHeight - 16;
-    const tableBottom = tableRect ? tableRect.bottom - 28 : bottomSafe;
-    const boundaryBottom = Math.min(bottomSafe, Math.max(topSafe + cardHeight, tableBottom));
+    const canPlaceRight = rect.right + cardWidth + 12 <= window.innerWidth - 16;
+    const canPlaceLeft = rect.left - cardWidth - 12 >= 16;
+    const boundaryBottom = bottomSafe;
     const spaceBelow = boundaryBottom - rect.bottom - 12;
     const spaceAbove = rect.top - topSafe - 12;
-    const shouldPlaceAbove = spaceBelow < cardHeight && spaceAbove > spaceBelow;
-    const desiredTop = shouldPlaceAbove ? rect.top - cardHeight - 12 : rect.bottom + 12;
-    const maxTop = Math.max(topSafe, Math.min(bottomSafe - cardHeight, boundaryBottom - cardHeight));
-    const top = Math.max(topSafe, Math.min(maxTop, desiredTop));
-    const left = Math.min(window.innerWidth - cardWidth - 16, Math.max(16, rect.left - 16));
+    let placement = "right";
+    let left = rect.right + 12;
+    let desiredTop = rect.top + rect.height / 2 - cardHeight / 2;
+
+    if (!canPlaceRight && canPlaceLeft) {
+      placement = "left";
+      left = rect.left - cardWidth - 12;
+    } else if (!canPlaceRight) {
+      const shouldPlaceAbove = spaceBelow < cardHeight && spaceAbove > spaceBelow;
+      placement = shouldPlaceAbove ? "top" : "bottom";
+      desiredTop = shouldPlaceAbove ? rect.top - cardHeight - 12 : rect.bottom + 12;
+      left = rect.left - 16;
+    }
+
+    const top = Math.max(topSafe, Math.min(bottomSafe - cardHeight, desiredTop));
+    left = Math.min(window.innerWidth - cardWidth - 16, Math.max(16, left));
     hoverTimerRef.current = setTimeout(() => {
-      setHoverPreview({ checkKey: nextKey, top, left, placement: shouldPlaceAbove ? "top" : "bottom" });
+      setHoverPreview({ checkKey: nextKey, top, left, placement });
       hoverTimerRef.current = null;
     }, 120);
   };
@@ -360,11 +371,7 @@ function LorChecksPage() {
         </div>
         {hoverPreviewRow && (
           <div
-            className={`sampi-cashier-popover fixed z-50 w-[min(19rem,calc(100vw-2rem))] rounded-xl border p-2.5 text-xs shadow-2xl ${
-              hasDebt(hoverPreviewRow)
-                ? "border-red-300 bg-red-50 text-red-950"
-                : "border-cyan-200 bg-cyan-50 text-cyan-950"
-            }`}
+            className="sampi-cashier-popover sampi-cashier-popover-danger fixed z-50 w-[min(19rem,calc(100vw-2rem))] rounded-xl border p-2.5 text-xs shadow-2xl"
             data-placement={hoverPreview.placement}
             style={{ top: hoverPreview.top, left: hoverPreview.left }}
             onMouseEnter={() => {
@@ -375,30 +382,24 @@ function LorChecksPage() {
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p
-                  className={`text-[10px] font-black uppercase tracking-wide ${
-                    hasDebt(hoverPreviewRow) ? "text-red-700" : "text-cyan-700"
-                  }`}
-                >
+                <p className="sampi-popover-kicker text-[10px] font-black uppercase tracking-wide">
                   Kassa tafsilotlari
                 </p>
-                <p className="mt-0.5 truncate text-sm font-black leading-4">
+                <p className="mt-0.5 truncate text-sm font-black leading-4 text-white">
                   {hoverPreviewRow.patient?.fullName || "-"}
                 </p>
-                <p className="mt-0.5 truncate text-[11px] font-bold opacity-80">
+                <p className="mt-0.5 truncate text-[11px] font-bold text-red-100/80">
                   Chek: {hoverPreviewRow.checkId || "-"}
                 </p>
               </div>
-              {hasDebt(hoverPreviewRow) ? (
-                <span className="shrink-0 rounded-full bg-red-700 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">
-                  Diqqat
-                </span>
-              ) : null}
+              <span className="sampi-popover-chip shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide">
+                Diqqat
+              </span>
             </div>
             {hoverPreviewRow?.cashierStatus?.accepted ? (
               <div className="mt-2 space-y-2">
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg bg-white/70 px-2 py-1">
+                  <div className="sampi-popover-metric rounded-lg px-2 py-1">
                     <span className="block text-[10px] font-black uppercase tracking-wide opacity-70">
                       To'langan
                     </span>
@@ -406,7 +407,7 @@ function LorChecksPage() {
                       {formatCurrency(hoverPreviewRow.cashierStatus.paidAmount || 0)} so'm
                     </span>
                   </div>
-                  <div className="rounded-lg bg-white/70 px-2 py-1">
+                  <div className="sampi-popover-metric rounded-lg px-2 py-1">
                     <span className="block text-[10px] font-black uppercase tracking-wide opacity-70">
                       Qarz
                     </span>
@@ -415,7 +416,7 @@ function LorChecksPage() {
                     </span>
                   </div>
                 </div>
-                <div className="grid gap-1 leading-4">
+                <div className="sampi-popover-info grid gap-1 leading-4">
                   <p className="truncate">
                     <span className="font-bold">Telefon:</span>{" "}
                     {hoverPreviewRow.cashierStatus.patientPhone || "-"}
@@ -428,14 +429,10 @@ function LorChecksPage() {
                     <span className="font-bold">Kassir:</span>{" "}
                     {hoverPreviewRow.cashierStatus.acceptedByName || "-"}
                   </p>
-                  <p className="truncate">
-                    <span className="font-bold">Vaqt:</span>{" "}
-                    {formatDateTime(hoverPreviewRow.cashierStatus.acceptedAt)}
-                  </p>
-                  <p className="truncate">
-                    <span className="font-bold">To'lov:</span>{" "}
-                    {getPaymentLabel(hoverPreviewRow.cashierStatus.paymentMethod)}
-                  </p>
+                </div>
+                <div className="sampi-popover-footer truncate">
+                  {getPaymentLabel(hoverPreviewRow.cashierStatus.paymentMethod)} -{" "}
+                  {formatDateTime(hoverPreviewRow.cashierStatus.acceptedAt)}
                 </div>
               </div>
             ) : (

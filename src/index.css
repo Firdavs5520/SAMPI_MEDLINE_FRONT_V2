@@ -192,6 +192,28 @@ html.theme-dark .sampi-navbar {
   transform: translateY(1px);
 }
 
+html.theme-dark .sampi-navbar-user {
+  color: #e2e8f0;
+  background: linear-gradient(180deg, rgba(15, 26, 44, 0.96), rgba(11, 21, 38, 0.94));
+  border-color: #2f4056;
+  box-shadow:
+    inset 0 0 0 1px rgba(56, 189, 248, 0.08),
+    0 10px 24px -20px rgba(2, 6, 23, 0.95);
+}
+
+html.theme-dark .sampi-navbar-user:hover {
+  background: linear-gradient(180deg, rgba(20, 36, 58, 0.98), rgba(14, 28, 48, 0.96));
+  border-color: #3c5574;
+}
+
+html.theme-dark .sampi-navbar-user-name {
+  color: #f8fafc;
+}
+
+html.theme-dark .sampi-navbar-user-role {
+  color: #93a7c0;
+}
+
 .sampi-sidebar {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.96)),
@@ -215,6 +237,7 @@ html.theme-dark .sampi-sidebar {
   display: flex;
   gap: 0.625rem;
   align-items: center;
+  width: 100%;
   transition: gap 220ms ease, justify-content 220ms ease;
 }
 
@@ -223,7 +246,8 @@ html.theme-dark .sampi-sidebar {
 }
 
 .sampi-brand-title {
-  max-width: 12rem;
+  max-width: 10.5rem;
+  flex: 1 1 auto;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -234,7 +258,8 @@ html.theme-dark .sampi-sidebar {
 
 .sampi-sidebar-brand-row-compact {
   justify-content: center;
-  gap: 0;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 
 .sampi-sidebar-brand-row-compact .sampi-brand-title {
@@ -244,6 +269,7 @@ html.theme-dark .sampi-sidebar {
 }
 
 .sampi-sidebar-toggle {
+  background: linear-gradient(180deg, #ffffff, #eef5f8);
   box-shadow:
     0 10px 18px -16px rgba(15, 23, 42, 0.85),
     0 0 0 3px rgba(14, 116, 144, 0.08);
@@ -309,9 +335,44 @@ html.theme-dark .sampi-theme-toggle::before {
 
 .sampi-cashier-popover {
   animation: cashier-pop 140ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
-  max-height: min(13rem, calc(100vh - 7rem));
-  overflow: visible;
-  scrollbar-width: thin;
+  max-height: 12rem;
+  overflow: hidden;
+  color: #fee2e2;
+}
+
+.sampi-cashier-popover-danger {
+  border-color: rgba(248, 113, 113, 0.42);
+  background:
+    linear-gradient(135deg, rgba(127, 29, 29, 0.97), rgba(69, 10, 10, 0.98)),
+    radial-gradient(circle at 0% 0%, rgba(248, 113, 113, 0.22), transparent 46%);
+  box-shadow:
+    0 24px 48px -28px rgba(127, 29, 29, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.sampi-popover-kicker {
+  color: #fecaca;
+}
+
+.sampi-popover-chip {
+  background: #dc2626;
+  color: #fff1f2;
+  box-shadow: 0 8px 18px -14px rgba(254, 202, 202, 0.55);
+}
+
+.sampi-popover-metric {
+  background: rgba(15, 23, 42, 0.58);
+  color: #fecaca;
+}
+
+.sampi-popover-info {
+  color: #fecaca;
+}
+
+.sampi-popover-footer {
+  border-top: 1px solid rgba(254, 202, 202, 0.16);
+  padding-top: 0.3rem;
+  color: rgba(254, 226, 226, 0.72);
 }
 
 .sampi-cashier-popover::before {
@@ -336,14 +397,31 @@ html.theme-dark .sampi-theme-toggle::before {
   rotate: 225deg;
 }
 
+.sampi-cashier-popover[data-placement="right"]::before {
+  left: -0.39rem;
+  top: 50%;
+  transform: translateY(-50%);
+  rotate: -45deg;
+}
+
+.sampi-cashier-popover[data-placement="left"]::before {
+  left: auto;
+  right: -0.39rem;
+  top: 50%;
+  transform: translateY(-50%);
+  rotate: 135deg;
+}
+
 html.theme-dark .sampi-cashier-popover .bg-white\/70 {
   background-color: rgba(15, 26, 44, 0.76) !important;
 }
 
 html.theme-dark .sampi-cashier-popover {
-  border-color: #2f4056 !important;
-  background: #0f1a2c !important;
-  color: #e2e8f0 !important;
+  border-color: rgba(248, 113, 113, 0.42) !important;
+  background:
+    linear-gradient(135deg, rgba(127, 29, 29, 0.97), rgba(69, 10, 10, 0.98)),
+    radial-gradient(circle at 0% 0%, rgba(248, 113, 113, 0.22), transparent 46%) !important;
+  color: #fee2e2 !important;
 }
 
 .route-enter .card {
@@ -819,6 +897,19 @@ html.theme-dark .bg-slate-50\/80 {
 
 html.theme-dark .bg-slate-100 {
   background-color: #0b1526 !important;
+}
+
+html.theme-dark .bg-slate-200,
+html.theme-dark .bg-slate-300,
+html.theme-dark .disabled\:bg-slate-100:disabled,
+html.theme-dark .disabled\:bg-slate-300:disabled {
+  background-color: #142238 !important;
+  border-color: #2f4056 !important;
+  color: #8fa3bd !important;
+}
+
+html.theme-dark .hover\:bg-slate-300:hover {
+  background-color: #1b2d48 !important;
 }
 
 html.theme-dark .bg-cyan-50,
