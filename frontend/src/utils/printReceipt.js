@@ -226,7 +226,7 @@ const isStandalonePwa = () => {
       window.navigator.standalone === true ||
       document.referrer.startsWith("android-app://")
     );
-  } catch (error) {
+  } catch {
     return false;
   }
 };
@@ -289,7 +289,7 @@ const printInsideCurrentApp = (check) => {
       try {
         frameWindow.focus();
         frameWindow.print();
-      } catch (error) {
+      } catch {
         cleanup();
       }
     }, 120);

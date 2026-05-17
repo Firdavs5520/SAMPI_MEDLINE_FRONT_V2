@@ -5,8 +5,10 @@ import Navbar from "../components/Navbar.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const SIDEBAR_COMPACT_KEY = "sampi_sidebar_compact";
-const PULL_REFRESH_TRIGGER = 72;
-const PULL_REFRESH_MAX = 110;
+const PULL_REFRESH_TRIGGER = 92;
+const PULL_REFRESH_MAX = 136;
+const PULL_REFRESH_START_ZONE = 48;
+const PULL_REFRESH_MIN_DRAG = 18;
 
 const getWindowScrollTop = () =>
   window.scrollY ||
@@ -38,6 +40,7 @@ function DashboardLayout() {
   const isPullingRef = useRef(false);
   const readyRef = useRef(false);
   const isRefreshingRef = useRef(false);
+  const sidebarOpenRef = useRef(false);
   const isLorSelectPage = role === "lor" && location.pathname === "/lor/select";
 
   const handleToggleSidebarCompact = () => {
@@ -55,6 +58,10 @@ function DashboardLayout() {
   }, [pullReady]);
 
   useEffect(() => {
+    sidebarOpenRef.current = sidebarOpen;
+  }, [sidebarOpen]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
     const canUseTouch = window.matchMedia?.("(pointer: coarse)")?.matches;
@@ -67,12 +74,13 @@ function DashboardLayout() {
 
     const onTouchStart = (event) => {
       if (event.touches.length !== 1 || isRefreshingRef.current) return;
+      if (sidebarOpenRef.current) return;
       if (isInteractiveTarget(event.target)) return;
 
       const currentTop = getWindowScrollTop();
       const touchY = event.touches[0]?.clientY ?? 0;
 
-      if (currentTop <= 0 && touchY <= 72) {
+      if (currentTop <= 0 && touchY <= PULL_REFRESH_START_ZONE) {
         pullStartYRef.current = touchY;
         isPullingRef.current = true;
       }
@@ -93,7 +101,13 @@ function DashboardLayout() {
         return;
       }
 
-      const nextDistance = Math.min(PULL_REFRESH_MAX, delta * 0.48);
+      if (delta < PULL_REFRESH_MIN_DRAG) {
+        setPullDistance(0);
+        setPullReady(false);
+        return;
+      }
+
+      const nextDistance = Math.min(PULL_REFRESH_MAX, (delta - PULL_REFRESH_MIN_DRAG) * 0.44);
       const isReady = nextDistance >= PULL_REFRESH_TRIGGER;
       setPullDistance(nextDistance);
       setPullReady(isReady);
@@ -156,8 +170,11 @@ function DashboardLayout() {
   return (
     <div className="app-shell flex min-h-screen w-full overflow-x-hidden bg-slate-100">
       <div
-        className="pointer-events-none fixed left-1/2 top-2 z-[35] -translate-x-1/2 transition-transform duration-200"
-        style={{ transform: `translate(-50%, ${-56 + pullDistance}px)` }}
+        className="pointer-events-none fixed left-1/2 z-[35] -translate-x-1/2 transition-transform duration-200"
+        style={{
+          top: "max(0.5rem, env(safe-area-inset-top, 0px))",
+          transform: `translate(-50%, ${-56 + pullDistance}px)`
+        }}
       >
         <div
           className={`rounded-full border px-3 py-1.5 text-xs font-semibold shadow ${

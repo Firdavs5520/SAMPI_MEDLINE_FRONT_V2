@@ -8,6 +8,15 @@
   --sampi-primary: #0e7490;
   --sampi-accent: #f97316;
   --sampi-surface: #f1f5f9;
+  color-scheme: light;
+}
+
+html.theme-light {
+  color-scheme: light;
+}
+
+html.theme-dark {
+  color-scheme: dark;
 }
 
 body {
@@ -20,8 +29,15 @@ body {
   scrollbar-color: #0f766e #e2e8f0;
 }
 
+html.theme-dark body {
+  background: #060d1a;
+  color: #e2e8f0;
+  scrollbar-color: #0ea5a2 #0f172a;
+}
+
 #root {
   min-height: 100vh;
+  transition: background-color 160ms ease, color 160ms ease;
 }
 
 *::-webkit-scrollbar {
@@ -57,6 +73,12 @@ select {
   @apply relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300;
 }
 
+html.theme-dark .card {
+  border-color: #1f2c3e !important;
+  background-color: #0f1a2c !important;
+  box-shadow: 0 20px 30px -24px rgba(2, 6, 23, 0.95);
+}
+
 .card::before {
   content: "";
   position: absolute;
@@ -72,6 +94,28 @@ select {
     radial-gradient(circle at 8% -8%, rgba(14, 116, 144, 0.12), transparent 36%),
     radial-gradient(circle at 90% 0%, rgba(249, 115, 22, 0.1), transparent 30%),
     var(--sampi-surface);
+}
+
+html.theme-dark .app-shell {
+  background:
+    radial-gradient(circle at 8% -8%, rgba(14, 116, 144, 0.2), transparent 40%),
+    radial-gradient(circle at 90% 0%, rgba(249, 115, 22, 0.14), transparent 34%),
+    #060d1a;
+}
+
+html.theme-dark .from-slate-100 {
+  --tw-gradient-from: #060d1a var(--tw-gradient-from-position);
+  --tw-gradient-to: rgba(6, 13, 26, 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+html.theme-dark .via-cyan-50 {
+  --tw-gradient-to: rgba(8, 28, 46, 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), #081c2e var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+
+html.theme-dark .to-orange-50 {
+  --tw-gradient-to: #161421 var(--tw-gradient-to-position);
 }
 
 .route-enter {
@@ -110,6 +154,11 @@ select {
     rgba(255, 255, 255, 0.93) 100%
   );
   box-shadow: 0 6px 20px -18px rgba(15, 23, 42, 0.6);
+}
+
+html.theme-dark .sampi-navbar {
+  background: linear-gradient(180deg, rgba(10, 17, 30, 0.98), rgba(10, 17, 30, 0.92));
+  border-color: #1f2c3e;
 }
 
 .sampi-navbar-user {
@@ -151,16 +200,22 @@ select {
   transition: transform 280ms ease-out, width 280ms ease-out;
 }
 
+html.theme-dark .sampi-sidebar {
+  background:
+    linear-gradient(180deg, rgba(8, 14, 25, 0.98), rgba(8, 14, 25, 0.95)),
+    radial-gradient(circle at 0% 0%, rgba(14, 116, 144, 0.2), transparent 45%);
+  border-color: #1f2c3e;
+}
+
 .sampi-brand-mark {
   box-shadow: inset 0 0 0 1px rgba(14, 116, 144, 0.12), 0 6px 16px -12px rgba(14, 116, 144, 0.65);
 }
 
 .sampi-sidebar-brand-row {
-  display: grid;
-  grid-template-columns: 2.25rem minmax(0, 12rem);
+  display: flex;
   gap: 0.625rem;
   align-items: center;
-  transition: grid-template-columns 240ms ease, gap 220ms ease;
+  transition: gap 220ms ease, justify-content 220ms ease;
 }
 
 .sampi-sidebar-group {
@@ -168,12 +223,39 @@ select {
 }
 
 .sampi-brand-title {
+  max-width: 12rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   opacity: 1;
   transform: translateX(0);
-  transition: opacity 140ms ease, transform 180ms ease;
+  transition: max-width 220ms ease, opacity 140ms ease, transform 180ms ease;
+}
+
+.sampi-sidebar-brand-row-compact {
+  justify-content: center;
+  gap: 0;
+}
+
+.sampi-sidebar-brand-row-compact .sampi-brand-title {
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(-0.35rem);
+}
+
+.sampi-sidebar-toggle {
+  box-shadow:
+    0 12px 22px -18px rgba(15, 23, 42, 0.85),
+    0 0 0 4px rgba(14, 116, 144, 0.08);
+}
+
+html.theme-dark .sampi-sidebar-toggle {
+  border-color: #2f4056;
+  background: #0f1a2c;
+  color: #d6e0ec;
+  box-shadow:
+    0 18px 28px -22px rgba(2, 6, 23, 0.95),
+    0 0 0 4px rgba(56, 189, 248, 0.08);
 }
 
 .sampi-sidebar-link {
@@ -196,6 +278,109 @@ select {
 .sampi-sidebar-link:hover::after {
   opacity: 1;
   transform: scaleX(1);
+}
+
+.sampi-theme-toggle {
+  position: relative;
+  overflow: hidden;
+}
+
+.sampi-theme-toggle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(14, 116, 144, 0.08), rgba(249, 115, 22, 0.1));
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.sampi-theme-toggle:hover::before {
+  opacity: 1;
+}
+
+.sampi-theme-toggle > span {
+  position: relative;
+  z-index: 1;
+}
+
+html.theme-dark .sampi-theme-toggle::before {
+  background: linear-gradient(120deg, rgba(14, 116, 144, 0.24), rgba(249, 115, 22, 0.18));
+}
+
+.sampi-debt-radar::before {
+  content: "";
+  position: absolute;
+  inset: -40% auto auto -8%;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(248, 113, 113, 0.28), transparent 62%);
+  animation: debt-radar 2.8s ease-in-out infinite;
+}
+
+.sampi-debt-row {
+  position: relative;
+}
+
+.sampi-debt-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(220, 38, 38, 0.1), transparent 34%);
+}
+
+.sampi-debt-orbit {
+  box-shadow:
+    0 0 0 3px rgba(254, 202, 202, 0.95),
+    0 0 0 7px rgba(254, 226, 226, 0.55);
+}
+
+.sampi-debt-pill {
+  box-shadow: 0 8px 18px -14px rgba(185, 28, 28, 0.9);
+}
+
+.sampi-cashier-popover {
+  animation: cashier-pop 140ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.sampi-cashier-popover::before {
+  content: "";
+  position: absolute;
+  left: 1.5rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  rotate: 45deg;
+  background: inherit;
+  border: inherit;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.sampi-cashier-popover[data-placement="bottom"]::before {
+  top: -0.39rem;
+}
+
+.sampi-cashier-popover[data-placement="top"]::before {
+  bottom: -0.39rem;
+  rotate: 225deg;
+}
+
+html.theme-dark .sampi-debt-radar {
+  border-color: #7f1d1d !important;
+  background: linear-gradient(135deg, rgba(69, 10, 10, 0.96), rgba(45, 18, 30, 0.94)) !important;
+  color: #fee2e2 !important;
+}
+
+html.theme-dark .sampi-debt-radar .bg-white\/80,
+html.theme-dark .sampi-cashier-popover .bg-white\/70 {
+  background-color: rgba(15, 26, 44, 0.76) !important;
+}
+
+html.theme-dark .sampi-cashier-popover {
+  border-color: #2f4056 !important;
+  background: #0f1a2c !important;
+  color: #e2e8f0 !important;
 }
 
 .route-enter .card {
@@ -332,6 +517,14 @@ select {
     0 10px 24px -16px rgba(14, 116, 144, 0.2);
 }
 
+html.theme-dark .sampi-dropdown {
+  border-color: #2d3b51;
+  background: #0e1728;
+  box-shadow:
+    0 10px 24px -20px rgba(2, 6, 23, 0.9),
+    0 10px 24px -16px rgba(14, 116, 144, 0.18);
+}
+
 .sampi-control {
   transition:
     border-color 170ms ease,
@@ -384,6 +577,10 @@ select {
 
 .sampi-table-row:hover td {
   color: #0f172a;
+}
+
+html.theme-dark .sampi-table-row:hover td {
+  color: #f8fafc;
 }
 
 .sampi-table-row > td:first-child {
@@ -511,6 +708,29 @@ select {
   }
 }
 
+@keyframes debt-radar {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes cashier-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes dropdown-pop {
   from {
     opacity: 0;
@@ -549,19 +769,6 @@ select {
   }
 }
 
-@media (min-width: 1024px) {
-  .sampi-sidebar-brand-row-compact {
-    grid-template-columns: 2.25rem 0fr;
-    gap: 0;
-    justify-content: center;
-  }
-
-  .sampi-sidebar-brand-row-compact .sampi-brand-title {
-    opacity: 0;
-    transform: translateX(-0.25rem);
-  }
-}
-
 .sampi-select {
   appearance: none;
   -webkit-appearance: none;
@@ -582,6 +789,120 @@ select {
   background: #ffffff;
 }
 
+html.theme-dark .sampi-select option {
+  color: #e2e8f0;
+  background: #0b1526;
+}
+
+html.theme-dark .sampi-control {
+  border-color: #32455f !important;
+  background-color: #0b1526 !important;
+  color: #e2e8f0;
+}
+
+html.theme-dark .sampi-control::placeholder {
+  color: #7f91a8;
+}
+
+html.theme-dark .sampi-brand-mark {
+  background: rgba(56, 189, 248, 0.22) !important;
+  border: 1px solid rgba(56, 189, 248, 0.32);
+  color: #c9f3ff !important;
+}
+
+html.theme-dark .text-slate-900 {
+  color: #f8fafc !important;
+}
+
+html.theme-dark .text-slate-800 {
+  color: #f1f5f9 !important;
+}
+
+html.theme-dark .text-slate-700 {
+  color: #d6e0ec !important;
+}
+
+html.theme-dark .text-slate-600 {
+  color: #b7c4d7 !important;
+}
+
+html.theme-dark .text-slate-500,
+html.theme-dark .text-slate-400 {
+  color: #91a3ba !important;
+}
+
+html.theme-dark .text-red-950,
+html.theme-dark .text-red-900,
+html.theme-dark .text-red-800,
+html.theme-dark .text-red-700 {
+  color: #fca5a5 !important;
+}
+
+html.theme-dark .text-amber-700 {
+  color: #fcd34d !important;
+}
+
+html.theme-dark .text-emerald-700 {
+  color: #86efac !important;
+}
+
+html.theme-dark .text-primary,
+html.theme-dark .text-cyan-700,
+html.theme-dark .text-cyan-800,
+html.theme-dark .text-cyan-950 {
+  color: #a5f3fc !important;
+}
+
+html.theme-dark .bg-white {
+  background-color: #0f1a2c !important;
+}
+
+html.theme-dark .bg-white\/80 {
+  background-color: rgba(15, 26, 44, 0.86) !important;
+}
+
+html.theme-dark .bg-slate-50,
+html.theme-dark .bg-slate-50\/80 {
+  background-color: rgba(12, 22, 38, 0.9) !important;
+}
+
+html.theme-dark .bg-slate-100 {
+  background-color: #0b1526 !important;
+}
+
+html.theme-dark .bg-cyan-50,
+html.theme-dark .bg-cyan-50\/40,
+html.theme-dark .bg-cyan-50\/70,
+html.theme-dark .bg-sky-50,
+html.theme-dark .bg-sky-50\/55 {
+  background-color: rgba(14, 42, 64, 0.82) !important;
+}
+
+html.theme-dark .bg-amber-50,
+html.theme-dark .bg-amber-50\/45,
+html.theme-dark .bg-amber-100 {
+  background-color: rgba(56, 40, 15, 0.86) !important;
+}
+
+html.theme-dark .bg-red-50,
+html.theme-dark .bg-red-50\/95,
+html.theme-dark .bg-red-100\/95 {
+  background-color: rgba(69, 10, 10, 0.86) !important;
+}
+
+html.theme-dark .border-slate-100,
+html.theme-dark .border-slate-200,
+html.theme-dark .border-slate-300,
+html.theme-dark .border-slate-200\/80 {
+  border-color: #2f4056 !important;
+}
+
+html.theme-dark .hover\:bg-slate-100:hover,
+html.theme-dark .hover\:bg-slate-50:hover,
+html.theme-dark .hover\:bg-slate-50\/85:hover {
+  background-color: #16243a !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .route-enter,
   .route-enter > div > *,
@@ -591,7 +912,10 @@ select {
   .lor-choice-card,
   .lor-choice-action::after,
   .animate-dropdown-pop,
+  .sampi-debt-radar::before,
+  .sampi-cashier-popover,
   .sampi-btn::after,
+  .sampi-theme-toggle svg,
   .sampi-alert,
   .sampi-modal-overlay,
   .sampi-modal-panel,

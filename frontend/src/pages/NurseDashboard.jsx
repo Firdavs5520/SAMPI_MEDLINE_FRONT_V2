@@ -203,7 +203,7 @@ function NurseDashboard() {
         try {
           element.focus();
           if (typeof element.select === "function") element.select();
-        } catch (error) {
+        } catch {
           // no-op
         }
       }, 0);

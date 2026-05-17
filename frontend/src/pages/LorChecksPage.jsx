@@ -42,6 +42,7 @@ function LorChecksPage() {
   const [query, setQuery] = useState("");
   const [hoverPreview, setHoverPreview] = useState(null);
   const hoverTimerRef = useRef(null);
+  const hoverCloseTimerRef = useRef(null);
   const checkSuggestions = useMemo(() => {
     const uniq = new Map();
     checks.forEach((item) => {
@@ -118,6 +119,9 @@ function LorChecksPage() {
       if (hoverTimerRef.current) {
         clearTimeout(hoverTimerRef.current);
       }
+      if (hoverCloseTimerRef.current) {
+        clearTimeout(hoverCloseTimerRef.current);
+      }
     },
     []
   );
@@ -129,9 +133,20 @@ function LorChecksPage() {
     }
   };
 
-  const clearHoverPreview = () => {
+  const clearHoverCloseTimer = () => {
+    if (hoverCloseTimerRef.current) {
+      clearTimeout(hoverCloseTimerRef.current);
+      hoverCloseTimerRef.current = null;
+    }
+  };
+
+  const clearHoverPreview = ({ delay = 140 } = {}) => {
     clearHoverTimer();
-    setHoverPreview(null);
+    clearHoverCloseTimer();
+    hoverCloseTimerRef.current = setTimeout(() => {
+      setHoverPreview(null);
+      hoverCloseTimerRef.current = null;
+    }, delay);
   };
 
   const queueHoverPreview = (row, event) => {
@@ -139,14 +154,19 @@ function LorChecksPage() {
     if (!nextKey) return;
 
     clearHoverTimer();
-    setHoverPreview(null);
+    clearHoverCloseTimer();
     const rect = event.currentTarget.getBoundingClientRect();
-    const top = Math.min(window.innerHeight - 220, Math.max(84, rect.bottom + 10));
-    const left = Math.min(window.innerWidth - 360, Math.max(16, rect.left));
+    const cardWidth = Math.min(320, window.innerWidth - 32);
+    const cardHeight = hasDebt(row) ? 248 : 170;
+    const shouldPlaceAbove = rect.bottom + cardHeight + 18 > window.innerHeight;
+    const top = shouldPlaceAbove
+      ? Math.max(76, rect.top - cardHeight - 12)
+      : Math.min(window.innerHeight - cardHeight - 16, Math.max(76, rect.bottom + 12));
+    const left = Math.min(window.innerWidth - cardWidth - 16, Math.max(16, rect.left - 12));
     hoverTimerRef.current = setTimeout(() => {
-      setHoverPreview({ checkKey: nextKey, top, left });
+      setHoverPreview({ checkKey: nextKey, top, left, placement: shouldPlaceAbove ? "top" : "bottom" });
       hoverTimerRef.current = null;
-    }, 3000);
+    }, 120);
   };
 
   const clearSearch = () => {
@@ -195,23 +215,38 @@ function LorChecksPage() {
 
       <div className="card p-4 sm:p-5">
         {debtSummary.count > 0 && (
-          <div className="mb-4 rounded-xl border-2 border-red-400 bg-red-50 p-4 text-red-900 shadow-[0_18px_35px_-28px_rgba(220,38,38,0.8)]">
-            <p className="text-sm font-black uppercase tracking-wide text-red-700">Diqqat: qarzdor bemorlar bor</p>
-            <p className="mt-1 text-sm font-semibold">
-              Qarzdorlar soni: {debtSummary.count} ta, jami qarz: {formatCurrency(debtSummary.totalDebt)} so'm
-            </p>
-            <p className="mt-1 text-xs font-bold text-red-700">
-              Qizil qatorlar qarzi yopilmaguncha alohida ko'rsatiladi.
-            </p>
+          <div className="sampi-debt-radar sticky top-20 z-10 mb-4 overflow-hidden rounded-xl border-2 border-red-400 bg-red-50 p-4 text-red-950 shadow-[0_18px_35px_-28px_rgba(220,38,38,0.9)]">
+            <div className="relative z-[1] grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+              <div>
+                <p className="text-sm font-black uppercase tracking-wide text-red-700">
+                  Qarzdor bemorlar yuqorida ushlab turildi
+                </p>
+                <p className="mt-1 text-sm font-semibold">
+                  Qarz yopilmaguncha bu qatorlar qizil signal bilan ajralib turadi.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <div className="rounded-lg border border-red-200 bg-white/80 px-3 py-2">
+                  <p className="text-[10px] font-black uppercase tracking-wide text-red-600">Soni</p>
+                  <p className="text-lg font-black text-red-800">{debtSummary.count}</p>
+                </div>
+                <div className="rounded-lg border border-red-200 bg-white/80 px-3 py-2">
+                  <p className="text-[10px] font-black uppercase tracking-wide text-red-600">Jami qarz</p>
+                  <p className="text-lg font-black text-red-800">
+                    {formatCurrency(debtSummary.totalDebt)}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
-        <div onMouseLeave={clearHoverPreview}>
+        <div onMouseLeave={() => clearHoverPreview({ delay: 180 })}>
           <Table
             data={prioritizedChecks}
             rowClassName={(row, rowIndex) => {
               const debt = hasDebt(row);
               if (debt) {
-                return "bg-red-50/95 shadow-[inset_6px_0_0_#dc2626] ring-2 ring-inset ring-red-300 hover:bg-red-100/95";
+                return "sampi-debt-row bg-red-50/95 shadow-[inset_6px_0_0_#dc2626] ring-2 ring-inset ring-red-300 hover:bg-red-100/95";
               }
 
               if (row?.cashierStatus?.accepted) {
@@ -242,14 +277,17 @@ function LorChecksPage() {
                 const isQueued = getCheckKey(row) === hoverPreview?.checkKey;
                 return (
                   <div
-                    className="relative max-w-[280px]"
+                    className="relative max-w-[280px] outline-none"
+                    tabIndex={0}
                     onMouseEnter={(event) => queueHoverPreview(row, event)}
-                    onMouseLeave={clearHoverPreview}
+                    onMouseLeave={() => clearHoverPreview({ delay: 180 })}
+                    onFocus={(event) => queueHoverPreview(row, event)}
+                    onBlur={() => clearHoverPreview({ delay: 0 })}
                   >
                     <div className="flex items-center gap-2.5">
                       <span
-                        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-black tracking-wide text-white ${
-                          debt ? "bg-red-700 shadow-[0_0_0_3px_rgba(254,202,202,0.9)]" : "bg-slate-800"
+                        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[10px] font-black tracking-wide text-white ${
+                          debt ? "sampi-debt-orbit bg-red-700" : "bg-slate-800"
                         }`}
                       >
                         {getPatientInitials(patientName)}
@@ -260,13 +298,13 @@ function LorChecksPage() {
                             {patientName}
                           </p>
                           {debt ? (
-                            <span className="shrink-0 rounded-full bg-red-700 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">
-                              Qarzdor
+                            <span className="sampi-debt-pill shrink-0 rounded-full bg-red-700 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">
+                              Qarz yopilmagan
                             </span>
                           ) : null}
                         </div>
                         <p className={`truncate text-[11px] font-bold ${debt ? "text-red-700" : "text-slate-500"}`}>
-                          Chek: {row.checkId || "-"} {isQueued ? "- 3 soniyadan keyin tafsilot" : ""}
+                          Chek: {row.checkId || "-"} {isQueued ? "- kassa tafsiloti ochiq" : ""}
                         </p>
                       </div>
                     </div>
@@ -356,56 +394,81 @@ function LorChecksPage() {
         </div>
         {hoverPreviewRow && (
           <div
-            className={`fixed z-50 w-[min(22rem,calc(100vw-2rem))] rounded-xl border p-4 text-sm shadow-2xl ${
+            className={`sampi-cashier-popover fixed z-50 w-[min(20rem,calc(100vw-2rem))] rounded-xl border p-3 text-sm shadow-2xl ${
               hasDebt(hoverPreviewRow)
                 ? "border-red-300 bg-red-50 text-red-950"
                 : "border-cyan-200 bg-cyan-50 text-cyan-950"
             }`}
+            data-placement={hoverPreview.placement}
             style={{ top: hoverPreview.top, left: hoverPreview.left }}
-            onMouseEnter={clearHoverTimer}
-            onMouseLeave={clearHoverPreview}
+            onMouseEnter={() => {
+              clearHoverTimer();
+              clearHoverCloseTimer();
+            }}
+            onMouseLeave={() => clearHoverPreview({ delay: 0 })}
           >
-            <p
-              className={`text-xs font-black uppercase tracking-wide ${
-                hasDebt(hoverPreviewRow) ? "text-red-700" : "text-cyan-700"
-              }`}
-            >
-              Kassa tafsilotlari
-            </p>
-            <p className="mt-1 text-sm font-black">
-              {hoverPreviewRow.patient?.fullName || "-"}
-            </p>
-            <p className="mt-0.5 text-xs font-bold">Chek: {hoverPreviewRow.checkId || "-"}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p
+                  className={`text-[11px] font-black uppercase tracking-wide ${
+                    hasDebt(hoverPreviewRow) ? "text-red-700" : "text-cyan-700"
+                  }`}
+                >
+                  Kassa tafsilotlari
+                </p>
+                <p className="mt-1 truncate text-sm font-black">
+                  {hoverPreviewRow.patient?.fullName || "-"}
+                </p>
+                <p className="mt-0.5 text-xs font-bold">Chek: {hoverPreviewRow.checkId || "-"}</p>
+              </div>
+              {hasDebt(hoverPreviewRow) ? (
+                <span className="rounded-full bg-red-700 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white">
+                  Diqqat
+                </span>
+              ) : null}
+            </div>
             {hoverPreviewRow?.cashierStatus?.accepted ? (
-              <div className="mt-2 grid gap-2 text-xs sm:grid-cols-2">
-                <p>
-                  <span className="font-bold">Kassir:</span>{" "}
-                  {hoverPreviewRow.cashierStatus.acceptedByName || "-"}
-                </p>
-                <p>
-                  <span className="font-bold">Telefon:</span>{" "}
-                  {hoverPreviewRow.cashierStatus.patientPhone || "-"}
-                </p>
-                <p>
-                  <span className="font-bold">To'lov raqami:</span>{" "}
-                  {hoverPreviewRow.cashierStatus.checkCode || hoverPreviewRow.checkId || "-"}
-                </p>
-                <p>
-                  <span className="font-bold">Qabul vaqti:</span>{" "}
-                  {formatDateTime(hoverPreviewRow.cashierStatus.acceptedAt)}
-                </p>
-                <p>
-                  <span className="font-bold">To'lov turi:</span>{" "}
-                  {getPaymentLabel(hoverPreviewRow.cashierStatus.paymentMethod)}
-                </p>
-                <p>
-                  <span className="font-bold">Qarz:</span>{" "}
-                  {formatCurrency(hoverPreviewRow.cashierStatus.debtAmount || 0)} so'm
-                </p>
-                <p className="sm:col-span-2">
-                  <span className="font-bold">Izoh:</span>{" "}
-                  {hoverPreviewRow.cashierStatus.note || "Izoh qoldirilmagan"}
-                </p>
+              <div className="mt-3 space-y-2 text-xs">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg bg-white/70 px-2 py-1.5">
+                    <span className="block text-[10px] font-black uppercase tracking-wide opacity-70">
+                      To'langan
+                    </span>
+                    <span className="font-black">
+                      {formatCurrency(hoverPreviewRow.cashierStatus.paidAmount || 0)} so'm
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-white/70 px-2 py-1.5">
+                    <span className="block text-[10px] font-black uppercase tracking-wide opacity-70">
+                      Qarz
+                    </span>
+                    <span className="font-black">
+                      {formatCurrency(hoverPreviewRow.cashierStatus.debtAmount || 0)} so'm
+                    </span>
+                  </div>
+                </div>
+                <div className="grid gap-1.5">
+                  <p>
+                    <span className="font-bold">Telefon:</span>{" "}
+                    {hoverPreviewRow.cashierStatus.patientPhone || "-"}
+                  </p>
+                  <p>
+                    <span className="font-bold">Izoh:</span>{" "}
+                    {hoverPreviewRow.cashierStatus.note || "Izoh qoldirilmagan"}
+                  </p>
+                  <p>
+                    <span className="font-bold">Kassir:</span>{" "}
+                    {hoverPreviewRow.cashierStatus.acceptedByName || "-"}
+                  </p>
+                  <p>
+                    <span className="font-bold">Vaqt:</span>{" "}
+                    {formatDateTime(hoverPreviewRow.cashierStatus.acceptedAt)}
+                  </p>
+                  <p>
+                    <span className="font-bold">To'lov:</span>{" "}
+                    {getPaymentLabel(hoverPreviewRow.cashierStatus.paymentMethod)}
+                  </p>
+                </div>
               </div>
             ) : (
               <p className="mt-2 text-xs font-semibold text-amber-700">
