@@ -6,8 +6,6 @@ import Alert from "../components/Alert.jsx";
 import Table from "../components/Table.jsx";
 import Spinner from "../components/Spinner.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
-import StatusBadge from "../components/StatusBadge.jsx";
-import MobileActionBar from "../components/MobileActionBar.jsx";
 import {
   extractErrorMessage,
   formatCurrency,
@@ -139,15 +137,15 @@ function DeliveryDashboard() {
   };
 
   if (loading) {
-    return <Spinner text="Yetkazuvchi paneli yuklanmoqda..." />;
+    return <Spinner text="Delivery panel yuklanmoqda..." />;
   }
 
   return (
-    <div className="space-y-6 sampi-mobile-safe">
+    <div className="space-y-6">
       <div className={`card p-4 sm:p-5 ${sectionTheme.headerCard}`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-800">Yetkazuvchi paneli</h1>
+            <h1 className="text-xl font-bold text-slate-800">Kuryer paneli</h1>
             <p className="mt-1 text-sm text-slate-500">
               Ombordagi dorilarni tez tanlash va ko'p miqdorda qoldiq qo'shish bo'limi.
             </p>
@@ -155,7 +153,7 @@ function DeliveryDashboard() {
           <span
             className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-bold tracking-wide ${sectionTheme.badge}`}
           >
-            YETKAZUVCHI BO'LIMI
+            DELIVERY BO'LIMI
           </span>
         </div>
         <div className={`mt-3 rounded-xl border px-3 py-2 text-sm font-medium ${sectionTheme.alertBox}`}>
@@ -172,7 +170,7 @@ function DeliveryDashboard() {
         <div className="mb-4">
           <QuickSearchInput
             label="Dori qidirish"
-            placeholder="Masalan: Seftriakson"
+            placeholder="Masalan: Ceftriaxone"
             value={medicineSearch}
             onChange={setMedicineSearch}
             items={sortedMedicines}
@@ -198,14 +196,15 @@ function DeliveryDashboard() {
                 key={medicine._id}
                 type="button"
                 onClick={() => toggleMedicine(medicine._id)}
-                className={`px-3 py-3 text-left transition ${
-                  selected ? "sampi-choice-card is-selected" : "sampi-choice-card"
+                className={`rounded-xl border px-3 py-3 text-left transition ${
+                  selected
+                    ? "border-primary bg-cyan-50"
+                    : "border-slate-200 bg-white hover:border-primary/50"
                 }`}
-                style={{ touchAction: "pan-y" }}
               >
                 <p className="font-semibold text-slate-800">{medicine.name}</p>
                 <p className="mt-1 text-xs text-slate-600">
-                  Hozirgi qoldiq: {formatCurrency(medicine.stock)}
+                  Ho'zirgi qoldiq: {formatCurrency(medicine.stock)}
                 </p>
                 <p className="text-xs text-slate-500">
                   Narx: {medicine.price ? formatCurrency(medicine.price) : "-"}
@@ -238,7 +237,7 @@ function DeliveryDashboard() {
                   <div>
                     <p className="font-medium text-slate-800">{medicine?.name}</p>
                     <p className="text-xs text-slate-500">
-                      Hozirgi qoldiq: {formatCurrency(medicine?.stock)}
+                      Ho'zirgi qoldiq: {formatCurrency(medicine?.stock)}
                     </p>
                   </div>
 
@@ -264,7 +263,7 @@ function DeliveryDashboard() {
             })}
           </div>
 
-          <div className="mt-4 hidden sm:block">
+          <div className="mt-4">
             <Button
               loading={savingStock}
               onClick={handleBatchRestock}
@@ -306,38 +305,18 @@ function DeliveryDashboard() {
               label: "Holat",
               render: (row) =>
                 row.stock > 0 ? (
-                  <StatusBadge tone="success">Bor</StatusBadge>
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                    Bor
+                  </span>
                 ) : (
-                  <StatusBadge tone="error">QOLMADI</StatusBadge>
+                  <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
+                    QOLMADI
+                  </span>
                 )
             }
           ]}
-          stickyHeader
-          emptyTitle="Dorilar ro'yxati bo'sh"
-          emptyDescription="Hamshira yangi dori qo'shgandan keyin bu yerda ko'rinadi."
         />
       </div>
-
-      <MobileActionBar show={selectedMedicineIds.length > 0}>
-        <Button
-          type="button"
-          variant="secondary"
-          className="flex-1"
-          onClick={() => {
-            setSelectedMedicineIds([]);
-            setSelectedInputs({});
-          }}
-        >
-          Tozalash
-        </Button>
-        <Button
-          loading={savingStock}
-          onClick={handleBatchRestock}
-          className={`flex-1 ${sectionTheme.submitButton}`}
-        >
-          Omborga qo'shish
-        </Button>
-      </MobileActionBar>
     </div>
   );
 }

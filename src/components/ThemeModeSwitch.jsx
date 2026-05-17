@@ -1,4 +1,5 @@
 import { useTheme } from "../context/ThemeContext.jsx";
+
 const THEME_OPTIONS = ["light", "dark", "system"];
 const THEME_LABELS = {
   light: "Yorug'",

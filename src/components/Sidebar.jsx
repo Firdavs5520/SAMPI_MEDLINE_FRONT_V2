@@ -146,24 +146,18 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
         return acc;
       }, [])
     : [];
-  const flatMenus = hasGroups
-    ? groupedMenus.flatMap((group) =>
-        group.items.map((item) => ({ ...item, __groupName: group.name }))
-      )
-    : menus.map((item) => ({ ...item, __groupName: item.group || "" }));
 
   const linkClassName = ({ isActive }) =>
     `sampi-sidebar-link flex min-h-[44px] items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out ${
-      isCompact ? "gap-2 lg:justify-center lg:px-2 lg:gap-0" : "gap-2"
+      isCompact ? "lg:justify-center lg:px-2" : "gap-2"
     } ${
-      isActive ? "bg-primary text-white shadow-sm" : "text-slate-700 hover:bg-slate-100"
+      isActive ? "bg-primary text-white shadow-sm" : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
     }`;
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
     const media = window.matchMedia("(min-width: 1024px)");
     const sync = (event) => setIsDesktop(event.matches);
-    setIsDesktop(media.matches);
 
     if (typeof media.addEventListener === "function") {
       media.addEventListener("change", sync);
@@ -176,22 +170,29 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
 
   return (
     <aside
-      className={`sampi-sidebar fixed inset-y-0 left-0 z-40 w-[88vw] max-w-[22rem] transform border-r border-slate-200 transition lg:static lg:max-w-none lg:translate-x-0 lg:transition-all lg:duration-300 lg:ease-out ${compact ? "lg:w-20" : "lg:w-64"} ${open ? "translate-x-0" : "-translate-x-full"}`}
+      className={`sampi-sidebar fixed inset-y-0 left-0 z-40 w-[88vw] max-w-[22rem] transform border-r border-slate-200 lg:static lg:max-w-none lg:translate-x-0 ${compact ? "lg:w-20" : "lg:w-64"} ${open ? "translate-x-0" : "-translate-x-full"}`}
     >
       <div className="flex h-full flex-col">
         <div className={`flex items-center border-b border-slate-200 py-4 ${isCompact ? "justify-center px-2" : "justify-between px-4 sm:px-5"}`}>
-          <div className={`flex items-center gap-2 ${isCompact ? "lg:justify-center lg:w-full" : ""}`}>
+          <div
+            className={`sampi-sidebar-brand-row min-w-0 items-center ${
+              isCompact ? "sampi-sidebar-brand-row-compact lg:w-full" : ""
+            }`}
+          >
             <div className="sampi-brand-mark flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-sm font-extrabold text-primary">
               SM
             </div>
-            <h2 className={`text-lg font-bold text-slate-800 ${isCompact ? "lg:hidden" : ""}`}>
+            <h2
+              className={`sampi-brand-title text-lg font-bold leading-tight text-slate-800 ${
+                isCompact ? "lg:pointer-events-none" : ""
+              }`}
+            >
               Sampi Medline
             </h2>
           </div>
           <button
             type="button"
-            aria-label="Yon panelni yopish"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 lg:hidden"
+            className="rounded-lg p-1 text-slate-500 hover:bg-slate-100 lg:hidden"
             onClick={onClose}
           >
             X
@@ -201,7 +202,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
         <button
           type="button"
           aria-label={isCompact ? "To'liq menyu" : "Faqat ikonlar"}
-          className="absolute -right-4 top-20 hidden h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:scale-105 hover:bg-slate-50 lg:inline-flex"
+          className="sampi-sidebar-toggle absolute -right-5 top-24 hidden h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-md transition hover:scale-105 hover:bg-slate-50 lg:inline-flex"
           title={isCompact ? "To'liq menyu" : "Faqat ikonlar"}
           onClick={onToggleCompact}
         >
@@ -219,125 +220,51 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
         </button>
 
         <nav className={`overflow-y-auto p-4 ${isCompact ? "space-y-2" : "space-y-3"}`}>
-          {hasGroups ? (
-            <>
-              <div className="hidden space-y-3 lg:block">
-                {groupedMenus.map((group, index) => (
-                  <div
-                    key={group.name}
-                    className={`sampi-sidebar-group rounded-2xl p-2 ${
-                      isCompact ? "sampi-sidebar-compact-group" : "sampi-sidebar-group-card"
-                    }`}
-                    style={{ animationDelay: `${30 + index * 28}ms` }}
+          {hasGroups
+            ? groupedMenus.map((group) => (
+                <div
+                  key={group.name}
+                  className={`sampi-sidebar-group rounded-2xl p-2 ${isCompact ? "lg:border-0 lg:bg-transparent lg:px-0" : "border border-slate-200/80 bg-slate-50/80"}`}
+                >
+                  <p
+                    className={`px-2 pb-1 pt-0.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 ${isCompact ? "lg:hidden" : ""}`}
                   >
-                    {!isCompact ? (
-                      <div className="px-2 pb-1 pt-0.5">
-                        <div className="sampi-group-title">
-                          <span className="sampi-group-icon">
-                            {String(group.name || "?").slice(0, 1)}
-                          </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                            {group.name}
-                          </p>
-                        </div>
-                        <div className="sampi-group-divider" />
-                      </div>
-                    ) : (
-                      <div className="sampi-sidebar-compact-heading">
-                        <span>{String(group.name || "?").slice(0, 1)}</span>
-                      </div>
-                    )}
-
-                    <div className={`space-y-1.5 ${isCompact ? "mt-1" : ""}`}>
-                      {group.items.map((item) => (
-                        <NavLink
-                          key={item.path}
-                          to={item.path}
-                          end={item.end === true}
-                          onClick={onClose}
-                          title={item.label}
-                          aria-label={item.label}
-                          className={({ isActive }) =>
-                            isCompact
-                              ? `sampi-sidebar-compact-link ${
-                                  isActive
-                                    ? "bg-primary text-white shadow-sm"
-                                    : "text-slate-700 hover:bg-slate-100"
-                                }`
-                              : linkClassName({ isActive })
-                          }
-                        >
-                          <MenuIcon name={item.icon} />
-                          {!isCompact ? <span className="truncate">{item.label}</span> : null}
-                        </NavLink>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="space-y-3 lg:hidden">
-                {groupedMenus.map((group, index) => (
-                  <div
-                    key={group.name}
-                    className="sampi-sidebar-group sampi-sidebar-group-card rounded-2xl p-2"
-                    style={{ animationDelay: `${30 + index * 28}ms` }}
-                  >
-                    <div className="px-2 pb-1 pt-0.5">
-                      <div className="sampi-group-title">
-                        <span className="sampi-group-icon">
-                          {String(group.name || "?").slice(0, 1)}
+                    {group.name}
+                  </p>
+                  <div className="space-y-1.5">
+                    {group.items.map((item) => (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        end={item.end === true}
+                        onClick={onClose}
+                        title={isCompact ? item.label : undefined}
+                        aria-label={item.label}
+                        className={linkClassName}
+                      >
+                        <MenuIcon name={item.icon} />
+                        <span className={`truncate ${isCompact ? "lg:hidden" : ""}`}>
+                          {item.label}
                         </span>
-                        <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                          {group.name}
-                        </p>
-                      </div>
-                      <div className="sampi-group-divider" />
-                    </div>
-                    <div className="space-y-1.5">
-                      {group.items.map((item) => (
-                        <NavLink
-                          key={item.path}
-                          to={item.path}
-                          end={item.end === true}
-                          onClick={onClose}
-                          title={item.label}
-                          aria-label={item.label}
-                          className={linkClassName}
-                        >
-                          <MenuIcon name={item.icon} />
-                          <span className="truncate">{item.label}</span>
-                        </NavLink>
-                      ))}
-                    </div>
+                      </NavLink>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            flatMenus.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.end === true}
-                onClick={onClose}
-                title={item.label}
-                aria-label={item.label}
-                className={({ isActive }) =>
-                  isCompact
-                    ? `sampi-sidebar-compact-link ${
-                        isActive
-                          ? "bg-primary text-white shadow-sm"
-                          : "text-slate-700 hover:bg-slate-100"
-                      }`
-                    : linkClassName({ isActive })
-                }
-              >
-                <MenuIcon name={item.icon} />
-                {!isCompact ? <span className="truncate">{item.label}</span> : null}
-              </NavLink>
-            ))
-          )}
+                </div>
+              ))
+            : menus.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.end === true}
+                  onClick={onClose}
+                  title={isCompact ? item.label : undefined}
+                  aria-label={item.label}
+                  className={linkClassName}
+                >
+                  <MenuIcon name={item.icon} />
+                  <span className={`truncate ${isCompact ? "lg:hidden" : ""}`}>{item.label}</span>
+                </NavLink>
+              ))}
         </nav>
       </div>
     </aside>

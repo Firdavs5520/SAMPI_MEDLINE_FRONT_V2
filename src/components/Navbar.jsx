@@ -65,10 +65,12 @@ function Navbar({ onMenuOpen }) {
           <button
             type="button"
             onClick={handleGoHome}
-            className="sampi-navbar-user min-w-0 rounded-lg px-2 py-1 text-left text-sm text-slate-600"
+            className="sampi-navbar-user min-w-0 rounded-xl px-2.5 py-1.5 text-left text-sm"
           >
-            <div className="truncate font-semibold text-slate-800">{displayName}</div>
-            <div className="hidden truncate text-xs sm:block">{roleLabels[user?.role] || "-"}</div>
+            <div className="sampi-navbar-user-name truncate font-semibold">{displayName}</div>
+            <div className="sampi-navbar-user-role hidden truncate text-xs sm:block">
+              {roleLabels[user?.role] || "-"}
+            </div>
           </button>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">

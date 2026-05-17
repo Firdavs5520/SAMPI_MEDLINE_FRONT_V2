@@ -14,7 +14,7 @@ const readStoredMode = () => {
 
 const detectSystemTheme = () => {
   if (typeof window === "undefined") return "light";
-  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ? "dark" : "light";
 };
 
 export function ThemeProvider({ children }) {

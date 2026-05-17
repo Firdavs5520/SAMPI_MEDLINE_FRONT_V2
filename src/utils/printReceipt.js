@@ -309,19 +309,17 @@ export const openPendingPrintTab = () => {
     return openInlinePrintSession();
   }
 
-  return openBrowserPrintTab() || openInlinePrintSession();
+  return openBrowserPrintTab();
 };
 
 export const writeCheckToPrintTab = (printSession, check) => {
-  if (!printSession) return printInsideCurrentApp(check);
+  if (!printSession) return false;
 
   if (printSession.__inlinePrint) {
     return printInsideCurrentApp(check);
   }
 
-  if (!printSession.tab || printSession.tab.closed) {
-    return printInsideCurrentApp(check);
-  }
+  if (!printSession.tab || printSession.tab.closed) return false;
 
   printSession.tab.document.open();
   printSession.tab.document.write(buildCheckPrintHtml(check));
