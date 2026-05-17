@@ -568,6 +568,7 @@ html.theme-dark .sampi-cashier-popover {
   min-height: 72vh;
   display: grid;
   place-items: center;
+  padding: clamp(1rem, 2.2vw, 2rem);
   border-radius: 1.5rem;
   overflow: hidden;
   background:
@@ -591,13 +592,22 @@ html.theme-dark .sampi-cashier-popover {
 .lor-select-card {
   position: relative;
   z-index: 2;
-  width: min(100%, 860px);
+  width: min(100%, 900px);
   border-radius: 1.5rem;
   border: 1px solid #d7e2ec;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(6px);
   box-shadow: 0 20px 40px -30px rgba(15, 23, 42, 0.48);
   padding: clamp(1rem, 2.3vw, 2rem);
+  overflow: hidden;
+}
+
+.lor-select-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, #0891b2, #f97316, #22c55e);
 }
 
 .lor-select-header {
@@ -627,7 +637,8 @@ html.theme-dark .sampi-cashier-popover {
   border-radius: 1.05rem;
   border: 1px solid #d8e3ed;
   background: linear-gradient(180deg, #ffffff, #f8fbff);
-  padding: 1rem;
+  min-height: 11.6rem;
+  padding: 1.25rem;
   transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
 }
 
@@ -683,6 +694,51 @@ html.theme-dark .sampi-cashier-popover {
     inset 0 0 0 1px rgba(14, 116, 144, 0.18);
 }
 
+.lor-step-track {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1.2rem;
+}
+
+.lor-step-dot {
+  display: inline-flex;
+  min-width: 7.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.78);
+  color: #64748b;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.lor-step-dot-active {
+  border-color: rgba(8, 145, 178, 0.55);
+  background: #ecfeff;
+  color: #0e7490;
+}
+
+.lor-step-dot-done {
+  border-color: rgba(34, 197, 94, 0.36);
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.lor-step-line {
+  width: min(14vw, 5.5rem);
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.32);
+}
+
+.lor-step-line-done {
+  background: linear-gradient(90deg, #0891b2, #22c55e);
+}
+
 .lor-select-section {
   position: relative;
   overflow: hidden;
@@ -692,6 +748,35 @@ html.theme-dark .sampi-cashier-popover {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 250, 252, 0.72)),
     radial-gradient(circle at 0% 0%, rgba(14, 116, 144, 0.1), transparent 42%);
+}
+
+.lor-select-stage {
+  max-width: 780px;
+  margin-inline: auto;
+  padding: clamp(1rem, 2.2vw, 1.6rem);
+  animation: card-appear 260ms ease both;
+}
+
+.lor-doctor-stage {
+  max-width: 100%;
+}
+
+.lor-stage-eyebrow {
+  width: fit-content;
+  margin: 0 auto 0.35rem;
+  border-radius: 999px;
+  background: rgba(14, 116, 144, 0.1);
+  padding: 0.3rem 0.62rem;
+  color: #0e7490;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lor-stage-eyebrow-left {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .lor-select-section-muted {
@@ -718,7 +803,8 @@ html.theme-dark .sampi-cashier-popover {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(248, 250, 252, 0.76)),
     radial-gradient(circle at 0% 0%, rgba(249, 115, 22, 0.08), transparent 44%);
-  padding: 0.78rem;
+  min-height: 5.85rem;
+  padding: 0.9rem;
   text-align: left;
   transition:
     border-color 180ms ease,
@@ -1158,6 +1244,54 @@ html.theme-dark .bg-slate-50\/80 {
 
 html.theme-dark .bg-slate-100 {
   background-color: #0b1526 !important;
+}
+
+html.theme-dark .lor-select-shell {
+  border-color: #22364d;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(14, 165, 233, 0.16), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(249, 115, 22, 0.12), transparent 40%),
+    linear-gradient(150deg, #07111f 0%, #0a1728 52%, #0c1a2e 100%);
+}
+
+html.theme-dark .lor-select-card {
+  border-color: #2f4056;
+  background: rgba(11, 21, 38, 0.94);
+  box-shadow: 0 24px 48px -32px rgba(0, 0, 0, 0.82);
+}
+
+html.theme-dark .lor-select-chip,
+html.theme-dark .lor-step-dot-active {
+  border-color: rgba(34, 211, 238, 0.36);
+  background: rgba(8, 47, 73, 0.88);
+  color: #a5f3fc;
+}
+
+html.theme-dark .lor-step-dot {
+  border-color: #2f4056;
+  background: rgba(15, 26, 44, 0.72);
+  color: #91a3ba;
+}
+
+html.theme-dark .lor-step-dot-done {
+  border-color: rgba(52, 211, 153, 0.34);
+  background: rgba(6, 78, 59, 0.58);
+  color: #bbf7d0;
+}
+
+html.theme-dark .lor-step-line {
+  background: #2f4056;
+}
+
+html.theme-dark .lor-step-line-done {
+  background: linear-gradient(90deg, #22d3ee, #34d399);
+}
+
+html.theme-dark .lor-stage-eyebrow,
+html.theme-dark .lor-selected-mini {
+  border-color: rgba(34, 211, 238, 0.24);
+  background: rgba(8, 47, 73, 0.62);
+  color: #a5f3fc;
 }
 
 html.theme-dark .lor-select-section {
