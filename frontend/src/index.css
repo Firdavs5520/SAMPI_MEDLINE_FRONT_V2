@@ -245,8 +245,8 @@ html.theme-dark .sampi-sidebar {
 
 .sampi-sidebar-toggle {
   box-shadow:
-    0 12px 22px -18px rgba(15, 23, 42, 0.85),
-    0 0 0 4px rgba(14, 116, 144, 0.08);
+    0 10px 18px -16px rgba(15, 23, 42, 0.85),
+    0 0 0 3px rgba(14, 116, 144, 0.08);
 }
 
 html.theme-dark .sampi-sidebar-toggle {
@@ -254,8 +254,8 @@ html.theme-dark .sampi-sidebar-toggle {
   background: #0f1a2c;
   color: #d6e0ec;
   box-shadow:
-    0 18px 28px -22px rgba(2, 6, 23, 0.95),
-    0 0 0 4px rgba(56, 189, 248, 0.08);
+    0 14px 24px -20px rgba(2, 6, 23, 0.95),
+    0 0 0 3px rgba(56, 189, 248, 0.08);
 }
 
 .sampi-sidebar-link {
@@ -309,6 +309,9 @@ html.theme-dark .sampi-theme-toggle::before {
 
 .sampi-cashier-popover {
   animation: cashier-pop 140ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  max-height: min(13rem, calc(100vh - 7rem));
+  overflow: visible;
+  scrollbar-width: thin;
 }
 
 .sampi-cashier-popover::before {
