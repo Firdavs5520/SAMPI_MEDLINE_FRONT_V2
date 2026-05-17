@@ -39,6 +39,15 @@ const getPatientInitials = (value) => {
   return `${words[0][0] || ""}${words[1][0] || ""}`.toUpperCase();
 };
 
+const renderCashierStatus = (row) => {
+  const accepted = Boolean(row?.cashierStatus?.accepted);
+  const debt = hasDebt(row);
+  const statusClass = debt ? "debt" : accepted ? "success" : "pending";
+  const label = debt ? "Qarzi bor" : accepted ? "Qabul qilingan" : "Kutilmoqda";
+
+  return <span className={`sampi-lor-status sampi-lor-status-${statusClass}`}>{label}</span>;
+};
+
 function LorChecksPage() {
   const { lorIdentity } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -192,8 +201,8 @@ function LorChecksPage() {
   }
 
   return (
-    <div className="space-y-6 overflow-x-hidden">
-      <div className="card p-4 sm:p-5">
+    <div className="sampi-lor-checks-page space-y-6 overflow-x-hidden">
+      <div className="card sampi-lor-search-card p-4 sm:p-5">
         <h1 className="text-xl font-bold text-slate-800">Mening cheklarim</h1>
         <p className="mt-1 text-sm text-slate-500">
           Faqat siz yaratgan cheklar chiqadi. Bemor ism-familiyasi bo'yicha qidiring.
@@ -227,7 +236,7 @@ function LorChecksPage() {
 
       <Alert type="error" message={error} />
 
-      <div className="card p-4 sm:p-5">
+      <div className="card sampi-lor-table-card p-4 sm:p-5">
         <div onMouseLeave={() => clearHoverPreview({ delay: 180 })}>
           <Table
             data={prioritizedChecks}
@@ -310,23 +319,7 @@ function LorChecksPage() {
             {
               key: "cashierStatus",
               label: "Kassa holati",
-              render: (row) => {
-                const accepted = Boolean(row?.cashierStatus?.accepted);
-                const debt = hasDebt(row);
-                return (
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      debt
-                        ? "bg-amber-100 text-amber-700"
-                        : accepted
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-amber-100 text-amber-700"
-                    }`}
-                  >
-                    {debt ? "Qarzi bor" : accepted ? "Qabul qilingan" : "Kutilmoqda"}
-                  </span>
-                );
-              }
+              render: renderCashierStatus
             },
             {
               key: "paidAmount",
@@ -347,7 +340,7 @@ function LorChecksPage() {
                 }
 
                 return (
-                  <span className="inline-flex items-center rounded-md border border-red-400 bg-red-600 px-2 py-1 text-xs font-black text-white shadow-sm">
+                  <span className="sampi-lor-debt-chip inline-flex items-center rounded-md px-2 py-1 text-xs font-black text-white shadow-sm">
                     Qarz: {formatCurrency(debt)} so'm
                   </span>
                 );
