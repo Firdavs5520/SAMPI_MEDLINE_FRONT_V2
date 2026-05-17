@@ -94,7 +94,7 @@ function LorSelectPage() {
   return (
     <div className="lor-select-shell">
       <div className="lor-select-glow" />
-      <div className="lor-select-card route-enter">
+      <div className="lor-select-card lor-ios-card route-enter">
         <div className="lor-select-header">
           <span className="lor-select-chip">
             {selectedLor ? "Doktor tanlash" : "LOR ish joyi"}
@@ -127,7 +127,7 @@ function LorSelectPage() {
 
         <div className="mt-7">
           {!selectedLor ? (
-            <section className="lor-select-section lor-select-stage">
+            <section key="cabinet-step" className="lor-select-section lor-select-stage lor-stage-in">
               <div className="lor-stage-eyebrow">1-qadam</div>
               <h2 className="text-center text-2xl font-black text-slate-900">Kabinetni belgilang</h2>
               <p className="mx-auto mt-2 max-w-xl text-center text-sm font-semibold text-slate-500">
@@ -163,7 +163,10 @@ function LorSelectPage() {
               </div>
             </section>
           ) : (
-            <section className="lor-select-section lor-select-stage lor-doctor-stage">
+            <section
+              key="doctor-step"
+              className="lor-select-section lor-select-stage lor-doctor-stage lor-stage-in"
+            >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <div className="lor-stage-eyebrow lor-stage-eyebrow-left">2-qadam</div>
@@ -203,13 +206,14 @@ function LorSelectPage() {
 
               {specialists.length ? (
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {filteredSpecialists.map((doctor) => {
+                  {filteredSpecialists.map((doctor, index) => {
                     const selected = lorDoctor?.id === doctor._id;
                     return (
                       <button
                         key={doctor._id}
                         type="button"
                         className={`lor-doctor-card ${selected ? "lor-doctor-card-selected" : ""}`}
+                        style={{ "--item-index": index }}
                         onClick={() => chooseDoctor(doctor)}
                       >
                         <span className="lor-doctor-avatar">{getDoctorInitials(doctor.name)}</span>
