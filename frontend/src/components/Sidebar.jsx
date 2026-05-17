@@ -189,6 +189,25 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
             >
               Sampi Medline
             </h2>
+            <button
+              type="button"
+              aria-label={isCompact ? "To'liq menyu" : "Faqat ikonlar"}
+              className="sampi-sidebar-toggle hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-md transition hover:scale-105 hover:bg-slate-50 lg:inline-flex"
+              title={isCompact ? "To'liq menyu" : "Faqat ikonlar"}
+              onClick={onToggleCompact}
+            >
+              <svg
+                className={`h-4 w-4 transition-transform duration-300 ${isCompact ? "rotate-180" : ""}`}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M15 6l-6 6 6 6" />
+              </svg>
+            </button>
           </div>
           <button
             type="button"
@@ -198,26 +217,6 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
             X
           </button>
         </div>
-
-        <button
-          type="button"
-          aria-label={isCompact ? "To'liq menyu" : "Faqat ikonlar"}
-          className="sampi-sidebar-toggle absolute right-3 top-[5.15rem] z-10 hidden h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-md transition hover:scale-105 hover:bg-slate-50 lg:inline-flex"
-          title={isCompact ? "To'liq menyu" : "Faqat ikonlar"}
-          onClick={onToggleCompact}
-        >
-          <svg
-            className={`h-4 w-4 transition-transform duration-300 ${isCompact ? "rotate-180" : ""}`}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M15 6l-6 6 6 6" />
-          </svg>
-        </button>
 
         <nav className={`overflow-y-auto p-4 ${isCompact ? "space-y-2" : "space-y-3"}`}>
           {hasGroups
