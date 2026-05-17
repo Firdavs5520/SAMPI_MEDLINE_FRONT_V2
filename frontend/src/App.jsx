@@ -23,12 +23,13 @@ import { useAuth } from "./context/AuthContext.jsx";
 import { roleHomePath } from "./utils/constants.js";
 
 function App() {
-  const { token, role, lorIdentity } = useAuth();
+  const { token, role, lorIdentity, lorDoctor } = useAuth();
+  const hasLorContext = Boolean(lorIdentity && lorDoctor?.id);
 
   const home =
     token && role
       ? role === "lor"
-        ? lorIdentity
+        ? hasLorContext
           ? "/lor/checks"
           : "/lor/select"
         : roleHomePath[role]
@@ -56,13 +57,11 @@ function App() {
         <Route element={<DashboardLayout />}>
           <Route
             path="/lor"
-            element={<Navigate to={lorIdentity ? "/lor/checks" : "/lor/select"} replace />}
+            element={<Navigate to={hasLorContext ? "/lor/checks" : "/lor/select"} replace />}
           />
           <Route
             path="/lor/select"
-            element={
-              lorIdentity ? <Navigate to="/lor/checks" replace /> : <LorSelectPage />
-            }
+            element={<LorSelectPage />}
           />
 
           <Route element={<RequireLorIdentity />}>

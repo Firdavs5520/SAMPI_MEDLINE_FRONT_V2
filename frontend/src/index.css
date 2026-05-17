@@ -676,6 +676,137 @@ html.theme-dark .sampi-cashier-popover {
   transform: translateX(3px);
 }
 
+.lor-choice-selected {
+  border-color: rgba(14, 116, 144, 0.95) !important;
+  box-shadow:
+    0 18px 40px -30px rgba(14, 116, 144, 0.95),
+    inset 0 0 0 1px rgba(14, 116, 144, 0.18);
+}
+
+.lor-select-section {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 1rem;
+  padding: 1rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 250, 252, 0.72)),
+    radial-gradient(circle at 0% 0%, rgba(14, 116, 144, 0.1), transparent 42%);
+}
+
+.lor-select-section-muted {
+  opacity: 0.72;
+}
+
+.lor-selected-mini {
+  border-radius: 999px;
+  border: 1px solid rgba(14, 116, 144, 0.26);
+  background: rgba(14, 116, 144, 0.1);
+  padding: 0.35rem 0.7rem;
+  color: #0e7490;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.lor-doctor-card {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 0.95rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(248, 250, 252, 0.76)),
+    radial-gradient(circle at 0% 0%, rgba(249, 115, 22, 0.08), transparent 44%);
+  padding: 0.78rem;
+  text-align: left;
+  transition:
+    border-color 180ms ease,
+    box-shadow 200ms ease,
+    transform 170ms ease,
+    background-color 180ms ease;
+}
+
+.lor-doctor-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(14, 116, 144, 0.5);
+  box-shadow: 0 18px 34px -28px rgba(14, 116, 144, 0.82);
+}
+
+.lor-doctor-card-selected {
+  border-color: rgba(14, 116, 144, 0.95);
+  background:
+    linear-gradient(180deg, rgba(207, 250, 254, 0.92), rgba(224, 242, 254, 0.82)),
+    radial-gradient(circle at 100% 0%, rgba(249, 115, 22, 0.14), transparent 42%);
+  box-shadow: inset 0 0 0 1px rgba(14, 116, 144, 0.18);
+}
+
+.lor-doctor-avatar {
+  display: inline-flex;
+  width: 2.55rem;
+  height: 2.55rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.85rem;
+  background: linear-gradient(135deg, #0e7490, #0891b2);
+  color: #ecfeff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  box-shadow: 0 12px 22px -18px rgba(14, 116, 144, 0.95);
+}
+
+.lor-doctor-empty {
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  border-radius: 0.95rem;
+  background: rgba(248, 250, 252, 0.62);
+  padding: 1rem;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.sampi-lor-service-hero {
+  isolation: isolate;
+}
+
+.sampi-lor-context-card {
+  display: flex;
+  min-width: min(100%, 26rem);
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border: 1px solid rgba(14, 116, 144, 0.28);
+  border-radius: 1rem;
+  background:
+    linear-gradient(135deg, rgba(236, 254, 255, 0.9), rgba(224, 242, 254, 0.72)),
+    radial-gradient(circle at 100% 0%, rgba(249, 115, 22, 0.12), transparent 44%);
+  padding: 0.75rem;
+}
+
+.sampi-lor-step-pill {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.76);
+  padding: 0.72rem 0.8rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.sampi-lor-step-active {
+  border-color: rgba(14, 116, 144, 0.8);
+  background: linear-gradient(135deg, rgba(207, 250, 254, 0.95), rgba(224, 242, 254, 0.8));
+  color: #0e7490;
+}
+
+.sampi-lor-step-done {
+  border-color: rgba(16, 185, 129, 0.32);
+  background: rgba(220, 252, 231, 0.75);
+  color: #047857;
+}
+
 .animate-dropdown-pop {
   transform-origin: top;
   animation: dropdown-pop 180ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
@@ -1027,6 +1158,43 @@ html.theme-dark .bg-slate-50\/80 {
 
 html.theme-dark .bg-slate-100 {
   background-color: #0b1526 !important;
+}
+
+html.theme-dark .lor-select-section {
+  border-color: #2f4056;
+  background:
+    linear-gradient(180deg, rgba(15, 26, 44, 0.92), rgba(11, 21, 38, 0.86)),
+    radial-gradient(circle at 0% 0%, rgba(14, 165, 162, 0.16), transparent 42%);
+}
+
+html.theme-dark .lor-choice-card,
+html.theme-dark .lor-doctor-card,
+html.theme-dark .sampi-lor-step-pill,
+html.theme-dark .sampi-lor-context-card,
+html.theme-dark .lor-doctor-empty {
+  border-color: #2f4056;
+  background:
+    linear-gradient(180deg, rgba(15, 26, 44, 0.92), rgba(11, 21, 38, 0.86)),
+    radial-gradient(circle at 100% 0%, rgba(14, 165, 162, 0.12), transparent 42%);
+}
+
+html.theme-dark .lor-choice-selected,
+html.theme-dark .lor-doctor-card-selected,
+html.theme-dark .sampi-lor-step-active {
+  border-color: rgba(34, 211, 238, 0.62) !important;
+  background:
+    linear-gradient(180deg, rgba(8, 47, 73, 0.98), rgba(12, 38, 58, 0.94)),
+    radial-gradient(circle at 100% 0%, rgba(249, 115, 22, 0.14), transparent 42%);
+}
+
+html.theme-dark .sampi-lor-step-done {
+  border-color: rgba(52, 211, 153, 0.32);
+  background: rgba(5, 85, 66, 0.55);
+  color: #bbf7d0;
+}
+
+html.theme-dark .lor-doctor-empty {
+  color: #91a3ba;
 }
 
 html.theme-dark .bg-slate-200,

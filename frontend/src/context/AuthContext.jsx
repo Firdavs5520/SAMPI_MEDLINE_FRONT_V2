@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import authService from "../services/authService.js";
 import { storageKeys } from "../utils/constants.js";
 
@@ -14,6 +14,22 @@ const parseUser = () => {
   }
 };
 
+const parseLorDoctor = () => {
+  try {
+    const rawDoctor =
+      sessionStorage.getItem(storageKeys.lorDoctor) ||
+      localStorage.getItem(storageKeys.lorDoctor);
+    const doctor = rawDoctor ? JSON.parse(rawDoctor) : null;
+    if (!doctor?.id || !doctor?.name) return null;
+    return {
+      id: String(doctor.id),
+      name: String(doctor.name)
+    };
+  } catch {
+    return null;
+  }
+};
+
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem(storageKeys.token));
   const [user, setUser] = useState(parseUser);
@@ -22,6 +38,7 @@ export function AuthProvider({ children }) {
       localStorage.getItem(storageKeys.lorIdentity) ||
       ""
   );
+  const [lorDoctor, setLorDoctorState] = useState(parseLorDoctor);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -31,9 +48,22 @@ export function AuthProvider({ children }) {
       localStorage.removeItem(storageKeys.lorIdentity);
       setLorIdentityState(String(localLorIdentity || "").trim().toLowerCase());
     }
+
+    const localLorDoctor = localStorage.getItem(storageKeys.lorDoctor);
+    if (localLorDoctor) {
+      sessionStorage.setItem(storageKeys.lorDoctor, localLorDoctor);
+      localStorage.removeItem(storageKeys.lorDoctor);
+      setLorDoctorState(parseLorDoctor());
+    }
   }, []);
 
-  const login = async (email, password) => {
+  const clearLorDoctor = useCallback(() => {
+    sessionStorage.removeItem(storageKeys.lorDoctor);
+    localStorage.removeItem(storageKeys.lorDoctor);
+    setLorDoctorState(null);
+  }, []);
+
+  const login = useCallback(async (email, password) => {
     setLoading(true);
     try {
       const payload = await authService.login(email, password);
@@ -46,41 +76,64 @@ export function AuthProvider({ children }) {
         sessionStorage.removeItem(storageKeys.lorIdentity);
         localStorage.removeItem(storageKeys.lorIdentity);
         setLorIdentityState("");
+        clearLorDoctor();
       } else {
         sessionStorage.removeItem(storageKeys.lorIdentity);
         localStorage.removeItem(storageKeys.lorIdentity);
         setLorIdentityState("");
+        clearLorDoctor();
       }
 
       return payload.user;
     } finally {
       setLoading(false);
     }
-  };
+  }, [clearLorDoctor]);
 
-  const setLorIdentity = (value) => {
+  const setLorIdentity = useCallback((value) => {
     const safeValue = String(value || "").trim().toLowerCase();
     if (!safeValue) {
       sessionStorage.removeItem(storageKeys.lorIdentity);
       localStorage.removeItem(storageKeys.lorIdentity);
       setLorIdentityState("");
+      clearLorDoctor();
       return;
     }
 
     sessionStorage.setItem(storageKeys.lorIdentity, safeValue);
     localStorage.removeItem(storageKeys.lorIdentity);
     setLorIdentityState(safeValue);
-  };
+    clearLorDoctor();
+  }, [clearLorDoctor]);
 
-  const logout = () => {
+  const setLorDoctor = useCallback((doctor) => {
+    const safeDoctor = {
+      id: String(doctor?.id || doctor?._id || "").trim(),
+      name: String(doctor?.name || "").trim()
+    };
+
+    if (!safeDoctor.id || !safeDoctor.name) {
+      clearLorDoctor();
+      return;
+    }
+
+    sessionStorage.setItem(storageKeys.lorDoctor, JSON.stringify(safeDoctor));
+    localStorage.removeItem(storageKeys.lorDoctor);
+    setLorDoctorState(safeDoctor);
+  }, [clearLorDoctor]);
+
+  const logout = useCallback(() => {
     localStorage.removeItem(storageKeys.token);
     localStorage.removeItem(storageKeys.user);
     localStorage.removeItem(storageKeys.lorIdentity);
+    localStorage.removeItem(storageKeys.lorDoctor);
     sessionStorage.removeItem(storageKeys.lorIdentity);
+    sessionStorage.removeItem(storageKeys.lorDoctor);
     setToken(null);
     setUser(null);
     setLorIdentityState("");
-  };
+    setLorDoctorState(null);
+  }, []);
 
   useEffect(() => {
     const handleUnauthorized = () => logout();
@@ -89,7 +142,7 @@ export function AuthProvider({ children }) {
     return () => {
       window.removeEventListener("auth:unauthorized", handleUnauthorized);
     };
-  }, []);
+  }, [logout]);
 
   const value = useMemo(
     () => ({
@@ -97,13 +150,27 @@ export function AuthProvider({ children }) {
       role: user?.role || null,
       token,
       lorIdentity,
+      lorDoctor,
       loading,
       isAuthenticated: Boolean(token),
       login,
       setLorIdentity,
+      setLorDoctor,
+      clearLorDoctor,
       logout
     }),
-    [user, token, lorIdentity, loading]
+    [
+      user,
+      token,
+      lorIdentity,
+      lorDoctor,
+      loading,
+      login,
+      setLorIdentity,
+      setLorDoctor,
+      clearLorDoctor,
+      logout
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

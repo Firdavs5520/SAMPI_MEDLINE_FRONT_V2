@@ -1,4 +1,5 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import serviceService from "../services/serviceService.js";
 import usageService from "../services/usageService.js";
 import Input from "../components/Input.jsx";
@@ -20,7 +21,7 @@ import {
   writeCheckToPrintTab
 } from "../utils/printReceipt.js";
 
-const STEP_LABELS = ["1. Doktor", "2. Bemor", "3. Xizmatlar", "4. Chek preview"];
+const STEP_LABELS = ["1. Bemor", "2. Xizmatlar", "3. Chek preview"];
 
 const normalizeSearch = (value) =>
   String(value ?? "")
@@ -34,17 +35,15 @@ const safeQty = (value) => {
 };
 
 function LorServicesPage() {
-  const { user, lorIdentity } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, lorIdentity, lorDoctor } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [submittingCheckout, setSubmittingCheckout] = useState(false);
 
   const [services, setServices] = useState([]);
-  const [specialists, setSpecialists] = useState([]);
-  const [selectedSpecialistId, setSelectedSpecialistId] = useState("");
-  const [specialistSearch, setSpecialistSearch] = useState("");
-
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
   const [serviceInputs, setServiceInputs] = useState({});
   const [serviceSearch, setServiceSearch] = useState("");
@@ -53,21 +52,9 @@ function LorServicesPage() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  const specialistSearchRef = useRef(null);
   const patientInputRef = useRef(null);
   const serviceSearchRef = useRef(null);
   const previewRef = useRef(null);
-
-  const selectedSpecialist = useMemo(
-    () => specialists.find((item) => item._id === selectedSpecialistId) || null,
-    [specialists, selectedSpecialistId]
-  );
-
-  const filteredSpecialists = useMemo(() => {
-    const q = normalizeSearch(specialistSearch);
-    if (!q) return specialists;
-    return specialists.filter((item) => normalizeSearch(item?.name).includes(q));
-  }, [specialists, specialistSearch]);
 
   const sortedServices = useMemo(
     () =>
@@ -116,26 +103,13 @@ function LorServicesPage() {
     setError("");
   };
 
-  const loadSpecialists = async () => {
-    const data = await usageService.getRoleSpecialists();
-    setSpecialists(data);
-
-    setSelectedSpecialistId((prev) => {
-      if (prev && data.some((item) => item._id === prev)) return prev;
-      return data[0]?._id || "";
-    });
-  };
-
   const loadData = async () => {
     setLoading(true);
     setError("");
 
     try {
       const currentUserId = String(user?.id || user?._id || "");
-      const [allServices] = await Promise.all([
-        serviceService.getAllServices(),
-        loadSpecialists()
-      ]);
+      const allServices = await serviceService.getAllServices();
 
       setServices(
         allServices.filter(
@@ -168,10 +142,9 @@ function LorServicesPage() {
       }, 0);
     };
 
-    if (step === 1) focusElement(specialistSearchRef.current);
-    if (step === 2) focusElement(patientInputRef.current);
-    if (step === 3) focusElement(serviceSearchRef.current);
-    if (step === 4) focusElement(previewRef.current);
+    if (step === 1) focusElement(patientInputRef.current);
+    if (step === 2) focusElement(serviceSearchRef.current);
+    if (step === 3) focusElement(previewRef.current);
   }, [step]);
 
   useEffect(() => {
@@ -180,9 +153,9 @@ function LorServicesPage() {
     );
   }, [sortedServices]);
 
-  const validateSpecialist = () => {
-    if (!selectedSpecialistId) {
-      throw new Error("Avval doktorni tanlang.");
+  const validateDoctor = () => {
+    if (!lorDoctor?.id || !lorDoctor?.name) {
+      throw new Error("Avval LOR va doktorni tanlang.");
     }
   };
 
@@ -223,6 +196,10 @@ function LorServicesPage() {
     }));
   };
 
+  const changeLorContext = () => {
+    navigate("/lor/select", { state: { from: location } });
+  };
+
   const handleCreateCheckout = async () => {
     if (submittingCheckout) return;
     resetMessages();
@@ -230,7 +207,7 @@ function LorServicesPage() {
     let printTab = null;
 
     try {
-      validateSpecialist();
+      validateDoctor();
       validatePatient();
 
       if (!lorIdentity) {
@@ -265,8 +242,8 @@ function LorServicesPage() {
       const result = await usageService.createLorCheckout({
         services: servicesPayload,
         lorIdentity,
-        specialistId: selectedSpecialistId,
-        specialistName: selectedSpecialist?.name || "",
+        specialistId: lorDoctor.id,
+        specialistName: lorDoctor.name,
         patient: {
           firstName,
           lastName
@@ -292,21 +269,12 @@ function LorServicesPage() {
     }
   };
 
-  const goNextFromSpecialist = () => {
-    resetMessages();
-    try {
-      validateSpecialist();
-      setStep(2);
-    } catch (err) {
-      setError(extractErrorMessage(err));
-    }
-  };
-
   const goNextFromPatient = () => {
     resetMessages();
     try {
+      validateDoctor();
       validatePatient();
-      setStep(3);
+      setStep(2);
     } catch (err) {
       setError(extractErrorMessage(err));
     }
@@ -314,7 +282,7 @@ function LorServicesPage() {
 
   const goNextFromServices = () => {
     resetMessages();
-    setStep(4);
+    setStep(3);
   };
 
   if (loading) {
@@ -323,15 +291,29 @@ function LorServicesPage() {
 
   return (
     <div className="space-y-4 overflow-x-hidden sm:space-y-6">
-      <div className="card border-sky-200 bg-sky-50/70 p-4 sm:p-5">
-        <h1 className="text-xl font-bold text-slate-800">LOR paneli</h1>
-        <p className="mt-1 text-sm text-slate-600">Bosqichma-bosqich chek yaratish</p>
+      <div className="card sampi-lor-service-hero border-sky-200 bg-sky-50/70 p-4 sm:p-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-800">LOR paneli</h1>
+            <p className="mt-1 text-sm text-slate-600">Chek yaratish endi bemordan boshlanadi.</p>
+          </div>
 
-        <div className="mt-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800">
-          Tanlangan LOR: {lorIdentity ? lorIdentity.toUpperCase() : "-"}
+          <div className="sampi-lor-context-card">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-wide text-cyan-700">
+                Tanlangan ish joyi
+              </p>
+              <p className="mt-1 text-sm font-black text-slate-900">
+                {lorIdentity ? lorIdentity.toUpperCase() : "-"} · {lorDoctor?.name || "Doktor tanlanmagan"}
+              </p>
+            </div>
+            <Button variant="secondary" className="px-3 py-2 text-xs" onClick={changeLorContext}>
+              Almashtirish
+            </Button>
+          </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
           {STEP_LABELS.map((label, index) => {
             const n = index + 1;
             const active = n === step;
@@ -340,12 +322,8 @@ function LorServicesPage() {
             return (
               <div
                 key={label}
-                className={`rounded-xl border px-3 py-2 text-center text-xs font-semibold ${
-                  active
-                    ? "border-primary bg-cyan-50 text-primary"
-                    : done
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                      : "border-slate-200 bg-white text-slate-500"
+                className={`sampi-lor-step-pill ${
+                  active ? "sampi-lor-step-active" : done ? "sampi-lor-step-done" : ""
                 }`}
               >
                 {label}
@@ -361,71 +339,28 @@ function LorServicesPage() {
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
-              goNextFromSpecialist();
+              goNextFromPatient();
             }
           }}
         >
-          <h2 className="text-lg font-semibold">1-qadam: Doktor tanlash</h2>
-          <p className="mb-4 text-sm text-slate-600">
-            Avval chekni qaysi doktor nomidan chiqarishni tanlang. Yangi doktor qo'shish
-            uchun chap menyudan "Doktorlarni boshqarish" ga o'ting.
+          <h2 className="text-lg font-semibold">1-qadam: Bemor F.I.O</h2>
+          <p className="mb-3 text-sm text-slate-600">
+            Doktor allaqachon tanlangan. Endi bemor ism-familiyasini kiriting.
           </p>
-
-          <div className="mt-4">
-            <QuickSearchInput
-              label="Doktor qidirish"
-              placeholder="Masalan: Aziz"
-              value={specialistSearch}
-              onChange={setSpecialistSearch}
-              inputRef={specialistSearchRef}
-              items={specialists}
-              getItemLabel={(item) => item?.name || ""}
-              onPick={(item) => {
-                setSelectedSpecialistId(item?._id || "");
-                setSpecialistSearch(item?.name || "");
-              }}
-              emptyText="Mos doktor topilmadi"
-            />
-          </div>
-
-          {specialists.length ? (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {filteredSpecialists.map((item) => {
-                const selected = selectedSpecialistId === item._id;
-                return (
-                  <button
-                    key={item._id}
-                    type="button"
-                    onClick={() => setSelectedSpecialistId(item._id)}
-                    className={`rounded-xl border px-3 py-3 text-left transition ${
-                      selected
-                        ? "border-primary bg-cyan-50"
-                        : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-primary/50"
-                    }`}
-                  >
-                    <p className="font-semibold text-slate-800">{item.name}</p>
-                    <p className="mt-1 text-xs font-medium text-slate-500">
-                      {selected ? "Tanlangan" : "Tanlash uchun bosing"}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-
-          {!specialists.length ? (
-            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              Hozircha doktor yo'q. Chap menyudan "Doktorlarni boshqarish" bo'limida
-              yangi doktor qo'shing.
-            </div>
-          ) : null}
+          <Input
+            label="Bemor F.I.O"
+            value={patient.fullName}
+            placeholder="Masalan: Ali Valiyev"
+            inputRef={patientInputRef}
+            onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
+          />
 
           <div className="mt-4 flex justify-end">
             <Button
               className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
-              onClick={goNextFromSpecialist}
+              onClick={goNextFromPatient}
             >
-              Keyingi: Bemor
+              Keyingi: Xizmatlar
             </Button>
           </div>
         </div>
@@ -437,44 +372,11 @@ function LorServicesPage() {
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
-              goNextFromPatient();
-            }
-          }}
-        >
-          <h2 className="text-lg font-semibold">2-qadam: Bemor F.I.O</h2>
-          <Input
-            label="Bemor F.I.O"
-            value={patient.fullName}
-            placeholder="Masalan: Ali Valiyev"
-            inputRef={patientInputRef}
-            onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
-          />
-
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(1)}>
-              Orqaga
-            </Button>
-            <Button
-              className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
-              onClick={goNextFromPatient}
-            >
-              Keyingi: Xizmatlar
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      {step === 3 ? (
-        <div
-          className="card border-sky-200 p-4 sm:p-5"
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
               goNextFromServices();
             }
           }}
         >
-          <h2 className="text-lg font-semibold">3-qadam: Xizmat tanlash</h2>
+          <h2 className="text-lg font-semibold">2-qadam: Xizmat tanlash</h2>
           <QuickSearchInput
             label="Xizmat qidirish"
             placeholder="Masalan: Burun chayish"
@@ -491,13 +393,13 @@ function LorServicesPage() {
 
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {sortedServices.length === 0 ? (
-              <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">
+              <div className="md:col-span-2 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600 xl:col-span-3">
                 Hali xizmat yo'q. Avval "Xizmat qo'shish" bo'limida xizmat yarating.
               </div>
             ) : null}
 
             {sortedServices.length > 0 && filteredServices.length === 0 ? (
-              <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">
+              <div className="md:col-span-2 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600 xl:col-span-3">
                 Qidiruv bo'yicha xizmat topilmadi.
               </div>
             ) : null}
@@ -561,7 +463,7 @@ function LorServicesPage() {
           ) : null}
 
           <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(2)}>
+            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(1)}>
               Orqaga
             </Button>
             <Button
@@ -574,7 +476,7 @@ function LorServicesPage() {
         </div>
       ) : null}
 
-      {step === 4 ? (
+      {step === 3 ? (
         <div
           ref={previewRef}
           tabIndex={0}
@@ -586,18 +488,19 @@ function LorServicesPage() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">4-qadam: Chek preview</h2>
+          <h2 className="text-lg font-semibold">3-qadam: Chek preview</h2>
           <p className="mb-3 text-sm text-slate-600">Enter bosib chek chiqaring.</p>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm">
-              Doktor: <span className="font-semibold">{selectedSpecialist?.name || "-"}</span>
+              Doktor: <span className="font-semibold">{lorDoctor?.name || "-"}</span>
             </p>
             <p className="text-sm">
               Bemor: <span className="font-semibold">{patient.fullName || "-"}</span>
             </p>
             <p className="text-sm">
-              LOR tanlovi: <span className="font-semibold">{lorIdentity ? lorIdentity.toUpperCase() : "-"}</span>
+              LOR tanlovi:{" "}
+              <span className="font-semibold">{lorIdentity ? lorIdentity.toUpperCase() : "-"}</span>
             </p>
 
             <div className="mt-3 space-y-1">
@@ -631,7 +534,7 @@ function LorServicesPage() {
           ) : null}
 
           <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(3)}>
+            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(2)}>
               Orqaga
             </Button>
             <Button
