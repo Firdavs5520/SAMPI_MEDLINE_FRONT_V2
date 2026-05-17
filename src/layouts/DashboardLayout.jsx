@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar.jsx";
 import Navbar from "../components/Navbar.jsx";
@@ -25,9 +25,18 @@ const isInteractiveTarget = (target) => {
   );
 };
 
+const getRouteMotion = (previousPath, currentPath) => {
+  if (previousPath === currentPath) return "steady";
+  const previousDepth = previousPath.split("/").filter(Boolean).length;
+  const currentDepth = currentPath.split("/").filter(Boolean).length;
+  if (currentDepth < previousDepth) return "back";
+  return "forward";
+};
+
 function DashboardLayout() {
   const location = useLocation();
   const { role } = useAuth();
+  const previousPathRef = useRef(location.pathname);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCompact, setSidebarCompact] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -36,12 +45,14 @@ function DashboardLayout() {
   const [pullDistance, setPullDistance] = useState(0);
   const [pullReady, setPullReady] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [routeMotion, setRouteMotion] = useState("steady");
   const pullStartYRef = useRef(null);
   const isPullingRef = useRef(false);
   const readyRef = useRef(false);
   const isRefreshingRef = useRef(false);
   const sidebarOpenRef = useRef(false);
   const isLorSelectPage = role === "lor" && location.pathname === "/lor/select";
+  const routeClassName = `route-enter page-motion page-motion-${routeMotion}`;
 
   const handleToggleSidebarCompact = () => {
     setSidebarCompact((prev) => {
@@ -60,6 +71,11 @@ function DashboardLayout() {
   useEffect(() => {
     sidebarOpenRef.current = sidebarOpen;
   }, [sidebarOpen]);
+
+  useLayoutEffect(() => {
+    setRouteMotion(getRouteMotion(previousPathRef.current, location.pathname));
+    previousPathRef.current = location.pathname;
+  }, [location.pathname]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -159,7 +175,7 @@ function DashboardLayout() {
     return (
       <div className="min-h-screen bg-slate-100">
         <main className="min-w-0 p-2.5 pb-4 sm:p-4 lg:p-6">
-          <div key={location.pathname} className="route-enter">
+          <div key={location.pathname} className={routeClassName}>
             <Outlet />
           </div>
         </main>
@@ -209,7 +225,7 @@ function DashboardLayout() {
       <div className="relative flex min-h-screen min-w-0 flex-1 flex-col">
         <Navbar onMenuOpen={() => setSidebarOpen(true)} />
         <main className="min-w-0 flex-1 p-2.5 pb-4 sm:p-4 lg:p-6">
-          <div key={location.pathname} className="route-enter">
+          <div key={location.pathname} className={routeClassName}>
             <Outlet />
           </div>
         </main>
