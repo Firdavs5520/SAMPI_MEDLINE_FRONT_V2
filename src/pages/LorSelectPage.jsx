@@ -130,14 +130,6 @@ function LorSelectPage() {
     }, DOCTOR_CONFIRM_DELAY_MS);
   };
 
-  const goManageDoctors = () => {
-    if (!selectedLor) {
-      setError("Avval LOR-1 yoki LOR-2 ni tanlang.");
-      return;
-    }
-    navigate("/lor/specialists");
-  };
-
   if (loading) {
     return <Spinner text="LOR doktorlari yuklanmoqda..." />;
   }
@@ -246,13 +238,6 @@ function LorSelectPage() {
                   <Button variant="secondary" className="px-3 py-2 text-xs" onClick={changeCabinet}>
                     Kabinetni o'zgartirish
                   </Button>
-                  <Button
-                    variant="secondary"
-                    className="px-3 py-2 text-xs"
-                    onClick={goManageDoctors}
-                  >
-                    Doktor qo'shish
-                  </Button>
                 </div>
               </div>
 
@@ -304,7 +289,7 @@ function LorSelectPage() {
                 </div>
               ) : (
                 <div className="lor-doctor-empty mt-4">
-                  Hozircha doktor yo'q. "Doktor qo'shish" orqali avval ro'yxatga doktor kiriting.
+                  Hozircha doktor yo'q. Doktorlarni chap menyudagi boshqaruv sahifasidan kiriting.
                 </div>
               )}
 
