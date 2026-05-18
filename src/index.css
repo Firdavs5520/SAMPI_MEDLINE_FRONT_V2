@@ -11,6 +11,8 @@
   --sampi-motion-smooth: cubic-bezier(0.16, 0.92, 0.24, 1);
   --sampi-glow-duration: 1150ms;
   --sampi-glow-duration-long: 1300ms;
+  --sampi-premium-glow-duration: 1450ms;
+  --sampi-premium-glow-ease: cubic-bezier(0.19, 1, 0.22, 1);
   color-scheme: light;
 }
 
@@ -74,8 +76,12 @@ select {
 
 .card {
   @apply relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300;
-  transition-duration: 520ms;
-  transition-timing-function: var(--sampi-motion-smooth);
+  isolation: isolate;
+  transition:
+    border-color var(--sampi-premium-glow-duration) ease,
+    background-color var(--sampi-premium-glow-duration) ease,
+    box-shadow var(--sampi-premium-glow-duration) ease,
+    transform 680ms var(--sampi-motion-smooth);
 }
 
 html.theme-dark .card {
@@ -92,6 +98,47 @@ html.theme-dark .card {
   height: 1px;
   background: linear-gradient(90deg, rgba(14, 116, 144, 0.25), rgba(249, 115, 22, 0.16));
   pointer-events: none;
+  z-index: 2;
+}
+
+.card:not(.sampi-lor-search-card):not(.sampi-lor-table-card)::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -42%;
+  z-index: 0;
+  height: 58%;
+  pointer-events: none;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(14, 116, 144, 0.2), transparent 64%),
+    radial-gradient(ellipse at 78% 92%, rgba(249, 115, 22, 0.14), transparent 56%);
+  filter: blur(22px);
+  opacity: 0;
+  transform: translateY(26px) scale(0.88);
+  transition:
+    opacity var(--sampi-premium-glow-duration) var(--sampi-premium-glow-ease),
+    transform 1650ms var(--sampi-premium-glow-ease),
+    filter var(--sampi-premium-glow-duration) ease;
+}
+
+.card:not(.sampi-lor-search-card):not(.sampi-lor-table-card):hover::after,
+.card:not(.sampi-lor-search-card):not(.sampi-lor-table-card):focus-within::after {
+  opacity: 0.9;
+  transform: translateY(0) scale(1);
+  filter: blur(14px);
+}
+
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+
+html.theme-dark .card:not(.sampi-lor-search-card):not(.sampi-lor-table-card)::after {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(34, 211, 238, 0.2), transparent 64%),
+    radial-gradient(ellipse at 78% 92%, rgba(249, 115, 22, 0.12), transparent 58%);
 }
 
 .app-shell {
@@ -189,6 +236,9 @@ html.theme-dark .sampi-navbar {
 }
 
 .sampi-navbar-user {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   color: #0f172a;
   background: linear-gradient(180deg, rgba(241, 245, 249, 0.96), rgba(226, 232, 240, 0.92));
   border: 1px solid rgba(148, 163, 184, 0.45);
@@ -197,6 +247,39 @@ html.theme-dark .sampi-navbar {
     background-color var(--sampi-glow-duration) ease,
     box-shadow var(--sampi-glow-duration) ease,
     border-color var(--sampi-glow-duration) ease;
+}
+
+.sampi-navbar-user::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -58%;
+  z-index: 0;
+  height: 76%;
+  pointer-events: none;
+  border-radius: 999px;
+  background: radial-gradient(ellipse at 50% 100%, rgba(14, 116, 144, 0.22), transparent 64%);
+  filter: blur(18px);
+  opacity: 0;
+  transform: translateY(22px) scale(0.84);
+  transition:
+    opacity var(--sampi-premium-glow-duration) var(--sampi-premium-glow-ease),
+    transform 1600ms var(--sampi-premium-glow-ease),
+    filter var(--sampi-premium-glow-duration) ease;
+}
+
+.sampi-navbar-user:hover::after,
+.sampi-navbar-user:focus-visible::after,
+.sampi-navbar-user:focus-within::after {
+  opacity: 0.78;
+  transform: translateY(0) scale(1);
+  filter: blur(12px);
+}
+
+.sampi-navbar-user > * {
+  position: relative;
+  z-index: 1;
 }
 
 .sampi-navbar-user-name {
@@ -231,6 +314,10 @@ html.theme-dark .sampi-navbar-user {
 html.theme-dark .sampi-navbar-user:hover {
   background: linear-gradient(180deg, rgba(20, 36, 58, 0.98), rgba(14, 28, 48, 0.96));
   border-color: #3c5574;
+}
+
+html.theme-dark .sampi-navbar-user::after {
+  background: radial-gradient(ellipse at 50% 100%, rgba(34, 211, 238, 0.2), transparent 64%);
 }
 
 html.theme-dark .sampi-navbar-user-name {
@@ -299,10 +386,55 @@ html.theme-dark .sampi-sidebar {
 }
 
 .sampi-sidebar-toggle {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   background: linear-gradient(180deg, #ffffff, #eef5f8);
   box-shadow:
     0 10px 18px -16px rgba(15, 23, 42, 0.85),
     0 0 0 3px rgba(14, 116, 144, 0.08);
+}
+
+.sampi-sidebar-toggle::after,
+.sampi-theme-toggle::after,
+.sampi-dropdown::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: -58%;
+  z-index: 0;
+  height: 76%;
+  pointer-events: none;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(14, 116, 144, 0.2), transparent 64%),
+    radial-gradient(ellipse at 82% 92%, rgba(249, 115, 22, 0.12), transparent 58%);
+  filter: blur(18px);
+  opacity: 0;
+  transform: translateY(22px) scale(0.84);
+  transition:
+    opacity var(--sampi-premium-glow-duration) var(--sampi-premium-glow-ease),
+    transform 1600ms var(--sampi-premium-glow-ease),
+    filter var(--sampi-premium-glow-duration) ease;
+}
+
+.sampi-sidebar-toggle:hover::after,
+.sampi-sidebar-toggle:focus-visible::after,
+.sampi-theme-toggle:hover::after,
+.sampi-theme-toggle:focus-visible::after,
+.sampi-dropdown:hover::after,
+.sampi-dropdown:focus-within::after {
+  opacity: 0.82;
+  transform: translateY(0) scale(1);
+  filter: blur(12px);
+}
+
+.sampi-sidebar-toggle > *,
+.sampi-theme-toggle > *,
+.sampi-dropdown > * {
+  position: relative;
+  z-index: 1;
 }
 
 html.theme-dark .sampi-sidebar-toggle {
@@ -316,6 +448,39 @@ html.theme-dark .sampi-sidebar-toggle {
 
 .sampi-sidebar-link {
   position: relative;
+  overflow: hidden;
+}
+
+.sampi-sidebar-link::before {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: -62%;
+  z-index: 0;
+  height: 78%;
+  pointer-events: none;
+  border-radius: 999px;
+  background: radial-gradient(ellipse at 50% 100%, rgba(14, 116, 144, 0.2), transparent 66%);
+  filter: blur(16px);
+  opacity: 0;
+  transform: translateY(20px) scale(0.84);
+  transition:
+    opacity var(--sampi-premium-glow-duration) var(--sampi-premium-glow-ease),
+    transform 1600ms var(--sampi-premium-glow-ease),
+    filter var(--sampi-premium-glow-duration) ease;
+}
+
+.sampi-sidebar-link:hover::before,
+.sampi-sidebar-link:focus-visible::before {
+  opacity: 0.82;
+  transform: translateY(0) scale(1);
+  filter: blur(11px);
+}
+
+.sampi-sidebar-link > * {
+  position: relative;
+  z-index: 1;
 }
 
 .sampi-sidebar-link::after {
@@ -328,6 +493,7 @@ html.theme-dark .sampi-sidebar-toggle {
   background: linear-gradient(90deg, rgba(14, 116, 144, 0.3), rgba(249, 115, 22, 0.2));
   opacity: 0;
   transform: scaleX(0.35);
+  z-index: 2;
   transition:
     opacity var(--sampi-glow-duration) var(--sampi-motion-smooth),
     transform var(--sampi-glow-duration-long) var(--sampi-motion-smooth);
@@ -340,6 +506,7 @@ html.theme-dark .sampi-sidebar-toggle {
 
 .sampi-theme-toggle {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
 }
 
@@ -349,6 +516,7 @@ html.theme-dark .sampi-sidebar-toggle {
   inset: 0;
   background: linear-gradient(120deg, rgba(14, 116, 144, 0.08), rgba(249, 115, 22, 0.1));
   opacity: 0;
+  z-index: 0;
   transition: opacity var(--sampi-glow-duration) var(--sampi-motion-smooth);
 }
 
@@ -365,30 +533,75 @@ html.theme-dark .sampi-theme-toggle::before {
   background: linear-gradient(120deg, rgba(14, 116, 144, 0.24), rgba(249, 115, 22, 0.18));
 }
 
+html.theme-dark .sampi-sidebar-toggle::after,
+html.theme-dark .sampi-theme-toggle::after,
+html.theme-dark .sampi-dropdown::after {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(34, 211, 238, 0.2), transparent 64%),
+    radial-gradient(ellipse at 82% 92%, rgba(249, 115, 22, 0.1), transparent 58%);
+}
+
+html.theme-dark .sampi-sidebar-link::before {
+  background: radial-gradient(ellipse at 50% 100%, rgba(34, 211, 238, 0.18), transparent 66%);
+}
+
 .sampi-lor-search-card,
 .sampi-lor-table-card {
   isolation: isolate;
+  transition:
+    border-color var(--sampi-premium-glow-duration) ease,
+    box-shadow var(--sampi-premium-glow-duration) ease,
+    transform 680ms var(--sampi-motion-smooth),
+    background-color var(--sampi-premium-glow-duration) ease;
 }
 
 .sampi-lor-search-card::after,
 .sampi-lor-table-card::after {
   content: "";
   position: absolute;
-  inset: 0;
+  left: 6%;
+  right: 6%;
+  bottom: -42%;
+  height: 62%;
   pointer-events: none;
+  border-radius: 999px;
   background:
-    linear-gradient(135deg, rgba(14, 116, 144, 0.08), transparent 34%),
-    linear-gradient(315deg, rgba(249, 115, 22, 0.08), transparent 28%);
-  opacity: 0.72;
-  z-index: -1;
+    radial-gradient(ellipse at 50% 100%, rgba(14, 116, 144, 0.24), transparent 66%),
+    radial-gradient(ellipse at 78% 92%, rgba(249, 115, 22, 0.12), transparent 58%);
+  opacity: 0.54;
+  transform: translateY(26px) scale(0.9);
+  filter: blur(24px);
+  z-index: 0;
+  transition:
+    opacity var(--sampi-premium-glow-duration) var(--sampi-premium-glow-ease),
+    transform 1700ms var(--sampi-premium-glow-ease),
+    filter var(--sampi-premium-glow-duration) ease;
+}
+
+.sampi-lor-search-card:hover,
+.sampi-lor-search-card:focus-within,
+.sampi-lor-table-card:hover,
+.sampi-lor-table-card:focus-within {
+  border-color: rgba(14, 116, 144, 0.34);
+  box-shadow:
+    0 18px 42px -34px rgba(14, 116, 144, 0.62),
+    inset 0 0 0 1px rgba(14, 116, 144, 0.06);
+}
+
+.sampi-lor-search-card:hover::after,
+.sampi-lor-search-card:focus-within::after,
+.sampi-lor-table-card:hover::after,
+.sampi-lor-table-card:focus-within::after {
+  opacity: 0.88;
+  transform: translateY(0) scale(1);
+  filter: blur(16px);
 }
 
 html.theme-dark .sampi-lor-search-card::after,
 html.theme-dark .sampi-lor-table-card::after {
   background:
-    linear-gradient(135deg, rgba(14, 165, 162, 0.14), transparent 34%),
-    linear-gradient(315deg, rgba(249, 115, 22, 0.1), transparent 28%);
-  opacity: 1;
+    radial-gradient(ellipse at 50% 100%, rgba(34, 211, 238, 0.24), transparent 66%),
+    radial-gradient(ellipse at 78% 92%, rgba(249, 115, 22, 0.1), transparent 58%);
 }
 
 .sampi-lor-status {
@@ -429,7 +642,7 @@ html.theme-dark .sampi-lor-table-card::after {
 
 .sampi-table-row:hover .sampi-lor-status::after {
   transform: translateX(125%);
-  transition: transform 520ms ease;
+  transition: transform 1250ms var(--sampi-premium-glow-ease);
 }
 
 .sampi-lor-status-success {
@@ -630,6 +843,7 @@ html.theme-dark .sampi-cashier-popover {
 .lor-select-card {
   position: relative;
   z-index: 2;
+  isolation: isolate;
   width: min(100%, 900px);
   border-radius: 1.5rem;
   border: 1px solid #d7e2ec;
@@ -638,6 +852,19 @@ html.theme-dark .sampi-cashier-popover {
   box-shadow: 0 20px 40px -30px rgba(15, 23, 42, 0.48);
   padding: clamp(1rem, 2.3vw, 2rem);
   overflow: hidden;
+  transition:
+    border-color var(--sampi-premium-glow-duration) ease,
+    box-shadow var(--sampi-premium-glow-duration) ease,
+    transform 720ms var(--sampi-motion-smooth),
+    background-color var(--sampi-premium-glow-duration) ease;
+}
+
+.lor-select-card:hover,
+.lor-select-card:focus-within {
+  border-color: rgba(14, 116, 144, 0.36);
+  box-shadow:
+    0 30px 58px -38px rgba(14, 116, 144, 0.42),
+    0 18px 42px -38px rgba(249, 115, 22, 0.28);
 }
 
 .lor-ios-card {
@@ -695,6 +922,7 @@ html.theme-dark .sampi-cashier-popover {
 
 .lor-choice-card {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   display: block;
   text-align: left;
@@ -706,9 +934,9 @@ html.theme-dark .sampi-cashier-popover {
   transform: translateZ(0);
   transition:
     transform 560ms cubic-bezier(0.16, 0.92, 0.24, 1.05),
-    box-shadow 680ms ease,
-    border-color var(--sampi-glow-duration) ease,
-    background var(--sampi-glow-duration) ease,
+    box-shadow var(--sampi-premium-glow-duration) ease,
+    border-color var(--sampi-premium-glow-duration) ease,
+    background var(--sampi-premium-glow-duration) ease,
     opacity 260ms ease;
   will-change: transform;
 }
@@ -724,10 +952,34 @@ html.theme-dark .sampi-cashier-popover {
   opacity: 0;
   transform: translateX(-12%) scale(1.08);
   filter: blur(2px);
+  z-index: 0;
   transition:
     opacity var(--sampi-glow-duration) var(--sampi-motion-smooth),
     transform var(--sampi-glow-duration-long) var(--sampi-motion-smooth),
     filter var(--sampi-glow-duration) ease;
+}
+
+.lor-choice-card::after,
+.lor-doctor-card::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -54%;
+  z-index: 0;
+  height: 74%;
+  pointer-events: none;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(14, 116, 144, 0.28), transparent 66%),
+    radial-gradient(ellipse at 80% 92%, rgba(249, 115, 22, 0.12), transparent 58%);
+  filter: blur(22px);
+  opacity: 0;
+  transform: translateY(24px) scale(0.84);
+  transition:
+    opacity var(--sampi-premium-glow-duration) var(--sampi-premium-glow-ease),
+    transform 1680ms var(--sampi-premium-glow-ease),
+    filter var(--sampi-premium-glow-duration) ease;
 }
 
 .lor-choice-card:hover {
@@ -739,6 +991,21 @@ html.theme-dark .sampi-cashier-popover {
   opacity: 0.68;
   transform: translateX(0) scale(1);
   filter: blur(0);
+}
+
+.lor-choice-card:hover::after,
+.lor-choice-card:focus-visible::after,
+.lor-doctor-card:hover::after,
+.lor-doctor-card:focus-visible::after {
+  opacity: 0.92;
+  transform: translateY(0) scale(1);
+  filter: blur(14px);
+}
+
+.lor-choice-card > *,
+.lor-doctor-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .lor-choice-card:active {
@@ -867,6 +1134,7 @@ html.theme-dark .sampi-cashier-popover {
 
 .lor-select-section {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 1rem;
@@ -874,6 +1142,59 @@ html.theme-dark .sampi-cashier-popover {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 250, 252, 0.72)),
     radial-gradient(circle at 0% 0%, rgba(14, 116, 144, 0.1), transparent 42%);
+  transition:
+    border-color var(--sampi-premium-glow-duration) ease,
+    box-shadow var(--sampi-premium-glow-duration) ease,
+    transform 700ms var(--sampi-motion-smooth),
+    background-color var(--sampi-premium-glow-duration) ease;
+}
+
+.lor-select-section::after,
+.sampi-lor-context-card::after,
+.sampi-lor-step-pill::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -50%;
+  z-index: 0;
+  height: 68%;
+  pointer-events: none;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(14, 116, 144, 0.22), transparent 66%),
+    radial-gradient(ellipse at 80% 92%, rgba(249, 115, 22, 0.12), transparent 58%);
+  filter: blur(20px);
+  opacity: 0;
+  transform: translateY(24px) scale(0.86);
+  transition:
+    opacity var(--sampi-premium-glow-duration) var(--sampi-premium-glow-ease),
+    transform 1650ms var(--sampi-premium-glow-ease),
+    filter var(--sampi-premium-glow-duration) ease;
+}
+
+.lor-select-section:hover,
+.lor-select-section:focus-within {
+  border-color: rgba(14, 116, 144, 0.32);
+  box-shadow: 0 22px 44px -36px rgba(14, 116, 144, 0.62);
+}
+
+.lor-select-section:hover::after,
+.lor-select-section:focus-within::after,
+.sampi-lor-context-card:hover::after,
+.sampi-lor-context-card:focus-within::after,
+.sampi-lor-step-pill:hover::after,
+.sampi-lor-step-pill:focus-within::after {
+  opacity: 0.86;
+  transform: translateY(0) scale(1);
+  filter: blur(13px);
+}
+
+.lor-select-section > *,
+.sampi-lor-context-card > *,
+.sampi-lor-step-pill > * {
+  position: relative;
+  z-index: 1;
 }
 
 .lor-select-stage {
@@ -926,6 +1247,7 @@ html.theme-dark .sampi-cashier-popover {
 
 .lor-doctor-card {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   display: flex;
   min-width: 0;
@@ -940,10 +1262,10 @@ html.theme-dark .sampi-cashier-popover {
   padding: 0.9rem;
   text-align: left;
   transition:
-    border-color var(--sampi-glow-duration) ease,
-    box-shadow var(--sampi-glow-duration) ease,
+    border-color var(--sampi-premium-glow-duration) ease,
+    box-shadow var(--sampi-premium-glow-duration) ease,
     transform 560ms cubic-bezier(0.16, 0.92, 0.24, 1.05),
-    background var(--sampi-glow-duration) ease,
+    background var(--sampi-premium-glow-duration) ease,
     opacity 320ms ease;
   animation: ios-list-pop 760ms cubic-bezier(0.16, 0.92, 0.24, 1.08) both;
   animation-delay: calc(var(--item-index, 0) * 86ms + 180ms);
@@ -961,6 +1283,7 @@ html.theme-dark .sampi-cashier-popover {
   opacity: 0;
   transform: translateX(-16%) scale(1.08);
   filter: blur(3px);
+  z-index: 0;
   transition:
     opacity var(--sampi-glow-duration) var(--sampi-motion-smooth),
     transform var(--sampi-glow-duration-long) var(--sampi-motion-smooth),
@@ -1043,6 +1366,9 @@ html.theme-dark .sampi-cashier-popover {
 }
 
 .sampi-lor-context-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   min-width: min(100%, 26rem);
   align-items: center;
@@ -1054,9 +1380,16 @@ html.theme-dark .sampi-cashier-popover {
     linear-gradient(135deg, rgba(236, 254, 255, 0.9), rgba(224, 242, 254, 0.72)),
     radial-gradient(circle at 100% 0%, rgba(249, 115, 22, 0.12), transparent 44%);
   padding: 0.75rem;
+  transition:
+    border-color var(--sampi-premium-glow-duration) ease,
+    box-shadow var(--sampi-premium-glow-duration) ease,
+    background-color var(--sampi-premium-glow-duration) ease;
 }
 
 .sampi-lor-step-pill {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 0.9rem;
   background: rgba(255, 255, 255, 0.76);
@@ -1065,6 +1398,11 @@ html.theme-dark .sampi-cashier-popover {
   color: #64748b;
   font-size: 0.75rem;
   font-weight: 900;
+  transition:
+    border-color var(--sampi-premium-glow-duration) ease,
+    box-shadow var(--sampi-premium-glow-duration) ease,
+    background-color var(--sampi-premium-glow-duration) ease,
+    color var(--sampi-premium-glow-duration) ease;
 }
 
 .sampi-lor-step-active {
@@ -1081,10 +1419,12 @@ html.theme-dark .sampi-cashier-popover {
 
 .animate-dropdown-pop {
   transform-origin: top;
-  animation: dropdown-pop 180ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  animation: dropdown-pop 260ms cubic-bezier(0.16, 0.92, 0.24, 1) both;
 }
 
 .sampi-dropdown {
+  position: relative;
+  isolation: isolate;
   border-color: #dbe5ee;
   box-shadow:
     0 10px 24px -20px rgba(15, 23, 42, 0.66),
@@ -1121,7 +1461,32 @@ html.theme-dark .sampi-dropdown {
 
 .sampi-btn {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
+  transition-duration: 560ms !important;
+  transition-timing-function: var(--sampi-motion-smooth) !important;
+}
+
+.sampi-btn::before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -62%;
+  z-index: 0;
+  height: 78%;
+  pointer-events: none;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(14, 116, 144, 0.26), transparent 66%),
+    radial-gradient(ellipse at 78% 92%, rgba(249, 115, 22, 0.14), transparent 58%);
+  filter: blur(17px);
+  opacity: 0;
+  transform: translateY(20px) scale(0.86);
+  transition:
+    opacity var(--sampi-premium-glow-duration) var(--sampi-premium-glow-ease),
+    transform 1600ms var(--sampi-premium-glow-ease),
+    filter var(--sampi-premium-glow-duration) ease;
 }
 
 .sampi-btn::after {
@@ -1130,11 +1495,31 @@ html.theme-dark .sampi-dropdown {
   inset: 0;
   background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.18) 50%, transparent 100%);
   transform: translateX(-140%);
+  z-index: 1;
+  pointer-events: none;
   transition: transform var(--sampi-glow-duration-long) var(--sampi-motion-smooth);
+}
+
+.sampi-btn:hover::before,
+.sampi-btn:focus-visible::before {
+  opacity: 0.86;
+  transform: translateY(0) scale(1);
+  filter: blur(11px);
 }
 
 .sampi-btn:hover::after {
   transform: translateX(140%);
+}
+
+.sampi-btn > * {
+  position: relative;
+  z-index: 2;
+}
+
+html.theme-dark .sampi-btn::before {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(34, 211, 238, 0.22), transparent 66%),
+    radial-gradient(ellipse at 78% 92%, rgba(249, 115, 22, 0.1), transparent 58%);
 }
 
 .sampi-table-row {
@@ -1637,6 +2022,14 @@ html.theme-dark .lor-select-section {
     radial-gradient(circle at 0% 0%, rgba(14, 165, 162, 0.16), transparent 42%);
 }
 
+html.theme-dark .lor-select-section::after,
+html.theme-dark .sampi-lor-context-card::after,
+html.theme-dark .sampi-lor-step-pill::after {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(34, 211, 238, 0.24), transparent 66%),
+    radial-gradient(ellipse at 80% 92%, rgba(249, 115, 22, 0.1), transparent 58%);
+}
+
 html.theme-dark .lor-choice-card,
 html.theme-dark .lor-doctor-card,
 html.theme-dark .sampi-lor-step-pill,
@@ -1656,6 +2049,13 @@ html.theme-dark .lor-choice-card::before {
 
 html.theme-dark .lor-choice-card:hover::before {
   opacity: 0.52;
+}
+
+html.theme-dark .lor-choice-card::after,
+html.theme-dark .lor-doctor-card::after {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(34, 211, 238, 0.26), transparent 66%),
+    radial-gradient(ellipse at 80% 92%, rgba(249, 115, 22, 0.1), transparent 58%);
 }
 
 html.theme-dark .lor-doctor-card::before {
@@ -1739,24 +2139,36 @@ html.theme-dark .hover\:bg-slate-50\/85:hover {
   .route-enter > div > *,
   .page-motion,
   .route-enter .card,
+  .card::after,
   .lor-select-glow,
   .lor-select-shell-switching .lor-select-glow,
   .lor-ios-card,
   .lor-select-card::after,
   .lor-stage-in,
+  .lor-select-section::after,
   .lor-step-line-done,
   .sampi-sidebar-group,
+  .sampi-navbar-user::after,
+  .sampi-sidebar-toggle::after,
+  .sampi-sidebar-link::before,
   .lor-choice-card,
   .lor-choice-card-selecting,
   .lor-choice-card::before,
+  .lor-choice-card::after,
   .lor-choice-action::after,
   .lor-doctor-card,
   .lor-doctor-card-confirming,
   .lor-doctor-card::before,
+  .lor-doctor-card::after,
   .lor-doctor-avatar,
+  .sampi-lor-context-card::after,
+  .sampi-lor-step-pill::after,
   .animate-dropdown-pop,
   .sampi-cashier-popover,
+  .sampi-dropdown::after,
+  .sampi-btn::before,
   .sampi-btn::after,
+  .sampi-theme-toggle::after,
   .sampi-theme-toggle svg,
   .sampi-alert,
   .sampi-modal-overlay,
