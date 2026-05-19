@@ -35,12 +35,12 @@ function SelectMenu({ label, value, options, onChange, disabled = false }) {
 
   return (
     <label className="relative block" ref={ref}>
-      {label ? <span className="mb-1.5 block text-sm font-medium text-slate-600">{label}</span> : null}
+      {label ? <span className="sampi-field-label mb-1.5 block text-sm font-semibold text-slate-600">{label}</span> : null}
       <button
         type="button"
         disabled={disabled}
         onClick={() => setOpen((prev) => !prev)}
-        className="sampi-control flex w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-slate-100"
+        className="sampi-input sampi-control flex w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-slate-100"
       >
         <span>{selected?.label || "Tanlang"}</span>
         <svg

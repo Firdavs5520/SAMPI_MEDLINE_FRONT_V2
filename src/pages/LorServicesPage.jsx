@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import serviceService from "../services/serviceService.js";
 import usageService from "../services/usageService.js";
@@ -103,7 +103,7 @@ function LorServicesPage() {
     setError("");
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -123,11 +123,11 @@ function LorServicesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, user?._id]);
 
   useEffect(() => {
     loadData();
-  }, [user?.id, user?._id]);
+  }, [loadData]);
 
   useEffect(() => {
     const focusElement = (element) => {

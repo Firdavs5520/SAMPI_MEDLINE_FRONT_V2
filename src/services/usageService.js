@@ -62,13 +62,19 @@ const usageService = {
     return data.data;
   },
 
-  async getMyChecks(search = "", lorIdentity = "") {
+  async getMyChecks(search = "", lorIdentity = "", specialist = null) {
     const params = new URLSearchParams();
     if (search?.trim()) {
       params.set("q", search.trim());
     }
     if (lorIdentity?.trim()) {
       params.set("lorIdentity", lorIdentity.trim().toLowerCase());
+    }
+    if (specialist?.id) {
+      params.set("specialistId", String(specialist.id).trim());
+    }
+    if (specialist?.name) {
+      params.set("specialistName", String(specialist.name).trim());
     }
     const query = params.toString() ? `?${params.toString()}` : "";
     const { data } = await api.get(`/usage/my-checks${query}`);

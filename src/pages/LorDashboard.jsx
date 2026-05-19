@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import serviceService from "../services/serviceService.js";
 import Spinner from "../components/Spinner.jsx";
@@ -30,7 +30,7 @@ function LorDashboard() {
   const [error, setError] = useState("");
   const [services, setServices] = useState([]);
 
-  const loadServices = async () => {
+  const loadServices = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -49,11 +49,11 @@ function LorDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, user?._id]);
 
   useEffect(() => {
     loadServices();
-  }, [user?.id, user?._id]);
+  }, [loadServices]);
 
   const totalServices = useMemo(() => services.length, [services]);
   const averagePrice = useMemo(() => {

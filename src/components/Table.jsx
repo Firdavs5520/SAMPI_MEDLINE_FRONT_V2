@@ -10,8 +10,8 @@ function Table({
     typeof value === "function" ? value(...args) : value;
 
   return (
-    <div className="sampi-dropdown w-full overflow-x-auto rounded-xl border border-slate-200">
-      <table className={`w-full min-w-[720px] table-auto bg-white text-sm ${tableClassName}`.trim()}>
+    <div className="sampi-table-wrap sampi-dropdown w-full overflow-x-auto rounded-xl border border-slate-200">
+      <table className={`sampi-data-table w-full min-w-[720px] table-auto bg-white text-sm ${tableClassName}`.trim()}>
         <thead className={`bg-slate-50 text-left text-slate-600 ${headerClassName}`.trim()}>
           <tr>
             {columns.map((col) => (
@@ -25,10 +25,15 @@ function Table({
           {data.length === 0 ? (
             <tr>
               <td
-                className="px-3 py-6 text-center text-slate-500 sm:px-4"
+                className="px-3 py-10 text-center text-slate-500 sm:px-4"
                 colSpan={columns.length}
               >
-                Ma'lumot topilmadi
+                <div className="mx-auto flex max-w-xs flex-col items-center gap-2">
+                  <span className="sampi-empty-mark flex h-10 w-10 items-center justify-center rounded-xl text-sm font-black">
+                    SM
+                  </span>
+                  <span className="font-semibold">Ma'lumot topilmadi</span>
+                </div>
               </td>
             </tr>
           ) : (

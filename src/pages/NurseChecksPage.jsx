@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import usageService from "../services/usageService.js";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
@@ -19,6 +19,7 @@ function NurseChecksPage() {
   const [error, setError] = useState("");
   const [checks, setChecks] = useState([]);
   const [query, setQuery] = useState("");
+  const hasLoadedRef = useRef(false);
   const checkSuggestions = useMemo(() => {
     const uniq = new Map();
     checks.forEach((item) => {
@@ -32,8 +33,8 @@ function NurseChecksPage() {
     return Array.from(uniq.values());
   }, [checks]);
 
-  const loadChecks = async (searchValue = "") => {
-    const isInitial = loading;
+  const loadChecks = useCallback(async (searchValue = "") => {
+    const isInitial = !hasLoadedRef.current;
     if (!isInitial) {
       setSearching(true);
     }
@@ -44,17 +45,18 @@ function NurseChecksPage() {
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
       setSearching(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       loadChecks(query.trim());
     }, 220);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, loadChecks]);
 
   const clearSearch = () => {
     setQuery("");

@@ -25,7 +25,14 @@ function Button({
       className={`sampi-btn inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none enabled:hover:-translate-y-0.5 enabled:hover:shadow-md active:translate-y-0 ${variants[variant]} ${className}`}
       {...props}
     >
-      {loading ? "Yuklanmoqda..." : children}
+      {loading ? (
+        <span className="inline-flex items-center gap-2">
+          <span className="sampi-btn-spinner h-4 w-4 rounded-full border-2 border-current border-t-transparent" />
+          Yuklanmoqda...
+        </span>
+      ) : (
+        children
+      )}
     </button>
   );
 }

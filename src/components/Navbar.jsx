@@ -1,6 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { roleHomePath, roleLabels } from "../utils/constants.js";
+import { roleHomePath, roleLabels, sidebarMenus } from "../utils/constants.js";
 import Button from "./Button.jsx";
 import ThemeModeSwitch from "./ThemeModeSwitch.jsx";
 
@@ -19,10 +19,18 @@ const getDisplayName = (user) => {
   return LEGACY_NAME_MAP[rawName] || rawName;
 };
 
+const getPageLabel = (role, pathname) => {
+  const menus = sidebarMenus[role] || [];
+  const current = menus.find((item) => item.path === pathname);
+  return current?.label || roleLabels[role] || "Sampi Medline";
+};
+
 function Navbar({ onMenuOpen }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
   const displayName = getDisplayName(user);
+  const pageLabel = getPageLabel(user?.role, location.pathname);
 
   const handleLogout = () => {
     logout();
@@ -65,15 +73,32 @@ function Navbar({ onMenuOpen }) {
           <button
             type="button"
             onClick={handleGoHome}
-            className="sampi-navbar-user min-w-0 rounded-xl px-2.5 py-1.5 text-left text-sm"
+            className="sampi-navbar-home hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-black sm:inline-flex"
+            aria-label="Bosh sahifa"
+            title="Bosh sahifa"
           >
-            <div className="sampi-navbar-user-name truncate font-semibold">{displayName}</div>
-            <div className="sampi-navbar-user-role hidden truncate text-xs sm:block">
+            SM
+          </button>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-black text-slate-900 sm:text-base">
+              {pageLabel}
+            </div>
+            <div className="hidden truncate text-xs font-semibold text-slate-500 sm:block">
+              {roleLabels[user?.role] || "-"}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={handleGoHome}
+            className="sampi-navbar-user hidden min-w-0 rounded-xl px-2.5 py-1.5 text-left text-sm md:block"
+          >
+            <div className="sampi-navbar-user-name max-w-[10rem] truncate font-semibold">{displayName}</div>
+            <div className="sampi-navbar-user-role truncate text-xs">
               {roleLabels[user?.role] || "-"}
             </div>
           </button>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3">
           <ThemeModeSwitch compact />
           <Button
             variant="secondary"

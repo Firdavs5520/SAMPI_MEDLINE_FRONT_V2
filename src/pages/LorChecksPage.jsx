@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import usageService from "../services/usageService.js";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
@@ -49,13 +49,14 @@ const renderCashierStatus = (row) => {
 };
 
 function LorChecksPage() {
-  const { lorIdentity } = useAuth();
+  const { lorIdentity, lorDoctor } = useAuth();
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
   const [checks, setChecks] = useState([]);
   const [query, setQuery] = useState("");
   const [hoverPreview, setHoverPreview] = useState(null);
+  const hasLoadedRef = useRef(false);
   const hoverTimerRef = useRef(null);
   const hoverCloseTimerRef = useRef(null);
   const checkSuggestions = useMemo(() => {
@@ -90,29 +91,30 @@ function LorChecksPage() {
     [prioritizedChecks, hoverPreview?.checkKey]
   );
 
-  const loadChecks = async (searchValue = "") => {
-    const isInitial = loading;
+  const loadChecks = useCallback(async (searchValue = "") => {
+    const isInitial = !hasLoadedRef.current;
     if (!isInitial) {
       setSearching(true);
     }
     setError("");
     try {
-      const data = await usageService.getMyChecks(searchValue, lorIdentity);
+      const data = await usageService.getMyChecks(searchValue, lorIdentity, lorDoctor);
       setChecks(data);
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
       setSearching(false);
     }
-  };
+  }, [lorIdentity, lorDoctor]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       loadChecks(query.trim());
     }, 220);
     return () => clearTimeout(timer);
-  }, [query, lorIdentity]);
+  }, [query, lorIdentity, lorDoctor, loadChecks]);
 
   useEffect(
     () => () => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Alert from "../components/Alert.jsx";
@@ -222,7 +222,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const hasLoadedOnceRef = useRef(false);
   const [savingEntry, setSavingEntry] = useState(false);
   const [savingSpecialist, setSavingSpecialist] = useState(false);
   const [pendingChecksLoading, setPendingChecksLoading] = useState(false);
@@ -256,7 +256,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     [specialists]
   );
 
-  const buildEffectiveFilters = (baseFilters) => {
+  const buildEffectiveFilters = useCallback((baseFilters) => {
     const nextFilters = { ...baseFilters };
 
     if (lockedType) {
@@ -279,11 +279,11 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
 
     return nextFilters;
-  };
+  }, [lockedType, isDebtSection]);
 
   const effectiveFilters = useMemo(
     () => buildEffectiveFilters(filters),
-    [filters, lockedType, isDebtSection]
+    [filters, buildEffectiveFilters]
   );
   const availableSpecialistTypeOptions = useMemo(() => {
     if (lockedType === "lor" || filters.department === "lor") {
@@ -364,8 +364,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     setError("");
   };
 
-  const loadEntries = async ({ silent = false } = {}) => {
-    const shouldUseSilent = silent || hasLoadedOnce;
+  const loadEntries = useCallback(async ({ silent = false } = {}) => {
+    const shouldUseSilent = silent || hasLoadedOnceRef.current;
 
     if (!shouldUseSilent) {
       setLoading(true);
@@ -437,7 +437,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         );
         setSummary(summaryPayload || emptySummary);
       }
-      setHasLoadedOnce(true);
+      hasLoadedOnceRef.current = true;
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -446,7 +446,12 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       }
       setRefreshing(false);
     }
-  };
+  }, [
+    effectiveFilters,
+    isDebtSection,
+    isEntriesSection,
+    isHistorySection
+  ]);
 
   const loadSpecialists = async () => {
     try {
@@ -457,7 +462,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
   };
 
-  const loadPendingChecks = async ({ searchValue = "" } = {}) => {
+  const loadPendingChecks = useCallback(async ({ searchValue = "" } = {}) => {
     if (!isFormSection) {
       setPendingChecks([]);
       return;
@@ -475,7 +480,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     } finally {
       setPendingChecksLoading(false);
     }
-  };
+  }, [isFormSection, lockedType]);
 
   useEffect(() => {
     if (lockedType) {
@@ -540,7 +545,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     effectiveFilters.specialistType,
     effectiveFilters.paymentMethod,
     effectiveFilters.debtOnly,
-    effectiveFilters.search
+    effectiveFilters.search,
+    loadEntries
   ]);
 
   useEffect(() => {
@@ -556,7 +562,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     setPendingChecks([]);
     setPendingSearch("");
     setSelectedPendingCheck(null);
-  }, [isFormSection, lockedType]);
+  }, [isFormSection, lockedType, loadPendingChecks]);
 
   useEffect(() => {
     if (!isFormSection || isPendingCheckMode) {
@@ -568,7 +574,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }, 220);
 
     return () => clearTimeout(timer);
-  }, [isFormSection, isPendingCheckMode, pendingSearch, lockedType]);
+  }, [isFormSection, isPendingCheckMode, pendingSearch, lockedType, loadPendingChecks]);
 
   useEffect(() => {
     if (!isEntriesSection) {

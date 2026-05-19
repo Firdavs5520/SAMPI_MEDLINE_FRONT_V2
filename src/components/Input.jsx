@@ -2,13 +2,13 @@ function Input({ label, error, className = "", inputRef = null, ...props }) {
   return (
     <label className="block">
       {label && (
-        <span className="mb-1.5 block text-sm font-medium text-slate-600">
+        <span className="sampi-field-label mb-1.5 block text-sm font-semibold text-slate-600">
           {label}
         </span>
       )}
       <input
         ref={inputRef}
-        className={`sampi-control w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 sm:text-sm ${className}`}
+        className={`sampi-input sampi-control w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 sm:text-sm ${className}`}
         {...props}
       />
       {error ? <p className="mt-1 text-xs text-rose-600">{error}</p> : null}

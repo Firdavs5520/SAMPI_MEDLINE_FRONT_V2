@@ -41,18 +41,26 @@ function QuickSearchInput({
   return (
     <div className="relative">
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-600">{label}</span>
-        <input
-          ref={inputRef}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          onFocus={() => setOpen(true)}
-          onBlur={() => {
-            setTimeout(() => setOpen(false), 120);
-          }}
-          placeholder={placeholder}
-          className="sampi-control w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 sm:text-sm"
-        />
+        <span className="sampi-field-label mb-1.5 block text-sm font-semibold text-slate-600">{label}</span>
+        <span className="relative block">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-3.5-3.5" />
+            </svg>
+          </span>
+          <input
+            ref={inputRef}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            onFocus={() => setOpen(true)}
+            onBlur={() => {
+              setTimeout(() => setOpen(false), 120);
+            }}
+            placeholder={placeholder}
+            className="sampi-input sampi-control w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-9 pr-3 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 sm:text-sm"
+          />
+        </span>
       </label>
 
       {open && query ? (

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import medicineService from "../services/medicineService.js";
 import serviceService from "../services/serviceService.js";
 import usageService from "../services/usageService.js";
@@ -163,7 +163,7 @@ function NurseDashboard() {
     setError("");
   };
 
-  const loadSpecialists = async () => {
+  const loadSpecialists = useCallback(async () => {
     const data = await usageService.getRoleSpecialists();
     setSpecialists(data);
 
@@ -171,9 +171,9 @@ function NurseDashboard() {
       if (prev && data.some((item) => item._id === prev)) return prev;
       return data[0]?._id || "";
     });
-  };
+  }, []);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -190,11 +190,11 @@ function NurseDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [loadSpecialists]);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   useEffect(() => {
     const focusElement = (element) => {
