@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { storageKeys } from "../utils/constants.js";
 
 const ThemeContext = createContext(null);
@@ -20,6 +20,8 @@ const detectSystemTheme = () => {
 export function ThemeProvider({ children }) {
   const [mode, setModeState] = useState(readStoredMode);
   const [systemTheme, setSystemTheme] = useState(detectSystemTheme);
+  const previousThemeRef = useRef(null);
+  const transitionTimeoutRef = useRef(null);
   const resolvedTheme = useMemo(
     () => (mode === "system" ? systemTheme : mode),
     [mode, systemTheme]
@@ -28,13 +30,46 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     if (typeof document !== "undefined") {
       const root = document.documentElement;
+      const previousTheme = previousThemeRef.current;
+      const shouldAnimate = previousTheme && previousTheme !== resolvedTheme;
+
+      if (transitionTimeoutRef.current) {
+        window.clearTimeout(transitionTimeoutRef.current);
+      }
+
+      if (shouldAnimate) {
+        root.classList.add(
+          "theme-transitioning",
+          resolvedTheme === "dark" ? "theme-switching-to-dark" : "theme-switching-to-light"
+        );
+      }
+
       root.classList.remove("theme-light", "theme-dark");
       root.classList.add(resolvedTheme === "dark" ? "theme-dark" : "theme-light");
+      previousThemeRef.current = resolvedTheme;
+
+      if (shouldAnimate) {
+        transitionTimeoutRef.current = window.setTimeout(() => {
+          root.classList.remove(
+            "theme-transitioning",
+            "theme-switching-to-dark",
+            "theme-switching-to-light"
+          );
+          transitionTimeoutRef.current = null;
+        }, 1180);
+      }
     }
 
     if (typeof window !== "undefined") {
       localStorage.setItem(storageKeys.themeMode, mode);
     }
+
+    return () => {
+      if (transitionTimeoutRef.current) {
+        window.clearTimeout(transitionTimeoutRef.current);
+        transitionTimeoutRef.current = null;
+      }
+    };
   }, [mode, resolvedTheme]);
 
   useEffect(() => {
