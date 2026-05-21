@@ -13,6 +13,9 @@
   --sampi-glow-duration-long: 1300ms;
   --sampi-premium-glow-duration: 1450ms;
   --sampi-premium-glow-ease: cubic-bezier(0.19, 1, 0.22, 1);
+  --sampi-wave-duration: 5600ms;
+  --sampi-wave-duration-slow: 9800ms;
+  --sampi-wave-ease: cubic-bezier(0.45, 0, 0.2, 1);
   color-scheme: light;
 }
 
@@ -1847,6 +1850,171 @@ html.theme-dark .sampi-table-row:hover td {
   animation: spin 900ms linear infinite;
 }
 
+.app-shell {
+  background-size: 130% 130%, 122% 122%, auto;
+  animation: sampi-shell-wave 16s var(--sampi-wave-ease) infinite;
+}
+
+html.theme-dark .app-shell {
+  background-size: 138% 138%, 126% 126%, auto;
+}
+
+.sampi-login-shell,
+.lor-select-shell {
+  background-size: 150% 150%, 54px 54px, 54px 54px;
+  animation: sampi-surface-wave 14s var(--sampi-wave-ease) infinite;
+}
+
+.lor-select-shell {
+  background-size: 150% 150%, 140% 140%, auto;
+}
+
+.lor-select-shell::before {
+  content: "";
+  position: absolute;
+  inset: -28%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(116deg, transparent 18%, rgba(14, 116, 144, 0.16) 34%, transparent 52%),
+    linear-gradient(64deg, transparent 24%, rgba(249, 115, 22, 0.13) 48%, transparent 66%);
+  background-size: 210% 210%, 190% 190%;
+  opacity: 0.58;
+  transform: translate3d(-3%, 0, 0) rotate(-2deg);
+  animation: sampi-panel-wave 10s var(--sampi-wave-ease) infinite;
+}
+
+html.theme-dark .lor-select-shell::before {
+  background:
+    linear-gradient(116deg, transparent 18%, rgba(34, 211, 238, 0.13) 34%, transparent 52%),
+    linear-gradient(64deg, transparent 24%, rgba(249, 115, 22, 0.1) 48%, transparent 66%);
+  opacity: 0.44;
+}
+
+.card::before,
+.lor-select-card::before {
+  background-size: 240% 100%;
+  animation: sampi-border-wave 6.2s linear infinite;
+}
+
+.card:not(.sampi-lor-search-card):not(.sampi-lor-table-card)::after,
+.sampi-navbar-user::after,
+.sampi-sidebar-toggle::after,
+.sampi-theme-toggle::after,
+.sampi-dropdown::after,
+.sampi-sidebar-link::before,
+.sampi-lor-search-card::after,
+.sampi-lor-table-card::after,
+.lor-select-section::after,
+.sampi-lor-context-card::after,
+.sampi-lor-step-pill::after,
+.lor-choice-card::after,
+.lor-doctor-card::after,
+.sampi-btn::before {
+  --sampi-wave-opacity: 0.28;
+  --sampi-wave-y: 18px;
+  --sampi-wave-scale: 0.9;
+  --sampi-wave-scale-crest: 0.96;
+  --sampi-wave-blur: 20px;
+  opacity: var(--sampi-wave-opacity);
+  filter: blur(var(--sampi-wave-blur));
+  transform: translate3d(-1.2%, var(--sampi-wave-y), 0) scale(var(--sampi-wave-scale));
+  animation: sampi-wave-glow var(--sampi-wave-duration-slow) var(--sampi-wave-ease) infinite;
+}
+
+.sampi-lor-search-card::after,
+.sampi-lor-table-card::after,
+.lor-select-section::after,
+.sampi-lor-context-card::after,
+.sampi-lor-step-pill::after {
+  --sampi-wave-opacity: 0.42;
+  --sampi-wave-y: 15px;
+}
+
+.sampi-sidebar-link::before,
+.sampi-navbar-user::after,
+.sampi-btn::before {
+  --sampi-wave-opacity: 0.2;
+  --sampi-wave-y: 16px;
+  --sampi-wave-scale: 0.88;
+}
+
+.lor-choice-card::after,
+.lor-doctor-card::after {
+  --sampi-wave-opacity: 0.24;
+  --sampi-wave-y: 17px;
+  --sampi-wave-scale: 0.88;
+}
+
+.card:hover::after,
+.card:focus-within::after,
+.sampi-navbar-user:hover::after,
+.sampi-navbar-user:focus-visible::after,
+.sampi-navbar-user:focus-within::after,
+.sampi-sidebar-toggle:hover::after,
+.sampi-sidebar-toggle:focus-visible::after,
+.sampi-theme-toggle:hover::after,
+.sampi-theme-toggle:focus-visible::after,
+.sampi-dropdown:hover::after,
+.sampi-dropdown:focus-within::after,
+.sampi-sidebar-link:hover::before,
+.sampi-sidebar-link:focus-visible::before,
+.sampi-lor-search-card:hover::after,
+.sampi-lor-search-card:focus-within::after,
+.sampi-lor-table-card:hover::after,
+.sampi-lor-table-card:focus-within::after,
+.lor-select-section:hover::after,
+.lor-select-section:focus-within::after,
+.sampi-lor-context-card:hover::after,
+.sampi-lor-context-card:focus-within::after,
+.sampi-lor-step-pill:hover::after,
+.sampi-lor-step-pill:focus-within::after,
+.lor-choice-card:hover::after,
+.lor-choice-card:focus-visible::after,
+.lor-doctor-card:hover::after,
+.lor-doctor-card:focus-visible::after,
+.sampi-btn:hover::before,
+.sampi-btn:focus-visible::before {
+  --sampi-wave-opacity: 0.9;
+  --sampi-wave-y: 0px;
+  --sampi-wave-scale: 1;
+  --sampi-wave-scale-crest: 1.045;
+  --sampi-wave-blur: 13px;
+  animation-duration: 3600ms;
+}
+
+.lor-choice-card-selecting::after,
+.lor-choice-selected::after,
+.lor-doctor-card-selected::after,
+.lor-doctor-card-confirming::after,
+.sampi-lor-step-active::after {
+  --sampi-wave-opacity: 0.86;
+  --sampi-wave-y: 2px;
+  --sampi-wave-scale: 1;
+  --sampi-wave-scale-crest: 1.055;
+  --sampi-wave-blur: 13px;
+  animation-duration: 2800ms;
+}
+
+.sampi-btn::after,
+.lor-select-card::after,
+.sampi-lor-status::after {
+  background-size: 240% 100%;
+  animation: sampi-sheen-wave 3600ms var(--sampi-wave-ease) infinite;
+}
+
+.lor-select-glow {
+  animation: lor-glow-wave 5200ms var(--sampi-wave-ease) infinite;
+}
+
+.lor-select-shell-switching .lor-select-glow {
+  animation: lor-glow-wave 1800ms var(--sampi-wave-ease) infinite;
+}
+
+.sampi-shell-texture {
+  animation: shell-texture-drift 14s linear infinite, sampi-texture-wave 9s var(--sampi-wave-ease) infinite;
+}
+
 @keyframes page-enter {
   from {
     opacity: 0;
@@ -1942,6 +2110,94 @@ html.theme-dark .sampi-table-row:hover td {
   }
   100% {
     background-position: 44px 44px, -44px 44px, 100% 50%;
+  }
+}
+
+@keyframes sampi-shell-wave {
+  0%,
+  100% {
+    background-position: 0% 0%, 100% 100%, 0 0;
+  }
+  50% {
+    background-position: 18% 12%, 82% 88%, 0 0;
+  }
+}
+
+@keyframes sampi-surface-wave {
+  0%,
+  100% {
+    background-position: 0% 0%, 0 0, 0 0;
+  }
+  50% {
+    background-position: 16% 10%, 18px 0, 0 18px;
+  }
+}
+
+@keyframes sampi-panel-wave {
+  0%,
+  100% {
+    background-position: 0% 50%, 100% 50%;
+    transform: translate3d(-3%, 0, 0) rotate(-2deg);
+  }
+  50% {
+    background-position: 100% 50%, 0% 50%;
+    transform: translate3d(3%, -2%, 0) rotate(2deg);
+  }
+}
+
+@keyframes sampi-border-wave {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes sampi-wave-glow {
+  0%,
+  100% {
+    transform: translate3d(-1.2%, var(--sampi-wave-y, 18px), 0) scale(var(--sampi-wave-scale, 0.9));
+  }
+  50% {
+    transform: translate3d(1.2%, calc(var(--sampi-wave-y, 18px) - 7px), 0)
+      scale(var(--sampi-wave-scale-crest, 0.96));
+  }
+}
+
+@keyframes sampi-sheen-wave {
+  0% {
+    transform: translateX(-145%);
+  }
+  48%,
+  100% {
+    transform: translateX(145%);
+  }
+}
+
+@keyframes lor-glow-wave {
+  0%,
+  100% {
+    transform: translate3d(-5%, 10%, 0) rotate(-2deg) scale(0.94, 0.9);
+    opacity: 0.52;
+  }
+  45% {
+    transform: translate3d(6%, -4%, 0) rotate(3deg) scale(1.08, 1);
+    opacity: 0.72;
+  }
+  72% {
+    transform: translate3d(2%, 5%, 0) rotate(-1deg) scale(1, 0.96);
+    opacity: 0.62;
+  }
+}
+
+@keyframes sampi-texture-wave {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.42;
   }
 }
 
@@ -2455,6 +2711,16 @@ html.theme-dark .hover\:bg-slate-50\/85:hover {
   background-color: #16243a !important;
 }
 
+html.theme-dark .sampi-login-shell {
+  background-size: 150% 150%, 54px 54px, 54px 54px;
+  animation: sampi-surface-wave 14s var(--sampi-wave-ease) infinite;
+}
+
+html.theme-dark .lor-select-shell {
+  background-size: 150% 150%, 140% 140%, auto;
+  animation: sampi-surface-wave 14s var(--sampi-wave-ease) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .route-enter,
   .route-enter > div > *,
@@ -2503,6 +2769,58 @@ html.theme-dark .hover\:bg-slate-50\/85:hover {
   .route-enter > div > * {
     opacity: 1 !important;
     transform: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell {
+    animation: sampi-shell-wave 24s var(--sampi-wave-ease) infinite !important;
+  }
+
+  .sampi-login-shell,
+  .lor-select-shell {
+    animation: sampi-surface-wave 22s var(--sampi-wave-ease) infinite !important;
+  }
+
+  .lor-select-shell::before {
+    animation: sampi-panel-wave 18s var(--sampi-wave-ease) infinite !important;
+  }
+
+  .sampi-shell-texture {
+    animation: shell-texture-drift 24s linear infinite, sampi-texture-wave 18s var(--sampi-wave-ease) infinite !important;
+  }
+
+  .card::before,
+  .lor-select-card::before {
+    animation: sampi-border-wave 11s linear infinite !important;
+  }
+
+  .card:not(.sampi-lor-search-card):not(.sampi-lor-table-card)::after,
+  .sampi-navbar-user::after,
+  .sampi-sidebar-toggle::after,
+  .sampi-theme-toggle::after,
+  .sampi-dropdown::after,
+  .sampi-sidebar-link::before,
+  .sampi-lor-search-card::after,
+  .sampi-lor-table-card::after,
+  .lor-select-section::after,
+  .sampi-lor-context-card::after,
+  .sampi-lor-step-pill::after,
+  .lor-choice-card::after,
+  .lor-doctor-card::after,
+  .sampi-btn::before {
+    animation: sampi-wave-glow 18s var(--sampi-wave-ease) infinite !important;
+  }
+
+  .sampi-btn::after,
+  .lor-select-card::after,
+  .sampi-lor-status::after {
+    animation: sampi-sheen-wave 9s var(--sampi-wave-ease) infinite !important;
+  }
+
+  .lor-select-glow,
+  .lor-select-shell-switching .lor-select-glow {
+    animation: lor-glow-wave 12s var(--sampi-wave-ease) infinite !important;
   }
 }
 
