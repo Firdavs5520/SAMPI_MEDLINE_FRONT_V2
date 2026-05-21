@@ -79,21 +79,19 @@ const buildCheckPrintHtml = (check, options = {}) => {
     <meta charset="UTF-8" />
     <title>Chek</title>
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap");
-
       @page { size: 58mm auto; margin: 0; }
       html, body {
         margin: 0;
         padding: 0;
         width: 58mm;
-        font-family: "Golos Text", sans-serif;
+        font-family: Arial, sans-serif;
         font-size: 12px;
         color: #000;
         background: #fff;
       }
 
       * {
-        font-family: "Golos Text", sans-serif;
+        font-family: Arial, sans-serif;
       }
 
       .ticket { width: 58mm; margin: 0; padding: 0; }
@@ -190,14 +188,7 @@ const buildCheckPrintHtml = (check, options = {}) => {
       }
 
       window.onload = function () {
-        const startPrint = function () {
-          setTimeout(runPrint, 120);
-        };
-        if (document.fonts && document.fonts.ready) {
-          document.fonts.ready.then(startPrint).catch(startPrint);
-        } else {
-          startPrint();
-        }
+        setTimeout(runPrint, 80);
       };
 
       document.addEventListener("keydown", function (event) {
@@ -241,7 +232,7 @@ const openBrowserPrintTab = () => {
 
   printTab.document.open();
   printTab.document.write(
-    "<!doctype html><html><head><title>Chek tayyorlanmoqda...</title><style>@import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap');body{font-family:'Golos Text',sans-serif;font-size:16px;font-weight:700;padding:12px;}</style></head><body>Chek tayyorlanmoqda...</body></html>"
+    "<!doctype html><html><head><title>Chek tayyorlanmoqda...</title><style>body{font-family:Arial,sans-serif;font-size:16px;font-weight:700;padding:12px;}</style></head><body>Chek tayyorlanmoqda...</body></html>"
   );
   printTab.document.close();
   return {
@@ -284,22 +275,14 @@ const printInsideCurrentApp = (check) => {
   frameDocument.write(buildCheckPrintHtml(check, { inline: true }));
   frameDocument.close();
 
-  const startPrint = () => {
-    setTimeout(() => {
-      try {
-        frameWindow.focus();
-        frameWindow.print();
-      } catch {
-        cleanup();
-      }
-    }, 120);
-  };
-
-  if (frameDocument.fonts && frameDocument.fonts.ready) {
-    frameDocument.fonts.ready.then(startPrint).catch(startPrint);
-  } else {
-    startPrint();
-  }
+  setTimeout(() => {
+    try {
+      frameWindow.focus();
+      frameWindow.print();
+    } catch {
+      cleanup();
+    }
+  }, 80);
 
   return true;
 };

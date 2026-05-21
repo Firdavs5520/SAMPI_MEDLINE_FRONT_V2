@@ -13,9 +13,6 @@
   --sampi-glow-duration-long: 1300ms;
   --sampi-premium-glow-duration: 1450ms;
   --sampi-premium-glow-ease: cubic-bezier(0.19, 1, 0.22, 1);
-  --sampi-wave-duration: 5600ms;
-  --sampi-wave-duration-slow: 9800ms;
-  --sampi-wave-ease: cubic-bezier(0.45, 0, 0.2, 1);
   color-scheme: light;
 }
 
@@ -217,7 +214,6 @@ html.theme-dark .app-shell {
     linear-gradient(115deg, transparent 0%, rgba(255, 255, 255, 0.36) 48%, transparent 66%);
   background-size: 44px 44px, 44px 44px, 220% 100%;
   mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
-  animation: shell-texture-drift 18s linear infinite;
 }
 
 html.theme-dark .sampi-shell-texture {
@@ -334,8 +330,7 @@ html.theme-dark .to-orange-50 {
   --page-enter-origin: 50% 42%;
   position: relative;
   transform-origin: var(--page-enter-origin);
-  animation: page-enter 860ms cubic-bezier(0.16, 0.92, 0.24, 1.04) both;
-  will-change: opacity, transform, filter, clip-path;
+  will-change: auto;
 }
 
 .route-enter::before {
@@ -352,7 +347,6 @@ html.theme-dark .to-orange-50 {
   opacity: 0;
   transform: scaleX(0.35);
   transform-origin: var(--page-scan-origin, left);
-  animation: route-scan 820ms cubic-bezier(0.19, 1, 0.22, 1) 60ms both;
 }
 
 .page-motion-forward {
@@ -380,28 +374,7 @@ html.theme-dark .to-orange-50 {
 }
 
 .route-enter > div > * {
-  opacity: 0;
-  animation: section-appear 720ms cubic-bezier(0.16, 0.92, 0.24, 1.04) both;
-}
-
-.route-enter > div > *:nth-child(1) {
-  animation-delay: 80ms;
-}
-
-.route-enter > div > *:nth-child(2) {
-  animation-delay: 140ms;
-}
-
-.route-enter > div > *:nth-child(3) {
-  animation-delay: 200ms;
-}
-
-.route-enter > div > *:nth-child(4) {
-  animation-delay: 260ms;
-}
-
-.route-enter > div > *:nth-child(5) {
-  animation-delay: 320ms;
+  opacity: 1;
 }
 
 .sampi-navbar {
@@ -1003,10 +976,6 @@ html.theme-dark .sampi-cashier-popover {
   color: #fee2e2 !important;
 }
 
-.route-enter .card {
-  animation: card-appear 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
 .route-enter .card:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 28px -18px rgba(2, 132, 199, 0.45);
@@ -1037,11 +1006,6 @@ html.theme-dark .sampi-cashier-popover {
   background: linear-gradient(90deg, rgba(14, 116, 144, 0.22), rgba(249, 115, 22, 0.22));
   filter: blur(72px);
   opacity: 0.6;
-  animation: pulse-glow 4s ease-in-out infinite;
-}
-
-.lor-select-shell-switching .lor-select-glow {
-  animation: ios-selection-glow 1.3s ease-in-out infinite;
 }
 
 .lor-select-card {
@@ -1073,7 +1037,6 @@ html.theme-dark .sampi-cashier-popover {
 
 .lor-ios-card {
   transform-origin: 50% 48%;
-  animation: ios-card-arrive 860ms cubic-bezier(0.16, 0.92, 0.24, 1.08) both;
 }
 
 .lor-select-card::before {
@@ -1098,7 +1061,6 @@ html.theme-dark .sampi-cashier-popover {
     transparent 100%
   );
   transform: translateX(-140%);
-  animation: ios-soft-sheen 3.4s cubic-bezier(0.2, 0.8, 0.2, 1) 640ms infinite;
 }
 
 .lor-select-header {
@@ -1142,7 +1104,6 @@ html.theme-dark .sampi-cashier-popover {
     border-color var(--sampi-premium-glow-duration) ease,
     background var(--sampi-premium-glow-duration) ease,
     opacity 260ms ease;
-  will-change: transform;
 }
 
 .lor-choice-card::before {
@@ -1227,7 +1188,6 @@ html.theme-dark .sampi-cashier-popover {
 
 .lor-choice-card-selecting {
   border-color: rgba(8, 145, 178, 0.82) !important;
-  animation: ios-choice-confirm 900ms cubic-bezier(0.16, 0.92, 0.24, 1.08) both;
   box-shadow:
     0 26px 42px -24px rgba(8, 145, 178, 0.72),
     inset 0 0 0 1px rgba(8, 145, 178, 0.18);
@@ -1333,7 +1293,6 @@ html.theme-dark .sampi-cashier-popover {
 
 .lor-step-line-done {
   background: linear-gradient(90deg, #0891b2, #22c55e);
-  animation: ios-progress-fill 850ms cubic-bezier(0.16, 0.92, 0.24, 1) both;
 }
 
 .lor-select-section {
@@ -1409,10 +1368,6 @@ html.theme-dark .sampi-cashier-popover {
   padding: clamp(1rem, 2.2vw, 1.6rem);
 }
 
-.lor-stage-in {
-  animation: ios-stage-rise 920ms cubic-bezier(0.16, 0.92, 0.24, 1.06) both;
-}
-
 .lor-doctor-stage {
   max-width: 100%;
 }
@@ -1471,9 +1426,6 @@ html.theme-dark .sampi-cashier-popover {
     transform 560ms cubic-bezier(0.16, 0.92, 0.24, 1.05),
     background var(--sampi-premium-glow-duration) ease,
     opacity 320ms ease;
-  animation: ios-list-pop 760ms cubic-bezier(0.16, 0.92, 0.24, 1.08) both;
-  animation-delay: calc(var(--item-index, 0) * 86ms + 180ms);
-  will-change: transform;
 }
 
 .lor-doctor-card::before {
@@ -1529,7 +1481,6 @@ html.theme-dark .sampi-cashier-popover {
 
 .lor-doctor-card-confirming {
   border-color: rgba(34, 197, 94, 0.74) !important;
-  animation: ios-doctor-confirm 900ms cubic-bezier(0.16, 0.92, 0.24, 1.08) both;
   box-shadow:
     0 26px 42px -24px rgba(34, 197, 94, 0.58),
     inset 0 0 0 1px rgba(34, 197, 94, 0.18);
@@ -1549,10 +1500,6 @@ html.theme-dark .sampi-cashier-popover {
   font-weight: 900;
   box-shadow: 0 12px 22px -18px rgba(14, 116, 144, 0.95);
   transition: transform 240ms cubic-bezier(0.2, 0.9, 0.2, 1.08);
-}
-
-.lor-doctor-card-selected .lor-doctor-avatar {
-  animation: ios-avatar-breathe 1.8s ease-in-out infinite;
 }
 
 .lor-doctor-empty {
@@ -1850,227 +1797,50 @@ html.theme-dark .sampi-table-row:hover td {
   animation: spin 900ms linear infinite;
 }
 
-.app-shell {
-  background-size: 130% 130%, 122% 122%, auto;
-  animation: sampi-shell-wave 16s var(--sampi-wave-ease) infinite;
-}
-
-html.theme-dark .app-shell {
-  background-size: 138% 138%, 126% 126%, auto;
-}
-
-.sampi-login-shell,
-.lor-select-shell {
-  background-size: 150% 150%, 54px 54px, 54px 54px;
-  animation: sampi-surface-wave 14s var(--sampi-wave-ease) infinite;
-}
-
-.lor-select-shell {
-  background-size: 150% 150%, 140% 140%, auto;
-}
-
-.lor-select-shell::before {
-  content: "";
-  position: absolute;
-  inset: -28%;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(116deg, transparent 18%, rgba(14, 116, 144, 0.16) 34%, transparent 52%),
-    linear-gradient(64deg, transparent 24%, rgba(249, 115, 22, 0.13) 48%, transparent 66%);
-  background-size: 210% 210%, 190% 190%;
-  opacity: 0.58;
-  transform: translate3d(-3%, 0, 0) rotate(-2deg);
-  animation: sampi-panel-wave 10s var(--sampi-wave-ease) infinite;
-}
-
-html.theme-dark .lor-select-shell::before {
-  background:
-    linear-gradient(116deg, transparent 18%, rgba(34, 211, 238, 0.13) 34%, transparent 52%),
-    linear-gradient(64deg, transparent 24%, rgba(249, 115, 22, 0.1) 48%, transparent 66%);
-  opacity: 0.44;
-}
-
-.card::before,
-.lor-select-card::before {
-  background-size: 240% 100%;
-  animation: sampi-border-wave 6.2s linear infinite;
-}
-
+.sampi-shell-texture,
+.route-enter::before,
 .card:not(.sampi-lor-search-card):not(.sampi-lor-table-card)::after,
 .sampi-navbar-user::after,
 .sampi-sidebar-toggle::after,
+.sampi-theme-toggle::before,
 .sampi-theme-toggle::after,
 .sampi-dropdown::after,
 .sampi-sidebar-link::before,
+.sampi-sidebar-link::after,
 .sampi-lor-search-card::after,
 .sampi-lor-table-card::after,
+.lor-select-glow,
+.lor-select-card::after,
+.lor-choice-card::before,
+.lor-choice-card::after,
 .lor-select-section::after,
+.lor-doctor-card::before,
+.lor-doctor-card::after,
 .sampi-lor-context-card::after,
 .sampi-lor-step-pill::after,
-.lor-choice-card::after,
-.lor-doctor-card::after,
-.sampi-btn::before {
-  --sampi-wave-opacity: 0.28;
-  --sampi-wave-y: 18px;
-  --sampi-wave-scale: 0.9;
-  --sampi-wave-scale-crest: 0.96;
-  --sampi-wave-blur: 20px;
-  opacity: var(--sampi-wave-opacity);
-  filter: blur(var(--sampi-wave-blur));
-  transform: translate3d(-1.2%, var(--sampi-wave-y), 0) scale(var(--sampi-wave-scale));
-  animation: sampi-wave-glow var(--sampi-wave-duration-slow) var(--sampi-wave-ease) infinite;
-}
-
-.sampi-lor-search-card::after,
-.sampi-lor-table-card::after,
-.lor-select-section::after,
-.sampi-lor-context-card::after,
-.sampi-lor-step-pill::after {
-  --sampi-wave-opacity: 0.42;
-  --sampi-wave-y: 15px;
-}
-
-.sampi-sidebar-link::before,
-.sampi-navbar-user::after,
-.sampi-btn::before {
-  --sampi-wave-opacity: 0.2;
-  --sampi-wave-y: 16px;
-  --sampi-wave-scale: 0.88;
-}
-
-.lor-choice-card::after,
-.lor-doctor-card::after {
-  --sampi-wave-opacity: 0.24;
-  --sampi-wave-y: 17px;
-  --sampi-wave-scale: 0.88;
-}
-
-.card:hover::after,
-.card:focus-within::after,
-.sampi-navbar-user:hover::after,
-.sampi-navbar-user:focus-visible::after,
-.sampi-navbar-user:focus-within::after,
-.sampi-sidebar-toggle:hover::after,
-.sampi-sidebar-toggle:focus-visible::after,
-.sampi-theme-toggle:hover::after,
-.sampi-theme-toggle:focus-visible::after,
-.sampi-dropdown:hover::after,
-.sampi-dropdown:focus-within::after,
-.sampi-sidebar-link:hover::before,
-.sampi-sidebar-link:focus-visible::before,
-.sampi-lor-search-card:hover::after,
-.sampi-lor-search-card:focus-within::after,
-.sampi-lor-table-card:hover::after,
-.sampi-lor-table-card:focus-within::after,
-.lor-select-section:hover::after,
-.lor-select-section:focus-within::after,
-.sampi-lor-context-card:hover::after,
-.sampi-lor-context-card:focus-within::after,
-.sampi-lor-step-pill:hover::after,
-.sampi-lor-step-pill:focus-within::after,
-.lor-choice-card:hover::after,
-.lor-choice-card:focus-visible::after,
-.lor-doctor-card:hover::after,
-.lor-doctor-card:focus-visible::after,
-.sampi-btn:hover::before,
-.sampi-btn:focus-visible::before {
-  --sampi-wave-opacity: 0.9;
-  --sampi-wave-y: 0px;
-  --sampi-wave-scale: 1;
-  --sampi-wave-scale-crest: 1.045;
-  --sampi-wave-blur: 13px;
-  animation-duration: 3600ms;
-}
-
-.lor-choice-card-selecting::after,
-.lor-choice-selected::after,
-.lor-doctor-card-selected::after,
-.lor-doctor-card-confirming::after,
-.sampi-lor-step-active::after {
-  --sampi-wave-opacity: 0.86;
-  --sampi-wave-y: 2px;
-  --sampi-wave-scale: 1;
-  --sampi-wave-scale-crest: 1.055;
-  --sampi-wave-blur: 13px;
-  animation-duration: 2800ms;
-}
-
+.sampi-btn::before,
 .sampi-btn::after,
-.lor-select-card::after,
-.sampi-lor-status::after {
-  background-size: 240% 100%;
-  animation: sampi-sheen-wave 3600ms var(--sampi-wave-ease) infinite;
+.sampi-lor-status::after,
+.sampi-table-row > td:first-child::before {
+  display: none !important;
 }
 
-.lor-select-glow {
-  animation: lor-glow-wave 5200ms var(--sampi-wave-ease) infinite;
-}
-
-.lor-select-shell-switching .lor-select-glow {
-  animation: lor-glow-wave 1800ms var(--sampi-wave-ease) infinite;
-}
-
-.sampi-shell-texture {
-  animation: shell-texture-drift 14s linear infinite, sampi-texture-wave 9s var(--sampi-wave-ease) infinite;
-}
-
-@keyframes page-enter {
-  from {
-    opacity: 0;
-    transform: translate3d(var(--page-enter-x, 0px), var(--page-enter-y, 12px), 0)
-      scale(var(--page-enter-scale, 0.985))
-      rotate(var(--page-enter-rotate, 0deg));
-    filter: blur(12px) saturate(0.86);
-    clip-path: inset(0 0 4% 0 round 1rem);
-  }
-  62% {
-    opacity: 1;
-    transform: translate3d(0, -3px, 0) scale(1.003) rotate(0deg);
-    filter: blur(0);
-    clip-path: inset(0 0 0 0 round 0.65rem);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-    filter: blur(0);
-    clip-path: inset(0 0 0 0 round 0);
-  }
-}
-
-@keyframes section-appear {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 18px, 0) scale(0.982);
-    filter: blur(7px);
-  }
-  66% {
-    opacity: 1;
-    transform: translate3d(0, -2px, 0) scale(1.002);
-    filter: blur(0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-    filter: blur(0);
-  }
-}
-
-@keyframes route-scan {
-  0% {
-    opacity: 0;
-    transform: scaleX(0.2) translateX(-8%);
-    filter: blur(3px);
-  }
-  38% {
-    opacity: 0.95;
-    filter: blur(0);
-  }
-  100% {
-    opacity: 0;
-    transform: scaleX(1) translateX(0);
-    filter: blur(2px);
-  }
+.route-enter,
+.route-enter > div > *,
+.route-enter .card,
+.lor-ios-card,
+.lor-stage-in,
+.lor-choice-card-selecting,
+.lor-step-line-done,
+.lor-doctor-card,
+.lor-doctor-card-confirming,
+.lor-doctor-avatar {
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+  clip-path: none !important;
+  animation: none !important;
+  will-change: auto !important;
 }
 
 @keyframes theme-wash {
@@ -2101,114 +1871,6 @@ html.theme-dark .lor-select-shell::before {
   100% {
     transform: rotate(0deg) scale(1);
     opacity: 1;
-  }
-}
-
-@keyframes shell-texture-drift {
-  0% {
-    background-position: 0 0, 0 0, 0% 50%;
-  }
-  100% {
-    background-position: 44px 44px, -44px 44px, 100% 50%;
-  }
-}
-
-@keyframes sampi-shell-wave {
-  0%,
-  100% {
-    background-position: 0% 0%, 100% 100%, 0 0;
-  }
-  50% {
-    background-position: 18% 12%, 82% 88%, 0 0;
-  }
-}
-
-@keyframes sampi-surface-wave {
-  0%,
-  100% {
-    background-position: 0% 0%, 0 0, 0 0;
-  }
-  50% {
-    background-position: 16% 10%, 18px 0, 0 18px;
-  }
-}
-
-@keyframes sampi-panel-wave {
-  0%,
-  100% {
-    background-position: 0% 50%, 100% 50%;
-    transform: translate3d(-3%, 0, 0) rotate(-2deg);
-  }
-  50% {
-    background-position: 100% 50%, 0% 50%;
-    transform: translate3d(3%, -2%, 0) rotate(2deg);
-  }
-}
-
-@keyframes sampi-border-wave {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 200% 50%;
-  }
-}
-
-@keyframes sampi-wave-glow {
-  0%,
-  100% {
-    transform: translate3d(-1.2%, var(--sampi-wave-y, 18px), 0) scale(var(--sampi-wave-scale, 0.9));
-  }
-  50% {
-    transform: translate3d(1.2%, calc(var(--sampi-wave-y, 18px) - 7px), 0)
-      scale(var(--sampi-wave-scale-crest, 0.96));
-  }
-}
-
-@keyframes sampi-sheen-wave {
-  0% {
-    transform: translateX(-145%);
-  }
-  48%,
-  100% {
-    transform: translateX(145%);
-  }
-}
-
-@keyframes lor-glow-wave {
-  0%,
-  100% {
-    transform: translate3d(-5%, 10%, 0) rotate(-2deg) scale(0.94, 0.9);
-    opacity: 0.52;
-  }
-  45% {
-    transform: translate3d(6%, -4%, 0) rotate(3deg) scale(1.08, 1);
-    opacity: 0.72;
-  }
-  72% {
-    transform: translate3d(2%, 5%, 0) rotate(-1deg) scale(1, 0.96);
-    opacity: 0.62;
-  }
-}
-
-@keyframes sampi-texture-wave {
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.42;
-  }
-}
-
-@keyframes card-appear {
-  from {
-    opacity: 0;
-    transform: translateY(7px) scale(0.994);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 
@@ -2246,140 +1908,6 @@ html.theme-dark .lor-select-shell::before {
 @keyframes spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse-glow {
-  0%,
-  100% {
-    opacity: 0.48;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.72;
-    transform: scale(1.035);
-  }
-}
-
-@keyframes ios-card-arrive {
-  from {
-    opacity: 0;
-    transform: translateY(18px) scale(0.965) rotateX(4deg);
-  }
-  64% {
-    opacity: 1;
-    transform: translateY(-2px) scale(1.006) rotateX(0deg);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1) rotateX(0deg);
-  }
-}
-
-@keyframes ios-choice-confirm {
-  0% {
-    transform: translateY(-2px) scale(1);
-  }
-  34% {
-    transform: translateY(-8px) scale(1.025);
-  }
-  68% {
-    transform: translateY(-4px) scale(1.012);
-  }
-  100% {
-    transform: translateY(-5px) scale(1.016);
-  }
-}
-
-@keyframes ios-doctor-confirm {
-  0% {
-    transform: translateY(-2px) scale(1);
-  }
-  36% {
-    transform: translateY(-7px) scale(1.024);
-  }
-  74% {
-    transform: translateY(-3px) scale(1.01);
-  }
-  100% {
-    transform: translateY(-4px) scale(1.014);
-  }
-}
-
-@keyframes ios-selection-glow {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-  45% {
-    opacity: 0.82;
-    transform: scale(1.07);
-  }
-}
-
-@keyframes ios-stage-rise {
-  from {
-    opacity: 0;
-    transform: translateY(24px) scale(0.965);
-    filter: blur(10px);
-  }
-  58% {
-    opacity: 1;
-    transform: translateY(-4px) scale(1.006);
-    filter: blur(1px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-}
-
-@keyframes ios-list-pop {
-  from {
-    opacity: 0;
-    transform: translateY(18px) scale(0.955);
-  }
-  70% {
-    opacity: 1;
-    transform: translateY(-3px) scale(1.006);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes ios-soft-sheen {
-  0%,
-  58% {
-    transform: translateX(-145%);
-  }
-  82%,
-  100% {
-    transform: translateX(145%);
-  }
-}
-
-@keyframes ios-progress-fill {
-  from {
-    opacity: 0.25;
-    transform: scaleX(0.4);
-  }
-  to {
-    opacity: 1;
-    transform: scaleX(1);
-  }
-}
-
-@keyframes ios-avatar-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.045);
   }
 }
 
@@ -2711,16 +2239,6 @@ html.theme-dark .hover\:bg-slate-50\/85:hover {
   background-color: #16243a !important;
 }
 
-html.theme-dark .sampi-login-shell {
-  background-size: 150% 150%, 54px 54px, 54px 54px;
-  animation: sampi-surface-wave 14s var(--sampi-wave-ease) infinite;
-}
-
-html.theme-dark .lor-select-shell {
-  background-size: 150% 150%, 140% 140%, auto;
-  animation: sampi-surface-wave 14s var(--sampi-wave-ease) infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .route-enter,
   .route-enter > div > *,
@@ -2768,58 +2286,6 @@ html.theme-dark .lor-select-shell {
   .route-enter > div > * {
     opacity: 1 !important;
     transform: none !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-shell {
-    animation: sampi-shell-wave 24s var(--sampi-wave-ease) infinite !important;
-  }
-
-  .sampi-login-shell,
-  .lor-select-shell {
-    animation: sampi-surface-wave 22s var(--sampi-wave-ease) infinite !important;
-  }
-
-  .lor-select-shell::before {
-    animation: sampi-panel-wave 18s var(--sampi-wave-ease) infinite !important;
-  }
-
-  .sampi-shell-texture {
-    animation: shell-texture-drift 24s linear infinite, sampi-texture-wave 18s var(--sampi-wave-ease) infinite !important;
-  }
-
-  .card::before,
-  .lor-select-card::before {
-    animation: sampi-border-wave 11s linear infinite !important;
-  }
-
-  .card:not(.sampi-lor-search-card):not(.sampi-lor-table-card)::after,
-  .sampi-navbar-user::after,
-  .sampi-sidebar-toggle::after,
-  .sampi-theme-toggle::after,
-  .sampi-dropdown::after,
-  .sampi-sidebar-link::before,
-  .sampi-lor-search-card::after,
-  .sampi-lor-table-card::after,
-  .lor-select-section::after,
-  .sampi-lor-context-card::after,
-  .sampi-lor-step-pill::after,
-  .lor-choice-card::after,
-  .lor-doctor-card::after,
-  .sampi-btn::before {
-    animation: sampi-wave-glow 18s var(--sampi-wave-ease) infinite !important;
-  }
-
-  .sampi-btn::after,
-  .lor-select-card::after,
-  .sampi-lor-status::after {
-    animation: sampi-sheen-wave 9s var(--sampi-wave-ease) infinite !important;
-  }
-
-  .lor-select-glow,
-  .lor-select-shell-switching .lor-select-glow {
-    animation: lor-glow-wave 12s var(--sampi-wave-ease) infinite !important;
   }
 
   .sampi-btn-spinner,

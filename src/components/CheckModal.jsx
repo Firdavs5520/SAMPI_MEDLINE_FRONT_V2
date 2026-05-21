@@ -51,14 +51,12 @@ const buildPrintHtml = (check) => {
     <meta charset="UTF-8" />
     <title>Chek</title>
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap");
-
       @page { size: 58mm auto; margin: 0; }
       html, body {
         margin: 0;
         padding: 0;
         width: 58mm;
-        font-family: "Golos Text", sans-serif;
+        font-family: Arial, sans-serif;
         font-size: 13px;
         color: #000;
         background: #fff;
@@ -132,7 +130,7 @@ const buildPrintHtml = (check) => {
         border: 1px solid #111;
         background: #fff;
         padding: 6px 8px;
-        font-family: "Golos Text", sans-serif;
+        font-family: Arial, sans-serif;
         font-size: 12px;
         cursor: pointer;
       }
