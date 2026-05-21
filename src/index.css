@@ -2760,8 +2760,7 @@ html.theme-dark .lor-select-shell {
   .sampi-alert,
   .sampi-modal-overlay,
   .sampi-modal-panel,
-  .sampi-busy-panel,
-  .sampi-spin-dot {
+  .sampi-busy-panel {
     animation: none !important;
     transition: none !important;
   }
@@ -2821,6 +2820,11 @@ html.theme-dark .lor-select-shell {
   .lor-select-glow,
   .lor-select-shell-switching .lor-select-glow {
     animation: lor-glow-wave 12s var(--sampi-wave-ease) infinite !important;
+  }
+
+  .sampi-btn-spinner,
+  .sampi-spin-dot {
+    animation: spin 900ms linear infinite !important;
   }
 }
 
