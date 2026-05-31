@@ -6,6 +6,7 @@ import { roleHomePath } from "../utils/constants.js";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Alert from "../components/Alert.jsx";
+import heroImage from "../assets/hero.png";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ function LoginPage() {
     <div className="sampi-login-shell route-enter flex min-h-screen items-center justify-center p-3 sm:p-6">
       <div className="sampi-login-card grid w-full max-w-5xl overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-2xl shadow-cyan-950/10 backdrop-blur lg:grid-cols-[1.05fr_0.95fr]">
         <section className="sampi-login-visual hidden min-h-[36rem] flex-col justify-center p-8 lg:flex">
-          <div>
+          <div className="sampi-login-copy">
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/70 bg-white/75 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-cyan-800 shadow-sm">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
               sampi-medline.vercel.app
@@ -52,6 +53,11 @@ function LoginPage() {
             <p className="mt-3 max-w-sm text-sm font-medium leading-6 text-slate-600">
               Klinikadagi ish oqimi uchun yagona boshqaruv paneli.
             </p>
+          </div>
+
+          <div className="sampi-login-art" aria-hidden="true">
+            <div className="sampi-login-art-frame" />
+            <img src={heroImage} alt="" className="sampi-login-art-image" />
           </div>
         </section>
 
