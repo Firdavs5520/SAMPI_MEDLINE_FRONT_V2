@@ -487,6 +487,317 @@ html.theme-dark .to-orange-50 {
   --tw-gradient-to: #161421 var(--tw-gradient-to-position);
 }
 
+.manager-dashboard {
+  --manager-cyan: #0e7490;
+  --manager-orange: #f97316;
+  --manager-green: #10b981;
+}
+
+.manager-hero {
+  isolation: isolate;
+  background:
+    linear-gradient(135deg, rgba(236, 254, 255, 0.92), rgba(255, 255, 255, 0.96) 48%, rgba(255, 247, 237, 0.86)),
+    linear-gradient(90deg, rgba(14, 116, 144, 0.06) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(249, 115, 22, 0.05) 1px, transparent 1px);
+  background-size: auto, 2.35rem 2.35rem, 2.35rem 2.35rem;
+}
+
+.manager-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0.22rem;
+  background: linear-gradient(90deg, #0e7490, #14b8a6, #f97316);
+  z-index: 1;
+}
+
+.manager-hero::after {
+  content: "";
+  position: absolute;
+  right: -7rem;
+  bottom: -3rem;
+  z-index: 0;
+  width: 18rem;
+  height: 8rem;
+  background: linear-gradient(110deg, rgba(14, 116, 144, 0.12), rgba(249, 115, 22, 0.1));
+  transform: rotate(-18deg);
+  pointer-events: none;
+}
+
+.manager-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.manager-hero-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.manager-kicker {
+  width: fit-content;
+  border: 1px solid rgba(14, 116, 144, 0.22);
+  border-radius: 999px;
+  background: rgba(236, 254, 255, 0.72);
+  padding: 0.34rem 0.72rem;
+  color: #0e7490;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.manager-hero-panel {
+  min-width: 0;
+  border: 1px solid rgba(14, 116, 144, 0.18);
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 250, 252, 0.72)),
+    linear-gradient(135deg, rgba(14, 116, 144, 0.08), rgba(249, 115, 22, 0.06));
+  padding: 1rem;
+  box-shadow: 0 18px 38px -32px rgba(14, 116, 144, 0.68);
+}
+
+.manager-hero-chip,
+.manager-monitor-chip {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.42rem 0.62rem;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.manager-hero-chip-good {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(220, 252, 231, 0.72);
+  color: #047857;
+}
+
+.manager-hero-chip-bad {
+  border-color: rgba(244, 63, 94, 0.28);
+  background: rgba(255, 228, 230, 0.76);
+  color: #be123c;
+}
+
+.manager-period-tabs {
+  scrollbar-width: none;
+}
+
+.manager-period-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.manager-period-tab {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.manager-stat-card,
+.manager-role-card,
+.manager-lor-mini,
+.manager-list-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.manager-stat-card {
+  min-height: 8rem;
+  box-shadow: 0 12px 26px -24px rgba(15, 23, 42, 0.52);
+}
+
+.manager-stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0.18rem;
+  background: currentColor;
+  opacity: 0.28;
+}
+
+.manager-stat-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.manager-stat-glow {
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: 0.72rem;
+  z-index: 0;
+  height: 0.24rem;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.12;
+}
+
+.manager-role-card {
+  box-shadow: 0 14px 30px -26px rgba(15, 23, 42, 0.58);
+}
+
+.manager-role-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.manager-role-card-accent {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 0;
+  width: 0.28rem;
+  background: linear-gradient(180deg, rgba(14, 116, 144, 0.72), rgba(249, 115, 22, 0.58));
+}
+
+.manager-role-pulse {
+  height: 0.42rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.manager-role-pulse > span {
+  display: block;
+  width: 72%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0e7490, #14b8a6, #f97316);
+}
+
+.manager-role-card-lor .manager-role-pulse > span {
+  width: 58%;
+  background: linear-gradient(90deg, #f97316, #fbbf24);
+}
+
+.manager-role-card-total .manager-role-pulse > span {
+  width: 88%;
+  background: linear-gradient(90deg, #6366f1, #0e7490, #10b981);
+}
+
+.manager-lor-mini {
+  box-shadow: 0 12px 26px -24px rgba(15, 23, 42, 0.55);
+}
+
+.manager-list-panel {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
+}
+
+.manager-list-row {
+  min-height: 3rem;
+}
+
+.manager-list-row > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.manager-monitor-chip {
+  justify-content: flex-start;
+  gap: 0.45rem;
+  width: fit-content;
+}
+
+.manager-monitor-chip > span {
+  width: 0.55rem;
+  height: 0.55rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+}
+
+html.theme-dark .manager-hero {
+  background:
+    linear-gradient(135deg, rgba(8, 24, 39, 0.98), rgba(11, 21, 38, 0.95) 48%, rgba(18, 24, 38, 0.92)),
+    linear-gradient(90deg, rgba(34, 211, 238, 0.07) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(249, 115, 22, 0.05) 1px, transparent 1px);
+  background-size: auto, 2.35rem 2.35rem, 2.35rem 2.35rem;
+}
+
+html.theme-dark .manager-hero::after {
+  background: linear-gradient(110deg, rgba(34, 211, 238, 0.1), rgba(249, 115, 22, 0.08));
+}
+
+html.theme-dark .manager-kicker {
+  border-color: rgba(34, 211, 238, 0.28);
+  background: rgba(8, 47, 73, 0.62);
+  color: #a5f3fc;
+}
+
+html.theme-dark .manager-hero-panel,
+html.theme-dark .manager-list-panel {
+  border-color: #2f4056;
+  background:
+    linear-gradient(180deg, rgba(15, 26, 44, 0.92), rgba(11, 21, 38, 0.82)),
+    linear-gradient(135deg, rgba(34, 211, 238, 0.08), rgba(249, 115, 22, 0.05));
+  box-shadow: 0 18px 38px -32px rgba(2, 6, 23, 0.95);
+}
+
+html.theme-dark .manager-hero-chip,
+html.theme-dark .manager-monitor-chip {
+  border-color: #2f4056;
+  background: rgba(15, 26, 44, 0.72);
+  color: #b7c4d7;
+}
+
+html.theme-dark .manager-hero-chip-good {
+  border-color: rgba(52, 211, 153, 0.3);
+  background: rgba(5, 78, 59, 0.42);
+  color: #bbf7d0;
+}
+
+html.theme-dark .manager-hero-chip-bad {
+  border-color: rgba(251, 113, 133, 0.28);
+  background: rgba(76, 5, 25, 0.42);
+  color: #fda4af;
+}
+
+html.theme-dark .manager-stat-card,
+html.theme-dark .manager-role-card,
+html.theme-dark .manager-lor-mini {
+  box-shadow: 0 14px 30px -26px rgba(2, 6, 23, 0.95);
+}
+
+html.theme-dark .manager-role-pulse {
+  background: rgba(15, 26, 44, 0.82);
+}
+
+@media (min-width: 640px) {
+  .manager-hero-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 420px) {
+  .manager-dashboard {
+    margin-inline: -0.15rem;
+  }
+
+  .manager-hero,
+  .manager-dashboard .card {
+    border-radius: 1.1rem;
+  }
+
+  .manager-hero-panel {
+    padding: 0.9rem;
+  }
+
+  .manager-list-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .manager-list-row > span:last-child {
+    text-align: left;
+  }
+}
+
 .route-enter {
   --page-enter-x: 0px;
   --page-enter-y: 18px;

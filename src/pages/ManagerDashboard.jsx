@@ -102,15 +102,16 @@ const emptyMonitoring = () => ({
 
 function StatCard({ title, value, hint = "", tone = "default" }) {
   const tones = {
-    default: "border-slate-200 bg-white text-slate-800",
-    primary: "border-cyan-200 bg-cyan-50 text-cyan-800",
-    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    accent: "border-orange-200 bg-orange-50 text-orange-800",
-    danger: "border-rose-200 bg-rose-50 text-rose-700"
+    default: "manager-stat-default border-slate-200 bg-white text-slate-800",
+    primary: "manager-stat-primary border-cyan-200 bg-cyan-50 text-cyan-800",
+    success: "manager-stat-success border-emerald-200 bg-emerald-50 text-emerald-800",
+    accent: "manager-stat-accent border-orange-200 bg-orange-50 text-orange-800",
+    danger: "manager-stat-danger border-rose-200 bg-rose-50 text-rose-700"
   };
 
   return (
-    <div className={`rounded-2xl border p-4 ${tones[tone]}`}>
+    <div className={`manager-stat-card rounded-2xl border p-4 ${tones[tone]}`}>
+      <span className="manager-stat-glow" aria-hidden="true" />
       <p className="text-xs font-semibold uppercase tracking-wide opacity-80">{title}</p>
       <p className="mt-2 break-words text-xl font-bold sm:text-2xl">{value}</p>
       <p className="mt-1 min-h-5 break-words text-xs opacity-80">{hint}</p>
@@ -138,7 +139,8 @@ function RoleSummaryCard({ title, roleKey, stats = emptyRoleStats() }) {
   const topItem = formatTopItem(stats.topItem);
 
   return (
-    <div className={`rounded-2xl border p-4 ${tone}`}>
+    <div className={`manager-role-card manager-role-card-${roleKey} rounded-2xl border p-4 ${tone}`}>
+      <span className="manager-role-card-accent" aria-hidden="true" />
       <p className="text-sm font-bold text-slate-800">{title}</p>
 
       <div className="mt-3 grid grid-cols-2 gap-3">
@@ -155,6 +157,10 @@ function RoleSummaryCard({ title, roleKey, stats = emptyRoleStats() }) {
       <div className="mt-3">
         <p className="text-xs text-slate-500">Ishlatilgan dori turlari</p>
         <p className="text-sm font-semibold text-slate-900">{stats.medicineTypesCount}</p>
+      </div>
+
+      <div className="manager-role-pulse mt-3" aria-hidden="true">
+        <span />
       </div>
 
       <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-white/80 p-3">
@@ -271,50 +277,72 @@ function ManagerDashboard() {
   const safePeriod = overview.period || period;
   const periodHint = PERIOD_LABELS[safePeriod] || PERIOD_LABELS[period];
   const dbConnected = String(monitoring?.health?.dbState || "").toLowerCase() === "connected";
+  const primaryTopItem = formatTopItem(overview.total.topItem);
 
   if (loading) {
     return <Spinner text="Menejer statistikasi yuklanmoqda..." />;
   }
 
   return (
-    <div className="space-y-6 overflow-x-hidden">
-      <div className="card p-4 sm:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="manager-dashboard space-y-6 overflow-x-hidden">
+      <div className="card manager-hero p-4 sm:p-5">
+        <div className="manager-hero-grid">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-slate-800">Umumiy statistika</h1>
-            <p className="break-words text-sm text-slate-500">
-              Nurse, LOR va jami bo'yicha alohida statistika ko'rinadi.
+            <p className="manager-kicker">Manager nazorati</p>
+            <h1 className="mt-2 text-2xl font-black leading-tight text-slate-900 sm:text-3xl">
+              Umumiy statistika
+            </h1>
+            <p className="mt-2 max-w-xl break-words text-sm font-medium leading-6 text-slate-600">
+              Nurse, LOR, smena va texnik holat bir joyda. Mobile’da asosiy raqamlar tepada turadi.
             </p>
+          </div>
+
+          <div className="manager-hero-panel">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Jami daromad</p>
+            <p className="mt-2 break-words text-2xl font-black text-slate-900">
+              {formatCurrency(overview.total.totalRevenue)}
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <span className="manager-hero-chip">{overview.total.checksCount} chek</span>
+              <span className={`manager-hero-chip ${dbConnected ? "manager-hero-chip-good" : "manager-hero-chip-bad"}`}>
+                DB {dbConnected ? "online" : "offline"}
+              </span>
+            </div>
+            <p className="mt-3 line-clamp-2 text-xs font-semibold text-slate-500">
+              Top: {primaryTopItem.title}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="manager-period-tabs flex gap-2 overflow-x-auto pb-1">
+            {PERIOD_OPTIONS.map((option) => {
+              const isActive = period === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handlePeriodChange(option.value)}
+                  className={`manager-period-tab rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    isActive
+                      ? "border-primary bg-primary text-white"
+                      : "border-slate-300 bg-white text-slate-700 hover:border-primary hover:text-primary"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
           </div>
 
           <Button
             variant="secondary"
             onClick={() => loadDashboard({ nextPeriod: period, nextShiftDate: shiftDate })}
             loading={refreshing}
-            className="self-start sm:self-auto"
+            className="w-full sm:w-auto"
           >
             Yangilash
           </Button>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          {PERIOD_OPTIONS.map((option) => {
-            const isActive = period === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => handlePeriodChange(option.value)}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                  isActive
-                    ? "border-primary bg-primary text-white"
-                    : "border-slate-300 bg-white text-slate-700 hover:border-primary hover:text-primary"
-                }`}
-              >
-                {option.label}
-              </button>
-            );
-          })}
         </div>
       </div>
 
@@ -361,7 +389,7 @@ function ManagerDashboard() {
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
+          <div className="manager-lor-mini rounded-2xl border border-sky-200 bg-sky-50 p-4">
             <p className="text-sm font-bold text-slate-800">LOR-1</p>
             <p className="mt-2 text-2xl font-bold text-slate-900">
               {formatCurrency(overview.lorIdentities?.lor1?.totalRevenue || 0)}
@@ -371,7 +399,7 @@ function ManagerDashboard() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
+          <div className="manager-lor-mini rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
             <p className="text-sm font-bold text-slate-800">LOR-2</p>
             <p className="mt-2 text-2xl font-bold text-slate-900">
               {formatCurrency(overview.lorIdentities?.lor2?.totalRevenue || 0)}
@@ -428,7 +456,7 @@ function ManagerDashboard() {
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="manager-list-panel rounded-xl border border-slate-200 bg-slate-50 p-3">
             <p className="text-sm font-semibold text-slate-800">To'lov usuli bo'yicha</p>
             <div className="mt-2 space-y-2">
               {(shiftReport?.byPaymentMethod || []).length === 0 ? (
@@ -437,12 +465,12 @@ function ManagerDashboard() {
                 shiftReport.byPaymentMethod.map((item) => (
                   <div
                     key={item.paymentMethod}
-                    className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    className="manager-list-row flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
                   >
                     <span className="font-medium text-slate-700">
                       {paymentMethodLabels[item.paymentMethod] || item.paymentMethod}
                     </span>
-                    <span className="font-semibold text-slate-900">
+                    <span className="text-right font-semibold text-slate-900">
                       {formatCurrency(item.totalPaidAmount)} so'm
                     </span>
                   </div>
@@ -451,7 +479,7 @@ function ManagerDashboard() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="manager-list-panel rounded-xl border border-slate-200 bg-slate-50 p-3">
             <p className="text-sm font-semibold text-slate-800">Bo'lim bo'yicha</p>
             <div className="mt-2 space-y-2">
               {(shiftReport?.byDepartment || []).length === 0 ? (
@@ -460,12 +488,12 @@ function ManagerDashboard() {
                 shiftReport.byDepartment.map((item) => (
                   <div
                     key={item.department}
-                    className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    className="manager-list-row flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
                   >
                     <span className="font-medium text-slate-700">
                       {departmentLabels[item.department] || item.department}
                     </span>
-                    <span className="font-semibold text-slate-900">
+                    <span className="text-right font-semibold text-slate-900">
                       {formatCurrency(item.totalAmount)} so'm
                     </span>
                   </div>
@@ -477,10 +505,18 @@ function ManagerDashboard() {
       </section>
 
       <section className="card p-4 sm:p-5">
-        <h2 className="text-lg font-bold text-slate-800">Texnik monitoring</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          5xx xatolar va servis restart holati manager uchun ko'rinadi.
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">Texnik monitoring</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              5xx xatolar va servis restart holati manager uchun ko'rinadi.
+            </p>
+          </div>
+          <div className="manager-monitor-chip">
+            <span className={dbConnected ? "bg-emerald-500" : "bg-rose-500"} />
+            {dbConnected ? "Tizim barqaror" : "Tekshirish kerak"}
+          </div>
+        </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
@@ -509,7 +545,7 @@ function ManagerDashboard() {
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="manager-list-panel rounded-xl border border-slate-200 bg-slate-50 p-3">
             <p className="text-sm font-semibold text-slate-800">Oxirgi xatolar</p>
             <div className="mt-2 space-y-2">
               {(monitoring?.recentErrors || []).length === 0 ? (
@@ -531,7 +567,7 @@ function ManagerDashboard() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="manager-list-panel rounded-xl border border-slate-200 bg-slate-50 p-3">
             <p className="text-sm font-semibold text-slate-800">Oxirgi restartlar</p>
             <div className="mt-2 space-y-2">
               {(monitoring?.recentStartups || []).length === 0 ? (
