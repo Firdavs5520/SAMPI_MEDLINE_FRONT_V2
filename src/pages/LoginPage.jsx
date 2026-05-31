@@ -7,12 +7,6 @@ import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Alert from "../components/Alert.jsx";
 
-const loginStats = [
-  { label: "Qabul", value: "Nurse" },
-  { label: "Chek", value: "Kassa" },
-  { label: "Nazorat", value: "Manager" }
-];
-
 function LoginPage() {
   const navigate = useNavigate();
   const { login, token, role, lorIdentity, loading } = useAuth();
@@ -46,7 +40,7 @@ function LoginPage() {
   return (
     <div className="sampi-login-shell route-enter flex min-h-screen items-center justify-center p-3 sm:p-6">
       <div className="sampi-login-card grid w-full max-w-5xl overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-2xl shadow-cyan-950/10 backdrop-blur lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="sampi-login-visual hidden min-h-[36rem] flex-col justify-between p-8 lg:flex">
+        <section className="sampi-login-visual hidden min-h-[36rem] flex-col justify-center p-8 lg:flex">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/70 bg-white/75 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-cyan-800 shadow-sm">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -58,36 +52,6 @@ function LoginPage() {
             <p className="mt-3 max-w-sm text-sm font-medium leading-6 text-slate-600">
               Klinikadagi ish oqimi uchun yagona boshqaruv paneli.
             </p>
-          </div>
-
-          <div className="sampi-login-preview">
-            <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 p-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Bugungi holat</p>
-                <p className="mt-1 text-lg font-black text-slate-900">Operatsion panel</p>
-              </div>
-              <div className="rounded-lg bg-emerald-500 px-2.5 py-1 text-xs font-black text-white">
-                Live
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3 p-4">
-              {loginStats.map((item) => (
-                <div key={item.label} className="sampi-login-metric">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{item.label}</p>
-                  <p className="mt-2 truncate text-sm font-black text-slate-900">{item.value}</p>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-2 px-4 pb-4">
-              {["Bemor qabul qilindi", "Chek kassaga yuborildi", "Hisobot yangilandi"].map(
-                (item, index) => (
-                  <div key={item} className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white/80 px-3 py-2.5">
-                    <span className={`h-2.5 w-2.5 rounded-full ${index === 0 ? "bg-cyan-500" : index === 1 ? "bg-orange-500" : "bg-emerald-500"}`} />
-                    <span className="truncate text-sm font-semibold text-slate-700">{item}</span>
-                  </div>
-                )
-              )}
-            </div>
           </div>
         </section>
 

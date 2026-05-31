@@ -243,26 +243,6 @@ html.theme-dark .sampi-shell-texture {
   border-right: 1px solid rgba(203, 213, 225, 0.76);
 }
 
-.sampi-login-preview {
-  overflow: hidden;
-  border: 1px solid rgba(203, 213, 225, 0.82);
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.74);
-  box-shadow:
-    0 26px 54px -36px rgba(14, 116, 144, 0.48),
-    inset 0 1px 0 rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(18px);
-}
-
-.sampi-login-metric {
-  min-width: 0;
-  border: 1px solid rgba(203, 213, 225, 0.78);
-  border-radius: 0.85rem;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.92), rgba(255, 255, 255, 0.84));
-  padding: 0.8rem;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
-}
-
 .sampi-login-form-card {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96)),
@@ -301,24 +281,8 @@ html.theme-dark .sampi-login-visual {
     linear-gradient(90deg, rgba(34, 211, 238, 0.08), transparent);
 }
 
-html.theme-dark .sampi-login-preview,
-html.theme-dark .sampi-login-metric {
-  border-color: #2f4056;
-  background: rgba(15, 26, 44, 0.78);
-}
-
 html.theme-dark .sampi-login-card {
   box-shadow: 0 28px 70px -42px rgba(2, 6, 23, 0.96);
-}
-
-html.theme-dark .sampi-login-preview {
-  box-shadow:
-    0 26px 54px -36px rgba(2, 6, 23, 0.86),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-html.theme-dark .sampi-login-metric {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 html.theme-dark .sampi-login-form-card {
