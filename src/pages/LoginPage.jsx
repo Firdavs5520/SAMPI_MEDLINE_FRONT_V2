@@ -6,7 +6,6 @@ import { roleHomePath } from "../utils/constants.js";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Alert from "../components/Alert.jsx";
-import heroImage from "../assets/hero.png";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -56,8 +55,14 @@ function LoginPage() {
           </div>
 
           <div className="sampi-login-art" aria-hidden="true">
-            <div className="sampi-login-art-frame" />
-            <img src={heroImage} alt="" className="sampi-login-art-image" />
+            <span className="sampi-login-orbit sampi-login-orbit-one" />
+            <span className="sampi-login-orbit sampi-login-orbit-two" />
+            <div className="sampi-login-symbol">
+              <span className="sampi-login-symbol-cross" />
+              <span className="sampi-login-symbol-line" />
+            </div>
+            <span className="sampi-login-art-dot sampi-login-art-dot-one" />
+            <span className="sampi-login-art-dot sampi-login-art-dot-two" />
           </div>
         </section>
 
