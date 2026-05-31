@@ -74,7 +74,7 @@ function LoginPage() {
               <Input
                 label="Email"
                 type="email"
-                placeholder="nurse@mail.com"
+                placeholder="email@example.com"
                 value={form.email}
                 autoComplete="email"
                 onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
