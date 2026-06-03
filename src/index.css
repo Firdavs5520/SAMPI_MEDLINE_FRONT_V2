@@ -1452,6 +1452,481 @@ html.theme-dark .sampi-cashier-popover {
   color: #fee2e2 !important;
 }
 
+.nurse-dashboard {
+  --nurse-primary: #0e7490;
+  --nurse-accent: #f97316;
+  --nurse-green: #10b981;
+  --nurse-border: #d7e5ee;
+}
+
+.nurse-hero,
+.nurse-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--nurse-border);
+  border-radius: 1rem;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.92)),
+    linear-gradient(90deg, rgba(14, 116, 144, 0.06) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(249, 115, 22, 0.045) 1px, transparent 1px);
+  background-size: auto, 2.2rem 2.2rem, 2.2rem 2.2rem;
+  box-shadow: 0 18px 38px -30px rgba(15, 23, 42, 0.46);
+}
+
+.nurse-hero {
+  padding: clamp(1rem, 2.2vw, 1.5rem);
+}
+
+.nurse-panel {
+  padding: clamp(1rem, 2vw, 1.35rem);
+}
+
+.nurse-hero::before,
+.nurse-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0.2rem;
+  background: linear-gradient(90deg, var(--nurse-primary), #14b8a6, var(--nurse-accent));
+}
+
+.nurse-kicker,
+.nurse-eyebrow {
+  width: fit-content;
+  border: 1px solid rgba(14, 116, 144, 0.22);
+  border-radius: 999px;
+  background: rgba(236, 254, 255, 0.78);
+  color: var(--nurse-primary);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  padding: 0.34rem 0.68rem;
+  text-transform: uppercase;
+}
+
+.nurse-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  min-width: min(100%, 34rem);
+}
+
+.nurse-hero-stat {
+  min-width: 0;
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.76);
+  padding: 0.8rem;
+}
+
+.nurse-hero-stat span {
+  display: block;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.nurse-hero-stat strong {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  margin-top: 0.35rem;
+  color: #0f172a;
+  font-size: 0.98rem;
+  font-weight: 900;
+}
+
+.nurse-hero-stat-total {
+  border-color: rgba(249, 115, 22, 0.28);
+  background: rgba(255, 247, 237, 0.8);
+}
+
+.nurse-progress-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.nurse-step-card {
+  display: flex;
+  min-width: 0;
+  min-height: 2.65rem;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid rgba(203, 213, 225, 0.88);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.74);
+  color: #64748b;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.nurse-step-number {
+  display: inline-flex;
+  width: 1.55rem;
+  height: 1.55rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.72rem;
+}
+
+.nurse-step-active {
+  border-color: rgba(14, 116, 144, 0.42);
+  background: rgba(236, 254, 255, 0.82);
+  color: #0e7490;
+  box-shadow: inset 0 0 0 1px rgba(14, 116, 144, 0.08);
+}
+
+.nurse-step-active .nurse-step-number {
+  background: var(--nurse-primary);
+  color: #ecfeff;
+}
+
+.nurse-step-done {
+  border-color: rgba(16, 185, 129, 0.28);
+  background: rgba(220, 252, 231, 0.72);
+  color: #047857;
+}
+
+.nurse-step-done .nurse-step-number {
+  background: var(--nurse-green);
+  color: #ecfdf5;
+}
+
+.nurse-panel-header {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.nurse-panel-meta {
+  flex: 0 0 auto;
+  max-width: 12rem;
+  border: 1px solid rgba(14, 116, 144, 0.2);
+  border-radius: 999px;
+  background: rgba(236, 254, 255, 0.72);
+  color: #0e7490;
+  padding: 0.42rem 0.72rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.nurse-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15.5rem), 1fr));
+  gap: 0.75rem;
+}
+
+.nurse-choice-card,
+.nurse-product-card {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid #dbe5ee;
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.86);
+  padding: 0.85rem;
+  text-align: left;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.nurse-choice-card:hover,
+.nurse-product-card:hover {
+  border-color: rgba(14, 116, 144, 0.38);
+  box-shadow: 0 14px 28px -24px rgba(14, 116, 144, 0.55);
+  transform: translateY(-1px);
+}
+
+.nurse-choice-card-selected,
+.nurse-product-selected {
+  border-color: rgba(14, 116, 144, 0.58);
+  background:
+    linear-gradient(180deg, rgba(236, 254, 255, 0.92), rgba(240, 253, 250, 0.84)),
+    rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 0 0 1px rgba(14, 116, 144, 0.12);
+}
+
+.nurse-product-blocked {
+  cursor: not-allowed;
+  border-color: rgba(244, 63, 94, 0.26);
+  background: rgba(255, 241, 242, 0.82);
+  opacity: 0.74;
+}
+
+.nurse-avatar {
+  display: inline-flex;
+  width: 2.7rem;
+  height: 2.7rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.8rem;
+  background: linear-gradient(135deg, #0e7490, #14b8a6);
+  color: #ecfeff;
+  font-weight: 900;
+}
+
+.nurse-select-dot {
+  display: inline-flex;
+  width: 1.7rem;
+  height: 1.7rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(14, 116, 144, 0.22);
+  border-radius: 999px;
+  color: #0e7490;
+}
+
+.nurse-mini-metric {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  border: 1px solid rgba(203, 213, 225, 0.72);
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.84);
+  color: #475569;
+  padding: 0.26rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.nurse-selection-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.nurse-selection-row {
+  display: grid;
+  min-width: 0;
+  align-items: end;
+  gap: 0.8rem;
+  border: 1px solid #dbe5ee;
+  border-radius: 0.9rem;
+  background:
+    linear-gradient(90deg, rgba(14, 116, 144, 0.07), transparent 34%),
+    rgba(255, 255, 255, 0.82);
+  padding: 0.85rem;
+}
+
+.nurse-receipt {
+  border: 1px solid #d8e4ee;
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.92)),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+  background-size: auto, 1.8rem 1.8rem;
+  padding: clamp(0.9rem, 2vw, 1.15rem);
+}
+
+.nurse-receipt-head {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.nurse-receipt-head > div {
+  min-width: 0;
+  border: 1px solid rgba(203, 213, 225, 0.76);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.75rem;
+}
+
+.nurse-receipt-section {
+  margin-top: 0.9rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.64);
+  padding-top: 0.75rem;
+}
+
+.nurse-receipt-title,
+.nurse-receipt-line,
+.nurse-receipt-total {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.nurse-receipt-title {
+  margin-bottom: 0.5rem;
+  color: #0f172a;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.nurse-receipt-title strong {
+  display: inline-flex;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.76rem;
+}
+
+.nurse-receipt-line {
+  padding: 0.42rem 0;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.nurse-receipt-line + .nurse-receipt-line {
+  border-top: 1px solid rgba(226, 232, 240, 0.88);
+}
+
+.nurse-receipt-total {
+  margin-top: 0.9rem;
+  border-radius: 0.85rem;
+  background: linear-gradient(135deg, #0e7490, #0f766e);
+  color: #ecfeff;
+  padding: 0.9rem;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.nurse-receipt-total strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+  font-size: 1.12rem;
+}
+
+html.theme-dark .nurse-hero,
+html.theme-dark .nurse-panel {
+  border-color: #2f4056;
+  background:
+    linear-gradient(135deg, rgba(15, 26, 44, 0.96), rgba(11, 21, 38, 0.9)),
+    linear-gradient(90deg, rgba(34, 211, 238, 0.055) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(249, 115, 22, 0.04) 1px, transparent 1px);
+  background-size: auto, 2.2rem 2.2rem, 2.2rem 2.2rem;
+  box-shadow: 0 20px 40px -30px rgba(2, 6, 23, 0.9);
+}
+
+html.theme-dark .nurse-kicker,
+html.theme-dark .nurse-eyebrow,
+html.theme-dark .nurse-panel-meta {
+  border-color: rgba(34, 211, 238, 0.28);
+  background: rgba(8, 47, 73, 0.66);
+  color: #a5f3fc;
+}
+
+html.theme-dark .nurse-hero-stat,
+html.theme-dark .nurse-choice-card,
+html.theme-dark .nurse-product-card,
+html.theme-dark .nurse-selection-row,
+html.theme-dark .nurse-receipt,
+html.theme-dark .nurse-receipt-head > div {
+  border-color: #2f4056;
+  background: rgba(15, 26, 44, 0.78);
+}
+
+html.theme-dark .nurse-hero-stat span,
+html.theme-dark .nurse-mini-metric {
+  color: #93a7c0;
+}
+
+html.theme-dark .nurse-hero-stat strong,
+html.theme-dark .nurse-receipt-title {
+  color: #f8fafc;
+}
+
+html.theme-dark .nurse-hero-stat-total {
+  background: rgba(56, 40, 15, 0.62);
+}
+
+html.theme-dark .nurse-step-card {
+  border-color: #2f4056;
+  background: rgba(15, 26, 44, 0.72);
+  color: #93a7c0;
+}
+
+html.theme-dark .nurse-step-number {
+  background: #1b2d48;
+  color: #b7c4d7;
+}
+
+html.theme-dark .nurse-step-active {
+  border-color: rgba(34, 211, 238, 0.42);
+  background: rgba(8, 47, 73, 0.64);
+  color: #a5f3fc;
+}
+
+html.theme-dark .nurse-step-done {
+  border-color: rgba(52, 211, 153, 0.3);
+  background: rgba(6, 78, 59, 0.5);
+  color: #bbf7d0;
+}
+
+html.theme-dark .nurse-product-selected,
+html.theme-dark .nurse-choice-card-selected {
+  border-color: rgba(34, 211, 238, 0.52);
+  background: rgba(8, 47, 73, 0.66);
+}
+
+html.theme-dark .nurse-product-blocked {
+  border-color: rgba(248, 113, 113, 0.34);
+  background: rgba(69, 10, 10, 0.58);
+}
+
+html.theme-dark .nurse-mini-metric {
+  border-color: #2f4056;
+  background: rgba(11, 21, 38, 0.76);
+}
+
+html.theme-dark .nurse-receipt-line {
+  color: #cbd5e1;
+}
+
+html.theme-dark .nurse-receipt-line + .nurse-receipt-line,
+html.theme-dark .nurse-receipt-section {
+  border-color: #2f4056;
+}
+
+@media (max-width: 760px) {
+  .nurse-hero-stats,
+  .nurse-progress-grid,
+  .nurse-receipt-head {
+    grid-template-columns: 1fr;
+  }
+
+  .nurse-step-card {
+    min-height: 2.45rem;
+  }
+
+  .nurse-panel-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .nurse-panel-meta {
+    max-width: 100%;
+  }
+}
+
 .route-enter .card:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 28px -18px rgba(2, 132, 199, 0.45);

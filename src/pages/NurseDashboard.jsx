@@ -69,6 +69,49 @@ const getServicePrice = (service, tier) => {
   return tiers[PRICE_TIER_ORDER.includes(tier) ? tier : "first"];
 };
 
+const getInitials = (name) => {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (!parts.length) return "H";
+  return parts.map((part) => part[0]?.toLocaleUpperCase("uz-UZ")).join("");
+};
+
+function CheckIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function NursePanelHeader({ eyebrow, title, children, meta }) {
+  return (
+    <div className="nurse-panel-header">
+      <div className="min-w-0">
+        <p className="nurse-eyebrow">{eyebrow}</p>
+        <h2 className="mt-1 break-words text-lg font-black text-slate-900 sm:text-xl">{title}</h2>
+        {children ? <p className="mt-1 max-w-2xl break-words text-sm font-medium text-slate-500">{children}</p> : null}
+      </div>
+      {meta ? <div className="nurse-panel-meta">{meta}</div> : null}
+    </div>
+  );
+}
+
+function NurseStepCard({ label, index, active, done }) {
+  return (
+    <div
+      className={`nurse-step-card ${active ? "nurse-step-active" : ""} ${done ? "nurse-step-done" : ""}`}
+    >
+      <span className="nurse-step-number">{index + 1}</span>
+      <span className="min-w-0 truncate">{label.replace(/^\d+\.\s*/, "")}</span>
+    </div>
+  );
+}
+
 function NurseDashboard() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -361,30 +404,54 @@ function NurseDashboard() {
   if (loading) return <Spinner text="Hamshira paneli yuklanmoqda..." />;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="card border-rose-200 bg-rose-50/70 p-4 sm:p-5">
-        <h1 className="text-xl font-bold text-slate-800">Hamshira paneli</h1>
-        <p className="mt-1 text-sm text-slate-600">Bosqichma-bosqich chek yaratish</p>
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+    <div className="nurse-dashboard space-y-4 sm:space-y-5">
+      <section className="nurse-hero">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div className="min-w-0">
+            <p className="nurse-kicker">Hamshira paneli</p>
+            <h1 className="mt-2 break-words text-2xl font-black text-slate-950 sm:text-3xl">
+              Chek yaratish
+            </h1>
+            <p className="mt-2 max-w-3xl break-words text-sm font-medium text-slate-600 sm:text-base">
+              Hamshira, bemor, dori va xizmatlar bitta tartibli flow ichida yig'iladi.
+            </p>
+          </div>
+
+          <div className="nurse-hero-stats">
+            <div className="nurse-hero-stat">
+              <span>Hamshira</span>
+              <strong>{selectedSpecialist?.name || "-"}</strong>
+            </div>
+            <div className="nurse-hero-stat">
+              <span>Tanlangan</span>
+              <strong>{selectedMedicineIds.length + selectedServiceIds.length}</strong>
+            </div>
+            <div className="nurse-hero-stat nurse-hero-stat-total">
+              <span>Jami</span>
+              <strong>{formatCurrency(previewTotal)}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="nurse-progress-grid">
           {STEP_LABELS.map((label, i) => {
             const n = i + 1;
-            const active = n === step;
-            const done = n < step;
             return (
-              <div
+              <NurseStepCard
                 key={label}
-                className={`rounded-xl border px-3 py-2 text-center text-xs font-semibold ${active ? "border-primary bg-cyan-50 text-primary" : done ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-white text-slate-500"}`}
-              >
-                {label}
-              </div>
+                label={label}
+                index={i}
+                active={n === step}
+                done={n < step}
+              />
             );
           })}
         </div>
-      </div>
+      </section>
 
       {step === 1 ? (
         <div
-          className="card border-rose-200 p-4 sm:p-5"
+          className="nurse-panel"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -392,11 +459,13 @@ function NurseDashboard() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">1-qadam: Hamshira tanlash</h2>
-          <p className="mb-4 text-sm text-slate-600">
-            Avval chekni kim yaratishini tanlang. Yangi hamshira qo'shish uchun chap menyudan
-            "Hamshiralarni boshqarish" ga o'ting.
-          </p>
+          <NursePanelHeader
+            eyebrow="1-qadam"
+            title="Hamshira tanlash"
+            meta={`${filteredSpecialists.length} ta natija`}
+          >
+            Chek kim nomidan yaratilishini belgilang.
+          </NursePanelHeader>
 
           <div className="mt-4">
             <QuickSearchInput
@@ -416,7 +485,7 @@ function NurseDashboard() {
           </div>
 
           {specialists.length ? (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="nurse-card-grid mt-4">
               {filteredSpecialists.map((item) => {
                 const selected = selectedSpecialistId === item._id;
                 return (
@@ -424,16 +493,19 @@ function NurseDashboard() {
                     key={item._id}
                     type="button"
                     onClick={() => setSelectedSpecialistId(item._id)}
-                    className={`rounded-xl border px-3 py-3 text-left transition ${
-                      selected
-                        ? "border-primary bg-cyan-50"
-                        : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-primary/50"
-                    }`}
+                    aria-pressed={selected}
+                    className={`nurse-choice-card ${selected ? "nurse-choice-card-selected" : ""}`}
                   >
-                    <p className="font-semibold text-slate-800">{item.name}</p>
-                    <p className="mt-1 text-xs font-medium text-slate-500">
-                      {selected ? "Tanlangan" : "Tanlash uchun bosing"}
-                    </p>
+                    <span className="nurse-avatar">{getInitials(item.name)}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block break-words text-sm font-black text-slate-900">
+                        {item.name}
+                      </span>
+                      <span className="mt-1 block text-xs font-semibold text-slate-500">
+                        {selected ? "Tanlangan" : "Hamshira"}
+                      </span>
+                    </span>
+                    <span className="nurse-select-dot">{selected ? <CheckIcon /> : null}</span>
                   </button>
                 );
               })}
@@ -449,7 +521,7 @@ function NurseDashboard() {
 
           <div className="mt-4 flex justify-end">
             <Button
-              className="w-full bg-rose-600 hover:bg-rose-700 focus:ring-rose-300 sm:w-auto"
+              className="w-full sm:w-auto"
               onClick={goNextFromSpecialist}
             >
               Keyingi: Bemor
@@ -460,7 +532,7 @@ function NurseDashboard() {
 
       {step === 2 ? (
         <div
-          className="card border-rose-200 p-4 sm:p-5"
+          className="nurse-panel"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -468,7 +540,10 @@ function NurseDashboard() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">2-qadam: Bemor F.I.O</h2>
+          <NursePanelHeader eyebrow="2-qadam" title="Bemor ma'lumoti">
+            Ism va familiyani bitta maydonda to'liq kiriting.
+          </NursePanelHeader>
+          <div className="mt-4 max-w-2xl">
           <Input
             label="Bemor F.I.O"
             value={patient.fullName}
@@ -476,12 +551,13 @@ function NurseDashboard() {
             inputRef={patientInputRef}
             onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
           />
+          </div>
           <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
             <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(1)}>
               Orqaga
             </Button>
             <Button
-              className="w-full bg-rose-600 hover:bg-rose-700 focus:ring-rose-300 sm:w-auto"
+              className="w-full sm:w-auto"
               onClick={goNextFromPatient}
             >
               Keyingi: Dorilar
@@ -492,7 +568,7 @@ function NurseDashboard() {
 
       {step === 3 ? (
         <div
-          className="card border-rose-200 p-4 sm:p-5"
+          className="nurse-panel"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -500,7 +576,14 @@ function NurseDashboard() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">3-qadam: Dorilar</h2>
+          <NursePanelHeader
+            eyebrow="3-qadam"
+            title="Dorilar"
+            meta={`${selectedMedicineIds.length} ta tanlandi`}
+          >
+            Omborda bor va narxi sozlangan dorilarni tanlang.
+          </NursePanelHeader>
+          <div className="mt-4">
           <QuickSearchInput
             label="Dori qidirish"
             placeholder="Masalan: Paracetamol"
@@ -512,7 +595,8 @@ function NurseDashboard() {
             onPick={(item) => setMedicineSearch(item?.name || "")}
             emptyText="Mos dori topilmadi"
           />
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          </div>
+          <div className="nurse-card-grid mt-4">
             {filteredMedicines.map((medicine) => {
               const selected = selectedMedicineIds.includes(medicine._id);
               const blocked = medicine.stock <= 0 || !isValidPrice(medicine.price);
@@ -522,30 +606,36 @@ function NurseDashboard() {
                   type="button"
                   disabled={blocked}
                   onClick={() => toggleMedicine(medicine._id, !blocked)}
-                  className={`rounded-xl border px-3 py-3 text-left ${selected ? "border-primary bg-cyan-50" : blocked ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-white"}`}
+                  aria-pressed={selected}
+                  className={`nurse-product-card ${selected ? "nurse-product-selected" : ""} ${blocked ? "nurse-product-blocked" : ""}`}
                 >
-                  <p className="font-semibold">{medicine.name}</p>
-                  <p className="text-xs text-slate-600">Qoldiq: {medicine.stock}</p>
-                  <p className="text-xs text-slate-500">
-                    Narx: {isValidPrice(medicine.price) ? formatCurrency(medicine.price) : "-"}
-                  </p>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="break-words text-sm font-black text-slate-900">{medicine.name}</span>
+                    <span className="mt-3 flex flex-wrap gap-2">
+                      <span className="nurse-mini-metric">Qoldiq: {medicine.stock}</span>
+                      <span className="nurse-mini-metric">
+                        {isValidPrice(medicine.price) ? formatCurrency(medicine.price) : "Narx yo'q"}
+                      </span>
+                    </span>
+                  </span>
+                  <span className="nurse-select-dot">{selected ? <CheckIcon /> : null}</span>
                 </button>
               );
             })}
           </div>
 
           {selectedMedicineIds.length > 0 ? (
-            <div className="mt-4 space-y-3">
+            <div className="nurse-selection-list mt-4">
               {selectedMedicineIds.map((id) => {
                 const medicine = medicines.find((m) => m._id === id);
                 return (
                   <div
                     key={id}
-                    className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_180px_auto]"
+                    className="nurse-selection-row md:grid-cols-[minmax(0,1fr)_180px_auto]"
                   >
-                    <div>
-                      <p className="font-medium">{medicine?.name}</p>
-                      <p className="text-xs text-slate-500">Qoldiq: {medicine?.stock}</p>
+                    <div className="min-w-0">
+                      <p className="break-words font-bold text-slate-900">{medicine?.name}</p>
+                      <p className="text-xs font-semibold text-slate-500">Qoldiq: {medicine?.stock}</p>
                     </div>
                     <Input
                       label="Miqdor"
@@ -583,10 +673,10 @@ function NurseDashboard() {
                   setStep(4);
                 }}
               >
-                Skip
+                O'tkazib yuborish
               </Button>
               <Button
-                className="w-full bg-rose-600 hover:bg-rose-700 focus:ring-rose-300 sm:w-auto"
+                className="w-full sm:w-auto"
                 onClick={goNextFromMedicines}
               >
                 Keyingi
@@ -598,7 +688,7 @@ function NurseDashboard() {
 
       {step === 4 ? (
         <div
-          className="card border-rose-200 p-4 sm:p-5"
+          className="nurse-panel"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -606,7 +696,14 @@ function NurseDashboard() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">4-qadam: Xizmatlar</h2>
+          <NursePanelHeader
+            eyebrow="4-qadam"
+            title="Xizmatlar"
+            meta={`${selectedServiceIds.length} ta tanlandi`}
+          >
+            Hamshira xizmatini tanlab, kerakli narx turini belgilang.
+          </NursePanelHeader>
+          <div className="mt-4">
           <QuickSearchInput
             label="Xizmat qidirish"
             placeholder="Masalan: Ukol qilish"
@@ -618,7 +715,8 @@ function NurseDashboard() {
             onPick={(item) => setServiceSearch(item?.name || "")}
             emptyText="Mos xizmat topilmadi"
           />
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          </div>
+          <div className="nurse-card-grid mt-4">
             {filteredServices.map((service) => {
               const selected = selectedServiceIds.includes(service._id);
               const blocked = !getTierPrices(service);
@@ -628,19 +726,31 @@ function NurseDashboard() {
                   type="button"
                   disabled={blocked}
                   onClick={() => toggleService(service._id, !blocked)}
-                  className={`rounded-xl border px-3 py-3 text-left ${selected ? "border-primary bg-cyan-50" : blocked ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-white"}`}
+                  aria-pressed={selected}
+                  className={`nurse-product-card ${selected ? "nurse-product-selected" : ""} ${blocked ? "nurse-product-blocked" : ""}`}
                 >
-                  <p className="font-semibold">{service.name}</p>
-                  <p className="text-xs text-slate-500">
-                    1/2/3: {getServicePrice(service, "first") ? formatCurrency(getServicePrice(service, "first")) : "-"} / {getServicePrice(service, "second") ? formatCurrency(getServicePrice(service, "second")) : "-"} / {getServicePrice(service, "third") ? formatCurrency(getServicePrice(service, "third")) : "-"}
-                  </p>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="break-words text-sm font-black text-slate-900">{service.name}</span>
+                    <span className="mt-3 flex flex-wrap gap-2">
+                      <span className="nurse-mini-metric">
+                        1: {getServicePrice(service, "first") ? formatCurrency(getServicePrice(service, "first")) : "-"}
+                      </span>
+                      <span className="nurse-mini-metric">
+                        2: {getServicePrice(service, "second") ? formatCurrency(getServicePrice(service, "second")) : "-"}
+                      </span>
+                      <span className="nurse-mini-metric">
+                        3: {getServicePrice(service, "third") ? formatCurrency(getServicePrice(service, "third")) : "-"}
+                      </span>
+                    </span>
+                  </span>
+                  <span className="nurse-select-dot">{selected ? <CheckIcon /> : null}</span>
                 </button>
               );
             })}
           </div>
 
           {selectedServiceIds.length > 0 ? (
-            <div className="mt-4 space-y-3">
+            <div className="nurse-selection-list mt-4">
               {selectedServiceIds.map((id) => {
                 const service = services.find((s) => s._id === id);
                 const tier = PRICE_TIER_ORDER.includes(serviceInputs[id]?.priceTier)
@@ -649,11 +759,11 @@ function NurseDashboard() {
                 return (
                   <div
                     key={id}
-                    className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_160px_180px_auto]"
+                    className="nurse-selection-row md:grid-cols-[minmax(0,1fr)_160px_180px_auto]"
                   >
-                    <div>
-                      <p className="font-medium">{service?.name}</p>
-                      <p className="text-xs text-slate-500">
+                    <div className="min-w-0">
+                      <p className="break-words font-bold text-slate-900">{service?.name}</p>
+                      <p className="text-xs font-semibold text-slate-500">
                         Narx: {formatCurrency(getServicePrice(service, tier) || 0)}
                       </p>
                     </div>
@@ -709,10 +819,10 @@ function NurseDashboard() {
                   setStep(5);
                 }}
               >
-                Skip
+                O'tkazib yuborish
               </Button>
               <Button
-                className="w-full bg-rose-600 hover:bg-rose-700 focus:ring-rose-300 sm:w-auto"
+                className="w-full sm:w-auto"
                 onClick={goNextFromServices}
               >
                 Keyingi
@@ -726,7 +836,7 @@ function NurseDashboard() {
         <div
           ref={previewRef}
           tabIndex={0}
-          className="card border-rose-200 p-4 outline-none sm:p-5"
+          className="nurse-panel outline-none"
           onKeyDown={(e) => {
             if (e.key === "Enter" && hasAnySelection && !submitting) {
               e.preventDefault();
@@ -734,22 +844,35 @@ function NurseDashboard() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">5-qadam: Chek preview</h2>
-          <p className="mb-3 text-sm text-slate-600">Enter bosib chek chiqaring.</p>
+          <NursePanelHeader eyebrow="5-qadam" title="Chek preview" meta={formatCurrency(previewTotal)}>
+            Yakuniy chekni ko'rib chiqing.
+          </NursePanelHeader>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm">
-              Hamshira: <span className="font-semibold">{selectedSpecialist?.name || "-"}</span>
-            </p>
-            <p className="text-sm">
-              Bemor: <span className="font-semibold">{patient.fullName || "-"}</span>
-            </p>
-            <div className="mt-3 space-y-1">
-              <p className="text-sm font-semibold">Dorilar</p>
+          <div className="nurse-receipt mt-4">
+            <div className="nurse-receipt-head">
+              <div>
+                <p className="text-xs font-black uppercase text-slate-500">Hamshira</p>
+                <p className="mt-1 break-words text-base font-black text-slate-900">
+                  {selectedSpecialist?.name || "-"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase text-slate-500">Bemor</p>
+                <p className="mt-1 break-words text-base font-black text-slate-900">
+                  {patient.fullName || "-"}
+                </p>
+              </div>
+            </div>
+
+            <div className="nurse-receipt-section">
+              <div className="nurse-receipt-title">
+                <span>Dorilar</span>
+                <strong>{previewMedicines.length}</strong>
+              </div>
               {previewMedicines.length ? (
                 previewMedicines.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span>
+                  <div key={item.id} className="nurse-receipt-line">
+                    <span className="min-w-0 break-words">
                       {item.name} x{item.quantity}
                     </span>
                     <span className="font-semibold">{formatCurrency(item.lineTotal)}</span>
@@ -759,12 +882,16 @@ function NurseDashboard() {
                 <p className="text-sm text-slate-500">Tanlanmagan</p>
               )}
             </div>
-            <div className="mt-3 space-y-1">
-              <p className="text-sm font-semibold">Xizmatlar</p>
+
+            <div className="nurse-receipt-section">
+              <div className="nurse-receipt-title">
+                <span>Xizmatlar</span>
+                <strong>{previewServices.length}</strong>
+              </div>
               {previewServices.length ? (
                 previewServices.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span>
+                  <div key={item.id} className="nurse-receipt-line">
+                    <span className="min-w-0 break-words">
                       {item.name} ({PRICE_TIER_LABELS[item.tier]}) x{item.quantity}
                     </span>
                     <span className="font-semibold">{formatCurrency(item.lineTotal)}</span>
@@ -774,11 +901,10 @@ function NurseDashboard() {
                 <p className="text-sm text-slate-500">Tanlanmagan</p>
               )}
             </div>
-            <div className="mt-3 border-t border-dashed border-slate-300 pt-2">
-              <div className="flex justify-between text-base font-bold">
-                <span>Jami</span>
-                <span>{formatCurrency(previewTotal)}</span>
-              </div>
+
+            <div className="nurse-receipt-total">
+              <span>Jami</span>
+              <strong>{formatCurrency(previewTotal)}</strong>
             </div>
           </div>
 
@@ -795,10 +921,10 @@ function NurseDashboard() {
             <Button
               disabled={!hasAnySelection}
               loading={submitting}
-              className="w-full bg-rose-600 hover:bg-rose-700 focus:ring-rose-300 sm:w-auto"
+              className="w-full sm:w-auto"
               onClick={handleCheckout}
             >
-              Chek chiqarish (Enter)
+              Chek chiqarish
             </Button>
           </div>
         </div>
