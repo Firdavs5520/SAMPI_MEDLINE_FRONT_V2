@@ -21,11 +21,145 @@ import {
   writeCheckToPrintTab
 } from "../utils/printReceipt.js";
 
-const STEP_LABELS = ["1. Bemor", "2. Xizmatlar", "3. Chek preview"];
+const LOR_LANGUAGE_STORAGE_KEY = "sampi_lor_services_language";
 
-const normalizeSearch = (value) =>
+const LANGUAGE_OPTIONS = [
+  { id: "uz", label: "UZ", title: "O'zbekcha" },
+  { id: "ru", label: "RU", title: "Русский" }
+];
+
+const LOR_SERVICE_TEXT = {
+  uz: {
+    steps: ["1. Bemor", "2. Xizmatlar", "3. Chek preview"],
+    loading: "LOR xizmatlari yuklanmoqda...",
+    loadingAction: "Yuklanmoqda...",
+    creatingCheck: "Chek yaratilmoqda...",
+    heroTitle: "LOR paneli",
+    heroSubtitle: "Chek yaratish endi bemordan boshlanadi.",
+    languageLabel: "Til",
+    contextLabel: "Tanlangan ish joyi",
+    doctorFallback: "Doktor tanlanmagan",
+    switchContext: "Almashtirish",
+    patientTitle: "1-qadam: Bemor F.I.O",
+    patientHint: "Doktor allaqachon tanlangan. Endi bemor ism-familiyasini kiriting.",
+    patientLabel: "Bemor F.I.O",
+    patientPlaceholder: "Masalan: Ali Valiyev",
+    nextServices: "Keyingi: Xizmatlar",
+    servicesTitle: "2-qadam: Xizmat tanlash",
+    serviceSearchLabel: "Xizmat qidirish",
+    serviceSearchPlaceholder: "Masalan: Burun chayish",
+    serviceSearchEmpty: "Mos xizmat topilmadi",
+    noServices: "Hali xizmat yo'q. Avval \"Xizmat qo'shish\" bo'limida xizmat yarating.",
+    noSearchResults: "Qidiruv bo'yicha xizmat topilmadi.",
+    price: "Narx",
+    quantity: "Miqdor",
+    remove: "Olib tashlash",
+    back: "Orqaga",
+    nextPreview: "Keyingi: Preview",
+    previewTitle: "3-qadam: Chek preview",
+    previewHint: "Enter bosib chek chiqaring.",
+    doctor: "Doktor",
+    patient: "Bemor",
+    lorChoice: "LOR tanlovi",
+    services: "Xizmatlar",
+    noneSelected: "Tanlanmagan",
+    total: "Jami",
+    needServiceWarning: "Chek chiqarish uchun kamida bitta xizmat tanlanishi kerak.",
+    printCheck: "Chek chiqarish (Enter)",
+    successCheck: "Chek muvaffaqiyatli yaratildi.",
+    popupBlocked: "Brauzer yangi oynani blokladi. Oynaga ruxsatni yoqing.",
+    errors: {
+      doctorRequired: "Avval LOR va doktorni tanlang.",
+      patientRequired: "Bemor F.I.O ni to'liq kiriting (ismi va familiyasi).",
+      identityMissing: "LOR tanlovi topilmadi. Qayta kirib chiqing.",
+      serviceRequired: "Kamida bitta xizmat tanlang.",
+      selectedMissing: "Tanlangan xizmat topilmadi.",
+      quantityPositive: "Miqdor 0 dan katta bo'lishi kerak."
+    }
+  },
+  ru: {
+    steps: ["1. Пациент", "2. Услуги", "3. Предпросмотр"],
+    loading: "Услуги ЛОР загружаются...",
+    loadingAction: "Загрузка...",
+    creatingCheck: "Чек создается...",
+    heroTitle: "Панель ЛОР",
+    heroSubtitle: "Создание чека начинается с данных пациента.",
+    languageLabel: "Язык",
+    contextLabel: "Выбранное рабочее место",
+    doctorFallback: "Доктор не выбран",
+    switchContext: "Сменить",
+    patientTitle: "Шаг 1: Ф.И.О. пациента",
+    patientHint: "Доктор уже выбран. Введите имя и фамилию пациента.",
+    patientLabel: "Ф.И.О. пациента",
+    patientPlaceholder: "Например: Али Валиев",
+    nextServices: "Далее: Услуги",
+    servicesTitle: "Шаг 2: Выбор услуги",
+    serviceSearchLabel: "Поиск услуги",
+    serviceSearchPlaceholder: "Например: Промывание носа",
+    serviceSearchEmpty: "Подходящая услуга не найдена",
+    noServices: "Услуг пока нет. Сначала создайте услугу в разделе \"Добавить услугу\".",
+    noSearchResults: "По запросу услуга не найдена.",
+    price: "Цена",
+    quantity: "Количество",
+    remove: "Убрать",
+    back: "Назад",
+    nextPreview: "Далее: Предпросмотр",
+    previewTitle: "Шаг 3: Предпросмотр чека",
+    previewHint: "Нажмите Enter, чтобы распечатать чек.",
+    doctor: "Доктор",
+    patient: "Пациент",
+    lorChoice: "Выбор ЛОР",
+    services: "Услуги",
+    noneSelected: "Не выбрано",
+    total: "Итого",
+    needServiceWarning: "Для печати чека нужно выбрать хотя бы одну услугу.",
+    printCheck: "Распечатать чек (Enter)",
+    successCheck: "Чек успешно создан.",
+    popupBlocked: "Браузер заблокировал новое окно. Разрешите открытие окна.",
+    errors: {
+      doctorRequired: "Сначала выберите ЛОР и доктора.",
+      patientRequired: "Введите полное Ф.И.О. пациента (имя и фамилию).",
+      identityMissing: "Выбор ЛОР не найден. Выйдите и войдите заново.",
+      serviceRequired: "Выберите хотя бы одну услугу.",
+      selectedMissing: "Выбранная услуга не найдена.",
+      quantityPositive: "Количество должно быть больше 0."
+    }
+  }
+};
+
+const isSupportedLanguage = (value) => LANGUAGE_OPTIONS.some((option) => option.id === value);
+
+const getDoctorLanguageStorageKey = (doctorId) => {
+  const safeDoctorId = String(doctorId || "").trim();
+  return safeDoctorId
+    ? `${LOR_LANGUAGE_STORAGE_KEY}:${safeDoctorId}`
+    : LOR_LANGUAGE_STORAGE_KEY;
+};
+
+const getStoredLanguage = (doctorId) => {
+  if (typeof window === "undefined") return "uz";
+
+  try {
+    const storedLanguage = window.localStorage.getItem(getDoctorLanguageStorageKey(doctorId));
+    return isSupportedLanguage(storedLanguage) ? storedLanguage : "uz";
+  } catch {
+    return "uz";
+  }
+};
+
+const saveStoredLanguage = (language, doctorId) => {
+  if (typeof window === "undefined" || !isSupportedLanguage(language)) return;
+
+  try {
+    window.localStorage.setItem(getDoctorLanguageStorageKey(doctorId), language);
+  } catch {
+    // no-op
+  }
+};
+
+const normalizeSearch = (value, language = "uz") =>
   String(value ?? "")
-    .toLocaleLowerCase("uz-UZ")
+    .toLocaleLowerCase(language === "ru" ? "ru-RU" : "uz-UZ")
     .trim();
 
 const safeQty = (value) => {
@@ -38,6 +172,8 @@ function LorServicesPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, lorIdentity, lorDoctor } = useAuth();
+  const [language, setLanguage] = useState(() => getStoredLanguage(lorDoctor?.id));
+  const text = LOR_SERVICE_TEXT[language];
 
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
@@ -59,19 +195,22 @@ function LorServicesPage() {
   const sortedServices = useMemo(
     () =>
       [...services].sort((a, b) =>
-        String(a?.name || "").localeCompare(String(b?.name || ""), "uz")
+        String(a?.name || "").localeCompare(
+          String(b?.name || ""),
+          language === "ru" ? "ru" : "uz"
+        )
       ),
-    [services]
+    [services, language]
   );
 
   const filteredServices = useMemo(() => {
-    const query = normalizeSearch(serviceSearch);
+    const query = normalizeSearch(serviceSearch, language);
     if (!query) return sortedServices;
 
     return sortedServices.filter((service) =>
-      normalizeSearch(service?.name).includes(query)
+      normalizeSearch(service?.name, language).includes(query)
     );
-  }, [serviceSearch, sortedServices]);
+  }, [serviceSearch, sortedServices, language]);
 
   const previewServices = useMemo(
     () =>
@@ -130,6 +269,10 @@ function LorServicesPage() {
   }, [loadData]);
 
   useEffect(() => {
+    setLanguage(getStoredLanguage(lorDoctor?.id));
+  }, [lorDoctor?.id]);
+
+  useEffect(() => {
     const focusElement = (element) => {
       if (!element) return;
       setTimeout(() => {
@@ -155,7 +298,7 @@ function LorServicesPage() {
 
   const validateDoctor = () => {
     if (!lorDoctor?.id || !lorDoctor?.name) {
-      throw new Error("Avval LOR va doktorni tanlang.");
+      throw new Error(text.errors.doctorRequired);
     }
   };
 
@@ -165,7 +308,7 @@ function LorServicesPage() {
     const lastName = normalizedPatient.lastName.trim();
 
     if (!firstName || !lastName) {
-      throw new Error("Bemor F.I.O ni to'liq kiriting (ismi va familiyasi).");
+      throw new Error(text.errors.patientRequired);
     }
   };
 
@@ -200,6 +343,12 @@ function LorServicesPage() {
     navigate("/lor/select", { state: { from: location } });
   };
 
+  const handleLanguageChange = (nextLanguage) => {
+    if (!isSupportedLanguage(nextLanguage)) return;
+    setLanguage(nextLanguage);
+    saveStoredLanguage(nextLanguage, lorDoctor?.id);
+  };
+
   const handleCreateCheckout = async () => {
     if (submittingCheckout) return;
     resetMessages();
@@ -211,11 +360,11 @@ function LorServicesPage() {
       validatePatient();
 
       if (!lorIdentity) {
-        throw new Error("LOR tanlovi topilmadi. Qayta kirib chiqing.");
+        throw new Error(text.errors.identityMissing);
       }
 
       if (selectedServiceIds.length === 0) {
-        throw new Error("Kamida bitta xizmat tanlang.");
+        throw new Error(text.errors.serviceRequired);
       }
 
       const normalizedPatient = splitFullName(patient.fullName);
@@ -225,11 +374,11 @@ function LorServicesPage() {
       const servicesPayload = selectedServiceIds.map((serviceId) => {
         const service = sortedServices.find((item) => item._id === serviceId);
         if (!service) {
-          throw new Error("Tanlangan xizmat topilmadi.");
+          throw new Error(text.errors.selectedMissing);
         }
         const quantity = Number(serviceInputs[serviceId]?.quantity || 1);
         if (!Number.isFinite(quantity) || quantity <= 0) {
-          throw new Error("Miqdor 0 dan katta bo'lishi kerak.");
+          throw new Error(text.errors.quantityPositive);
         }
 
         return {
@@ -250,7 +399,7 @@ function LorServicesPage() {
         }
       });
 
-      setSuccess("Chek muvaffaqiyatli yaratildi.");
+      setSuccess(text.successCheck);
       setPatient({ fullName: "" });
       setSelectedServiceIds([]);
       setServiceInputs({});
@@ -259,7 +408,7 @@ function LorServicesPage() {
 
       const written = writeCheckToPrintTab(printTab, result.check);
       if (!written) {
-        setError("Brauzer yangi oynani blokladi. Oynaga ruxsatni yoqing.");
+        setError(text.popupBlocked);
       }
     } catch (err) {
       closePrintTab(printTab);
@@ -286,7 +435,7 @@ function LorServicesPage() {
   };
 
   if (loading) {
-    return <Spinner text="LOR xizmatlari yuklanmoqda..." />;
+    return <Spinner text={text.loading} />;
   }
 
   return (
@@ -294,27 +443,59 @@ function LorServicesPage() {
       <div className="card sampi-lor-service-hero border-sky-200 bg-sky-50/70 p-4 sm:p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-800">LOR paneli</h1>
-            <p className="mt-1 text-sm text-slate-600">Chek yaratish endi bemordan boshlanadi.</p>
+            <h1 className="text-xl font-bold text-slate-800">{text.heroTitle}</h1>
+            <p className="mt-1 text-sm text-slate-600">{text.heroSubtitle}</p>
           </div>
 
-          <div className="sampi-lor-context-card">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-wide text-cyan-700">
-                Tanlangan ish joyi
-              </p>
-              <p className="mt-1 text-sm font-black text-slate-900">
-                {lorIdentity ? lorIdentity.toUpperCase() : "-"} · {lorDoctor?.name || "Doktor tanlanmagan"}
-              </p>
+          <div className="flex w-full flex-col gap-2 lg:w-auto lg:items-end">
+            <div
+              className="inline-flex w-fit items-center gap-1 rounded-xl border border-cyan-200 bg-white/75 p-1"
+              aria-label={text.languageLabel}
+            >
+              <span className="px-2 text-[10px] font-black uppercase text-cyan-700">
+                {text.languageLabel}
+              </span>
+              {LANGUAGE_OPTIONS.map((option) => {
+                const active = option.id === language;
+
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    title={option.title}
+                    aria-pressed={active}
+                    onClick={() => handleLanguageChange(option.id)}
+                    className={`min-w-10 rounded-lg px-2.5 py-1.5 text-xs font-black transition ${
+                      active
+                        ? "bg-cyan-700 text-white shadow-sm"
+                        : "text-slate-600 hover:bg-cyan-50 hover:text-cyan-800"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
             </div>
-            <Button variant="secondary" className="px-3 py-2 text-xs" onClick={changeLorContext}>
-              Almashtirish
-            </Button>
+
+            <div className="sampi-lor-context-card">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wide text-cyan-700">
+                  {text.contextLabel}
+                </p>
+                <p className="mt-1 text-sm font-black text-slate-900">
+                  {lorIdentity ? lorIdentity.toUpperCase() : "-"} -{" "}
+                  {lorDoctor?.name || text.doctorFallback}
+                </p>
+              </div>
+              <Button variant="secondary" className="px-3 py-2 text-xs" onClick={changeLorContext}>
+                {text.switchContext}
+              </Button>
+            </div>
           </div>
         </div>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          {STEP_LABELS.map((label, index) => {
+          {text.steps.map((label, index) => {
             const n = index + 1;
             const active = n === step;
             const done = n < step;
@@ -343,14 +524,12 @@ function LorServicesPage() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">1-qadam: Bemor F.I.O</h2>
-          <p className="mb-3 text-sm text-slate-600">
-            Doktor allaqachon tanlangan. Endi bemor ism-familiyasini kiriting.
-          </p>
+          <h2 className="text-lg font-semibold">{text.patientTitle}</h2>
+          <p className="mb-3 text-sm text-slate-600">{text.patientHint}</p>
           <Input
-            label="Bemor F.I.O"
+            label={text.patientLabel}
             value={patient.fullName}
-            placeholder="Masalan: Ali Valiyev"
+            placeholder={text.patientPlaceholder}
             inputRef={patientInputRef}
             onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
           />
@@ -360,7 +539,7 @@ function LorServicesPage() {
               className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
               onClick={goNextFromPatient}
             >
-              Keyingi: Xizmatlar
+              {text.nextServices}
             </Button>
           </div>
         </div>
@@ -376,10 +555,10 @@ function LorServicesPage() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">2-qadam: Xizmat tanlash</h2>
+          <h2 className="text-lg font-semibold">{text.servicesTitle}</h2>
           <QuickSearchInput
-            label="Xizmat qidirish"
-            placeholder="Masalan: Burun chayish"
+            label={text.serviceSearchLabel}
+            placeholder={text.serviceSearchPlaceholder}
             value={serviceSearch}
             onChange={setServiceSearch}
             inputRef={serviceSearchRef}
@@ -388,19 +567,19 @@ function LorServicesPage() {
             onPick={(service) => {
               setServiceSearch(service?.name || "");
             }}
-            emptyText="Mos xizmat topilmadi"
+            emptyText={text.serviceSearchEmpty}
           />
 
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {sortedServices.length === 0 ? (
               <div className="md:col-span-2 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600 xl:col-span-3">
-                Hali xizmat yo'q. Avval "Xizmat qo'shish" bo'limida xizmat yarating.
+                {text.noServices}
               </div>
             ) : null}
 
             {sortedServices.length > 0 && filteredServices.length === 0 ? (
               <div className="md:col-span-2 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600 xl:col-span-3">
-                Qidiruv bo'yicha xizmat topilmadi.
+                {text.noSearchResults}
               </div>
             ) : null}
 
@@ -419,7 +598,7 @@ function LorServicesPage() {
                 >
                   <p className="font-semibold text-slate-800">{service.name}</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    Narx: {service.price ? formatCurrency(service.price) : "-"}
+                    {text.price}: {service.price ? formatCurrency(service.price) : "-"}
                   </p>
                 </button>
               );
@@ -438,11 +617,11 @@ function LorServicesPage() {
                     <div>
                       <p className="font-medium text-slate-800">{service?.name}</p>
                       <p className="text-xs text-slate-500">
-                        Narx: {service?.price ? formatCurrency(service.price) : "-"}
+                        {text.price}: {service?.price ? formatCurrency(service.price) : "-"}
                       </p>
                     </div>
                     <Input
-                      label="Miqdor"
+                      label={text.quantity}
                       type="number"
                       min="1"
                       value={serviceInputs[serviceId]?.quantity || ""}
@@ -454,7 +633,7 @@ function LorServicesPage() {
                       className="h-fit self-end"
                       onClick={() => toggleService(serviceId)}
                     >
-                      Olib tashlash
+                      {text.remove}
                     </Button>
                   </div>
                 );
@@ -464,13 +643,13 @@ function LorServicesPage() {
 
           <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
             <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(1)}>
-              Orqaga
+              {text.back}
             </Button>
             <Button
               className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
               onClick={goNextFromServices}
             >
-              Keyingi: Preview
+              {text.nextPreview}
             </Button>
           </div>
         </div>
@@ -488,23 +667,23 @@ function LorServicesPage() {
             }
           }}
         >
-          <h2 className="text-lg font-semibold">3-qadam: Chek preview</h2>
-          <p className="mb-3 text-sm text-slate-600">Enter bosib chek chiqaring.</p>
+          <h2 className="text-lg font-semibold">{text.previewTitle}</h2>
+          <p className="mb-3 text-sm text-slate-600">{text.previewHint}</p>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm">
-              Doktor: <span className="font-semibold">{lorDoctor?.name || "-"}</span>
+              {text.doctor}: <span className="font-semibold">{lorDoctor?.name || "-"}</span>
             </p>
             <p className="text-sm">
-              Bemor: <span className="font-semibold">{patient.fullName || "-"}</span>
+              {text.patient}: <span className="font-semibold">{patient.fullName || "-"}</span>
             </p>
             <p className="text-sm">
-              LOR tanlovi:{" "}
+              {text.lorChoice}:{" "}
               <span className="font-semibold">{lorIdentity ? lorIdentity.toUpperCase() : "-"}</span>
             </p>
 
             <div className="mt-3 space-y-1">
-              <p className="text-sm font-semibold">Xizmatlar</p>
+              <p className="text-sm font-semibold">{text.services}</p>
               {previewServices.length ? (
                 previewServices.map((item) => (
                   <div key={item.id} className="flex justify-between text-sm">
@@ -515,13 +694,13 @@ function LorServicesPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-slate-500">Tanlanmagan</p>
+                <p className="text-sm text-slate-500">{text.noneSelected}</p>
               )}
             </div>
 
             <div className="mt-3 border-t border-dashed border-slate-300 pt-2">
               <div className="flex justify-between text-base font-bold">
-                <span>Jami</span>
+                <span>{text.total}</span>
                 <span>{formatCurrency(previewTotal)}</span>
               </div>
             </div>
@@ -529,21 +708,22 @@ function LorServicesPage() {
 
           {!selectedServiceIds.length ? (
             <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              Chek chiqarish uchun kamida bitta xizmat tanlanishi kerak.
+              {text.needServiceWarning}
             </div>
           ) : null}
 
           <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
             <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(2)}>
-              Orqaga
+              {text.back}
             </Button>
             <Button
               loading={submittingCheckout}
               disabled={!selectedServiceIds.length}
               className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
               onClick={handleCreateCheckout}
+              loadingText={text.loadingAction}
             >
-              Chek chiqarish (Enter)
+              {text.printCheck}
             </Button>
           </div>
         </div>
@@ -551,7 +731,7 @@ function LorServicesPage() {
 
       <Alert type="success" message={success} />
       <Alert type="error" message={error} />
-      <BusyOverlay show={submittingCheckout} text="Chek yaratilmoqda..." />
+      <BusyOverlay show={submittingCheckout} text={text.creatingCheck} />
     </div>
   );
 }

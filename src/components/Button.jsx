@@ -2,6 +2,7 @@ function Button({
   children,
   type = "button",
   loading = false,
+  loadingText = "Yuklanmoqda...",
   disabled = false,
   variant = "primary",
   className = "",
@@ -28,7 +29,7 @@ function Button({
       {loading ? (
         <span className="inline-flex items-center gap-2">
           <span className="sampi-btn-spinner h-4 w-4 rounded-full border-2 border-current border-t-transparent" />
-          Yuklanmoqda...
+          {loadingText}
         </span>
       ) : (
         children
