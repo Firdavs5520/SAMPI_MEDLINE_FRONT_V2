@@ -2800,6 +2800,11 @@ html.theme-dark .sampi-table-row:hover td {
   will-change: auto !important;
 }
 
+.sampi-btn-spinner,
+.sampi-spin-dot {
+  animation: spin 900ms linear infinite !important;
+}
+
 @keyframes theme-wash {
   0% {
     opacity: 0;
