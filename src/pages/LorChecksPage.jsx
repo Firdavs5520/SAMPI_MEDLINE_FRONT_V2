@@ -7,6 +7,11 @@ import Button from "../components/Button.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { extractErrorMessage, formatCurrency, formatDateTime } from "../utils/format.js";
+import {
+  closePrintTab,
+  openPendingPrintTab,
+  writeCheckToPrintTab
+} from "../utils/printReceipt.js";
 
 const paymentMethodLabels = {
   cash: "Naqd",
@@ -56,6 +61,7 @@ function LorChecksPage() {
   const [checks, setChecks] = useState([]);
   const [query, setQuery] = useState("");
   const [hoverPreview, setHoverPreview] = useState(null);
+  const [reprintingCheckKey, setReprintingCheckKey] = useState("");
   const hasLoadedRef = useRef(false);
   const hoverTimerRef = useRef(null);
   const hoverCloseTimerRef = useRef(null);
@@ -196,6 +202,29 @@ function LorChecksPage() {
 
   const clearSearch = () => {
     setQuery("");
+  };
+
+  const handleReprintCheck = (row) => {
+    const checkKey = getCheckKey(row);
+    if (!checkKey || reprintingCheckKey) return;
+
+    setError("");
+    setReprintingCheckKey(checkKey);
+    const printSession = openPendingPrintTab();
+
+    try {
+      const printed = writeCheckToPrintTab(printSession, row);
+      if (!printed) {
+        throw new Error("Brauzer yangi oynani blokladi. Oynaga ruxsatni yoqing.");
+      }
+    } catch (err) {
+      closePrintTab(printSession);
+      setError(extractErrorMessage(err));
+    } finally {
+      setTimeout(() => {
+        setReprintingCheckKey((current) => (current === checkKey ? "" : current));
+      }, 450);
+    }
   };
 
   if (loading) {
@@ -360,6 +389,26 @@ function LorChecksPage() {
               key: "createdAt",
               label: "Sana",
               render: (row) => formatDateTime(row.createdAt)
+            },
+            {
+              key: "actions",
+              label: "Amal",
+              render: (row) => {
+                const checkKey = getCheckKey(row);
+                return (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    loading={reprintingCheckKey === checkKey}
+                    loadingText="Chiqarilmoqda..."
+                    disabled={Boolean(reprintingCheckKey) && reprintingCheckKey !== checkKey}
+                    className="px-3 py-1.5 text-xs"
+                    onClick={() => handleReprintCheck(row)}
+                  >
+                    Qayta chiqarish
+                  </Button>
+                );
+              }
             }
             ]}
           />
