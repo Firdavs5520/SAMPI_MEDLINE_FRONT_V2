@@ -127,6 +127,84 @@ const LOR_SERVICE_TEXT = {
   }
 };
 
+const LOR_SERVICE_NAME_TRANSLATIONS = [
+  {
+    ru: "Введение Лекарственных Средств В Ухо",
+    uz: "Quloqqa dori vositalarini kiritish"
+  },
+  {
+    ru: "Зондирование Лобной Пазухи С Одной Стороны",
+    uz: "Bir tomondan peshona bo'shlig'ini zondlash"
+  },
+  {
+    ru: "Ингаляция",
+    uz: "Ingalyatsiya"
+  },
+  {
+    ru: "Компресс В Ухо",
+    uz: "Quloqqa kompress"
+  },
+  {
+    ru: "Консультация",
+    uz: "Konsultatsiya"
+  },
+  {
+    ru: "Лимфотропное Введение Лекарственных Средств",
+    uz: "Limfotrop dori vositalarini kiritish"
+  },
+  {
+    ru: "Обработка Полости Рта",
+    uz: "Og'iz bo'shlig'ini ishlov berish"
+  },
+  {
+    ru: "Осмотр Пациента В Динамике (2 Недель)",
+    uz: "Bemorni dinamik kuzatish (2 hafta)"
+  },
+  {
+    ru: "Продувание По Политцеру",
+    uz: "Politser bo'yicha puflash"
+  }
+];
+
+const normalizeServiceNameKey = (value) =>
+  String(value || "")
+    .replace(/ё/g, "е")
+    .replace(/Ё/g, "Е")
+    .toLocaleLowerCase("ru-RU")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const LOR_SERVICE_NAME_TRANSLATION_MAP = LOR_SERVICE_NAME_TRANSLATIONS.reduce(
+  (map, translation) => {
+    map.set(normalizeServiceNameKey(translation.ru), translation);
+    map.set(normalizeServiceNameKey(translation.uz), translation);
+    return map;
+  },
+  new Map()
+);
+
+const getDisplayServiceName = (service, language) => {
+  const originalName = String(service?.name || "");
+  const translation = LOR_SERVICE_NAME_TRANSLATION_MAP.get(normalizeServiceNameKey(originalName));
+  return translation?.[language] || originalName;
+};
+
+const getServiceNameSearchValues = (service, language) => {
+  const originalName = String(service?.name || "");
+  const translation = LOR_SERVICE_NAME_TRANSLATION_MAP.get(normalizeServiceNameKey(originalName));
+
+  return Array.from(
+    new Set(
+      [
+        getDisplayServiceName(service, language),
+        originalName,
+        translation?.uz,
+        translation?.ru
+      ].filter(Boolean)
+    )
+  );
+};
+
 const isSupportedLanguage = (value) => LANGUAGE_OPTIONS.some((option) => option.id === value);
 
 const getDoctorLanguageStorageKey = (doctorId) => {
@@ -173,7 +251,7 @@ function LorServicesPage() {
   const location = useLocation();
   const { user, lorIdentity, lorDoctor } = useAuth();
   const [language, setLanguage] = useState(() => getStoredLanguage(lorDoctor?.id));
-  const text = LOR_SERVICE_TEXT[language];
+  const text = LOR_SERVICE_TEXT.uz;
 
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
@@ -195,8 +273,8 @@ function LorServicesPage() {
   const sortedServices = useMemo(
     () =>
       [...services].sort((a, b) =>
-        String(a?.name || "").localeCompare(
-          String(b?.name || ""),
+        getDisplayServiceName(a, language).localeCompare(
+          getDisplayServiceName(b, language),
           language === "ru" ? "ru" : "uz"
         )
       ),
@@ -208,7 +286,9 @@ function LorServicesPage() {
     if (!query) return sortedServices;
 
     return sortedServices.filter((service) =>
-      normalizeSearch(service?.name, language).includes(query)
+      getServiceNameSearchValues(service, language).some((name) =>
+        normalizeSearch(name, language).includes(query)
+      )
     );
   }, [serviceSearch, sortedServices, language]);
 
@@ -223,13 +303,13 @@ function LorServicesPage() {
 
           return {
             id: serviceId,
-            name: service.name,
+            name: getDisplayServiceName(service, language),
             quantity,
             lineTotal
           };
         })
         .filter(Boolean),
-    [selectedServiceIds, sortedServices, serviceInputs]
+    [selectedServiceIds, sortedServices, serviceInputs, language]
   );
 
   const previewTotal = useMemo(
@@ -563,9 +643,9 @@ function LorServicesPage() {
             onChange={setServiceSearch}
             inputRef={serviceSearchRef}
             items={sortedServices}
-            getItemLabel={(item) => item?.name || ""}
+            getItemLabel={(item) => getDisplayServiceName(item, language)}
             onPick={(service) => {
-              setServiceSearch(service?.name || "");
+              setServiceSearch(getDisplayServiceName(service, language));
             }}
             emptyText={text.serviceSearchEmpty}
           />
@@ -585,6 +665,8 @@ function LorServicesPage() {
 
             {filteredServices.map((service) => {
               const selected = selectedServiceIds.includes(service._id);
+              const displayName = getDisplayServiceName(service, language);
+
               return (
                 <button
                   key={service._id}
@@ -596,7 +678,7 @@ function LorServicesPage() {
                       : "border-slate-200 bg-white hover:border-primary/50"
                   }`}
                 >
-                  <p className="font-semibold text-slate-800">{service.name}</p>
+                  <p className="font-semibold text-slate-800">{displayName}</p>
                   <p className="mt-1 text-xs text-slate-500">
                     {text.price}: {service.price ? formatCurrency(service.price) : "-"}
                   </p>
@@ -609,13 +691,15 @@ function LorServicesPage() {
             <div className="mt-4 space-y-3">
               {selectedServiceIds.map((serviceId) => {
                 const service = sortedServices.find((item) => item._id === serviceId);
+                const displayName = getDisplayServiceName(service, language);
+
                 return (
                   <div
                     key={serviceId}
                     className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_160px_auto]"
                   >
                     <div>
-                      <p className="font-medium text-slate-800">{service?.name}</p>
+                      <p className="font-medium text-slate-800">{displayName}</p>
                       <p className="text-xs text-slate-500">
                         {text.price}: {service?.price ? formatCurrency(service.price) : "-"}
                       </p>
