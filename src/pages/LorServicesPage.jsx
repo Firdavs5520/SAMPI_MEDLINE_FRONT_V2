@@ -129,6 +129,46 @@ const LOR_SERVICE_TEXT = {
 
 const LOR_SERVICE_NAME_TRANSLATIONS = [
   {
+    ru: "Промывание И Удаление Серных Пробок Из Ушей",
+    uz: "Quloq kiri tiqinlarini yuvish va olib tashlash"
+  },
+  {
+    ru: "Промывание Лакун. Миндалины",
+    uz: "Murtak lakunalarini yuvish"
+  },
+  {
+    ru: "Промывание Лакун Миндалины",
+    uz: "Murtak lakunalarini yuvish"
+  },
+  {
+    ru: "Промывание Онп По Проецу",
+    uz: "Burun yondosh bo'shliqlarini Proets usulida yuvish"
+  },
+  {
+    ru: "Промывание ОНП По Проецу",
+    uz: "Burun yondosh bo'shliqlarini Proets usulida yuvish"
+  },
+  {
+    ru: "Промывание ОНП По Проетцу",
+    uz: "Burun yondosh bo'shliqlarini Proets usulida yuvish"
+  },
+  {
+    ru: "Пункция Верхнечелюстной Пазухи С Одной Стороны",
+    uz: "Bir tomondan yuqori jag' bo'shlig'ini punksiya qilish"
+  },
+  {
+    ru: "Смена Трахеостомической Трубки",
+    uz: "Traxeostomik naychani almashtirish"
+  },
+  {
+    ru: "Удаление Инородного Тела Из Лор Органов",
+    uz: "LOR organlaridan yot jismni olib tashlash"
+  },
+  {
+    ru: "Уход За Больным В Послеоперационном Периоде",
+    uz: "Operatsiyadan keyingi davrda bemorni parvarish qilish"
+  },
+  {
     ru: "Введение Лекарственных Средств В Ухо",
     uz: "Quloqqa dori vositalarini kiritish"
   },
@@ -154,7 +194,7 @@ const LOR_SERVICE_NAME_TRANSLATIONS = [
   },
   {
     ru: "Обработка Полости Рта",
-    uz: "Og'iz bo'shlig'ini ishlov berish"
+    uz: "Og'iz bo'shlig'iga ishlov berish"
   },
   {
     ru: "Осмотр Пациента В Динамике (2 Недель)",
