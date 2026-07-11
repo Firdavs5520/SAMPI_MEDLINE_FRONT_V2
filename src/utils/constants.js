@@ -11,7 +11,8 @@ export const roleHomePath = {
   lor: "/lor/select",
   delivery: "/delivery",
   manager: "/manager",
-  cashier: "/cashier/nurse-patients"
+  cashier: "/cashier/nurse-patients",
+  reporter: "/reporter"
 };
 
 export const roleLabels = {
@@ -19,7 +20,8 @@ export const roleLabels = {
   lor: "LOR shifokor",
   delivery: "Yetkazuvchi",
   manager: "Menejer",
-  cashier: "Kassir"
+  cashier: "Kassir",
+  reporter: "Reporter"
 };
 
 export const sidebarMenus = {
@@ -54,5 +56,8 @@ export const sidebarMenus = {
     { label: "Ombor qoldiqlari", path: "/manager/stock", icon: "box" },
     { label: "Ko'p ishlatilgan dorilar", path: "/manager/most-used", icon: "trending" },
     { label: "Dori sarfi tarixi", path: "/manager/usage-history", icon: "history" }
+  ],
+  reporter: [
+    { label: "Kunlik hisobot", path: "/reporter", end: true, icon: "bar-chart" }
   ]
 };

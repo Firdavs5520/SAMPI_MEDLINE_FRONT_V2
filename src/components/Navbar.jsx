@@ -9,7 +9,8 @@ const LEGACY_NAME_MAP = {
   "LOR Doctor": "LOR shifokor",
   "Delivery User": "Yetkazuvchi",
   "Manager User": "Menejer",
-  "Cashier User": "Kassir"
+  "Cashier User": "Kassir",
+  "Reporter User": "Reporter"
 };
 
 const getDisplayName = (user) => {
