@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Alert from "../components/Alert.jsx";
 import Button from "../components/Button.jsx";
 import DatePickerField from "../components/DatePickerField.jsx";
-import Input from "../components/Input.jsx";
+import MonthPickerField from "../components/MonthPickerField.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Table from "../components/Table.jsx";
 import reporterService from "../services/reporterService.js";
@@ -47,7 +47,8 @@ const emptyManual = () =>
   );
 
 const safeNumber = (value) => {
-  const parsed = Number(value);
+  const parsed =
+    typeof value === "number" ? value : Number(String(value || "").replace(/\s/g, ""));
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
@@ -64,6 +65,11 @@ const normalizeManualForm = (manual = {}) =>
   );
 
 const isMissingAmount = (value) => String(value ?? "").trim() === "";
+
+const normalizeAmountInput = (value) =>
+  String(value ?? "")
+    .replace(/\D/g, "")
+    .slice(0, 12);
 
 function StatCard({ title, value, hint, tone = "cyan" }) {
   const tones = {
@@ -102,6 +108,29 @@ function MonthlyMobileRow({ row }) {
         <span>Qarz: {formatCurrency(row.debtAmount)}</span>
       </div>
     </div>
+  );
+}
+
+function AmountField({ label, value, missing, onChange }) {
+  return (
+    <label className="block">
+      <span className="sampi-field-label mb-1.5 block text-sm font-semibold text-slate-600">
+        {label}
+      </span>
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        autoComplete="off"
+        placeholder="0"
+        className={`sampi-input sampi-control min-h-14 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-lg font-bold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 ${
+          missing ? "border-amber-400 bg-amber-50/70" : ""
+        }`}
+        value={value ?? ""}
+        onChange={(event) => onChange(normalizeAmountInput(event.target.value))}
+      />
+      {missing ? <p className="mt-1 text-xs text-rose-600">To'ldirilmagan</p> : null}
+    </label>
   );
 }
 
@@ -386,16 +415,11 @@ function ReporterDashboard() {
               Kunlik kassa va xarajat hisoboti
             </h1>
           </div>
-          <div className="grid gap-2 sm:grid-cols-[12rem_12rem_auto] sm:gap-3">
+          <div className="grid gap-2 md:grid-cols-[12rem_12rem_auto] md:items-end md:gap-3">
             <DatePickerField label="Kun" value={date} onChange={handleDateChange} />
-            <Input
-              label="Oy"
-              type="month"
-              value={month}
-              onChange={(event) => setMonth(event.target.value)}
-            />
+            <MonthPickerField label="Oy" value={month} onChange={setMonth} />
             <Button
-              className="min-h-12 self-end"
+              className="min-h-12 w-full md:w-auto"
               variant="accent"
               loading={exporting}
               loadingText="Excel..."
@@ -495,23 +519,15 @@ function ReporterDashboard() {
               {amountFields.map((field) => {
                 const missing = showMissing && isMissingAmount(form[field.key]);
                 return (
-                  <Input
+                  <AmountField
                     key={field.key}
                     label={field.label}
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    step="1000"
-                    autoComplete="off"
-                    error={missing ? "To'ldirilmagan" : ""}
-                    className={`min-h-14 text-lg font-bold ${
-                      missing ? "border-amber-400 bg-amber-50/70" : ""
-                    }`}
+                    missing={missing}
                     value={form[field.key] ?? ""}
-                    onChange={(event) =>
+                    onChange={(nextValue) =>
                       setForm((prev) => ({
                         ...prev,
-                        [field.key]: event.target.value
+                        [field.key]: nextValue
                       }))
                     }
                   />
