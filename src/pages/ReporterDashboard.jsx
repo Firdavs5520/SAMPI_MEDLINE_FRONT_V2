@@ -20,6 +20,20 @@ const amountFields = [
   { key: "debtAmount", label: "Qarz" }
 ];
 const SUSPICIOUS_AMOUNT_THRESHOLD = 10000000;
+const monthLabels = [
+  "Yanvar",
+  "Fevral",
+  "Mart",
+  "Aprel",
+  "May",
+  "Iyun",
+  "Iyul",
+  "Avgust",
+  "Sentabr",
+  "Oktabr",
+  "Noyabr",
+  "Dekabr"
+];
 
 const toYmd = (date = new Date()) => {
   const year = date.getFullYear();
@@ -29,6 +43,22 @@ const toYmd = (date = new Date()) => {
 };
 
 const toMonth = (date = new Date()) => toYmd(date).slice(0, 7);
+
+const shiftMonth = (value, offset) => {
+  const match = /^(\d{4})-(\d{2})$/.exec(String(value || ""));
+  const base = match
+    ? new Date(Number(match[1]), Number(match[2]) - 1, 1)
+    : new Date();
+  base.setMonth(base.getMonth() + offset);
+  return toMonth(base);
+};
+
+const formatMonthLabel = (value) => {
+  const match = /^(\d{4})-(\d{2})$/.exec(String(value || ""));
+  if (!match) return value || "";
+  const monthIndex = Number(match[2]) - 1;
+  return `${monthLabels[monthIndex] || match[2]} ${match[1]}`;
+};
 
 const getPreviousDateKey = (value) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
@@ -209,6 +239,72 @@ function AmountField({ label, value, missing, onChange }) {
   );
 }
 
+function ReportDownloadPanel({
+  month,
+  monthlyReport,
+  exportingReportId,
+  onMonthChange,
+  onExport
+}) {
+  const currentMonth = toMonth();
+  const previousMonth = shiftMonth(currentMonth, -1);
+  const selectedTotal =
+    safeNumber(monthlyReport?.totals?.lorHalfPaidAmount) +
+    safeNumber(monthlyReport?.totals?.procedurePaidAmount);
+  const isExporting = Boolean(exportingReportId);
+
+  return (
+    <section className="card space-y-4 p-3 sm:p-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-lg font-black text-slate-900">Hisobotni olish</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-500">
+            Kerakli oyni tanlang va Excelni bir bosishda yuklab oling.
+          </p>
+        </div>
+        <div className="rounded-xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm font-bold text-cyan-900">
+          {formatMonthLabel(month)} jami: {formatCurrency(selectedTotal)} so'm
+        </div>
+      </div>
+
+      <div className="grid gap-3 xl:grid-cols-[16rem_1fr] xl:items-end">
+        <MonthPickerField label="Hisobot oyi" value={month} onChange={onMonthChange} />
+        <div className="grid gap-2 sm:grid-cols-3">
+          <Button
+            className="min-h-12 w-full"
+            variant="accent"
+            loading={exportingReportId === "current"}
+            loadingText="Yuklanmoqda..."
+            disabled={isExporting}
+            onClick={() => onExport(currentMonth, "current")}
+          >
+            Shu oy Excel
+          </Button>
+          <Button
+            className="min-h-12 w-full"
+            variant="secondary"
+            loading={exportingReportId === "previous"}
+            loadingText="Yuklanmoqda..."
+            disabled={isExporting}
+            onClick={() => onExport(previousMonth, "previous")}
+          >
+            O'tgan oy Excel
+          </Button>
+          <Button
+            className="min-h-12 w-full"
+            loading={exportingReportId === "selected"}
+            loadingText="Yuklanmoqda..."
+            disabled={isExporting}
+            onClick={() => onExport(month, "selected")}
+          >
+            Tanlangan oy Excel
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ReporterDashboard() {
   const [date, setDate] = useState(toYmd);
   const [month, setMonth] = useState(toMonth);
@@ -219,7 +315,7 @@ function ReporterDashboard() {
   const [loadingMonthly, setLoadingMonthly] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copyingYesterday, setCopyingYesterday] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [exportingReportId, setExportingReportId] = useState("");
   const [autoSaveStatus, setAutoSaveStatus] = useState("idle");
   const [showMissing, setShowMissing] = useState(false);
   const [suspiciousPrompt, setSuspiciousPrompt] = useState(null);
@@ -463,15 +559,18 @@ function ReporterDashboard() {
     });
   };
 
-  const handleExport = async () => {
-    setExporting(true);
+  const handleExport = async (targetMonth = month, reportId = "selected") => {
+    setMonth(targetMonth);
+    setExportingReportId(reportId);
     setError("");
+    setSuccess("");
     try {
-      await reporterService.downloadMonthlyExcel(month);
+      await reporterService.downloadMonthlyExcel(targetMonth);
+      setSuccess(`${formatMonthLabel(targetMonth)} Excel hisoboti yuklandi.`);
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
-      setExporting(false);
+      setExportingReportId("");
     }
   };
 
@@ -547,24 +646,22 @@ function ReporterDashboard() {
               Kunlik kassa va xarajat hisoboti
             </h1>
           </div>
-          <div className="grid gap-2 md:grid-cols-[12rem_12rem_auto] md:items-end md:gap-3">
+          <div className="grid gap-2 md:grid-cols-[12rem] md:items-end md:gap-3">
             <DatePickerField label="Kun" value={date} onChange={handleDateChange} />
-            <MonthPickerField label="Oy" value={month} onChange={setMonth} />
-            <Button
-              className="min-h-12 w-full md:w-auto"
-              variant="accent"
-              loading={exporting}
-              loadingText="Excel..."
-              onClick={handleExport}
-            >
-              Excel yuklash
-            </Button>
           </div>
         </div>
       </div>
 
       {error ? <Alert type="error" message={error} /> : null}
       {success ? <Alert type="success" message={success} /> : null}
+
+      <ReportDownloadPanel
+        month={month}
+        monthlyReport={monthlyReport}
+        exportingReportId={exportingReportId}
+        onMonthChange={setMonth}
+        onExport={handleExport}
+      />
 
       {loadingDaily ? (
         <div className="card flex min-h-48 items-center justify-center p-6">
