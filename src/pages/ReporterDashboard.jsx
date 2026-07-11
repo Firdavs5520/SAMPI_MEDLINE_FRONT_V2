@@ -131,20 +131,20 @@ const getSuspiciousSignature = (fields) =>
 
 function StatCard({ title, value, hint, tone = "cyan" }) {
   const tones = {
-    cyan: "border-cyan-100 bg-cyan-50/80 text-cyan-800",
-    emerald: "border-emerald-100 bg-emerald-50/80 text-emerald-800",
-    amber: "border-amber-100 bg-amber-50/80 text-amber-800",
-    orange: "border-orange-100 bg-orange-50/80 text-orange-800",
-    slate: "border-slate-200 bg-white text-slate-800"
+    cyan: "reporter-stat-cyan",
+    emerald: "reporter-stat-emerald",
+    amber: "reporter-stat-amber",
+    orange: "reporter-stat-orange",
+    slate: "reporter-stat-slate"
   };
 
   return (
-    <div className={`rounded-xl border p-3 shadow-sm sm:p-4 ${tones[tone] || tones.slate}`}>
-      <p className="text-xs font-bold uppercase text-slate-500">{title}</p>
-      <p className="mt-1.5 break-words text-lg font-black leading-tight sm:mt-2 sm:text-xl">
+    <div className={`reporter-stat-card rounded-xl border p-3 shadow-sm sm:p-4 ${tones[tone] || tones.slate}`}>
+      <p className="reporter-stat-title text-xs font-bold uppercase">{title}</p>
+      <p className="reporter-stat-value mt-1.5 break-words text-lg font-black leading-tight sm:mt-2 sm:text-xl">
         {value}
       </p>
-      {hint ? <p className="mt-1 text-xs font-semibold text-slate-500">{hint}</p> : null}
+      {hint ? <p className="reporter-stat-hint mt-1 text-xs font-semibold">{hint}</p> : null}
     </div>
   );
 }
@@ -205,12 +205,14 @@ function CashierSummaryCards({ totals, lorHalfAmount, procedurePaidAmount, autoI
 
 function MonthlyMobileRow({ row }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="reporter-mobile-row rounded-xl border p-3 shadow-sm">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-sm font-black text-slate-900">{row.date}</p>
-        <p className="text-xs font-bold text-cyan-700">LOR 50%: {formatCurrency(row.lorHalfPaidAmount)}</p>
+        <p className="reporter-mobile-date text-sm font-black">{row.date}</p>
+        <p className="reporter-mobile-accent text-xs font-bold">
+          LOR 50%: {formatCurrency(row.lorHalfPaidAmount)}
+        </p>
       </div>
-      <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-600">
+      <div className="reporter-mobile-grid grid grid-cols-2 gap-2 text-xs font-semibold">
         <span>LOR soni: {row.lorClientsCount}</span>
         <span>Protsedura: {row.procedureCount}</span>
         <span>LOR: {formatCurrency(row.lorPaidAmount)}</span>
@@ -229,17 +231,17 @@ function MonthlyMobileRow({ row }) {
 function AmountField({ label, value, missing, onChange }) {
   return (
     <label className="block">
-      <span className="sampi-field-label mb-1.5 block text-sm font-semibold text-slate-600">
+      <span className="reporter-field-label sampi-field-label mb-1.5 block text-sm font-semibold">
         {label}
       </span>
       <input
         type="text"
         inputMode="numeric"
-        pattern="[0-9]*"
         autoComplete="off"
         placeholder="0"
-        className={`sampi-input sampi-control min-h-14 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-lg font-bold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 ${
-          missing ? "border-amber-400 bg-amber-50/70" : ""
+        aria-label={label}
+        className={`reporter-amount-input sampi-input sampi-control min-h-14 w-full rounded-xl border px-3 py-2.5 text-base font-bold outline-none transition sm:text-lg ${
+          missing ? "reporter-input-missing" : ""
         }`}
         value={value ?? ""}
         onChange={(event) => onChange(formatAmountInput(event.target.value))}
@@ -265,7 +267,7 @@ function ReportDownloadPanel({
   const isExporting = Boolean(exportingReportId);
 
   return (
-    <section className="card space-y-4 p-3 sm:p-5">
+    <section className="reporter-download-card card space-y-4 p-3 sm:p-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h2 className="text-lg font-black text-slate-900">Yillik hisobot</h2>
@@ -273,7 +275,7 @@ function ReportDownloadPanel({
             Oylar Excel ichida alohida sahifalarda chiqadi.
           </p>
         </div>
-        <div className="rounded-xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm font-bold text-cyan-900">
+        <div className="reporter-report-total rounded-xl border px-4 py-3 text-sm font-bold">
           {formatMonthLabel(month)} jami: {formatCurrency(selectedTotal)} so'm
         </div>
       </div>
@@ -698,8 +700,8 @@ function ReporterDashboard() {
   ];
 
   return (
-    <div className="space-y-3 pb-24 sm:space-y-4 sm:pb-4">
-      <div className="card p-3 sm:p-5">
+    <div className="reporter-dashboard space-y-3 pb-24 sm:space-y-4 sm:pb-4">
+      <div className="reporter-hero-card card p-3 sm:p-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-cyan-700">
@@ -731,7 +733,7 @@ function ReporterDashboard() {
           <Spinner />
         </div>
       ) : (
-        <form className="card space-y-4 p-3 sm:p-5" onSubmit={handleSave}>
+        <form className="reporter-entry-card card space-y-4 p-3 sm:p-5" noValidate onSubmit={handleSave}>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-lg font-bold text-slate-900">Reporter kiritadigan summalar</h2>
@@ -775,7 +777,7 @@ function ReporterDashboard() {
             procedurePaidAmount={procedurePaidAmount}
             autoIncomeTotal={autoIncomeTotal}
           />
-          <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
+          <div className="reporter-amount-grid grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
             {amountFields.map((field) => {
               const missing = showMissing && isMissingAmount(form[field.key]);
               return (
@@ -795,11 +797,11 @@ function ReporterDashboard() {
             })}
           </div>
           <label className="block">
-            <span className="sampi-field-label mb-1.5 block text-sm font-semibold text-slate-600">
+            <span className="reporter-field-label sampi-field-label mb-1.5 block text-sm font-semibold">
               Izoh
             </span>
             <textarea
-              className="sampi-input sampi-control min-h-24 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 sm:text-sm"
+              className="reporter-note-input sampi-input sampi-control min-h-24 w-full rounded-xl border px-3 py-2.5 text-base outline-none transition sm:text-sm"
               value={form.note || ""}
               onChange={(event) =>
                 setForm((prev) => ({
@@ -814,7 +816,7 @@ function ReporterDashboard() {
               Saqlash
             </Button>
           </div>
-          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur sm:hidden">
+          <div className="reporter-mobile-save fixed inset-x-0 bottom-0 z-30 border-t p-3 shadow-2xl backdrop-blur sm:hidden">
             <Button
               type="submit"
               className="min-h-12 w-full text-base"
@@ -827,7 +829,7 @@ function ReporterDashboard() {
         </form>
       )}
 
-      <section className="card p-3 sm:p-5">
+      <section className="reporter-monthly-card card p-3 sm:p-5">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-bold text-slate-900">Oylik hisobot</h2>
@@ -852,7 +854,7 @@ function ReporterDashboard() {
           <>
             <div className="space-y-2 lg:hidden">
               {activeMonthlyRows.length === 0 ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center text-sm font-semibold text-slate-500">
+                <div className="reporter-empty-state rounded-xl border p-4 text-center text-sm font-semibold">
                   Ma'lumot topilmadi
                 </div>
               ) : (
@@ -876,15 +878,15 @@ function ReporterDashboard() {
         panelClassName="max-w-md"
         bodyClassName="space-y-4"
       >
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm font-bold text-amber-900">
+        <div className="reporter-warning-card rounded-xl border p-4">
+          <p className="text-sm font-bold">
             Kiritilgan summa juda katta. Yana bir marta tekshiring.
           </p>
           <div className="mt-3 space-y-2">
             {(suspiciousPrompt?.fields || []).map((field) => (
               <div
                 key={field.key}
-                className="flex items-center justify-between gap-3 rounded-lg bg-white/80 px-3 py-2 text-sm font-semibold text-slate-800"
+                className="reporter-warning-row flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm font-semibold"
               >
                 <span>{field.label}</span>
                 <span>{formatCurrency(field.amount)} so'm</span>
