@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Alert from "../components/Alert.jsx";
 import Button from "../components/Button.jsx";
 import DatePickerField from "../components/DatePickerField.jsx";
+import Modal from "../components/Modal.jsx";
 import MonthPickerField from "../components/MonthPickerField.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Table from "../components/Table.jsx";
@@ -18,6 +19,7 @@ const amountFields = [
   { key: "clickAmount", label: "Click" },
   { key: "debtAmount", label: "Qarz" }
 ];
+const SUSPICIOUS_AMOUNT_THRESHOLD = 10000000;
 
 const toYmd = (date = new Date()) => {
   const year = date.getFullYear();
@@ -58,7 +60,7 @@ const normalizeManualForm = (manual = {}) =>
       const value = safeNumber(manual[field.key]);
       return {
         ...acc,
-        [field.key]: value > 0 ? String(value) : ""
+        [field.key]: value > 0 ? formatAmountInput(String(value)) : ""
       };
     },
     { note: manual?.note || "" }
@@ -71,11 +73,29 @@ const normalizeAmountInput = (value) =>
     .replace(/\D/g, "")
     .slice(0, 12);
 
+const formatAmountInput = (value) => {
+  const digits = normalizeAmountInput(value);
+  if (!digits) return "";
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+};
+
+const getSuspiciousFields = (formValue) =>
+  amountFields
+    .map((field) => ({
+      ...field,
+      amount: safeNumber(formValue[field.key])
+    }))
+    .filter((field) => field.amount >= SUSPICIOUS_AMOUNT_THRESHOLD);
+
+const getSuspiciousSignature = (fields) =>
+  fields.map((field) => `${field.key}:${field.amount}`).join("|");
+
 function StatCard({ title, value, hint, tone = "cyan" }) {
   const tones = {
     cyan: "border-cyan-100 bg-cyan-50/80 text-cyan-800",
     emerald: "border-emerald-100 bg-emerald-50/80 text-emerald-800",
     amber: "border-amber-100 bg-amber-50/80 text-amber-800",
+    orange: "border-orange-100 bg-orange-50/80 text-orange-800",
     slate: "border-slate-200 bg-white text-slate-800"
   };
 
@@ -102,6 +122,7 @@ function MonthlyMobileRow({ row }) {
         <span>Protsedura: {row.procedureCount}</span>
         <span>LOR: {formatCurrency(row.lorPaidAmount)}</span>
         <span>Proc: {formatCurrency(row.procedurePaidAmount)}</span>
+        <span>Jami: {formatCurrency(row.autoIncomeTotal)}</span>
         <span>Terminal: {formatCurrency(row.terminalAmount)}</span>
         <span>Click: {formatCurrency(row.clickAmount)}</span>
         <span>Perech: {formatCurrency(row.transferAmount)}</span>
@@ -127,7 +148,7 @@ function AmountField({ label, value, missing, onChange }) {
           missing ? "border-amber-400 bg-amber-50/70" : ""
         }`}
         value={value ?? ""}
-        onChange={(event) => onChange(normalizeAmountInput(event.target.value))}
+        onChange={(event) => onChange(formatAmountInput(event.target.value))}
       />
       {missing ? <p className="mt-1 text-xs text-rose-600">To'ldirilmagan</p> : null}
     </label>
@@ -145,12 +166,13 @@ function ReporterDashboard() {
   const [saving, setSaving] = useState(false);
   const [copyingYesterday, setCopyingYesterday] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [autoSaveStatus, setAutoSaveStatus] = useState("idle");
   const [showMissing, setShowMissing] = useState(false);
+  const [suspiciousPrompt, setSuspiciousPrompt] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const skipAutoSaveRef = useRef(true);
+  const approvedSuspiciousSignatureRef = useRef("");
 
   const loadDaily = useCallback(async () => {
     setLoadingDaily(true);
@@ -192,6 +214,9 @@ function ReporterDashboard() {
     procedure: { proceduresCount: 0, totalAmount: 0, paidAmount: 0 },
     total: { debtAmount: 0 }
   };
+  const lorHalfAmount = safeNumber(totals.lor.halfPaidAmount);
+  const procedurePaidAmount = safeNumber(totals.procedure.paidAmount);
+  const autoIncomeTotal = lorHalfAmount + procedurePaidAmount;
 
   const monthlyRows = useMemo(
     () =>
@@ -203,6 +228,9 @@ function ReporterDashboard() {
         lorHalfPaidAmount: row.cashier?.lor?.halfPaidAmount || 0,
         procedureCount: row.cashier?.procedure?.proceduresCount || 0,
         procedurePaidAmount: row.cashier?.procedure?.paidAmount || 0,
+        autoIncomeTotal:
+          safeNumber(row.cashier?.lor?.halfPaidAmount) +
+          safeNumber(row.cashier?.procedure?.paidAmount),
         expenseAmount: row.manual?.expenseAmount || 0,
         terminalAmount: row.manual?.terminalAmount || 0,
         transferAmount: row.manual?.transferAmount || 0,
@@ -252,11 +280,37 @@ function ReporterDashboard() {
   );
 
   const saveRecord = useCallback(
-    async ({ formValue = form, manual = false, showMessage = false } = {}) => {
+    async ({
+      formValue = form,
+      manual = false,
+      showMessage = false,
+      skipSuspiciousCheck = false
+    } = {}) => {
       if (manual) {
         setSaving(true);
       }
       setError("");
+
+      const suspiciousFields = getSuspiciousFields(formValue);
+      const suspiciousSignature = getSuspiciousSignature(suspiciousFields);
+      if (
+        !skipSuspiciousCheck &&
+        suspiciousFields.length > 0 &&
+        suspiciousSignature !== approvedSuspiciousSignatureRef.current
+      ) {
+        setSuspiciousPrompt({
+          fields: suspiciousFields,
+          signature: suspiciousSignature,
+          formValue,
+          manual,
+          showMessage
+        });
+        setAutoSaveStatus("warning");
+        if (manual) {
+          setSaving(false);
+        }
+        return false;
+      }
 
       try {
         const data = await reporterService.saveDailyRecord(buildPayload(formValue));
@@ -273,12 +327,13 @@ function ReporterDashboard() {
           setSaving(false);
         }
       }
+      return true;
     },
     [buildPayload, form, loadMonthly]
   );
 
   useEffect(() => {
-    if (!autoSaveEnabled || loadingDaily) return undefined;
+    if (loadingDaily) return undefined;
 
     if (skipAutoSaveRef.current) {
       skipAutoSaveRef.current = false;
@@ -289,15 +344,17 @@ function ReporterDashboard() {
     const timer = window.setTimeout(async () => {
       setAutoSaveStatus("saving");
       try {
-        await saveRecord({ showMessage: false });
-        setAutoSaveStatus("saved");
+        const saved = await saveRecord({ showMessage: false });
+        if (saved) {
+          setAutoSaveStatus("saved");
+        }
       } catch {
         setAutoSaveStatus("error");
       }
     }, 1200);
 
     return () => window.clearTimeout(timer);
-  }, [autoSaveEnabled, form, loadingDaily, saveRecord]);
+  }, [form, loadingDaily, saveRecord]);
 
   const handleSave = async (event) => {
     event.preventDefault();
@@ -334,7 +391,22 @@ function ReporterDashboard() {
     const confirmed = window.confirm("Kiritilgan summalarni tozalaysizmi?");
     if (!confirmed) return;
     setForm(emptyManual());
+    approvedSuspiciousSignatureRef.current = "";
     setSuccess("Summalar tozalandi.");
+  };
+
+  const handleApproveSuspicious = async () => {
+    const pending = suspiciousPrompt;
+    if (!pending) return;
+
+    approvedSuspiciousSignatureRef.current = pending.signature;
+    setSuspiciousPrompt(null);
+    await saveRecord({
+      formValue: pending.formValue,
+      manual: pending.manual,
+      showMessage: pending.showMessage,
+      skipSuspiciousCheck: true
+    });
   };
 
   const handleExport = async () => {
@@ -354,7 +426,8 @@ function ReporterDashboard() {
     waiting: "Auto-save kutmoqda",
     saving: "Auto-save saqlayapti",
     saved: "Auto-save saqlandi",
-    error: "Auto-save xato"
+    error: "Auto-save xato",
+    warning: "Katta summa tekshirilyapti"
   }[autoSaveStatus];
 
   const columns = [
@@ -375,6 +448,11 @@ function ReporterDashboard() {
       key: "procedurePaidAmount",
       label: "Protsedura kelgan",
       render: (row) => `${formatCurrency(row.procedurePaidAmount)} so'm`
+    },
+    {
+      key: "autoIncomeTotal",
+      label: "LOR 50% + Protsedura",
+      render: (row) => `${formatCurrency(row.autoIncomeTotal)} so'm`
     },
     {
       key: "expenseAmount",
@@ -440,14 +518,14 @@ function ReporterDashboard() {
         </div>
       ) : (
         <>
-          <section className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-5">
+          <section className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
             <StatCard
-              title="LOR mijozlari"
+              title="LOR odam"
               value={totals.lor.count}
               hint={`${formatCurrency(totals.lor.totalAmount)} so'm jami`}
             />
             <StatCard
-              title="LOR kelgan"
+              title="LOR summa"
               value={`${formatCurrency(totals.lor.paidAmount)} so'm`}
               hint="Kassadan qabul qilingan summa"
               tone="emerald"
@@ -459,9 +537,27 @@ function ReporterDashboard() {
               tone="amber"
             />
             <StatCard
-              title="Protsedura"
+              title="Protsedura soni"
               value={totals.procedure.proceduresCount}
-              hint={`${formatCurrency(totals.procedure.paidAmount)} so'm kelgan`}
+              hint={`${formatCurrency(totals.procedure.totalAmount)} so'm jami`}
+              tone="slate"
+            />
+            <StatCard
+              title="Protsedura summa"
+              value={`${formatCurrency(procedurePaidAmount)} so'm`}
+              hint="Kassadan kelgan protsedura summasi"
+              tone="emerald"
+            />
+            <StatCard
+              title="LOR 50% + Protsedura"
+              value={`${formatCurrency(autoIncomeTotal)} so'm`}
+              hint="Reporter uchun avtomatik yakun"
+              tone="orange"
+            />
+            <StatCard
+              title="LOR 50% qiymati"
+              value={`${formatCurrency(lorHalfAmount)} so'm`}
+              hint="Alohida nazorat summasi"
               tone="slate"
             />
             <StatCard
@@ -501,16 +597,11 @@ function ReporterDashboard() {
                   type="button"
                   variant="secondary"
                   className="min-h-11 px-3 text-xs"
-                  onClick={() => setAutoSaveEnabled((prev) => !prev)}
+                  disabled
                 >
-                  {autoSaveEnabled ? "Auto-save ON" : "Auto-save OFF"}
+                  Auto-save yoniq
                 </Button>
-                <Button
-                  type="button"
-                  variant="danger"
-                  className="min-h-11 px-3 text-xs"
-                  onClick={handleClear}
-                >
+                <Button type="button" variant="danger" className="min-h-11 px-3 text-xs" onClick={handleClear}>
                   Tozalash
                 </Button>
               </div>
@@ -578,7 +669,12 @@ function ReporterDashboard() {
           </div>
           {monthlyReport?.totals ? (
             <div className="text-sm font-bold text-slate-700">
-              Jami LOR 50%: {formatCurrency(monthlyReport.totals.lorHalfPaidAmount)} so'm
+              Jami LOR 50% + Protsedura:{" "}
+              {formatCurrency(
+                safeNumber(monthlyReport.totals.lorHalfPaidAmount) +
+                  safeNumber(monthlyReport.totals.procedurePaidAmount)
+              )}{" "}
+              so'm
             </div>
           ) : null}
         </div>
@@ -601,6 +697,50 @@ function ReporterDashboard() {
           </>
         )}
       </section>
+
+      <Modal
+        open={Boolean(suspiciousPrompt)}
+        title="Shubhali katta summa"
+        onClose={() => {
+          setSuspiciousPrompt(null);
+          setAutoSaveStatus("idle");
+        }}
+        panelClassName="max-w-md"
+        bodyClassName="space-y-4"
+      >
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm font-bold text-amber-900">
+            Kiritilgan summa juda katta. Yana bir marta tekshiring.
+          </p>
+          <div className="mt-3 space-y-2">
+            {(suspiciousPrompt?.fields || []).map((field) => (
+              <div
+                key={field.key}
+                className="flex items-center justify-between gap-3 rounded-lg bg-white/80 px-3 py-2 text-sm font-semibold text-slate-800"
+              >
+                <span>{field.label}</span>
+                <span>{formatCurrency(field.amount)} so'm</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button
+            type="button"
+            variant="secondary"
+            className="min-h-11"
+            onClick={() => {
+              setSuspiciousPrompt(null);
+              setAutoSaveStatus("idle");
+            }}
+          >
+            Qayta tekshiraman
+          </Button>
+          <Button type="button" className="min-h-11" onClick={handleApproveSuspicious}>
+            To'g'ri, saqlash
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
