@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Alert from "../components/Alert.jsx";
 import Button from "../components/Button.jsx";
 import DatePickerField from "../components/DatePickerField.jsx";
@@ -28,6 +28,15 @@ const toYmd = (date = new Date()) => {
 
 const toMonth = (date = new Date()) => toYmd(date).slice(0, 7);
 
+const getPreviousDateKey = (value) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
+  if (!match) return toYmd(new Date(Date.now() - 24 * 60 * 60 * 1000));
+
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  date.setDate(date.getDate() - 1);
+  return toYmd(date);
+};
+
 const emptyManual = () =>
   amountFields.reduce(
     (acc, field) => ({
@@ -41,6 +50,20 @@ const safeNumber = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 };
+
+const normalizeManualForm = (manual = {}) =>
+  amountFields.reduce(
+    (acc, field) => {
+      const value = safeNumber(manual[field.key]);
+      return {
+        ...acc,
+        [field.key]: value > 0 ? String(value) : ""
+      };
+    },
+    { note: manual?.note || "" }
+  );
+
+const isMissingAmount = (value) => String(value ?? "").trim() === "";
 
 function StatCard({ title, value, hint, tone = "cyan" }) {
   const tones = {
@@ -91,9 +114,14 @@ function ReporterDashboard() {
   const [loadingDaily, setLoadingDaily] = useState(true);
   const [loadingMonthly, setLoadingMonthly] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [copyingYesterday, setCopyingYesterday] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [autoSaveStatus, setAutoSaveStatus] = useState("idle");
+  const [showMissing, setShowMissing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const skipAutoSaveRef = useRef(true);
 
   const loadDaily = useCallback(async () => {
     setLoadingDaily(true);
@@ -101,11 +129,8 @@ function ReporterDashboard() {
     try {
       const data = await reporterService.getDailyReport(date);
       setDailyReport(data);
-      setForm({
-        ...emptyManual(),
-        ...(data?.manual || {}),
-        note: data?.manual?.note || ""
-      });
+      skipAutoSaveRef.current = true;
+      setForm(normalizeManualForm(data?.manual));
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -176,31 +201,111 @@ function ReporterDashboard() {
     [monthlyRows]
   );
 
-  const handleSave = async (event) => {
-    event.preventDefault();
-    setSaving(true);
-    setError("");
-    setSuccess("");
+  const missingCount = useMemo(
+    () => amountFields.filter((field) => isMissingAmount(form[field.key])).length,
+    [form]
+  );
 
-    try {
+  const buildPayload = useCallback(
+    (formValue = form) => {
       const payload = {
         date,
-        note: form.note || ""
+        note: formValue.note || ""
       };
 
       for (const field of amountFields) {
-        payload[field.key] = safeNumber(form[field.key]);
+        payload[field.key] = safeNumber(formValue[field.key]);
       }
 
-      const data = await reporterService.saveDailyRecord(payload);
-      setDailyReport(data);
-      setSuccess("Reporter yozuvi saqlandi.");
-      await loadMonthly();
+      return payload;
+    },
+    [date, form]
+  );
+
+  const saveRecord = useCallback(
+    async ({ formValue = form, manual = false, showMessage = false } = {}) => {
+      if (manual) {
+        setSaving(true);
+      }
+      setError("");
+
+      try {
+        const data = await reporterService.saveDailyRecord(buildPayload(formValue));
+        setDailyReport(data);
+        if (showMessage) {
+          setSuccess("Reporter yozuvi saqlandi.");
+        }
+        await loadMonthly();
+      } catch (err) {
+        setError(extractErrorMessage(err));
+        throw err;
+      } finally {
+        if (manual) {
+          setSaving(false);
+        }
+      }
+    },
+    [buildPayload, form, loadMonthly]
+  );
+
+  useEffect(() => {
+    if (!autoSaveEnabled || loadingDaily) return undefined;
+
+    if (skipAutoSaveRef.current) {
+      skipAutoSaveRef.current = false;
+      return undefined;
+    }
+
+    setAutoSaveStatus("waiting");
+    const timer = window.setTimeout(async () => {
+      setAutoSaveStatus("saving");
+      try {
+        await saveRecord({ showMessage: false });
+        setAutoSaveStatus("saved");
+      } catch {
+        setAutoSaveStatus("error");
+      }
+    }, 1200);
+
+    return () => window.clearTimeout(timer);
+  }, [autoSaveEnabled, form, loadingDaily, saveRecord]);
+
+  const handleSave = async (event) => {
+    event.preventDefault();
+    setSuccess("");
+    await saveRecord({ manual: true, showMessage: true });
+  };
+
+  const handleDateChange = (nextDate) => {
+    skipAutoSaveRef.current = true;
+    setDate(nextDate);
+  };
+
+  const handleCopyYesterday = async () => {
+    setCopyingYesterday(true);
+    setError("");
+    setSuccess("");
+    try {
+      const previousDate = getPreviousDateKey(date);
+      const data = await reporterService.getDailyReport(previousDate);
+      const copied = normalizeManualForm(data?.manual);
+      setForm((prev) => ({
+        ...copied,
+        note: prev.note || ""
+      }));
+      setSuccess(`${previousDate} sanasidagi summalar qo'yildi.`);
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
-      setSaving(false);
+      setCopyingYesterday(false);
     }
+  };
+
+  const handleClear = () => {
+    const confirmed = window.confirm("Kiritilgan summalarni tozalaysizmi?");
+    if (!confirmed) return;
+    setForm(emptyManual());
+    setSuccess("Summalar tozalandi.");
   };
 
   const handleExport = async () => {
@@ -214,6 +319,14 @@ function ReporterDashboard() {
       setExporting(false);
     }
   };
+
+  const autoSaveLabel = {
+    idle: "Auto-save tayyor",
+    waiting: "Auto-save kutmoqda",
+    saving: "Auto-save saqlayapti",
+    saved: "Auto-save saqlandi",
+    error: "Auto-save xato"
+  }[autoSaveStatus];
 
   const columns = [
     { key: "date", label: "Sana" },
@@ -274,7 +387,7 @@ function ReporterDashboard() {
             </h1>
           </div>
           <div className="grid gap-2 sm:grid-cols-[12rem_12rem_auto] sm:gap-3">
-            <DatePickerField label="Kun" value={date} onChange={setDate} />
+            <DatePickerField label="Kun" value={date} onChange={handleDateChange} />
             <Input
               label="Oy"
               type="month"
@@ -336,29 +449,74 @@ function ReporterDashboard() {
           </section>
 
           <form className="card space-y-4 p-3 sm:p-5" onSubmit={handleSave}>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Reporter kiritadigan summalar</h2>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Reporter kiritadigan summalar</h2>
+                <p className="text-xs font-semibold text-slate-500">{autoSaveLabel}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="min-h-11 px-3 text-xs"
+                  loading={copyingYesterday}
+                  loadingText="Olinmoqda..."
+                  onClick={handleCopyYesterday}
+                >
+                  Kechagini olish
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="min-h-11 px-3 text-xs"
+                  onClick={() => setShowMissing((prev) => !prev)}
+                >
+                  {showMissing ? "Yashirish" : `Bo'shlar: ${missingCount}`}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="min-h-11 px-3 text-xs"
+                  onClick={() => setAutoSaveEnabled((prev) => !prev)}
+                >
+                  {autoSaveEnabled ? "Auto-save ON" : "Auto-save OFF"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="danger"
+                  className="min-h-11 px-3 text-xs"
+                  onClick={handleClear}
+                >
+                  Tozalash
+                </Button>
+              </div>
             </div>
             <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
-              {amountFields.map((field) => (
-                <Input
-                  key={field.key}
-                  label={field.label}
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="1000"
-                  autoComplete="off"
-                  className="min-h-14 text-lg font-bold"
-                  value={form[field.key] ?? ""}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      [field.key]: event.target.value
-                    }))
-                  }
-                />
-              ))}
+              {amountFields.map((field) => {
+                const missing = showMissing && isMissingAmount(form[field.key]);
+                return (
+                  <Input
+                    key={field.key}
+                    label={field.label}
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="1000"
+                    autoComplete="off"
+                    error={missing ? "To'ldirilmagan" : ""}
+                    className={`min-h-14 text-lg font-bold ${
+                      missing ? "border-amber-400 bg-amber-50/70" : ""
+                    }`}
+                    value={form[field.key] ?? ""}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        [field.key]: event.target.value
+                      }))
+                    }
+                  />
+                );
+              })}
             </div>
             <label className="block">
               <span className="sampi-field-label mb-1.5 block text-sm font-semibold text-slate-600">
