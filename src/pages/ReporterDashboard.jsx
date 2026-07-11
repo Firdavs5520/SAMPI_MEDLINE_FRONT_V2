@@ -11,8 +11,12 @@ import { extractErrorMessage, formatCurrency } from "../utils/format.js";
 
 const amountFields = [
   { key: "expenseAmount", label: "Harajat" },
-  { key: "supplyAmount", label: "Ta'minot" },
   { key: "medicineAmount", label: "Dori" },
+  { key: "supplyAmount", label: "Ta'minot" },
+  { key: "stationeryAmount", label: "Kanstovar" },
+  { key: "communicationAmount", label: "Aloqa" },
+  { key: "childrenAmount", label: "Farzandlarga" },
+  { key: "homeAmount", label: "Uy uchun" },
   { key: "bossAmount", label: "Boshliq summasi" },
   { key: "terminalAmount", label: "Terminal" },
   { key: "transferAmount", label: "Perechisleniya" },
@@ -212,6 +216,7 @@ function MonthlyMobileRow({ row }) {
         <span>LOR: {formatCurrency(row.lorPaidAmount)}</span>
         <span>Proc: {formatCurrency(row.procedurePaidAmount)}</span>
         <span>Jami: {formatCurrency(row.autoIncomeTotal)}</span>
+        <span>Harajat jami: {formatCurrency(row.manualExpenseTotal)}</span>
         <span>Terminal: {formatCurrency(row.terminalAmount)}</span>
         <span>Click: {formatCurrency(row.clickAmount)}</span>
         <span>Perech: {formatCurrency(row.transferAmount)}</span>
@@ -376,23 +381,39 @@ function ReporterDashboard() {
 
   const monthlyRows = useMemo(
     () =>
-      (monthlyReport?.rows || []).map((row) => ({
-        id: row.date,
-        date: row.date,
-        lorClientsCount: row.cashier?.lor?.count || 0,
-        lorPaidAmount: row.cashier?.lor?.paidAmount || 0,
-        lorHalfPaidAmount: row.cashier?.lor?.halfPaidAmount || 0,
-        procedureCount: row.cashier?.procedure?.proceduresCount || 0,
-        procedurePaidAmount: row.cashier?.procedure?.paidAmount || 0,
-        autoIncomeTotal:
-          safeNumber(row.cashier?.lor?.halfPaidAmount) +
-          safeNumber(row.cashier?.procedure?.paidAmount),
-        expenseAmount: row.manual?.expenseAmount || 0,
-        terminalAmount: row.manual?.terminalAmount || 0,
-        transferAmount: row.manual?.transferAmount || 0,
-        clickAmount: row.manual?.clickAmount || 0,
-        debtAmount: row.manual?.debtAmount || 0
-      })),
+      (monthlyReport?.rows || []).map((row) => {
+        const manualAmounts = amountFields.reduce(
+          (acc, field) => ({
+            ...acc,
+            [field.key]: row.manual?.[field.key] || 0
+          }),
+          {}
+        );
+
+        return {
+          id: row.date,
+          date: row.date,
+          lorClientsCount: row.cashier?.lor?.count || 0,
+          lorPaidAmount: row.cashier?.lor?.paidAmount || 0,
+          lorHalfPaidAmount: row.cashier?.lor?.halfPaidAmount || 0,
+          procedureCount: row.cashier?.procedure?.proceduresCount || 0,
+          procedurePaidAmount: row.cashier?.procedure?.paidAmount || 0,
+          autoIncomeTotal:
+            safeNumber(row.cashier?.lor?.halfPaidAmount) +
+            safeNumber(row.cashier?.procedure?.paidAmount),
+          ...manualAmounts,
+          manualExpenseTotal:
+            safeNumber(manualAmounts.expenseAmount) +
+            safeNumber(manualAmounts.medicineAmount) +
+            safeNumber(manualAmounts.supplyAmount) +
+            safeNumber(manualAmounts.stationeryAmount) +
+            safeNumber(manualAmounts.communicationAmount) +
+            safeNumber(manualAmounts.childrenAmount) +
+            safeNumber(manualAmounts.homeAmount) +
+            safeNumber(manualAmounts.bossAmount) +
+            safeNumber(manualAmounts.debtAmount)
+        };
+      }),
     [monthlyReport]
   );
   const activeMonthlyRows = useMemo(
@@ -404,11 +425,7 @@ function ReporterDashboard() {
           row.lorHalfPaidAmount,
           row.procedureCount,
           row.procedurePaidAmount,
-          row.expenseAmount,
-          row.terminalAmount,
-          row.transferAmount,
-          row.clickAmount,
-          row.debtAmount
+          ...amountFields.map((field) => row[field.key])
         ].some((value) => safeNumber(value) > 0)
       ),
     [monthlyRows]
@@ -617,6 +634,46 @@ function ReporterDashboard() {
       key: "expenseAmount",
       label: "Harajat",
       render: (row) => `${formatCurrency(row.expenseAmount)} so'm`
+    },
+    {
+      key: "medicineAmount",
+      label: "Dori",
+      render: (row) => `${formatCurrency(row.medicineAmount)} so'm`
+    },
+    {
+      key: "supplyAmount",
+      label: "Ta'minot",
+      render: (row) => `${formatCurrency(row.supplyAmount)} so'm`
+    },
+    {
+      key: "stationeryAmount",
+      label: "Kanstovar",
+      render: (row) => `${formatCurrency(row.stationeryAmount)} so'm`
+    },
+    {
+      key: "communicationAmount",
+      label: "Aloqa",
+      render: (row) => `${formatCurrency(row.communicationAmount)} so'm`
+    },
+    {
+      key: "childrenAmount",
+      label: "Farzandlarga",
+      render: (row) => `${formatCurrency(row.childrenAmount)} so'm`
+    },
+    {
+      key: "homeAmount",
+      label: "Uy uchun",
+      render: (row) => `${formatCurrency(row.homeAmount)} so'm`
+    },
+    {
+      key: "bossAmount",
+      label: "Boshliq",
+      render: (row) => `${formatCurrency(row.bossAmount)} so'm`
+    },
+    {
+      key: "manualExpenseTotal",
+      label: "Jami harajat",
+      render: (row) => `${formatCurrency(row.manualExpenseTotal)} so'm`
     },
     {
       key: "terminalAmount",
