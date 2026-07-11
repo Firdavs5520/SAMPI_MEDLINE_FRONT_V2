@@ -697,6 +697,11 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       if (paidAmount > checkTotal) {
         throw new Error("To'langan summa chek summasidan oshmasligi kerak.");
       }
+      const debtAmount = Math.max(0, checkTotal - paidAmount);
+      const shouldRequireDebtPhone = shiftWindow?.settings?.requireDebtPhone !== false;
+      if (shouldRequireDebtPhone && debtAmount > 0 && !form.patientPhone.trim()) {
+        throw new Error("Qarz qolsa bemor telefoni majburiy.");
+      }
 
       const payload = {
         checkRef: selectedPendingCheck._id,
