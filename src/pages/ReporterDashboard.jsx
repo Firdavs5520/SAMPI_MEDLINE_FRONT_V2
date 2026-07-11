@@ -110,6 +110,60 @@ function StatCard({ title, value, hint, tone = "cyan" }) {
   );
 }
 
+function CashierSummaryCards({ totals, lorHalfAmount, procedurePaidAmount, autoIncomeTotal }) {
+  return (
+    <section className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
+      <StatCard
+        title="LOR odam"
+        value={totals.lor.count}
+        hint={`${formatCurrency(totals.lor.totalAmount)} so'm jami`}
+      />
+      <StatCard
+        title="LOR summa"
+        value={`${formatCurrency(totals.lor.paidAmount)} so'm`}
+        hint="Kassadan qabul qilingan summa"
+        tone="emerald"
+      />
+      <StatCard
+        title="LOR 50%"
+        value={`${formatCurrency(totals.lor.halfPaidAmount)} so'm`}
+        hint="Kelgan LOR summasi ikkiga bo'lingan"
+        tone="amber"
+      />
+      <StatCard
+        title="Protsedura soni"
+        value={totals.procedure.proceduresCount}
+        hint={`${formatCurrency(totals.procedure.totalAmount)} so'm jami`}
+        tone="slate"
+      />
+      <StatCard
+        title="Protsedura summa"
+        value={`${formatCurrency(procedurePaidAmount)} so'm`}
+        hint="Kassadan kelgan protsedura summasi"
+        tone="emerald"
+      />
+      <StatCard
+        title="LOR 50% + Protsedura"
+        value={`${formatCurrency(autoIncomeTotal)} so'm`}
+        hint="Reporter uchun avtomatik yakun"
+        tone="orange"
+      />
+      <StatCard
+        title="LOR 50% qiymati"
+        value={`${formatCurrency(lorHalfAmount)} so'm`}
+        hint="Alohida nazorat summasi"
+        tone="slate"
+      />
+      <StatCard
+        title="Kassadagi qarz"
+        value={`${formatCurrency(totals.total.debtAmount)} so'm`}
+        hint="Kassa yozuvlaridagi qolgan qarz"
+        tone="slate"
+      />
+    </section>
+  );
+}
+
 function MonthlyMobileRow({ row }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
@@ -517,146 +571,100 @@ function ReporterDashboard() {
           <Spinner />
         </div>
       ) : (
-        <>
-          <section className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
-            <StatCard
-              title="LOR odam"
-              value={totals.lor.count}
-              hint={`${formatCurrency(totals.lor.totalAmount)} so'm jami`}
-            />
-            <StatCard
-              title="LOR summa"
-              value={`${formatCurrency(totals.lor.paidAmount)} so'm`}
-              hint="Kassadan qabul qilingan summa"
-              tone="emerald"
-            />
-            <StatCard
-              title="LOR 50%"
-              value={`${formatCurrency(totals.lor.halfPaidAmount)} so'm`}
-              hint="Kelgan LOR summasi ikkiga bo'lingan"
-              tone="amber"
-            />
-            <StatCard
-              title="Protsedura soni"
-              value={totals.procedure.proceduresCount}
-              hint={`${formatCurrency(totals.procedure.totalAmount)} so'm jami`}
-              tone="slate"
-            />
-            <StatCard
-              title="Protsedura summa"
-              value={`${formatCurrency(procedurePaidAmount)} so'm`}
-              hint="Kassadan kelgan protsedura summasi"
-              tone="emerald"
-            />
-            <StatCard
-              title="LOR 50% + Protsedura"
-              value={`${formatCurrency(autoIncomeTotal)} so'm`}
-              hint="Reporter uchun avtomatik yakun"
-              tone="orange"
-            />
-            <StatCard
-              title="LOR 50% qiymati"
-              value={`${formatCurrency(lorHalfAmount)} so'm`}
-              hint="Alohida nazorat summasi"
-              tone="slate"
-            />
-            <StatCard
-              title="Kassadagi qarz"
-              value={`${formatCurrency(totals.total.debtAmount)} so'm`}
-              hint="Kassa yozuvlaridagi qolgan qarz"
-              tone="slate"
-            />
-          </section>
-
-          <form className="card space-y-4 p-3 sm:p-5" onSubmit={handleSave}>
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">Reporter kiritadigan summalar</h2>
-                <p className="text-xs font-semibold text-slate-500">{autoSaveLabel}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="min-h-11 px-3 text-xs"
-                  loading={copyingYesterday}
-                  loadingText="Olinmoqda..."
-                  onClick={handleCopyYesterday}
-                >
-                  Kechagini olish
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="min-h-11 px-3 text-xs"
-                  onClick={() => setShowMissing((prev) => !prev)}
-                >
-                  {showMissing ? "Yashirish" : `Bo'shlar: ${missingCount}`}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="min-h-11 px-3 text-xs"
-                  disabled
-                >
-                  Auto-save yoniq
-                </Button>
-                <Button type="button" variant="danger" className="min-h-11 px-3 text-xs" onClick={handleClear}>
-                  Tozalash
-                </Button>
-              </div>
+        <form className="card space-y-4 p-3 sm:p-5" onSubmit={handleSave}>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Reporter kiritadigan summalar</h2>
+              <p className="text-xs font-semibold text-slate-500">{autoSaveLabel}</p>
             </div>
-            <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
-              {amountFields.map((field) => {
-                const missing = showMissing && isMissingAmount(form[field.key]);
-                return (
-                  <AmountField
-                    key={field.key}
-                    label={field.label}
-                    missing={missing}
-                    value={form[field.key] ?? ""}
-                    onChange={(nextValue) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        [field.key]: nextValue
-                      }))
-                    }
-                  />
-                );
-              })}
-            </div>
-            <label className="block">
-              <span className="sampi-field-label mb-1.5 block text-sm font-semibold text-slate-600">
-                Izoh
-              </span>
-              <textarea
-                className="sampi-input sampi-control min-h-24 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 sm:text-sm"
-                value={form.note || ""}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    note: event.target.value
-                  }))
-                }
-              />
-            </label>
-            <div className="hidden justify-end sm:flex">
-              <Button type="submit" className="min-h-12" loading={saving} loadingText="Saqlanmoqda...">
-                Saqlash
-              </Button>
-            </div>
-            <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur sm:hidden">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
               <Button
-                type="submit"
-                className="min-h-12 w-full text-base"
-                loading={saving}
-                loadingText="Saqlanmoqda..."
+                type="button"
+                variant="secondary"
+                className="min-h-11 px-3 text-xs"
+                loading={copyingYesterday}
+                loadingText="Olinmoqda..."
+                onClick={handleCopyYesterday}
               >
-                Saqlash
+                Kechagini olish
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                className="min-h-11 px-3 text-xs"
+                onClick={() => setShowMissing((prev) => !prev)}
+              >
+                {showMissing ? "Yashirish" : `Bo'shlar: ${missingCount}`}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                className="min-h-11 px-3 text-xs"
+                disabled
+              >
+                Auto-save yoniq
+              </Button>
+              <Button type="button" variant="danger" className="min-h-11 px-3 text-xs" onClick={handleClear}>
+                Tozalash
               </Button>
             </div>
-          </form>
-        </>
+          </div>
+          <CashierSummaryCards
+            totals={totals}
+            lorHalfAmount={lorHalfAmount}
+            procedurePaidAmount={procedurePaidAmount}
+            autoIncomeTotal={autoIncomeTotal}
+          />
+          <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
+            {amountFields.map((field) => {
+              const missing = showMissing && isMissingAmount(form[field.key]);
+              return (
+                <AmountField
+                  key={field.key}
+                  label={field.label}
+                  missing={missing}
+                  value={form[field.key] ?? ""}
+                  onChange={(nextValue) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      [field.key]: nextValue
+                    }))
+                  }
+                />
+              );
+            })}
+          </div>
+          <label className="block">
+            <span className="sampi-field-label mb-1.5 block text-sm font-semibold text-slate-600">
+              Izoh
+            </span>
+            <textarea
+              className="sampi-input sampi-control min-h-24 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 sm:text-sm"
+              value={form.note || ""}
+              onChange={(event) =>
+                setForm((prev) => ({
+                  ...prev,
+                  note: event.target.value
+                }))
+              }
+            />
+          </label>
+          <div className="hidden justify-end sm:flex">
+            <Button type="submit" className="min-h-12" loading={saving} loadingText="Saqlanmoqda...">
+              Saqlash
+            </Button>
+          </div>
+          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur sm:hidden">
+            <Button
+              type="submit"
+              className="min-h-12 w-full text-base"
+              loading={saving}
+              loadingText="Saqlanmoqda..."
+            >
+              Saqlash
+            </Button>
+          </div>
+        </form>
       )}
 
       <section className="card p-3 sm:p-5">
