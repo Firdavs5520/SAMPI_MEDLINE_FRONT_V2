@@ -76,6 +76,12 @@ const SECTION_META = {
     subtitle: "LOR mutaxassislar ro'yxatini boshqarish.",
     lockedType: "lor",
     specialistLabel: "Vrach"
+  },
+  settings: {
+    title: "Kassa sozlamalari",
+    subtitle: "Smena va kassa ish tartibini boshqarish.",
+    lockedType: null,
+    specialistLabel: "Mutaxassis"
   }
 };
 
@@ -175,6 +181,26 @@ const emptySummary = {
   }
 };
 
+const defaultCashierSettings = {
+  shiftStartTime: "08:00",
+  shiftEndTime: "02:00",
+  lateEntryWarningMinutes: 30,
+  requireDebtPhone: true
+};
+
+const timeInputPattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+const normalizeSettingsForm = (settings = {}) => ({
+  shiftStartTime: settings.shiftStartTime || defaultCashierSettings.shiftStartTime,
+  shiftEndTime: settings.shiftEndTime || defaultCashierSettings.shiftEndTime,
+  lateEntryWarningMinutes: String(
+    settings.lateEntryWarningMinutes ?? defaultCashierSettings.lateEntryWarningMinutes
+  ),
+  requireDebtPhone: Boolean(
+    settings.requireDebtPhone ?? defaultCashierSettings.requireDebtPhone
+  )
+});
+
 function SummaryCard({ title, value, hint, tone = "default" }) {
   const tones = {
     default: "border-slate-200 bg-white",
@@ -200,6 +226,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const isFormSection = forcedSection === "nurse-patients" || forcedSection === "lor-patients";
   const isHistorySection = forcedSection === "nurse-history" || forcedSection === "lor-history";
   const isDebtSection = forcedSection === "debts";
+  const isSettingsSection = forcedSection === "settings";
   const isEntriesSection =
     forcedSection === "nurse-entries" ||
     forcedSection === "nurse-history" ||
@@ -225,6 +252,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const hasLoadedOnceRef = useRef(false);
   const [savingEntry, setSavingEntry] = useState(false);
   const [savingSpecialist, setSavingSpecialist] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
   const [pendingChecksLoading, setPendingChecksLoading] = useState(false);
   const [entries, setEntries] = useState([]);
   const [historyEntries, setHistoryEntries] = useState([]);
@@ -243,6 +271,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const [searchInput, setSearchInput] = useState("");
   const [form, setForm] = useState(createInitialForm(lockedType || "lor"));
   const [specialistNameInput, setSpecialistNameInput] = useState("");
+  const [settingsForm, setSettingsForm] = useState(() =>
+    normalizeSettingsForm(defaultCashierSettings)
+  );
   const [closingDebtId, setClosingDebtId] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -482,6 +513,23 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
   }, [isFormSection, lockedType]);
 
+  const loadSettings = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await cashierService.getSettings();
+      setSettingsForm(normalizeSettingsForm(data));
+      setShiftWindow({
+        fromLabel: data?.shiftStartTime || defaultCashierSettings.shiftStartTime,
+        toLabel: data?.shiftEndTime || defaultCashierSettings.shiftEndTime
+      });
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (lockedType) {
       setFilters((prev) => ({
@@ -527,7 +575,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   }, [lockedType, filters.department, filters.specialistType]);
 
   useEffect(() => {
-    if (!isSpecialistSection) {
+    if (isSettingsSection) {
+      loadSettings();
+    } else if (!isSpecialistSection) {
       loadEntries();
     } else {
       setEntries([]);
@@ -540,13 +590,15 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     isHistorySection,
     isEntriesSection,
     isSpecialistSection,
+    isSettingsSection,
     effectiveFilters.date,
     effectiveFilters.department,
     effectiveFilters.specialistType,
     effectiveFilters.paymentMethod,
     effectiveFilters.debtOnly,
     effectiveFilters.search,
-    loadEntries
+    loadEntries,
+    loadSettings
   ]);
 
   useEffect(() => {
@@ -743,8 +795,142 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
   };
 
+  const handleSettingsChange = (key, value) => {
+    setSettingsForm((prev) => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleSaveSettings = async (event) => {
+    event.preventDefault();
+    resetMessages();
+
+    if (!timeInputPattern.test(settingsForm.shiftStartTime)) {
+      setError("Smena boshlanishi HH:mm formatida bo'lishi kerak.");
+      return;
+    }
+
+    if (!timeInputPattern.test(settingsForm.shiftEndTime)) {
+      setError("Smena tugashi HH:mm formatida bo'lishi kerak.");
+      return;
+    }
+
+    const lateEntryWarningMinutes = Number(settingsForm.lateEntryWarningMinutes);
+    if (
+      !Number.isFinite(lateEntryWarningMinutes) ||
+      lateEntryWarningMinutes < 0 ||
+      lateEntryWarningMinutes > 720
+    ) {
+      setError("Ogohlantirish daqiqasi 0 dan 720 gacha bo'lishi kerak.");
+      return;
+    }
+
+    setSavingSettings(true);
+    try {
+      const data = await cashierService.updateSettings({
+        shiftStartTime: settingsForm.shiftStartTime,
+        shiftEndTime: settingsForm.shiftEndTime,
+        lateEntryWarningMinutes,
+        requireDebtPhone: settingsForm.requireDebtPhone
+      });
+      setSettingsForm(normalizeSettingsForm(data));
+      setShiftWindow({
+        fromLabel: data?.shiftStartTime || defaultCashierSettings.shiftStartTime,
+        toLabel: data?.shiftEndTime || defaultCashierSettings.shiftEndTime
+      });
+      hasLoadedOnceRef.current = false;
+      setSuccess("Kassa sozlamalari saqlandi.");
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   if (loading) {
     return <Spinner text="Kassa paneli yuklanmoqda..." />;
+  }
+
+  if (isSettingsSection) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div className="card p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-slate-800">{sectionMeta.title}</h1>
+              <p className="mt-1 text-sm text-slate-500">{sectionMeta.subtitle}</p>
+            </div>
+            <span className="inline-flex w-fit items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-bold tracking-wide text-cyan-800">
+              {shiftWindow.fromLabel} - {shiftWindow.toLabel}
+            </span>
+          </div>
+          <div className="mt-3 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-medium text-cyan-800">
+            Bu vaqt joriy yozuvlar, tarix va smena yopish hisobotida ishlatiladi.
+          </div>
+        </div>
+
+        <form className="card space-y-4 p-4 sm:p-5" onSubmit={handleSaveSettings}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input
+              label="Smena boshlanishi"
+              type="time"
+              value={settingsForm.shiftStartTime}
+              onChange={(event) => handleSettingsChange("shiftStartTime", event.target.value)}
+            />
+            <Input
+              label="Smena tugashi"
+              type="time"
+              value={settingsForm.shiftEndTime}
+              onChange={(event) => handleSettingsChange("shiftEndTime", event.target.value)}
+            />
+            <Input
+              label="Kechikkan yozuv ogohlantirishi (daqiqa)"
+              type="number"
+              min="0"
+              max="720"
+              inputMode="numeric"
+              value={settingsForm.lateEntryWarningMinutes}
+              onChange={(event) =>
+                handleSettingsChange("lateEntryWarningMinutes", event.target.value)
+              }
+            />
+            <label className="flex min-h-[4.25rem] items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-3 py-2.5">
+              <span>
+                <span className="block text-sm font-semibold text-slate-700">
+                  Qarzda telefon talab qilish
+                </span>
+                <span className="mt-0.5 block text-xs font-medium text-slate-500">
+                  Qarz yozuvi qolganda telefonni eslatish uchun.
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                className="h-5 w-5"
+                checked={settingsForm.requireDebtPhone}
+                onChange={(event) =>
+                  handleSettingsChange("requireDebtPhone", event.target.checked)
+                }
+              />
+            </label>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-600">
+            Agar tugash vaqti boshlanishdan kichik bo'lsa, smena ertasi kungacha davom etadi.
+            Masalan: 08:00 - 02:00.
+          </div>
+
+          <div className="flex justify-end">
+            <Button type="submit" className="min-h-12 w-full sm:w-auto" loading={savingSettings}>
+              Sozlamalarni saqlash
+            </Button>
+          </div>
+        </form>
+
+        <Alert type="success" message={success} />
+        <Alert type="error" message={error} />
+      </div>
+    );
   }
 
   if (isSpecialistSection) {

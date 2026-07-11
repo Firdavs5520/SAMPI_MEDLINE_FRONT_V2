@@ -49,7 +49,8 @@ export const sidebarMenus = {
     { label: "LOR tarixi", path: "/cashier/lor-history", end: true, group: "LOR bo'limi", icon: "history" },
     { label: "LOR shifokorlar", path: "/cashier/lor-specialists", end: true, group: "LOR bo'limi", icon: "users" },
     { label: "Kassa jurnali", path: "/cashier/journal", end: true, group: "Umumiy", icon: "receipt" },
-    { label: "Qarzdorlar ro'yxati", path: "/cashier/debts", end: true, group: "Umumiy", icon: "list" }
+    { label: "Qarzdorlar ro'yxati", path: "/cashier/debts", end: true, group: "Umumiy", icon: "list" },
+    { label: "Sozlamalar", path: "/cashier/settings", end: true, group: "Umumiy", icon: "settings" }
   ],
   manager: [
     { label: "Umumiy statistika", path: "/manager", end: true, icon: "bar-chart" },

@@ -22,6 +22,16 @@ const buildQuery = ({
 };
 
 const cashierService = {
+  async getSettings() {
+    const { data } = await api.get("/cashier/settings");
+    return data.data;
+  },
+
+  async updateSettings(payload) {
+    const { data } = await api.put("/cashier/settings", payload);
+    return data.data;
+  },
+
   async getEntries(filters = {}) {
     const { data } = await api.get(`/cashier/entries${buildQuery(filters)}`);
     return data.data;

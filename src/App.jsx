@@ -127,6 +127,10 @@ function App() {
             path="/cashier/debts"
             element={<CashierDashboard forcedSection="debts" />}
           />
+          <Route
+            path="/cashier/settings"
+            element={<CashierDashboard forcedSection="settings" />}
+          />
         </Route>
       </Route>
 
