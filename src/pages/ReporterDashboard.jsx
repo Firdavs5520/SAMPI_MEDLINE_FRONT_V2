@@ -51,10 +51,33 @@ function StatCard({ title, value, hint, tone = "cyan" }) {
   };
 
   return (
-    <div className={`rounded-xl border p-4 shadow-sm ${tones[tone] || tones.slate}`}>
+    <div className={`rounded-xl border p-3 shadow-sm sm:p-4 ${tones[tone] || tones.slate}`}>
       <p className="text-xs font-bold uppercase text-slate-500">{title}</p>
-      <p className="mt-2 text-xl font-black leading-tight">{value}</p>
+      <p className="mt-1.5 break-words text-lg font-black leading-tight sm:mt-2 sm:text-xl">
+        {value}
+      </p>
       {hint ? <p className="mt-1 text-xs font-semibold text-slate-500">{hint}</p> : null}
+    </div>
+  );
+}
+
+function MonthlyMobileRow({ row }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-sm font-black text-slate-900">{row.date}</p>
+        <p className="text-xs font-bold text-cyan-700">LOR 50%: {formatCurrency(row.lorHalfPaidAmount)}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-600">
+        <span>LOR soni: {row.lorClientsCount}</span>
+        <span>Protsedura: {row.procedureCount}</span>
+        <span>LOR: {formatCurrency(row.lorPaidAmount)}</span>
+        <span>Proc: {formatCurrency(row.procedurePaidAmount)}</span>
+        <span>Terminal: {formatCurrency(row.terminalAmount)}</span>
+        <span>Click: {formatCurrency(row.clickAmount)}</span>
+        <span>Perech: {formatCurrency(row.transferAmount)}</span>
+        <span>Qarz: {formatCurrency(row.debtAmount)}</span>
+      </div>
     </div>
   );
 }
@@ -133,6 +156,24 @@ function ReporterDashboard() {
         debtAmount: row.manual?.debtAmount || 0
       })),
     [monthlyReport]
+  );
+  const activeMonthlyRows = useMemo(
+    () =>
+      monthlyRows.filter((row) =>
+        [
+          row.lorClientsCount,
+          row.lorPaidAmount,
+          row.lorHalfPaidAmount,
+          row.procedureCount,
+          row.procedurePaidAmount,
+          row.expenseAmount,
+          row.terminalAmount,
+          row.transferAmount,
+          row.clickAmount,
+          row.debtAmount
+        ].some((value) => safeNumber(value) > 0)
+      ),
+    [monthlyRows]
   );
 
   const handleSave = async (event) => {
@@ -221,18 +262,18 @@ function ReporterDashboard() {
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="card p-4 sm:p-5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div className="space-y-3 pb-24 sm:space-y-4 sm:pb-4">
+      <div className="card p-3 sm:p-5">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-cyan-700">
               Reporter
             </p>
-            <h1 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">
+            <h1 className="mt-1 text-lg font-black leading-tight text-slate-900 sm:text-2xl">
               Kunlik kassa va xarajat hisoboti
             </h1>
           </div>
-          <div className="grid gap-3 sm:grid-cols-[12rem_12rem_auto]">
+          <div className="grid gap-2 sm:grid-cols-[12rem_12rem_auto] sm:gap-3">
             <DatePickerField label="Kun" value={date} onChange={setDate} />
             <Input
               label="Oy"
@@ -241,7 +282,7 @@ function ReporterDashboard() {
               onChange={(event) => setMonth(event.target.value)}
             />
             <Button
-              className="self-end"
+              className="min-h-12 self-end"
               variant="accent"
               loading={exporting}
               loadingText="Excel..."
@@ -262,7 +303,7 @@ function ReporterDashboard() {
         </div>
       ) : (
         <>
-          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <section className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-5">
             <StatCard
               title="LOR mijozlari"
               value={totals.lor.count}
@@ -294,18 +335,21 @@ function ReporterDashboard() {
             />
           </section>
 
-          <form className="card space-y-4 p-4 sm:p-5" onSubmit={handleSave}>
+          <form className="card space-y-4 p-3 sm:p-5" onSubmit={handleSave}>
             <div>
               <h2 className="text-lg font-bold text-slate-900">Reporter kiritadigan summalar</h2>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
               {amountFields.map((field) => (
                 <Input
                   key={field.key}
                   label={field.label}
                   type="number"
+                  inputMode="decimal"
                   min="0"
                   step="1000"
+                  autoComplete="off"
+                  className="min-h-14 text-lg font-bold"
                   value={form[field.key] ?? ""}
                   onChange={(event) =>
                     setForm((prev) => ({
@@ -321,7 +365,7 @@ function ReporterDashboard() {
                 Izoh
               </span>
               <textarea
-                className="sampi-input sampi-control min-h-24 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                className="sampi-input sampi-control min-h-24 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 sm:text-sm"
                 value={form.note || ""}
                 onChange={(event) =>
                   setForm((prev) => ({
@@ -331,8 +375,18 @@ function ReporterDashboard() {
                 }
               />
             </label>
-            <div className="flex justify-end">
-              <Button type="submit" loading={saving} loadingText="Saqlanmoqda...">
+            <div className="hidden justify-end sm:flex">
+              <Button type="submit" className="min-h-12" loading={saving} loadingText="Saqlanmoqda...">
+                Saqlash
+              </Button>
+            </div>
+            <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur sm:hidden">
+              <Button
+                type="submit"
+                className="min-h-12 w-full text-base"
+                loading={saving}
+                loadingText="Saqlanmoqda..."
+              >
                 Saqlash
               </Button>
             </div>
@@ -340,7 +394,7 @@ function ReporterDashboard() {
         </>
       )}
 
-      <section className="card p-4 sm:p-5">
+      <section className="card p-3 sm:p-5">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-bold text-slate-900">Oylik hisobot</h2>
@@ -354,7 +408,24 @@ function ReporterDashboard() {
             </div>
           ) : null}
         </div>
-        {loadingMonthly ? <Spinner /> : <Table columns={columns} data={monthlyRows} />}
+        {loadingMonthly ? (
+          <Spinner />
+        ) : (
+          <>
+            <div className="space-y-2 lg:hidden">
+              {activeMonthlyRows.length === 0 ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center text-sm font-semibold text-slate-500">
+                  Ma'lumot topilmadi
+                </div>
+              ) : (
+                activeMonthlyRows.map((row) => <MonthlyMobileRow key={row.id} row={row} />)
+              )}
+            </div>
+            <div className="hidden lg:block">
+              <Table columns={columns} data={monthlyRows} />
+            </div>
+          </>
+        )}
       </section>
     </div>
   );
