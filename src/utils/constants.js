@@ -58,6 +58,7 @@ export const sidebarMenus = {
     { label: "Dori sarfi tarixi", path: "/manager/usage-history", icon: "history" }
   ],
   reporter: [
-    { label: "Kunlik hisobot", path: "/reporter", end: true, icon: "bar-chart" }
+    { label: "Kunlik hisobot", path: "/reporter", end: true, icon: "bar-chart" },
+    { label: "Yillik hisobot", path: "/reporter/reports", end: true, icon: "receipt" }
   ]
 };

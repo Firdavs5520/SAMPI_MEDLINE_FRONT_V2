@@ -1,82 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import Alert from "../components/Alert.jsx";
 import Button from "../components/Button.jsx";
 import DatePickerField from "../components/DatePickerField.jsx";
 import Modal from "../components/Modal.jsx";
-import MonthPickerField from "../components/MonthPickerField.jsx";
 import Spinner from "../components/Spinner.jsx";
-import Table from "../components/Table.jsx";
 import reporterService from "../services/reporterService.js";
 import { extractErrorMessage, formatCurrency } from "../utils/format.js";
+import {
+  formatAmountInput,
+  getPreviousDateKey,
+  isMissingAmount,
+  reporterAmountFields,
+  safeNumber,
+  toYmd
+} from "../utils/reporterUtils.js";
 
-const amountFields = [
-  { key: "expenseAmount", label: "Harajat" },
-  { key: "medicineAmount", label: "Dori" },
-  { key: "supplyAmount", label: "Ta'minot" },
-  { key: "stationeryAmount", label: "Kanstovar" },
-  { key: "communicationAmount", label: "Aloqa" },
-  { key: "childrenAmount", label: "Farzandlarga" },
-  { key: "homeAmount", label: "Uy uchun" },
-  { key: "bossAmount", label: "Boshliq summasi" },
-  { key: "terminalAmount", label: "Terminal" },
-  { key: "transferAmount", label: "Perechisleniya" },
-  { key: "clickAmount", label: "Click" },
-  { key: "debtAmount", label: "Qarz" }
-];
+const amountFields = reporterAmountFields;
 const SUSPICIOUS_AMOUNT_THRESHOLD = 10000000;
-const monthLabels = [
-  "Yanvar",
-  "Fevral",
-  "Mart",
-  "Aprel",
-  "May",
-  "Iyun",
-  "Iyul",
-  "Avgust",
-  "Sentabr",
-  "Oktabr",
-  "Noyabr",
-  "Dekabr"
-];
-
-const toYmd = (date = new Date()) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-const toMonth = (date = new Date()) => toYmd(date).slice(0, 7);
-
-const shiftMonth = (value, offset) => {
-  const match = /^(\d{4})-(\d{2})$/.exec(String(value || ""));
-  const base = match
-    ? new Date(Number(match[1]), Number(match[2]) - 1, 1)
-    : new Date();
-  base.setMonth(base.getMonth() + offset);
-  return toMonth(base);
-};
-
-const formatMonthLabel = (value) => {
-  const match = /^(\d{4})-(\d{2})$/.exec(String(value || ""));
-  if (!match) return value || "";
-  const monthIndex = Number(match[2]) - 1;
-  return `${monthLabels[monthIndex] || match[2]} ${match[1]}`;
-};
-
-const getYearLabel = (value) => {
-  const match = /^(\d{4})-(\d{2})$/.exec(String(value || ""));
-  return match ? match[1] : new Date().getFullYear();
-};
-
-const getPreviousDateKey = (value) => {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
-  if (!match) return toYmd(new Date(Date.now() - 24 * 60 * 60 * 1000));
-
-  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  date.setDate(date.getDate() - 1);
-  return toYmd(date);
-};
 
 const emptyManual = () =>
   amountFields.reduce(
@@ -86,12 +27,6 @@ const emptyManual = () =>
     }),
     { note: "" }
   );
-
-const safeNumber = (value) => {
-  const parsed =
-    typeof value === "number" ? value : Number(String(value || "").replace(/\s/g, ""));
-  return Number.isFinite(parsed) ? parsed : 0;
-};
 
 const normalizeManualForm = (manual = {}) =>
   amountFields.reduce(
@@ -104,19 +39,6 @@ const normalizeManualForm = (manual = {}) =>
     },
     { note: manual?.note || "" }
   );
-
-const isMissingAmount = (value) => String(value ?? "").trim() === "";
-
-const normalizeAmountInput = (value) =>
-  String(value ?? "")
-    .replace(/\D/g, "")
-    .slice(0, 12);
-
-const formatAmountInput = (value) => {
-  const digits = normalizeAmountInput(value);
-  if (!digits) return "";
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-};
 
 const getSuspiciousFields = (formValue) =>
   amountFields
@@ -203,31 +125,6 @@ function CashierSummaryCards({ totals, lorHalfAmount, procedurePaidAmount, autoI
   );
 }
 
-function MonthlyMobileRow({ row }) {
-  return (
-    <div className="reporter-mobile-row rounded-xl border p-3 shadow-sm">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="reporter-mobile-date text-sm font-black">{row.date}</p>
-        <p className="reporter-mobile-accent text-xs font-bold">
-          LOR 50%: {formatCurrency(row.lorHalfPaidAmount)}
-        </p>
-      </div>
-      <div className="reporter-mobile-grid grid grid-cols-2 gap-2 text-xs font-semibold">
-        <span>LOR soni: {row.lorClientsCount}</span>
-        <span>Protsedura: {row.procedureCount}</span>
-        <span>LOR: {formatCurrency(row.lorPaidAmount)}</span>
-        <span>Proc: {formatCurrency(row.procedurePaidAmount)}</span>
-        <span>Jami: {formatCurrency(row.autoIncomeTotal)}</span>
-        <span>Harajat jami: {formatCurrency(row.manualExpenseTotal)}</span>
-        <span>Terminal: {formatCurrency(row.terminalAmount)}</span>
-        <span>Click: {formatCurrency(row.clickAmount)}</span>
-        <span>Perech: {formatCurrency(row.transferAmount)}</span>
-        <span>Qarz: {formatCurrency(row.debtAmount)}</span>
-      </div>
-    </div>
-  );
-}
-
 function AmountField({ label, value, missing, onChange }) {
   return (
     <label className="block">
@@ -251,84 +148,13 @@ function AmountField({ label, value, missing, onChange }) {
   );
 }
 
-function ReportDownloadPanel({
-  month,
-  monthlyReport,
-  exportingReportId,
-  onMonthChange,
-  onExport
-}) {
-  const currentMonth = toMonth();
-  const previousYearMonth = shiftMonth(currentMonth, -12);
-  const selectedYear = getYearLabel(month);
-  const selectedTotal =
-    safeNumber(monthlyReport?.totals?.lorHalfPaidAmount) +
-    safeNumber(monthlyReport?.totals?.procedurePaidAmount);
-  const isExporting = Boolean(exportingReportId);
-
-  return (
-    <section className="reporter-download-card card space-y-4 p-3 sm:p-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h2 className="text-lg font-black text-slate-900">Yillik hisobot</h2>
-          <p className="mt-1 text-sm font-semibold text-slate-500">
-            Oylar Excel ichida alohida sahifalarda chiqadi.
-          </p>
-        </div>
-        <div className="reporter-report-total rounded-xl border px-4 py-3 text-sm font-bold">
-          {formatMonthLabel(month)} jami: {formatCurrency(selectedTotal)} so'm
-        </div>
-      </div>
-
-      <div className="grid gap-3 xl:grid-cols-[16rem_1fr] xl:items-end">
-        <MonthPickerField label="Hisobot yili" value={month} onChange={onMonthChange} />
-        <div className="grid gap-2 sm:grid-cols-3">
-          <Button
-            className="min-h-12 w-full"
-            variant="accent"
-            loading={exportingReportId === "current"}
-            loadingText="Yuklanmoqda..."
-            disabled={isExporting}
-            onClick={() => onExport(currentMonth, "current")}
-          >
-            Shu yil Excel
-          </Button>
-          <Button
-            className="min-h-12 w-full"
-            variant="secondary"
-            loading={exportingReportId === "previous"}
-            loadingText="Yuklanmoqda..."
-            disabled={isExporting}
-            onClick={() => onExport(previousYearMonth, "previous")}
-          >
-            O'tgan yil Excel
-          </Button>
-          <Button
-            className="min-h-12 w-full"
-            loading={exportingReportId === "selected"}
-            loadingText="Yuklanmoqda..."
-            disabled={isExporting}
-            onClick={() => onExport(month, "selected")}
-          >
-            {selectedYear} Excel
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function ReporterDashboard() {
   const [date, setDate] = useState(toYmd);
-  const [month, setMonth] = useState(toMonth);
   const [dailyReport, setDailyReport] = useState(null);
-  const [monthlyReport, setMonthlyReport] = useState(null);
   const [form, setForm] = useState(emptyManual);
   const [loadingDaily, setLoadingDaily] = useState(true);
-  const [loadingMonthly, setLoadingMonthly] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copyingYesterday, setCopyingYesterday] = useState(false);
-  const [exportingReportId, setExportingReportId] = useState("");
   const [autoSaveStatus, setAutoSaveStatus] = useState("idle");
   const [showMissing, setShowMissing] = useState(false);
   const [suspiciousPrompt, setSuspiciousPrompt] = useState(null);
@@ -352,25 +178,9 @@ function ReporterDashboard() {
     }
   }, [date]);
 
-  const loadMonthly = useCallback(async () => {
-    setLoadingMonthly(true);
-    try {
-      const data = await reporterService.getMonthlyReport(month);
-      setMonthlyReport(data);
-    } catch (err) {
-      setError(extractErrorMessage(err));
-    } finally {
-      setLoadingMonthly(false);
-    }
-  }, [month]);
-
   useEffect(() => {
     loadDaily();
   }, [loadDaily]);
-
-  useEffect(() => {
-    loadMonthly();
-  }, [loadMonthly]);
 
   const totals = dailyReport?.cashier || {
     lor: { count: 0, totalAmount: 0, paidAmount: 0, halfPaidAmount: 0 },
@@ -380,58 +190,6 @@ function ReporterDashboard() {
   const lorHalfAmount = safeNumber(totals.lor.halfPaidAmount);
   const procedurePaidAmount = safeNumber(totals.procedure.paidAmount);
   const autoIncomeTotal = lorHalfAmount + procedurePaidAmount;
-
-  const monthlyRows = useMemo(
-    () =>
-      (monthlyReport?.rows || []).map((row) => {
-        const manualAmounts = amountFields.reduce(
-          (acc, field) => ({
-            ...acc,
-            [field.key]: row.manual?.[field.key] || 0
-          }),
-          {}
-        );
-
-        return {
-          id: row.date,
-          date: row.date,
-          lorClientsCount: row.cashier?.lor?.count || 0,
-          lorPaidAmount: row.cashier?.lor?.paidAmount || 0,
-          lorHalfPaidAmount: row.cashier?.lor?.halfPaidAmount || 0,
-          procedureCount: row.cashier?.procedure?.proceduresCount || 0,
-          procedurePaidAmount: row.cashier?.procedure?.paidAmount || 0,
-          autoIncomeTotal:
-            safeNumber(row.cashier?.lor?.halfPaidAmount) +
-            safeNumber(row.cashier?.procedure?.paidAmount),
-          ...manualAmounts,
-          manualExpenseTotal:
-            safeNumber(manualAmounts.expenseAmount) +
-            safeNumber(manualAmounts.medicineAmount) +
-            safeNumber(manualAmounts.supplyAmount) +
-            safeNumber(manualAmounts.stationeryAmount) +
-            safeNumber(manualAmounts.communicationAmount) +
-            safeNumber(manualAmounts.childrenAmount) +
-            safeNumber(manualAmounts.homeAmount) +
-            safeNumber(manualAmounts.bossAmount) +
-            safeNumber(manualAmounts.debtAmount)
-        };
-      }),
-    [monthlyReport]
-  );
-  const activeMonthlyRows = useMemo(
-    () =>
-      monthlyRows.filter((row) =>
-        [
-          row.lorClientsCount,
-          row.lorPaidAmount,
-          row.lorHalfPaidAmount,
-          row.procedureCount,
-          row.procedurePaidAmount,
-          ...amountFields.map((field) => row[field.key])
-        ].some((value) => safeNumber(value) > 0)
-      ),
-    [monthlyRows]
-  );
 
   const missingCount = useMemo(
     () => amountFields.filter((field) => isMissingAmount(form[field.key])).length,
@@ -493,7 +251,6 @@ function ReporterDashboard() {
         if (showMessage) {
           setSuccess("Reporter yozuvi saqlandi.");
         }
-        await loadMonthly();
       } catch (err) {
         setError(extractErrorMessage(err));
         throw err;
@@ -504,7 +261,7 @@ function ReporterDashboard() {
       }
       return true;
     },
-    [buildPayload, form, loadMonthly]
+    [buildPayload, form]
   );
 
   useEffect(() => {
@@ -584,21 +341,6 @@ function ReporterDashboard() {
     });
   };
 
-  const handleExport = async (targetMonth = month, reportId = "selected") => {
-    setMonth(targetMonth);
-    setExportingReportId(reportId);
-    setError("");
-    setSuccess("");
-    try {
-      await reporterService.downloadMonthlyExcel(targetMonth);
-      setSuccess(`${getYearLabel(targetMonth)} Excel hisoboti yuklandi.`);
-    } catch (err) {
-      setError(extractErrorMessage(err));
-    } finally {
-      setExportingReportId("");
-    }
-  };
-
   const autoSaveLabel = {
     idle: "Auto-save tayyor",
     waiting: "Auto-save kutmoqda",
@@ -607,97 +349,6 @@ function ReporterDashboard() {
     error: "Auto-save xato",
     warning: "Katta summa tekshirilyapti"
   }[autoSaveStatus];
-
-  const columns = [
-    { key: "date", label: "Sana" },
-    { key: "lorClientsCount", label: "LOR soni" },
-    {
-      key: "lorPaidAmount",
-      label: "LOR kelgan",
-      render: (row) => `${formatCurrency(row.lorPaidAmount)} so'm`
-    },
-    {
-      key: "lorHalfPaidAmount",
-      label: "LOR 50%",
-      render: (row) => `${formatCurrency(row.lorHalfPaidAmount)} so'm`
-    },
-    { key: "procedureCount", label: "Protsedura soni" },
-    {
-      key: "procedurePaidAmount",
-      label: "Protsedura kelgan",
-      render: (row) => `${formatCurrency(row.procedurePaidAmount)} so'm`
-    },
-    {
-      key: "autoIncomeTotal",
-      label: "LOR 50% + Protsedura",
-      render: (row) => `${formatCurrency(row.autoIncomeTotal)} so'm`
-    },
-    {
-      key: "expenseAmount",
-      label: "Harajat",
-      render: (row) => `${formatCurrency(row.expenseAmount)} so'm`
-    },
-    {
-      key: "medicineAmount",
-      label: "Dori",
-      render: (row) => `${formatCurrency(row.medicineAmount)} so'm`
-    },
-    {
-      key: "supplyAmount",
-      label: "Ta'minot",
-      render: (row) => `${formatCurrency(row.supplyAmount)} so'm`
-    },
-    {
-      key: "stationeryAmount",
-      label: "Kanstovar",
-      render: (row) => `${formatCurrency(row.stationeryAmount)} so'm`
-    },
-    {
-      key: "communicationAmount",
-      label: "Aloqa",
-      render: (row) => `${formatCurrency(row.communicationAmount)} so'm`
-    },
-    {
-      key: "childrenAmount",
-      label: "Farzandlarga",
-      render: (row) => `${formatCurrency(row.childrenAmount)} so'm`
-    },
-    {
-      key: "homeAmount",
-      label: "Uy uchun",
-      render: (row) => `${formatCurrency(row.homeAmount)} so'm`
-    },
-    {
-      key: "bossAmount",
-      label: "Boshliq",
-      render: (row) => `${formatCurrency(row.bossAmount)} so'm`
-    },
-    {
-      key: "manualExpenseTotal",
-      label: "Jami harajat",
-      render: (row) => `${formatCurrency(row.manualExpenseTotal)} so'm`
-    },
-    {
-      key: "terminalAmount",
-      label: "Terminal",
-      render: (row) => `${formatCurrency(row.terminalAmount)} so'm`
-    },
-    {
-      key: "transferAmount",
-      label: "Perechisleniya",
-      render: (row) => `${formatCurrency(row.transferAmount)} so'm`
-    },
-    {
-      key: "clickAmount",
-      label: "Click",
-      render: (row) => `${formatCurrency(row.clickAmount)} so'm`
-    },
-    {
-      key: "debtAmount",
-      label: "Qarz",
-      render: (row) => `${formatCurrency(row.debtAmount)} so'm`
-    }
-  ];
 
   return (
     <div className="reporter-dashboard space-y-3 pb-24 sm:space-y-4 sm:pb-4">
@@ -711,22 +362,20 @@ function ReporterDashboard() {
               Kunlik kassa va xarajat hisoboti
             </h1>
           </div>
-          <div className="grid gap-2 md:grid-cols-[12rem] md:items-end md:gap-3">
+          <div className="grid gap-2 sm:grid-cols-[12rem_auto] md:items-end md:gap-3">
             <DatePickerField label="Kun" value={date} onChange={handleDateChange} />
+            <Link
+              to="/reporter/reports"
+              className="sampi-btn inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-300"
+            >
+              Yillik hisobot
+            </Link>
           </div>
         </div>
       </div>
 
       {error ? <Alert type="error" message={error} /> : null}
       {success ? <Alert type="success" message={success} /> : null}
-
-      <ReportDownloadPanel
-        month={month}
-        monthlyReport={monthlyReport}
-        exportingReportId={exportingReportId}
-        onMonthChange={setMonth}
-        onExport={handleExport}
-      />
 
       {loadingDaily ? (
         <div className="card flex min-h-48 items-center justify-center p-6">
@@ -828,45 +477,6 @@ function ReporterDashboard() {
           </div>
         </form>
       )}
-
-      <section className="reporter-monthly-card card p-3 sm:p-5">
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">Oylik hisobot</h2>
-            <p className="text-sm font-medium text-slate-500">
-              {month} oyi bo'yicha Excelga tushadigan kunlik jadval.
-            </p>
-          </div>
-          {monthlyReport?.totals ? (
-            <div className="text-sm font-bold text-slate-700">
-              Jami LOR 50% + Protsedura:{" "}
-              {formatCurrency(
-                safeNumber(monthlyReport.totals.lorHalfPaidAmount) +
-                  safeNumber(monthlyReport.totals.procedurePaidAmount)
-              )}{" "}
-              so'm
-            </div>
-          ) : null}
-        </div>
-        {loadingMonthly ? (
-          <Spinner />
-        ) : (
-          <>
-            <div className="space-y-2 lg:hidden">
-              {activeMonthlyRows.length === 0 ? (
-                <div className="reporter-empty-state rounded-xl border p-4 text-center text-sm font-semibold">
-                  Ma'lumot topilmadi
-                </div>
-              ) : (
-                activeMonthlyRows.map((row) => <MonthlyMobileRow key={row.id} row={row} />)
-              )}
-            </div>
-            <div className="hidden lg:block">
-              <Table columns={columns} data={monthlyRows} />
-            </div>
-          </>
-        )}
-      </section>
 
       <Modal
         open={Boolean(suspiciousPrompt)}

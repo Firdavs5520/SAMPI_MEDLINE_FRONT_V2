@@ -15,6 +15,7 @@ import RoleSpecialistsPage from "./pages/RoleSpecialistsPage.jsx";
 import DeliveryDashboard from "./pages/DeliveryDashboard.jsx";
 import CashierDashboard from "./pages/CashierDashboard.jsx";
 import ReporterDashboard from "./pages/ReporterDashboard.jsx";
+import ReporterReportsPage from "./pages/ReporterReportsPage.jsx";
 import ManagerDashboard from "./pages/ManagerDashboard.jsx";
 import ManagerStockPage from "./pages/ManagerStockPage.jsx";
 import ManagerMostUsedPage from "./pages/ManagerMostUsedPage.jsx";
@@ -132,6 +133,7 @@ function App() {
       <Route element={<ProtectedRoute allowedRoles={["reporter"]} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/reporter" element={<ReporterDashboard />} />
+          <Route path="/reporter/reports" element={<ReporterReportsPage />} />
         </Route>
       </Route>
 
