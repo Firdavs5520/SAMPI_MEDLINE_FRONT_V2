@@ -60,6 +60,11 @@ const formatMonthLabel = (value) => {
   return `${monthLabels[monthIndex] || match[2]} ${match[1]}`;
 };
 
+const getYearLabel = (value) => {
+  const match = /^(\d{4})-(\d{2})$/.exec(String(value || ""));
+  return match ? match[1] : new Date().getFullYear();
+};
+
 const getPreviousDateKey = (value) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
   if (!match) return toYmd(new Date(Date.now() - 24 * 60 * 60 * 1000));
@@ -247,7 +252,8 @@ function ReportDownloadPanel({
   onExport
 }) {
   const currentMonth = toMonth();
-  const previousMonth = shiftMonth(currentMonth, -1);
+  const previousYearMonth = shiftMonth(currentMonth, -12);
+  const selectedYear = getYearLabel(month);
   const selectedTotal =
     safeNumber(monthlyReport?.totals?.lorHalfPaidAmount) +
     safeNumber(monthlyReport?.totals?.procedurePaidAmount);
@@ -257,9 +263,9 @@ function ReportDownloadPanel({
     <section className="card space-y-4 p-3 sm:p-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-lg font-black text-slate-900">Hisobotni olish</h2>
+          <h2 className="text-lg font-black text-slate-900">Yillik hisobot</h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">
-            Kerakli oyni tanlang va Excelni bir bosishda yuklab oling.
+            Oylar Excel ichida alohida sahifalarda chiqadi.
           </p>
         </div>
         <div className="rounded-xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm font-bold text-cyan-900">
@@ -268,7 +274,7 @@ function ReportDownloadPanel({
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[16rem_1fr] xl:items-end">
-        <MonthPickerField label="Hisobot oyi" value={month} onChange={onMonthChange} />
+        <MonthPickerField label="Hisobot yili" value={month} onChange={onMonthChange} />
         <div className="grid gap-2 sm:grid-cols-3">
           <Button
             className="min-h-12 w-full"
@@ -278,7 +284,7 @@ function ReportDownloadPanel({
             disabled={isExporting}
             onClick={() => onExport(currentMonth, "current")}
           >
-            Shu oy Excel
+            Shu yil Excel
           </Button>
           <Button
             className="min-h-12 w-full"
@@ -286,9 +292,9 @@ function ReportDownloadPanel({
             loading={exportingReportId === "previous"}
             loadingText="Yuklanmoqda..."
             disabled={isExporting}
-            onClick={() => onExport(previousMonth, "previous")}
+            onClick={() => onExport(previousYearMonth, "previous")}
           >
-            O'tgan oy Excel
+            O'tgan yil Excel
           </Button>
           <Button
             className="min-h-12 w-full"
@@ -297,7 +303,7 @@ function ReportDownloadPanel({
             disabled={isExporting}
             onClick={() => onExport(month, "selected")}
           >
-            Tanlangan oy Excel
+            {selectedYear} Excel
           </Button>
         </div>
       </div>
@@ -566,7 +572,7 @@ function ReporterDashboard() {
     setSuccess("");
     try {
       await reporterService.downloadMonthlyExcel(targetMonth);
-      setSuccess(`${formatMonthLabel(targetMonth)} Excel hisoboti yuklandi.`);
+      setSuccess(`${getYearLabel(targetMonth)} Excel hisoboti yuklandi.`);
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {

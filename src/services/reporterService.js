@@ -31,8 +31,9 @@ const reporterService = {
     });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
+    const year = String(month || "").slice(0, 4) || new Date().getFullYear();
     link.href = url;
-    link.download = `sampi-reporter-${month}.xlsx`;
+    link.download = `sampi-reporter-${year}.xlsx`;
     document.body.appendChild(link);
     link.click();
     link.remove();
