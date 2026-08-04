@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import serviceService from "../services/serviceService.js";
 import usageService from "../services/usageService.js";
+import tvService from "../services/tvService.js";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
@@ -296,6 +297,7 @@ function LorServicesPage() {
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [submittingCheckout, setSubmittingCheckout] = useState(false);
+  const [markingCurrentPatient, setMarkingCurrentPatient] = useState(false);
 
   const [services, setServices] = useState([]);
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
@@ -309,6 +311,7 @@ function LorServicesPage() {
   const patientInputRef = useRef(null);
   const serviceSearchRef = useRef(null);
   const previewRef = useRef(null);
+  const currentPatientKeyRef = useRef("");
 
   const sortedServices = useMemo(
     () =>
@@ -524,6 +527,7 @@ function LorServicesPage() {
       setSelectedServiceIds([]);
       setServiceInputs({});
       setServiceSearch("");
+      currentPatientKeyRef.current = "";
       setStep(1);
 
       const written = writeCheckToPrintTab(printTab, result.check);
@@ -538,14 +542,54 @@ function LorServicesPage() {
     }
   };
 
-  const goNextFromPatient = () => {
+  const goNextFromPatient = async () => {
+    if (markingCurrentPatient) return;
     resetMessages();
+    setMarkingCurrentPatient(true);
+
     try {
       validateDoctor();
       validatePatient();
+
+      if (!lorIdentity) {
+        throw new Error(text.errors.identityMissing);
+      }
+
+      const normalizedPatient = splitFullName(patient.fullName);
+      const firstName = normalizedPatient.firstName.trim();
+      const lastName = normalizedPatient.lastName.trim();
+      const currentPatientKey = [
+        lorIdentity,
+        lorDoctor?.id,
+        firstName,
+        lastName
+      ]
+        .join(":")
+        .toLowerCase();
+
+      if (currentPatientKeyRef.current !== currentPatientKey) {
+        const currentPatient = await tvService.setLorCurrentPatient({
+          lorIdentity,
+          specialistId: lorDoctor.id,
+          specialistName: lorDoctor.name,
+          patient: {
+            firstName,
+            lastName
+          }
+        });
+
+        if (!currentPatient?.queueCode) {
+          throw new Error("Bemor TV navbatiga chiqarilmadi.");
+        }
+
+        currentPatientKeyRef.current = currentPatientKey;
+      }
+
       setStep(2);
     } catch (err) {
       setError(extractErrorMessage(err));
+    } finally {
+      setMarkingCurrentPatient(false);
     }
   };
 
@@ -657,6 +701,9 @@ function LorServicesPage() {
           <div className="mt-4 flex justify-end">
             <Button
               className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
+              loading={markingCurrentPatient}
+              loadingText="Qabul qilinmoqda..."
+              disabled={markingCurrentPatient}
               onClick={goNextFromPatient}
             >
               {text.nextServices}

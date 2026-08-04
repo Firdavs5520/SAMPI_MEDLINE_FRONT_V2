@@ -1,6 +1,11 @@
 import api from "./api.js";
 
 const tvService = {
+  async setLorCurrentPatient(payload) {
+    const { data } = await api.post("/tv/lor-current", payload);
+    return data.data;
+  },
+
   async getLorQueue({ lorIdentity = "all", limit = 16 } = {}, signal) {
     const params = new URLSearchParams();
     if (lorIdentity) params.set("lorIdentity", lorIdentity);
