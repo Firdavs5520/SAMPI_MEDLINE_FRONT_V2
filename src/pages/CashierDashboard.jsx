@@ -34,6 +34,12 @@ const SECTION_META = {
     lockedType: "lor",
     specialistLabel: "Vrach"
   },
+  "lor-queue": {
+    title: "LOR navbat",
+    subtitle: "Kassir bemorni LORga yo'naltirganda navbat chekini chiqaradi.",
+    lockedType: "lor",
+    specialistLabel: "Vrach"
+  },
   "nurse-entries": {
     title: "Nurse yozuvlari",
     subtitle: "Joriy ro'yxat 08:00-02:00 oralig'ida ko'rsatiladi.",
@@ -230,6 +236,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const lockedType = sectionMeta.lockedType;
   const isSpecialistSection =
     forcedSection === "nurse-specialists" || forcedSection === "lor-specialists";
+  const isLorQueueSection = forcedSection === "lor-queue";
   const isFormSection = forcedSection === "nurse-patients" || forcedSection === "lor-patients";
   const isLorFormSection = forcedSection === "lor-patients";
   const isHistorySection = forcedSection === "nurse-history" || forcedSection === "lor-history";
@@ -270,6 +277,10 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const [pendingSearch, setPendingSearch] = useState("");
   const [selectedPendingCheck, setSelectedPendingCheck] = useState(null);
   const [issuedLorTicket, setIssuedLorTicket] = useState(null);
+  const [lorTicketStatus, setLorTicketStatus] = useState({
+    nextQueueCode: "01",
+    lastIssued: null
+  });
   const [shiftWindow, setShiftWindow] = useState({
     fromLabel: "08:00",
     toLabel: "02:00"
@@ -543,6 +554,28 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
   }, []);
 
+  const loadLorQueueTicketStatus = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) {
+      setRefreshing(true);
+    }
+
+    try {
+      const data = await cashierService.getLorQueueTicketStatus({ lorIdentity: "lor1" });
+      setLorTicketStatus({
+        nextQueueCode: data?.nextQueueCode || "01",
+        lastIssued: data?.lastIssued || null
+      });
+      if (data?.lastIssued) {
+        setIssuedLorTicket(data.lastIssued);
+      }
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (lockedType) {
       setFilters((prev) => ({
@@ -589,6 +622,11 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   }, [lockedType, filters.department, filters.specialistType]);
 
   useEffect(() => {
+    if (isLorQueueSection) {
+      loadLorQueueTicketStatus();
+      return;
+    }
+
     if (isSettingsSection) {
       loadSettings();
     } else if (!isSpecialistSection) {
@@ -603,6 +641,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     isDebtSection,
     isHistorySection,
     isEntriesSection,
+    isLorQueueSection,
     isSpecialistSection,
     isSettingsSection,
     effectiveFilters.date,
@@ -612,6 +651,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     effectiveFilters.debtOnly,
     effectiveFilters.search,
     loadEntries,
+    loadLorQueueTicketStatus,
     loadSettings
   ]);
 
@@ -751,6 +791,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       const ticket = await cashierService.issueLorQueueTicket({ lorIdentity: "lor1" });
       setIssuedLorTicket(ticket);
       setSuccess(`LOR navbat raqami chiqarildi: ${ticket.queueCode || "-"}.`);
+      await loadLorQueueTicketStatus({ silent: true });
 
       const printed = writeLorQueueTicketToPrintTab(printSession, ticket);
       if (!printed) {
@@ -762,7 +803,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     } finally {
       setIssuingLorTicket(false);
     }
-  }, [issuingLorTicket]);
+  }, [issuingLorTicket, loadLorQueueTicketStatus]);
 
   const handleReprintIssuedLorTicket = () => {
     if (!issuedLorTicket || reprintingLorTicket) return;
@@ -785,7 +826,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   };
 
   useEffect(() => {
-    if (!isLorFormSection || isPendingCheckMode) return undefined;
+    if (!isLorQueueSection) return undefined;
 
     const handleKeyDown = (event) => {
       if (event.key !== "Enter" || event.repeat || issuingLorTicket) return;
@@ -802,7 +843,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isLorFormSection, isPendingCheckMode, issuingLorTicket, handleIssueLorTicket]);
+  }, [isLorQueueSection, issuingLorTicket, handleIssueLorTicket]);
 
   const handlePickPendingCheck = (check) => {
     const roleType = String(check?.creatorRole || "").toLowerCase() === "nurse" ? "nurse" : "lor";
@@ -933,6 +974,84 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
   if (loading) {
     return <Spinner text="Kassa paneli yuklanmoqda..." />;
+  }
+
+  if (isLorQueueSection) {
+    const nextQueueCode = lorTicketStatus.nextQueueCode || "01";
+    const lastIssuedCode = issuedLorTicket?.queueCode || lorTicketStatus.lastIssued?.queueCode || "";
+
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div className="card border-sky-200 bg-sky-50/70 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-slate-800">LOR navbat cheki</h1>
+              <p className="mt-1 text-sm text-slate-500">
+                Bemor LORga yo'naltirilganda navbat raqami shu yerdan chiqariladi.
+              </p>
+            </div>
+            <span className="inline-flex w-fit items-center rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-bold tracking-wide text-sky-800">
+              KASSIR
+            </span>
+          </div>
+        </div>
+
+        <div className="card border-sky-200 bg-white p-4 text-center shadow-sm sm:p-6 lg:p-8">
+          <p className="text-lg font-black uppercase tracking-wide text-slate-700">LOR</p>
+          <p className="mt-4 text-base font-bold text-slate-500 sm:text-lg">
+            Hozir chiqariladigan navbat:
+          </p>
+          <div className="mx-auto mt-3 flex min-h-40 max-w-xl items-center justify-center rounded-xl border border-sky-100 bg-sky-50 px-4 py-6 sm:min-h-56">
+            <span className="text-[7rem] font-black leading-none text-slate-900 sm:text-[10rem] lg:text-[12rem]">
+              {nextQueueCode}
+            </span>
+          </div>
+          <p className="mt-5 text-lg font-black text-sky-700 sm:text-xl">
+            Enter tugmasini 1 marta bosing
+          </p>
+
+          <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button
+              type="button"
+              className="min-h-12 w-full bg-sky-600 px-8 text-base hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
+              loading={issuingLorTicket}
+              loadingText="Chiqarilmoqda..."
+              onClick={handleIssueLorTicket}
+            >
+              Chek chiqarish
+            </Button>
+            {issuedLorTicket ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className="min-h-12 w-full px-8 text-base sm:w-auto"
+                loading={reprintingLorTicket}
+                loadingText="Chiqarilmoqda..."
+                onClick={handleReprintIssuedLorTicket}
+              >
+                Qayta chiqarish
+              </Button>
+            ) : null}
+          </div>
+
+          {lastIssuedCode ? (
+            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-600">
+              Oxirgi chiqarilgan raqam:{" "}
+              <span className="text-slate-900">{lastIssuedCode}</span>
+            </div>
+          ) : null}
+
+          {refreshing ? (
+            <p className="mt-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+              Raqam yangilanmoqda...
+            </p>
+          ) : null}
+        </div>
+
+        <Alert type="success" message={success} />
+        <Alert type="error" message={error} />
+      </div>
+    );
   }
 
   if (isSettingsSection) {
@@ -1250,60 +1369,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
       {isFormSection ? (
         <div className="space-y-4 sm:space-y-5">
-          {isLorFormSection ? (
-            <div className="card border-sky-200 bg-sky-50/70 p-4 sm:p-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-800">LOR navbat raqami</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Bemor LORga yo'naltirilganda navbat raqamini shu yerdan chiqaring.
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-sky-700">
-                    Enter tugmasini 1 marta bosing
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
-                  loading={issuingLorTicket}
-                  loadingText="Chiqarilmoqda..."
-                  onClick={handleIssueLorTicket}
-                >
-                  Raqam chiqarish
-                </Button>
-              </div>
-
-              {issuedLorTicket ? (
-                <div className="mt-4 grid gap-3 md:grid-cols-[180px_1fr]">
-                  <div className="rounded-xl border border-sky-200 bg-white px-4 py-4 text-center shadow-sm">
-                    <p className="text-xs font-black uppercase tracking-wide text-sky-700">
-                      Navbat
-                    </p>
-                    <p className="mt-1 text-5xl font-black leading-none text-slate-900">
-                      {issuedLorTicket.queueCode || "--"}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
-                    Bu raqam LOR panelida kutilayotgan navbatga tushdi. LOR chaqirganda TVda faqat
-                    shu raqam ko'rinadi.
-                    <div className="mt-3">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="w-full sm:w-auto"
-                        loading={reprintingLorTicket}
-                        loadingText="Chiqarilmoqda..."
-                        onClick={handleReprintIssuedLorTicket}
-                      >
-                        Qayta chiqarish
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
           <div
             className={`card p-4 sm:p-5 transition-all duration-300 ${
               isPendingCheckMode ? "border-cyan-300 ring-2 ring-cyan-100" : ""

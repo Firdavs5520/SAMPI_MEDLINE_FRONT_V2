@@ -45,6 +45,14 @@ const cashierService = {
     return data.data;
   },
 
+  async getLorQueueTicketStatus({ lorIdentity = "lor1" } = {}) {
+    const params = new URLSearchParams();
+    if (lorIdentity) params.set("lorIdentity", lorIdentity);
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const { data } = await api.get(`/cashier/lor-queue-tickets/status${query}`);
+    return data.data;
+  },
+
   async getEntries(filters = {}) {
     const { data } = await api.get(`/cashier/entries${buildQuery(filters)}`);
     return data.data;

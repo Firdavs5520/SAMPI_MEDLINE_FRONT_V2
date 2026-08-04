@@ -11,7 +11,7 @@ export const roleHomePath = {
   lor: "/lor/select",
   delivery: "/delivery",
   manager: "/manager",
-  cashier: "/cashier/nurse-patients",
+  cashier: "/cashier/lor-queue",
   reporter: "/reporter",
   tv: "/tv/lor"
 };
@@ -42,14 +42,15 @@ export const sidebarMenus = {
   ],
   delivery: [{ label: "Yetkazuvchi paneli", path: "/delivery", end: true, icon: "truck" }],
   cashier: [
-    { label: "Nurse chek qabuli", path: "/cashier/nurse-patients", end: true, group: "Nurse bo'limi", icon: "user-plus" },
-    { label: "Nurse yozuvlari", path: "/cashier/nurse-entries", end: true, group: "Nurse bo'limi", icon: "list" },
-    { label: "Nurse tarixi", path: "/cashier/nurse-history", end: true, group: "Nurse bo'limi", icon: "history" },
-    { label: "Nurse shifokorlar", path: "/cashier/nurse-specialists", end: true, group: "Nurse bo'limi", icon: "users" },
+    { label: "LOR navbat", path: "/cashier/lor-queue", end: true, group: "LOR bo'limi", icon: "receipt" },
     { label: "LOR chek qabuli", path: "/cashier/lor-patients", end: true, group: "LOR bo'limi", icon: "user-plus" },
     { label: "LOR yozuvlari", path: "/cashier/lor-entries", end: true, group: "LOR bo'limi", icon: "list" },
     { label: "LOR tarixi", path: "/cashier/lor-history", end: true, group: "LOR bo'limi", icon: "history" },
     { label: "LOR shifokorlar", path: "/cashier/lor-specialists", end: true, group: "LOR bo'limi", icon: "users" },
+    { label: "Nurse chek qabuli", path: "/cashier/nurse-patients", end: true, group: "Nurse bo'limi", icon: "user-plus" },
+    { label: "Nurse yozuvlari", path: "/cashier/nurse-entries", end: true, group: "Nurse bo'limi", icon: "list" },
+    { label: "Nurse tarixi", path: "/cashier/nurse-history", end: true, group: "Nurse bo'limi", icon: "history" },
+    { label: "Nurse shifokorlar", path: "/cashier/nurse-specialists", end: true, group: "Nurse bo'limi", icon: "users" },
     { label: "Kassa jurnali", path: "/cashier/journal", end: true, group: "Umumiy", icon: "receipt" },
     { label: "Qarzdorlar ro'yxati", path: "/cashier/debts", end: true, group: "Umumiy", icon: "list" },
     { label: "Sozlamalar", path: "/cashier/settings", end: true, group: "Umumiy", icon: "settings" }
