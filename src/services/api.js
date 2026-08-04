@@ -12,6 +12,8 @@ const baseURL = normalizedApiHost.endsWith("/api")
   ? normalizedApiHost
   : `${normalizedApiHost}/api`;
 
+export const apiBaseURL = baseURL;
+
 const api = axios.create({
   baseURL,
   timeout: 60000

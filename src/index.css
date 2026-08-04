@@ -4057,6 +4057,44 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
   animation: sampi-tv-current-call 1700ms ease both;
 }
 
+.sampi-tv-connection-pill {
+  position: fixed;
+  right: 1.15rem;
+  bottom: 1.15rem;
+  z-index: 3;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.62);
+  color: rgba(226, 232, 240, 0.78);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  padding: 0.42rem 0.72rem;
+  backdrop-filter: blur(14px);
+}
+
+.sampi-tv-connection-live {
+  border-color: rgba(45, 212, 191, 0.24);
+  color: rgba(167, 243, 208, 0.88);
+}
+
+.sampi-tv-reconnect-note {
+  position: absolute;
+  bottom: 2.75rem;
+  left: 50%;
+  max-width: min(70vw, 36rem);
+  transform: translateX(-50%);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 999px;
+  background: rgba(8, 13, 19, 0.62);
+  color: rgba(226, 232, 240, 0.72);
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 0.62rem 1rem;
+  text-align: center;
+  backdrop-filter: blur(12px);
+}
+
 @keyframes sampi-tv-current-call {
   0%,
   100% {
@@ -4092,6 +4130,18 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
 
   .sampi-tv-current-empty {
     font-size: 3rem;
+  }
+
+  .sampi-tv-connection-pill {
+    right: 0.75rem;
+    bottom: 0.75rem;
+    font-size: 0.66rem;
+  }
+
+  .sampi-tv-reconnect-note {
+    bottom: 2.4rem;
+    max-width: calc(100vw - 2rem);
+    font-size: 0.72rem;
   }
 }
 

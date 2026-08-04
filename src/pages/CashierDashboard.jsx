@@ -108,6 +108,13 @@ const paymentMethodLabels = {
   transfer: "O'tkazma"
 };
 
+const printEventToneClasses = {
+  success: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  warning: "border-amber-200 bg-amber-50 text-amber-800",
+  error: "border-rose-200 bg-rose-50 text-rose-800",
+  info: "border-sky-200 bg-sky-50 text-sky-800"
+};
+
 const paymentMethodOptions = [
   { value: "all", label: "Barchasi" },
   { value: "cash", label: "Naqd" },
@@ -162,6 +169,19 @@ const getNextQueueCodePreview = (value) => {
   const parsed = Number(String(value || "").replace(/\D/g, ""));
   if (!Number.isFinite(parsed) || parsed < 0) return "01";
   return String(parsed + 1).padStart(2, "0");
+};
+
+const mergeRecentLorTickets = (tickets = [], ticket) => {
+  const seen = new Set();
+  return [ticket, ...tickets]
+    .filter(Boolean)
+    .filter((item) => {
+      const key = item.id || item._id || item.queueCode;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 5);
 };
 
 const formatCreatorRoleLabel = (value) =>
@@ -286,8 +306,10 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const [issuedLorTicket, setIssuedLorTicket] = useState(null);
   const [lorTicketStatus, setLorTicketStatus] = useState({
     nextQueueCode: "01",
-    lastIssued: null
+    lastIssued: null,
+    recentIssued: []
   });
+  const [lorPrintEvents, setLorPrintEvents] = useState([]);
   const [shiftWindow, setShiftWindow] = useState({
     fromLabel: "08:00",
     toLabel: "02:00"
@@ -425,6 +447,25 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     setSuccess("");
     setError("");
   };
+
+  const addLorPrintEvent = useCallback((message, tone = "info") => {
+    const at = new Date().toLocaleTimeString("uz-UZ", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+    setLorPrintEvents((prev) =>
+      [
+        {
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          at,
+          message,
+          tone
+        },
+        ...prev
+      ].slice(0, 5)
+    );
+  }, []);
 
   const loadEntries = useCallback(async ({ silent = false } = {}) => {
     const shouldUseSilent = silent || hasLoadedOnceRef.current;
@@ -571,7 +612,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         const data = await cashierService.getLorQueueTicketStatus({ lorIdentity: "lor1" });
         setLorTicketStatus({
           nextQueueCode: data?.nextQueueCode || "01",
-          lastIssued: data?.lastIssued || null
+          lastIssued: data?.lastIssued || null,
+          recentIssued: data?.recentIssued || []
         });
         if (data?.lastIssued) {
           setIssuedLorTicket(data.lastIssued);
@@ -616,6 +658,12 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     setPendingSearch("");
     setSelectedPendingCheck(null);
     setIssuedLorTicket(null);
+    setLorTicketStatus({
+      nextQueueCode: "01",
+      lastIssued: null,
+      recentIssued: []
+    });
+    setLorPrintEvents([]);
     setSuccess("");
     setError("");
   }, [forcedSection, today, lockedType, isDebtSection]);
@@ -799,46 +847,67 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     issuingLorTicketRef.current = true;
     setIssuingLorTicket(true);
     const printSession = openPendingPrintTab();
+    addLorPrintEvent(
+      printSession ? "Print oynasi tayyorlandi." : "Print oynasi bloklandi.",
+      printSession ? "info" : "warning"
+    );
 
     try {
       const ticket = await cashierService.issueLorQueueTicket({ lorIdentity: "lor1" });
       setIssuedLorTicket(ticket);
       setSuccess(`LOR navbat raqami chiqarildi: ${ticket.queueCode || "-"}.`);
+      addLorPrintEvent(`${ticket.queueCode || "-"} raqam serverda yaratildi.`, "success");
 
       const printed = writeLorQueueTicketToPrintTab(printSession, ticket);
       if (!printed) {
         setError("Brauzer yangi oynani blokladi. Navbat raqamini ekrandan ham aytish mumkin.");
+        addLorPrintEvent("Print yuborilmadi, popup ruxsatini tekshiring.", "warning");
+      } else {
+        addLorPrintEvent(`${ticket.queueCode || "-"} raqam printerga yuborildi.`, "success");
       }
 
-      setLorTicketStatus({
+      setLorTicketStatus((prev) => ({
+        ...prev,
         nextQueueCode: getNextQueueCodePreview(ticket.queueCode),
-        lastIssued: ticket
-      });
+        lastIssued: ticket,
+        recentIssued: mergeRecentLorTickets(prev.recentIssued, ticket)
+      }));
       loadLorQueueTicketStatus({ silent: true, showErrors: false });
     } catch (err) {
       closePrintTab(printSession);
       setError(extractErrorMessage(err));
+      addLorPrintEvent("Raqam chiqarishda xato bo'ldi.", "error");
     } finally {
       issuingLorTicketRef.current = false;
       setIssuingLorTicket(false);
     }
-  }, [loadLorQueueTicketStatus]);
+  }, [addLorPrintEvent, loadLorQueueTicketStatus]);
 
-  const handleReprintIssuedLorTicket = () => {
-    if (!issuedLorTicket || reprintingLorTicket) return;
+  const handleReprintIssuedLorTicket = (ticket = issuedLorTicket) => {
+    const targetTicket = ticket || issuedLorTicket;
+    if (!targetTicket || reprintingLorTicket) return;
 
     resetMessages();
+    setIssuedLorTicket(targetTicket);
     setReprintingLorTicket(true);
     const printSession = openPendingPrintTab();
+    addLorPrintEvent(
+      printSession
+        ? `${targetTicket.queueCode || "-"} raqam nusxasi tayyorlandi.`
+        : "Nusxa uchun print oynasi bloklandi.",
+      printSession ? "info" : "warning"
+    );
 
     try {
-      const printed = writeLorQueueTicketToPrintTab(printSession, issuedLorTicket);
+      const printed = writeLorQueueTicketToPrintTab(printSession, targetTicket);
       if (!printed) {
         throw new Error("Brauzer yangi oynani blokladi. Pop-up ruxsatini yoqing.");
       }
+      addLorPrintEvent(`${targetTicket.queueCode || "-"} raqam nusxasi printerga yuborildi.`, "success");
     } catch (err) {
       closePrintTab(printSession);
       setError(extractErrorMessage(err));
+      addLorPrintEvent("Nusxa chiqarishda xato bo'ldi.", "error");
     } finally {
       window.setTimeout(() => setReprintingLorTicket(false), 300);
     }
@@ -998,6 +1067,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   if (isLorQueueSection) {
     const nextQueueCode = lorTicketStatus.nextQueueCode || "01";
     const lastIssuedCode = issuedLorTicket?.queueCode || lorTicketStatus.lastIssued?.queueCode || "";
+    const recentIssuedTickets = lorTicketStatus.recentIssued || [];
 
     return (
       <div className="space-y-4 sm:space-y-6">
@@ -1057,6 +1127,42 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-600">
               Oxirgi chiqarilgan raqam:{" "}
               <span className="text-slate-900">{lastIssuedCode}</span>
+            </div>
+          ) : null}
+
+          {recentIssuedTickets.length ? (
+            <div className="mx-auto mt-4 max-w-2xl rounded-xl border border-slate-200 bg-white px-3 py-3 text-left">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">
+                Oxirgi 5 navbat
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {recentIssuedTickets.map((ticket) => (
+                  <button
+                    key={ticket.id || ticket._id || ticket.queueCode}
+                    type="button"
+                    className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-black text-sky-800 transition hover:border-sky-400 hover:bg-sky-100"
+                    onClick={() => handleReprintIssuedLorTicket(ticket)}
+                  >
+                    {ticket.queueCode}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {lorPrintEvents.length ? (
+            <div className="mx-auto mt-4 max-w-2xl space-y-2 text-left">
+              {lorPrintEvents.map((item) => (
+                <div
+                  key={item.id}
+                  className={`rounded-xl border px-3 py-2 text-xs font-bold ${
+                    printEventToneClasses[item.tone] || printEventToneClasses.info
+                  }`}
+                >
+                  <span className="mr-2 opacity-70">{item.at}</span>
+                  {item.message}
+                </div>
+              ))}
             </div>
           ) : null}
 

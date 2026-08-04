@@ -7,6 +7,7 @@ import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
 import BusyOverlay from "../components/BusyOverlay.jsx";
+import Modal from "../components/Modal.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
@@ -26,6 +27,13 @@ const LOR_LANGUAGE_STORAGE_KEY = "sampi_lor_services_language";
 const LANGUAGE_OPTIONS = [
   { id: "uz", label: "UZ", title: "O'zbekcha" },
   { id: "ru", label: "RU", title: "Русский" }
+];
+
+const CANCEL_REASON_OPTIONS = [
+  { value: "patient_absent", label: "Bemor kelmadi" },
+  { value: "wrong_direction", label: "Noto'g'ri yo'naltirilgan" },
+  { value: "patient_left", label: "Bemor qaytib ketdi" },
+  { value: "other", label: "Boshqa sabab" }
 ];
 
 const LOR_SERVICE_TEXT = {
@@ -304,6 +312,9 @@ function LorServicesPage() {
   const [queueLoading, setQueueLoading] = useState(false);
   const [callingTicketId, setCallingTicketId] = useState("");
   const [cancelingTicket, setCancelingTicket] = useState(false);
+  const [cancelPromptOpen, setCancelPromptOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState(CANCEL_REASON_OPTIONS[0].value);
+  const [cancelNote, setCancelNote] = useState("");
 
   const [services, setServices] = useState([]);
   const [queueState, setQueueState] = useState({ current: null, waiting: [] });
@@ -649,11 +660,18 @@ function LorServicesPage() {
     setCancelingTicket(true);
 
     try {
-      await usageService.cancelLorQueueTicket(activeTicket.id, { lorIdentity });
+      await usageService.cancelLorQueueTicket(activeTicket.id, {
+        lorIdentity,
+        reason: cancelReason,
+        note: cancelNote
+      });
       setPatient({ fullName: "" });
       setSelectedServiceIds([]);
       setServiceInputs({});
       setServiceSearch("");
+      setCancelPromptOpen(false);
+      setCancelReason(CANCEL_REASON_OPTIONS[0].value);
+      setCancelNote("");
       setStep(1);
       await loadLorQueueTickets({ silent: true });
       setSuccess("LOR navbati bekor qilindi.");
@@ -836,11 +854,18 @@ function LorServicesPage() {
                   variant="secondary"
                   loading={cancelingTicket}
                   loadingText="Bekor qilinmoqda..."
-                  onClick={handleCancelActiveTicket}
+                  onClick={() => setCancelPromptOpen(true)}
                 >
                   {text.cancelQueue}
                 </Button>
               </div>
+
+              {waitingTickets.length ? (
+                <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800">
+                  Avval {activeTicket.queueCode || "--"} raqamli bemorni yakunlang yoki bekor qiling.
+                  Keyingi {waitingTickets.length} ta navbat shu vaqtgacha bloklangan.
+                </div>
+              ) : null}
 
               <Input
                 label={text.patientLabel}
@@ -1056,6 +1081,76 @@ function LorServicesPage() {
 
       <Alert type="success" message={success} />
       <Alert type="error" message={error} />
+      <Modal
+        open={cancelPromptOpen}
+        title="Navbatni bekor qilish"
+        panelClassName="max-w-md"
+        onClose={() => {
+          if (!cancelingTicket) {
+            setCancelPromptOpen(false);
+          }
+        }}
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={cancelingTicket}
+              onClick={() => setCancelPromptOpen(false)}
+            >
+              Orqaga
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              loading={cancelingTicket}
+              loadingText="Bekor qilinmoqda..."
+              onClick={handleCancelActiveTicket}
+            >
+              Bekor qilish
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800">
+            {activeTicket?.queueCode || "--"} raqamli navbat bekor qilinadi. Bu amal TVdan raqamni olib tashlaydi.
+          </div>
+          <div className="grid gap-2">
+            {CANCEL_REASON_OPTIONS.map((option) => (
+              <label
+                key={option.value}
+                className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 text-sm font-bold transition ${
+                  cancelReason === option.value
+                    ? "border-sky-300 bg-sky-50 text-sky-900"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-sky-200"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="lor-cancel-reason"
+                  value={option.value}
+                  checked={cancelReason === option.value}
+                  onChange={(event) => setCancelReason(event.target.value)}
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+          <label className="block">
+            <span className="sampi-field-label mb-1.5 block text-sm font-semibold">
+              Izoh
+            </span>
+            <textarea
+              className="sampi-input sampi-control min-h-20 w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition"
+              maxLength={200}
+              value={cancelNote}
+              onChange={(event) => setCancelNote(event.target.value)}
+              placeholder="Ixtiyoriy"
+            />
+          </label>
+        </div>
+      </Modal>
       <BusyOverlay show={submittingCheckout} text={text.creatingCheck} />
     </div>
   );

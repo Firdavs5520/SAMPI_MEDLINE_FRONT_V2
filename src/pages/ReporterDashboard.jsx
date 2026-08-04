@@ -18,6 +18,12 @@ import {
 
 const amountFields = reporterAmountFields;
 const SUSPICIOUS_AMOUNT_THRESHOLD = 10000000;
+const cancelReasonLabels = {
+  patient_absent: "Bemor kelmadi",
+  wrong_direction: "Noto'g'ri yo'naltirilgan",
+  patient_left: "Bemor qaytib ketdi",
+  other: "Boshqa sabab"
+};
 
 const emptyManual = () =>
   amountFields.reduce(
@@ -121,6 +127,62 @@ function CashierSummaryCards({ totals, lorHalfAmount, procedurePaidAmount, autoI
         hint="Kassa yozuvlaridagi qolgan qarz"
         tone="slate"
       />
+    </section>
+  );
+}
+
+function LorQueueSummaryCards({ queue }) {
+  const safeQueue = {
+    issuedCount: 0,
+    waitingCount: 0,
+    inProgressCount: 0,
+    calledCount: 0,
+    completedCount: 0,
+    cancelledCount: 0,
+    avgWaitMinutes: 0,
+    avgServiceMinutes: 0,
+    cancelReasons: [],
+    ...(queue || {})
+  };
+  const cancelReasonText = safeQueue.cancelReasons.length
+    ? safeQueue.cancelReasons
+        .map((item) => `${cancelReasonLabels[item.reason] || item.reason}: ${item.count}`)
+        .join(" · ")
+    : "Bekor qilingan navbat yo'q";
+
+  return (
+    <section className="space-y-3">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-5">
+        <StatCard
+          title="Navbat chiqarildi"
+          value={safeQueue.issuedCount}
+          hint={`Kutmoqda: ${safeQueue.waitingCount}`}
+        />
+        <StatCard
+          title="Qabul qilindi"
+          value={safeQueue.calledCount}
+          hint={`Hozir: ${safeQueue.inProgressCount}`}
+          tone="emerald"
+        />
+        <StatCard
+          title="Yakunlandi"
+          value={safeQueue.completedCount}
+          hint="Chek yaratilgan navbat"
+          tone="amber"
+        />
+        <StatCard
+          title="Bekor bo'ldi"
+          value={safeQueue.cancelledCount}
+          hint={cancelReasonText}
+          tone="orange"
+        />
+        <StatCard
+          title="O'rtacha kutish"
+          value={`${safeQueue.avgWaitMinutes || 0} daq`}
+          hint={`Qabul vaqti: ${safeQueue.avgServiceMinutes || 0} daq`}
+          tone="slate"
+        />
+      </div>
     </section>
   );
 }
@@ -426,6 +488,7 @@ function ReporterDashboard() {
             procedurePaidAmount={procedurePaidAmount}
             autoIncomeTotal={autoIncomeTotal}
           />
+          <LorQueueSummaryCards queue={dailyReport?.lorQueue} />
           <div className="reporter-amount-grid grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
             {amountFields.map((field) => {
               const missing = showMissing && isMissingAmount(form[field.key]);

@@ -3,21 +3,36 @@ import tvService from "../services/tvService.js";
 import { extractErrorMessage } from "../utils/format.js";
 
 const POLL_INTERVAL_MS = 4000;
+const STREAM_RECONNECT_MS = 2500;
 const TV_MANIFEST_PATH = "/manifest-tv.webmanifest?v=1";
+
+const connectionLabels = {
+  connecting: "Ulanmoqda",
+  live: "Real-time",
+  reconnecting: "Aloqa tiklanmoqda",
+  polling: "Zaxira aloqa"
+};
 
 function TvLorQueuePage() {
   const [queue, setQueue] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pulseKey, setPulseKey] = useState("");
+  const [connectionState, setConnectionState] = useState("connecting");
   const audioContextRef = useRef(null);
   const abortRef = useRef(null);
+  const eventSourceRef = useRef(null);
+  const fallbackTimerRef = useRef(0);
+  const reconnectTimerRef = useRef(0);
   const firstAnnouncementRef = useRef(true);
   const lastAnnouncementKeyRef = useRef("");
   const mountedRef = useRef(false);
+  const connectionStateRef = useRef("connecting");
 
   const current = queue?.current || null;
   const currentKey = queue?.announcementKey || "";
+  const isConnectionSoft =
+    connectionState === "reconnecting" || connectionState === "polling" || Boolean(error);
 
   const ensureAudioContext = useCallback(async () => {
     if (!window.AudioContext && !window.webkitAudioContext) return null;
@@ -52,22 +67,11 @@ function TvLorQueuePage() {
     });
   }, [ensureAudioContext]);
 
-  const loadQueue = useCallback(async ({ silent = false } = {}) => {
-    if (abortRef.current) {
-      abortRef.current.abort();
-    }
-
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    if (!silent) {
-      setLoading(true);
-    }
-
-    try {
-      const data = await tvService.getLorQueue({ lorIdentity: "lor1", limit: 1 }, controller.signal);
+  const applyQueueData = useCallback(
+    (data) => {
       setQueue(data);
       setError("");
+      setLoading(false);
 
       const nextAnnouncementKey = data?.announcementKey || "";
       if (
@@ -84,17 +88,104 @@ function TvLorQueuePage() {
         lastAnnouncementKeyRef.current = nextAnnouncementKey;
       }
       firstAnnouncementRef.current = false;
-    } catch (err) {
-      if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
-        setError(extractErrorMessage(err));
+    },
+    [playQueueTone]
+  );
+
+  const loadQueue = useCallback(
+    async ({ silent = false } = {}) => {
+      if (abortRef.current) {
+        abortRef.current.abort();
       }
-    } finally {
-      if (abortRef.current === controller) {
-        abortRef.current = null;
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      if (!silent) {
+        setLoading(true);
       }
-      setLoading(false);
+
+      try {
+        const data = await tvService.getLorQueue({ lorIdentity: "lor1", limit: 1 }, controller.signal);
+        applyQueueData(data);
+        if (connectionStateRef.current !== "live") {
+          setConnectionState("polling");
+        }
+      } catch (err) {
+        if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
+          setError(extractErrorMessage(err));
+          if (connectionStateRef.current !== "live") {
+            setConnectionState("reconnecting");
+          }
+        }
+      } finally {
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+        }
+        setLoading(false);
+      }
+    },
+    [applyQueueData]
+  );
+
+  const closeEventSource = useCallback(() => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
     }
-  }, [playQueueTone]);
+  }, []);
+
+  const connectStream = useCallback(() => {
+    if (!window.EventSource) {
+      setConnectionState("polling");
+      loadQueue({ silent: true });
+      return;
+    }
+
+    window.clearTimeout(reconnectTimerRef.current);
+    closeEventSource();
+    setConnectionState("connecting");
+
+    const source = tvService.openLorQueueStream({ lorIdentity: "lor1", limit: 1 });
+    eventSourceRef.current = source;
+
+    const handleStreamData = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        setConnectionState("live");
+        applyQueueData(data);
+      } catch {
+        setError("TV navbat ma'lumoti noto'g'ri keldi.");
+      }
+    };
+
+    source.onopen = () => {
+      if (mountedRef.current) {
+        setConnectionState("live");
+      }
+    };
+    source.addEventListener("snapshot", handleStreamData);
+    source.addEventListener("queue", handleStreamData);
+    source.addEventListener("stream-error", (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        setError(data?.message || "TV navbat stream xatosi.");
+      } catch {
+        setError("TV navbat stream xatosi.");
+      }
+    });
+    source.onerror = () => {
+      if (!mountedRef.current) return;
+      setConnectionState("reconnecting");
+      closeEventSource();
+      loadQueue({ silent: true });
+      reconnectTimerRef.current = window.setTimeout(connectStream, STREAM_RECONNECT_MS);
+    };
+  }, [applyQueueData, closeEventSource, loadQueue]);
+
+  useEffect(() => {
+    connectionStateRef.current = connectionState;
+  }, [connectionState]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -105,23 +196,30 @@ function TvLorQueuePage() {
       manifestLink.setAttribute("href", TV_MANIFEST_PATH);
     }
 
+    connectStream();
+
     return () => {
       mountedRef.current = false;
+      window.clearTimeout(fallbackTimerRef.current);
+      window.clearTimeout(reconnectTimerRef.current);
+      closeEventSource();
       if (abortRef.current) abortRef.current.abort();
       if (manifestLink && previousManifest) {
         manifestLink.setAttribute("href", previousManifest);
       }
     };
-  }, []);
+  }, [closeEventSource, connectStream]);
 
   useEffect(() => {
     let stopped = false;
-    let timerId = 0;
 
     const run = async () => {
-      await loadQueue({ silent: !firstAnnouncementRef.current });
+      if (connectionStateRef.current !== "live") {
+        await loadQueue({ silent: !firstAnnouncementRef.current });
+      }
+
       if (!stopped) {
-        timerId = window.setTimeout(run, POLL_INTERVAL_MS);
+        fallbackTimerRef.current = window.setTimeout(run, POLL_INTERVAL_MS);
       }
     };
 
@@ -129,36 +227,56 @@ function TvLorQueuePage() {
 
     return () => {
       stopped = true;
-      window.clearTimeout(timerId);
+      window.clearTimeout(fallbackTimerRef.current);
     };
   }, [loadQueue]);
 
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === "visible") {
+        if (connectionStateRef.current !== "live") {
+          connectStream();
+        }
         loadQueue({ silent: true });
       }
     };
-    const onOnline = () => loadQueue({ silent: true });
+    const onOnline = () => {
+      connectStream();
+      loadQueue({ silent: true });
+    };
+    const onOffline = () => {
+      setConnectionState("reconnecting");
+      setError("Internet aloqasi uzildi. Oxirgi raqam ekranda qoldi.");
+    };
 
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
 
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
     };
-  }, [loadQueue]);
+  }, [connectStream, loadQueue]);
 
   return (
     <main className="sampi-tv-shell sampi-tv-minimal-shell sampi-tv-kiosk-ready">
+      <div
+        className={`sampi-tv-connection-pill ${
+          connectionState === "live" ? "sampi-tv-connection-live" : ""
+        }`}
+      >
+        {connectionLabels[connectionState] || connectionLabels.connecting}
+      </div>
+
       <div className="sampi-tv-minimal-stage">
         <section
           className={`sampi-tv-current-card ${
             currentKey && currentKey === pulseKey ? "sampi-tv-current-pulse" : ""
-          } ${error ? "sampi-tv-current-muted" : ""}`}
+          } ${isConnectionSoft ? "sampi-tv-current-muted" : ""}`}
         >
-          {loading ? (
+          {loading && !current ? (
             <div className="sampi-tv-current-empty">Yuklanmoqda</div>
           ) : current ? (
             <>
@@ -169,6 +287,12 @@ function TvLorQueuePage() {
             <div className="sampi-tv-current-empty">Navbat yo'q</div>
           )}
         </section>
+
+        {isConnectionSoft ? (
+          <div className="sampi-tv-reconnect-note">
+            {error || "Aloqa tiklanmoqda. Oxirgi raqam ekranda saqlanadi."}
+          </div>
+        ) : null}
       </div>
     </main>
   );
