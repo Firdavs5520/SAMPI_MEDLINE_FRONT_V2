@@ -158,6 +158,12 @@ const safeNumber = (value, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const getNextQueueCodePreview = (value) => {
+  const parsed = Number(String(value || "").replace(/\D/g, ""));
+  if (!Number.isFinite(parsed) || parsed < 0) return "01";
+  return String(parsed + 1).padStart(2, "0");
+};
+
 const formatCreatorRoleLabel = (value) =>
   String(value || "").toLowerCase() === "nurse" ? "Nurse" : "LOR";
 
@@ -265,6 +271,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const hasLoadedOnceRef = useRef(false);
+  const issuingLorTicketRef = useRef(false);
   const [savingEntry, setSavingEntry] = useState(false);
   const [savingSpecialist, setSavingSpecialist] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -554,27 +561,32 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
   }, []);
 
-  const loadLorQueueTicketStatus = useCallback(async ({ silent = false } = {}) => {
-    if (!silent) {
-      setRefreshing(true);
-    }
-
-    try {
-      const data = await cashierService.getLorQueueTicketStatus({ lorIdentity: "lor1" });
-      setLorTicketStatus({
-        nextQueueCode: data?.nextQueueCode || "01",
-        lastIssued: data?.lastIssued || null
-      });
-      if (data?.lastIssued) {
-        setIssuedLorTicket(data.lastIssued);
+  const loadLorQueueTicketStatus = useCallback(
+    async ({ silent = false, showErrors = true } = {}) => {
+      if (!silent) {
+        setRefreshing(true);
       }
-    } catch (err) {
-      setError(extractErrorMessage(err));
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+
+      try {
+        const data = await cashierService.getLorQueueTicketStatus({ lorIdentity: "lor1" });
+        setLorTicketStatus({
+          nextQueueCode: data?.nextQueueCode || "01",
+          lastIssued: data?.lastIssued || null
+        });
+        if (data?.lastIssued) {
+          setIssuedLorTicket(data.lastIssued);
+        }
+      } catch (err) {
+        if (showErrors) {
+          setError(extractErrorMessage(err));
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (lockedType) {
@@ -781,9 +793,10 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   };
 
   const handleIssueLorTicket = useCallback(async () => {
-    if (issuingLorTicket) return;
+    if (issuingLorTicketRef.current) return;
 
     resetMessages();
+    issuingLorTicketRef.current = true;
     setIssuingLorTicket(true);
     const printSession = openPendingPrintTab();
 
@@ -791,19 +804,25 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       const ticket = await cashierService.issueLorQueueTicket({ lorIdentity: "lor1" });
       setIssuedLorTicket(ticket);
       setSuccess(`LOR navbat raqami chiqarildi: ${ticket.queueCode || "-"}.`);
-      await loadLorQueueTicketStatus({ silent: true });
 
       const printed = writeLorQueueTicketToPrintTab(printSession, ticket);
       if (!printed) {
         setError("Brauzer yangi oynani blokladi. Navbat raqamini ekrandan ham aytish mumkin.");
       }
+
+      setLorTicketStatus({
+        nextQueueCode: getNextQueueCodePreview(ticket.queueCode),
+        lastIssued: ticket
+      });
+      loadLorQueueTicketStatus({ silent: true, showErrors: false });
     } catch (err) {
       closePrintTab(printSession);
       setError(extractErrorMessage(err));
     } finally {
+      issuingLorTicketRef.current = false;
       setIssuingLorTicket(false);
     }
-  }, [issuingLorTicket, loadLorQueueTicketStatus]);
+  }, [loadLorQueueTicketStatus]);
 
   const handleReprintIssuedLorTicket = () => {
     if (!issuedLorTicket || reprintingLorTicket) return;
@@ -829,7 +848,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     if (!isLorQueueSection) return undefined;
 
     const handleKeyDown = (event) => {
-      if (event.key !== "Enter" || event.repeat || issuingLorTicket) return;
+      if (event.key !== "Enter" || event.repeat || issuingLorTicketRef.current) return;
 
       const target = event.target;
       const tagName = String(target?.tagName || "").toLowerCase();
@@ -843,7 +862,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isLorQueueSection, issuingLorTicket, handleIssueLorTicket]);
+  }, [isLorQueueSection, handleIssueLorTicket]);
 
   const handlePickPendingCheck = (check) => {
     const roleType = String(check?.creatorRole || "").toLowerCase() === "nurse" ? "nurse" : "lor";
