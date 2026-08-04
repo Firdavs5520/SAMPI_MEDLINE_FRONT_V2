@@ -4051,46 +4051,87 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
   color: #0f172a;
   color-scheme: light;
   background:
-    linear-gradient(118deg, rgba(14, 116, 144, 0.1), transparent 34%),
-    linear-gradient(296deg, rgba(212, 175, 55, 0.12), transparent 36%),
-    linear-gradient(180deg, #f9fcfd 0%, #eef7f8 52%, #f8f4ec 100%);
+    radial-gradient(ellipse at 17% 14%, rgba(14, 116, 144, 0.14), transparent 36%),
+    radial-gradient(ellipse at 80% 84%, rgba(212, 175, 55, 0.18), transparent 35%),
+    linear-gradient(180deg, #fbfefe 0%, #eef8f8 48%, #faf7ef 100%);
 }
 
 .sampi-tv-minimal-shell::before {
   background:
-    linear-gradient(90deg, rgba(14, 116, 144, 0.08) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.78), transparent 38%, rgba(14, 116, 144, 0.08));
-  background-size: 5.5rem 5.5rem, 5.5rem 5.5rem, auto;
-  opacity: 0.58;
+    linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.84) 42%, transparent 64%),
+    linear-gradient(90deg, rgba(14, 116, 144, 0.055) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(15, 23, 42, 0.032) 1px, transparent 1px);
+  background-size: auto, 5.75rem 5.75rem, 5.75rem 5.75rem;
+  opacity: 0.72;
+}
+
+.sampi-tv-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sampi-tv-ambient span {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(2px);
+}
+
+.sampi-tv-ambient span:nth-child(1) {
+  top: 8%;
+  left: 7%;
+  width: min(28vw, 28rem);
+  height: min(28vw, 28rem);
+  border: 1px solid rgba(14, 116, 144, 0.12);
+  background: radial-gradient(circle, rgba(14, 116, 144, 0.1), transparent 68%);
+}
+
+.sampi-tv-ambient span:nth-child(2) {
+  right: 8%;
+  bottom: 10%;
+  width: min(34vw, 34rem);
+  height: min(34vw, 34rem);
+  border: 1px solid rgba(212, 175, 55, 0.14);
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.13), transparent 68%);
+}
+
+.sampi-tv-ambient span:nth-child(3) {
+  left: 50%;
+  top: 50%;
+  width: min(58vw, 56rem);
+  height: min(26vw, 22rem);
+  transform: translate(-50%, -50%) rotate(-8deg);
+  background: linear-gradient(90deg, transparent, rgba(14, 116, 144, 0.06), rgba(212, 175, 55, 0.08), transparent);
 }
 
 .sampi-tv-minimal-stage {
   position: relative;
   z-index: 1;
   display: grid;
-  width: min(93vw, 90rem);
-  min-height: 80vh;
+  width: min(94vw, 92rem);
+  min-height: 84vh;
   place-items: center;
-  padding: 2rem;
+  padding: clamp(1.2rem, 2.4vw, 2.8rem);
 }
 
 .sampi-tv-current-card {
   position: relative;
   display: grid;
   width: 100%;
-  min-height: min(75vh, 45rem);
+  min-height: min(80vh, 48rem);
   place-items: center;
   overflow: hidden;
-  border: 1px solid rgba(14, 116, 144, 0.18);
-  border-radius: 20px;
+  border: 1px solid rgba(14, 116, 144, 0.16);
+  border-radius: 28px;
   background:
-    linear-gradient(150deg, rgba(255, 255, 255, 0.98), rgba(241, 250, 250, 0.92) 50%, rgba(255, 250, 239, 0.94)),
-    linear-gradient(90deg, rgba(14, 116, 144, 0.1), transparent 42%, rgba(212, 175, 55, 0.1));
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(240, 250, 250, 0.88) 46%, rgba(255, 250, 239, 0.9)),
+    linear-gradient(90deg, rgba(14, 116, 144, 0.11), transparent 42%, rgba(212, 175, 55, 0.12));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
     inset 0 0 0 1px rgba(255, 255, 255, 0.72),
-    0 38px 92px -58px rgba(15, 23, 42, 0.32);
+    0 42px 120px -72px rgba(15, 23, 42, 0.42);
   text-align: center;
 }
 
@@ -4102,20 +4143,80 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
 }
 
 .sampi-tv-current-card::before {
-  inset: clamp(1rem, 2vw, 1.75rem);
-  border: 1px solid rgba(14, 116, 144, 0.14);
-  border-radius: 16px;
+  inset: clamp(1.15rem, 2.2vw, 2rem);
+  border: 1px solid rgba(14, 116, 144, 0.13);
+  border-radius: 22px;
 }
 
 .sampi-tv-current-card::after {
   left: 50%;
-  bottom: clamp(1.5rem, 3vw, 2.8rem);
-  width: min(38rem, 52vw);
+  bottom: clamp(1.6rem, 3vw, 2.9rem);
+  width: min(42rem, 56vw);
   height: 4px;
   transform: translateX(-50%);
   border-radius: 999px;
   background: linear-gradient(90deg, transparent, rgba(14, 116, 144, 0.74), rgba(212, 175, 55, 0.7), transparent);
   box-shadow: 0 10px 28px -18px rgba(14, 116, 144, 0.8);
+}
+
+.sampi-tv-brandline {
+  position: absolute;
+  top: clamp(1.8rem, 3vw, 3.2rem);
+  left: 50%;
+  z-index: 2;
+  transform: translateX(-50%);
+  color: rgba(15, 23, 42, 0.62);
+  font-size: clamp(0.82rem, 1vw, 1rem);
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  white-space: nowrap;
+}
+
+.sampi-tv-corner {
+  position: absolute;
+  z-index: 1;
+  width: clamp(5rem, 9vw, 9rem);
+  height: clamp(5rem, 9vw, 9rem);
+  pointer-events: none;
+}
+
+.sampi-tv-corner::before,
+.sampi-tv-corner::after {
+  content: "";
+  position: absolute;
+  background: linear-gradient(90deg, rgba(14, 116, 144, 0.42), rgba(212, 175, 55, 0.34));
+}
+
+.sampi-tv-corner::before {
+  width: 100%;
+  height: 2px;
+}
+
+.sampi-tv-corner::after {
+  width: 2px;
+  height: 100%;
+}
+
+.sampi-tv-corner-tl {
+  top: clamp(1.2rem, 2.4vw, 2.2rem);
+  left: clamp(1.2rem, 2.4vw, 2.2rem);
+}
+
+.sampi-tv-corner-tl::before,
+.sampi-tv-corner-tl::after {
+  top: 0;
+  left: 0;
+}
+
+.sampi-tv-corner-br {
+  right: clamp(1.2rem, 2.4vw, 2.2rem);
+  bottom: clamp(1.2rem, 2.4vw, 2.2rem);
+}
+
+.sampi-tv-corner-br::before,
+.sampi-tv-corner-br::after {
+  right: 0;
+  bottom: 0;
 }
 
 .sampi-tv-current-card > * {
@@ -4124,24 +4225,55 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
   min-width: 0;
 }
 
+.sampi-tv-current-content {
+  display: grid;
+  place-items: center;
+  width: min(88vw, 62rem);
+  padding-top: clamp(2rem, 3.5vw, 3.5rem);
+}
+
 .sampi-tv-current-kicker {
   color: #0e7490;
   font-size: clamp(1rem, 1.4vw, 1.3rem);
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: 0;
   text-transform: uppercase;
 }
 
+.sampi-tv-number-shell {
+  position: relative;
+  display: grid;
+  min-width: min(62vw, 42rem);
+  min-height: clamp(13rem, 28vw, 23rem);
+  place-items: center;
+  margin-top: clamp(0.9rem, 1.6vw, 1.4rem);
+}
+
+.sampi-tv-number-shell::before {
+  content: "";
+  position: absolute;
+  inset: 4% 0;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.48) 52%, transparent 72%),
+    linear-gradient(90deg, transparent, rgba(14, 116, 144, 0.08), rgba(212, 175, 55, 0.1), transparent);
+  box-shadow:
+    inset 0 0 0 1px rgba(14, 116, 144, 0.1),
+    0 34px 80px -58px rgba(14, 116, 144, 0.38);
+}
+
 .sampi-tv-current-code {
-  margin-top: 1rem;
+  position: relative;
   max-width: 100%;
   overflow: hidden;
-  color: #0f172a;
-  font-size: clamp(9rem, 20vw, 18rem);
+  color: #101827;
+  font-size: clamp(10rem, 22vw, 19rem);
   font-weight: 900;
   line-height: 0.9;
   text-overflow: ellipsis;
-  text-shadow: 0 18px 44px rgba(14, 116, 144, 0.16);
+  text-shadow:
+    0 18px 44px rgba(14, 116, 144, 0.16),
+    0 2px 0 rgba(255, 255, 255, 0.9);
   white-space: nowrap;
 }
 
@@ -4150,6 +4282,48 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
   max-width: min(82vw, 50rem);
   place-items: center;
   padding: clamp(1.25rem, 2vw, 2rem);
+}
+
+.sampi-tv-standby-mark {
+  position: relative;
+  display: grid;
+  width: clamp(7rem, 12vw, 11rem);
+  height: clamp(7rem, 12vw, 11rem);
+  place-items: center;
+  margin-bottom: clamp(1.2rem, 2vw, 1.8rem);
+  border: 1px solid rgba(14, 116, 144, 0.18);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.96), rgba(236, 253, 245, 0.74)),
+    linear-gradient(135deg, rgba(14, 116, 144, 0.12), rgba(212, 175, 55, 0.16));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    0 28px 70px -48px rgba(14, 116, 144, 0.45);
+}
+
+.sampi-tv-standby-mark::before,
+.sampi-tv-standby-mark::after,
+.sampi-tv-standby-mark span {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+}
+
+.sampi-tv-standby-mark::before {
+  inset: 17%;
+  border: 1px solid rgba(14, 116, 144, 0.16);
+}
+
+.sampi-tv-standby-mark::after {
+  width: 42%;
+  height: 4px;
+  background: #0e7490;
+}
+
+.sampi-tv-standby-mark span {
+  width: 4px;
+  height: 42%;
+  background: #d4af37;
 }
 
 .sampi-tv-standby-kicker {
@@ -4230,10 +4404,36 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
 
   .sampi-tv-current-card {
     min-height: calc(100vh - 2rem);
+    border-radius: 18px;
+  }
+
+  .sampi-tv-brandline {
+    top: 1.5rem;
+    font-size: 0.72rem;
+  }
+
+  .sampi-tv-corner {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .sampi-tv-current-content {
+    width: min(92vw, 42rem);
+    padding-top: 2rem;
+  }
+
+  .sampi-tv-number-shell {
+    min-width: min(82vw, 31rem);
+    min-height: 12rem;
   }
 
   .sampi-tv-current-code {
-    font-size: 8.5rem;
+    font-size: clamp(7rem, 30vw, 10rem);
+  }
+
+  .sampi-tv-standby-mark {
+    width: 6rem;
+    height: 6rem;
   }
 
   .sampi-tv-standby-title {

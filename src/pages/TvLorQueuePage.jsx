@@ -266,25 +266,43 @@ function TvLorQueuePage() {
 
   return (
     <main className="sampi-tv-shell sampi-tv-minimal-shell sampi-tv-kiosk-ready">
+      <div className="sampi-tv-ambient" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+
       <div className="sampi-tv-minimal-stage">
         <section
           className={`sampi-tv-current-card ${
             currentKey && currentKey === pulseKey ? "sampi-tv-current-pulse" : ""
           } ${isConnectionSoft ? "sampi-tv-current-muted" : ""}`}
         >
+          <div className="sampi-tv-brandline">SAMPI MEDLINE</div>
+          <div className="sampi-tv-corner sampi-tv-corner-tl" aria-hidden="true" />
+          <div className="sampi-tv-corner sampi-tv-corner-br" aria-hidden="true" />
+
           {loading && !current ? (
             <div className="sampi-tv-standby" aria-live="polite">
+              <div className="sampi-tv-standby-mark" aria-hidden="true">
+                <span />
+              </div>
               <div className="sampi-tv-standby-kicker">LOR</div>
               <div className="sampi-tv-standby-title">Tayyorlanmoqda</div>
               <div className="sampi-tv-standby-line" aria-hidden="true" />
             </div>
           ) : current ? (
-            <>
+            <div className="sampi-tv-current-content" aria-live="polite">
               <div className="sampi-tv-current-kicker">Hozirgi bemor</div>
-              <div className="sampi-tv-current-code">{displayQueueCode}</div>
-            </>
+              <div className="sampi-tv-number-shell">
+                <div className="sampi-tv-current-code">{displayQueueCode}</div>
+              </div>
+            </div>
           ) : (
             <div className="sampi-tv-standby" aria-live="polite">
+              <div className="sampi-tv-standby-mark" aria-hidden="true">
+                <span />
+              </div>
               <div className="sampi-tv-standby-kicker">LOR</div>
               <div className="sampi-tv-standby-title">Qabulga tayyor</div>
               <div className="sampi-tv-standby-line" aria-hidden="true" />
