@@ -12,7 +12,8 @@ export const roleHomePath = {
   delivery: "/delivery",
   manager: "/manager",
   cashier: "/cashier/nurse-patients",
-  reporter: "/reporter"
+  reporter: "/reporter",
+  tv: "/tv/lor"
 };
 
 export const roleLabels = {
@@ -21,7 +22,8 @@ export const roleLabels = {
   delivery: "Yetkazuvchi",
   manager: "Menejer",
   cashier: "Kassir",
-  reporter: "Reporter"
+  reporter: "Reporter",
+  tv: "TV navbat"
 };
 
 export const sidebarMenus = {

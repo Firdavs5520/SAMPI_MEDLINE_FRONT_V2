@@ -20,6 +20,7 @@ import ManagerDashboard from "./pages/ManagerDashboard.jsx";
 import ManagerStockPage from "./pages/ManagerStockPage.jsx";
 import ManagerMostUsedPage from "./pages/ManagerMostUsedPage.jsx";
 import ManagerUsageHistoryPage from "./pages/ManagerUsageHistoryPage.jsx";
+import TvLorQueuePage from "./pages/TvLorQueuePage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import { roleHomePath } from "./utils/constants.js";
@@ -41,6 +42,11 @@ function App() {
     <Routes>
       <Route path="/" element={<Navigate to={home} replace />} />
       <Route path="/login" element={<LoginPage />} />
+
+      <Route element={<ProtectedRoute allowedRoles={["tv"]} />}>
+        <Route path="/tv" element={<Navigate to="/tv/lor" replace />} />
+        <Route path="/tv/lor" element={<TvLorQueuePage />} />
+      </Route>
 
       <Route element={<ProtectedRoute allowedRoles={["nurse"]} />}>
         <Route element={<DashboardLayout />}>

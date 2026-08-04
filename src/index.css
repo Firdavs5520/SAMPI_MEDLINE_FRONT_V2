@@ -3552,6 +3552,426 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
   color: #e2e8f0;
 }
 
+.sampi-tv-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(6, 21, 18, 0.98) 0%, rgba(17, 24, 39, 0.98) 48%, rgba(39, 25, 13, 0.98) 100%),
+    linear-gradient(90deg, rgba(20, 184, 166, 0.1) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(245, 158, 11, 0.08) 1px, transparent 1px);
+  background-size: auto, 4rem 4rem, 4rem 4rem;
+  color: #f8fafc;
+  user-select: none;
+}
+
+.sampi-tv-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(110deg, transparent 0%, rgba(255, 255, 255, 0.1) 44%, transparent 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 36%, rgba(0, 0, 0, 0.18));
+  opacity: 0.8;
+}
+
+.sampi-tv-kiosk-ready {
+  cursor: none;
+}
+
+.sampi-tv-stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-height: 100vh;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.15rem;
+}
+
+.sampi-tv-topbar,
+.sampi-tv-hero,
+.sampi-tv-room-panel,
+.sampi-tv-list-band,
+.sampi-tv-loading,
+.sampi-tv-error,
+.sampi-tv-kiosk-button {
+  border: 1px solid rgba(226, 232, 240, 0.16);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 26px 46px -34px rgba(0, 0, 0, 0.72);
+}
+
+.sampi-tv-topbar {
+  display: flex;
+  min-height: 5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: rgba(8, 13, 19, 0.64);
+  padding: 0.9rem 1rem;
+  backdrop-filter: blur(18px);
+}
+
+.sampi-tv-brand {
+  color: #99f6e4;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.sampi-tv-topbar h1 {
+  margin: 0.15rem 0 0;
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.sampi-tv-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: #fef3c7;
+  font-size: 1.45rem;
+  font-weight: 900;
+}
+
+.sampi-tv-live span {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  background: #34d399;
+  box-shadow: 0 0 0 0.38rem rgba(52, 211, 153, 0.16);
+}
+
+.sampi-tv-live .sampi-tv-live-error {
+  background: #fb7185;
+  box-shadow: 0 0 0 0.38rem rgba(251, 113, 133, 0.16);
+}
+
+.sampi-tv-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16rem 12rem;
+  gap: 0.85rem;
+}
+
+.sampi-tv-hero > div {
+  min-width: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(20, 184, 166, 0.24), rgba(15, 23, 42, 0.68)),
+    linear-gradient(90deg, rgba(245, 158, 11, 0.14), transparent);
+  padding: 0.95rem 1rem;
+}
+
+.sampi-tv-hero > div:first-child {
+  background:
+    linear-gradient(135deg, rgba(20, 184, 166, 0.36), rgba(4, 47, 46, 0.78)),
+    linear-gradient(90deg, rgba(245, 158, 11, 0.2), transparent);
+}
+
+.sampi-tv-hero p,
+.sampi-tv-hero span {
+  margin: 0;
+  color: #bae6fd;
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.sampi-tv-hero strong,
+.sampi-tv-hero b {
+  display: block;
+  margin-top: 0.35rem;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 2.45rem;
+  font-weight: 900;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sampi-tv-room-grid {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.sampi-tv-room-panel {
+  display: flex;
+  min-height: 18rem;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 1rem;
+  background:
+    linear-gradient(145deg, rgba(8, 13, 19, 0.82), rgba(17, 24, 39, 0.7)),
+    linear-gradient(90deg, var(--sampi-tv-accent-soft), transparent);
+}
+
+.sampi-tv-room-panel::before {
+  content: "";
+  display: block;
+  height: 0.32rem;
+  margin: -1rem -1rem 0.8rem;
+  background: var(--sampi-tv-accent);
+}
+
+.sampi-tv-room-cyan {
+  --sampi-tv-accent: #22d3ee;
+  --sampi-tv-accent-soft: rgba(34, 211, 238, 0.2);
+  --sampi-tv-text: #a5f3fc;
+}
+
+.sampi-tv-room-amber {
+  --sampi-tv-accent: #f59e0b;
+  --sampi-tv-accent-soft: rgba(245, 158, 11, 0.22);
+  --sampi-tv-text: #fde68a;
+}
+
+.sampi-tv-room-emerald {
+  --sampi-tv-accent: #34d399;
+  --sampi-tv-accent-soft: rgba(52, 211, 153, 0.18);
+  --sampi-tv-text: #bbf7d0;
+}
+
+.sampi-tv-room-head,
+.sampi-tv-room-meta,
+.sampi-tv-list-head,
+.sampi-tv-row {
+  display: grid;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sampi-tv-room-head {
+  grid-template-columns: minmax(0, 1fr) auto;
+  color: var(--sampi-tv-text);
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.sampi-tv-room-head span:last-child {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.34rem 0.7rem;
+  color: #f8fafc;
+  font-size: 0.82rem;
+}
+
+.sampi-tv-code {
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 5.4rem;
+  font-weight: 900;
+  line-height: 0.95;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sampi-tv-doctor {
+  overflow: hidden;
+  color: var(--sampi-tv-text);
+  font-size: 1.35rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sampi-tv-room-meta {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sampi-tv-room-meta span,
+.sampi-tv-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sampi-tv-room-meta span {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.72rem 0.85rem;
+  color: #f8fafc;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.sampi-tv-empty-room {
+  display: grid;
+  min-height: 11rem;
+  place-items: center;
+  color: rgba(248, 250, 252, 0.72);
+  text-align: center;
+}
+
+.sampi-tv-empty-room span {
+  font-size: 4rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.sampi-tv-empty-room strong {
+  font-size: 1.2rem;
+}
+
+.sampi-tv-list-band {
+  min-height: 0;
+  overflow: hidden;
+  background: rgba(8, 13, 19, 0.64);
+}
+
+.sampi-tv-list-head {
+  grid-template-columns: minmax(0, 1fr) auto;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.85rem 1rem;
+  color: #d9f99d;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.sampi-tv-list {
+  display: grid;
+  max-height: 18rem;
+  overflow: hidden;
+}
+
+.sampi-tv-row {
+  grid-template-columns: 4.2rem minmax(0, 1fr) 8rem 6rem;
+  min-height: 3.15rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0 1rem;
+  color: #f8fafc;
+  font-weight: 900;
+}
+
+.sampi-tv-row-number {
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+.sampi-tv-row-code {
+  color: #ffffff;
+  font-size: 1.45rem;
+}
+
+.sampi-tv-row-room {
+  color: #99f6e4;
+}
+
+.sampi-tv-row-time {
+  color: #fde68a;
+  text-align: right;
+}
+
+.sampi-tv-no-rows,
+.sampi-tv-loading {
+  display: grid;
+  min-height: 9rem;
+  place-items: center;
+  color: #cbd5e1;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.sampi-tv-loading {
+  background: rgba(8, 13, 19, 0.64);
+}
+
+.sampi-tv-error {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 4;
+  max-width: 28rem;
+  background: rgba(127, 29, 29, 0.92);
+  padding: 0.8rem 1rem;
+  color: #fee2e2;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.sampi-tv-kiosk-button {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 5;
+  background:
+    linear-gradient(135deg, #f8fafc, #ccfbf1),
+    linear-gradient(90deg, rgba(245, 158, 11, 0.18), transparent);
+  padding: 0.9rem 1.1rem;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.sampi-tv-room-pulse {
+  animation: sampi-tv-call-pulse 1650ms ease both;
+}
+
+@keyframes sampi-tv-call-pulse {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 26px 46px -34px rgba(0, 0, 0, 0.72);
+  }
+  24% {
+    transform: translateY(-0.18rem);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 0 0 0.35rem rgba(34, 211, 238, 0.18),
+      0 34px 58px -34px rgba(0, 0, 0, 0.82);
+  }
+}
+
+@media (max-width: 980px) {
+  .sampi-tv-stage {
+    overflow-y: auto;
+  }
+
+  .sampi-tv-topbar,
+  .sampi-tv-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .sampi-tv-hero {
+    display: grid;
+  }
+
+  .sampi-tv-room-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sampi-tv-code {
+    font-size: 4rem;
+  }
+
+  .sampi-tv-row {
+    grid-template-columns: 3.4rem minmax(0, 1fr) 6rem;
+  }
+
+  .sampi-tv-row-time {
+    display: none;
+  }
+}
+
 @media (max-width: 340px) {
   .reporter-dashboard .reporter-amount-grid {
     grid-template-columns: minmax(0, 1fr);
