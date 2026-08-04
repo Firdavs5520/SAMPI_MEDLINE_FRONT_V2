@@ -193,6 +193,8 @@ function TvLorQueuePage() {
 
   useEffect(() => {
     mountedRef.current = true;
+    document.documentElement.classList.add("sampi-tv-lock");
+    document.body.classList.add("sampi-tv-lock");
 
     const manifestLink = document.querySelector("link[rel='manifest']");
     const previousManifest = manifestLink?.getAttribute("href") || "";
@@ -204,6 +206,8 @@ function TvLorQueuePage() {
 
     return () => {
       mountedRef.current = false;
+      document.documentElement.classList.remove("sampi-tv-lock");
+      document.body.classList.remove("sampi-tv-lock");
       window.clearTimeout(fallbackTimerRef.current);
       window.clearTimeout(reconnectTimerRef.current);
       closeEventSource();

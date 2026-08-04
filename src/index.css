@@ -3653,6 +3653,19 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
   cursor: none;
 }
 
+html.sampi-tv-lock,
+body.sampi-tv-lock {
+  width: 100%;
+  height: 100%;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+html.sampi-tv-lock #root {
+  height: 100%;
+  overflow: hidden;
+}
+
 .sampi-tv-stage {
   position: relative;
   z-index: 1;
@@ -4048,12 +4061,22 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
 .sampi-tv-minimal-shell {
   display: grid;
   place-items: center;
+  width: 100vw;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
   color: #0f172a;
   color-scheme: light;
   background:
     radial-gradient(ellipse at 17% 14%, rgba(14, 116, 144, 0.14), transparent 36%),
     radial-gradient(ellipse at 80% 84%, rgba(212, 175, 55, 0.18), transparent 35%),
     linear-gradient(180deg, #fbfefe 0%, #eef8f8 48%, #faf7ef 100%);
+}
+
+@supports (height: 100dvh) {
+  .sampi-tv-minimal-shell {
+    height: 100dvh;
+  }
 }
 
 .sampi-tv-minimal-shell::before {
@@ -4107,22 +4130,28 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
 }
 
 .sampi-tv-minimal-stage {
-  position: relative;
+  position: fixed;
+  inset: 0;
   z-index: 1;
   display: grid;
   width: 100vw;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
   place-items: center;
-  padding: clamp(1rem, 2.2vw, 2rem);
+  padding: clamp(0.75rem, 1.6vw, 1.5rem);
+}
+
+@supports (height: 100dvh) {
+  .sampi-tv-minimal-stage {
+    height: 100dvh;
+  }
 }
 
 .sampi-tv-current-card {
   position: relative;
   display: grid;
   width: 100%;
-  min-height: calc(100vh - clamp(2rem, 4.4vw, 4rem));
-  min-height: calc(100dvh - clamp(2rem, 4.4vw, 4rem));
+  height: 100%;
+  min-height: 0;
   place-items: center;
   overflow: hidden;
   border: 1px solid rgba(14, 116, 144, 0.16);
@@ -4163,7 +4192,7 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
 
 .sampi-tv-brandline {
   position: absolute;
-  top: clamp(1.25rem, 2.4vw, 2.4rem);
+  top: clamp(0.85rem, 1.8vw, 1.8rem);
   left: 50%;
   z-index: 2;
   transform: translateX(-50%);
@@ -4231,12 +4260,12 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
   display: grid;
   place-items: center;
   width: min(88vw, 62rem);
-  padding-top: clamp(2rem, 3.5vw, 3.5rem);
+  padding-top: clamp(1.25rem, 2.4vw, 2.4rem);
 }
 
 .sampi-tv-current-kicker {
   color: #0e7490;
-  font-size: clamp(1rem, 1.4vw, 1.3rem);
+  font-size: clamp(0.95rem, 1.2vw, 1.2rem);
   font-weight: 900;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -4245,8 +4274,8 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
 .sampi-tv-number-shell {
   position: relative;
   display: grid;
-  min-width: min(62vw, 42rem);
-  min-height: clamp(13rem, 28vw, 23rem);
+  min-width: min(58vw, 38rem);
+  min-height: clamp(9rem, 26vh, 17rem);
   place-items: center;
   margin-top: clamp(0.9rem, 1.6vw, 1.4rem);
 }
@@ -4269,7 +4298,7 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
   max-width: 100%;
   overflow: hidden;
   color: #101827;
-  font-size: clamp(10rem, 22vw, 19rem);
+  font-size: clamp(7rem, 24vh, 16rem);
   font-weight: 900;
   line-height: 0.9;
   text-overflow: ellipsis;
@@ -4281,18 +4310,18 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
 
 .sampi-tv-standby {
   display: grid;
-  max-width: min(82vw, 50rem);
+  max-width: min(78vw, 44rem);
   place-items: center;
-  padding: clamp(1.25rem, 2vw, 2rem);
+  padding: 0;
 }
 
 .sampi-tv-standby-mark {
   position: relative;
   display: grid;
-  width: clamp(7rem, 12vw, 11rem);
-  height: clamp(7rem, 12vw, 11rem);
+  width: clamp(4.5rem, 12vh, 7.25rem);
+  height: clamp(4.5rem, 12vh, 7.25rem);
   place-items: center;
-  margin-bottom: clamp(1.2rem, 2vw, 1.8rem);
+  margin-bottom: clamp(0.7rem, 1.6vh, 1.1rem);
   border: 1px solid rgba(14, 116, 144, 0.18);
   border-radius: 999px;
   background:
@@ -4330,15 +4359,15 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
 
 .sampi-tv-standby-kicker {
   color: #0e7490;
-  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  font-size: clamp(0.9rem, 1.5vh, 1.05rem);
   font-weight: 900;
   letter-spacing: 0.14em;
 }
 
 .sampi-tv-standby-title {
-  margin-top: 1rem;
+  margin-top: clamp(0.5rem, 1.2vh, 0.85rem);
   color: #122033;
-  font-size: clamp(3.5rem, 7.4vw, 7.4rem);
+  font-size: clamp(2.6rem, 8.2vh, 5.2rem);
   font-weight: 900;
   line-height: 1;
   text-shadow: 0 16px 38px rgba(15, 23, 42, 0.12);
@@ -4348,7 +4377,7 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
 .sampi-tv-standby-line {
   width: min(34rem, 58vw);
   height: 2px;
-  margin-top: 2.1rem;
+  margin-top: clamp(0.9rem, 2.2vh, 1.4rem);
   border-radius: 999px;
   background: linear-gradient(90deg, transparent, rgba(14, 116, 144, 0.72), rgba(212, 175, 55, 0.66), transparent);
   opacity: 0.9;
@@ -4400,12 +4429,14 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
 @media (max-width: 980px) {
   .sampi-tv-minimal-stage {
     width: 100vw;
-    min-height: 100vh;
-    padding: 1rem;
+    height: 100vh;
+    min-height: 0;
+    padding: 0.75rem;
   }
 
   .sampi-tv-current-card {
-    min-height: calc(100vh - 2rem);
+    height: 100%;
+    min-height: 0;
     border-radius: 18px;
   }
 
@@ -4421,7 +4452,7 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
 
   .sampi-tv-current-content {
     width: min(92vw, 42rem);
-    padding-top: 2rem;
+    padding-top: 1.2rem;
   }
 
   .sampi-tv-number-shell {
@@ -4430,16 +4461,16 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
   }
 
   .sampi-tv-current-code {
-    font-size: clamp(7rem, 30vw, 10rem);
+    font-size: clamp(5.5rem, 23vh, 9rem);
   }
 
   .sampi-tv-standby-mark {
-    width: 6rem;
-    height: 6rem;
+    width: 4.5rem;
+    height: 4.5rem;
   }
 
   .sampi-tv-standby-title {
-    font-size: clamp(2.7rem, 10vw, 5rem);
+    font-size: clamp(2.2rem, 7.4vh, 3.8rem);
   }
 
   .sampi-tv-standby-line {
@@ -4451,6 +4482,32 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
     bottom: 2.4rem;
     max-width: calc(100vw - 2rem);
     font-size: 0.72rem;
+  }
+}
+
+@media (max-height: 720px) {
+  .sampi-tv-brandline {
+    top: 0.75rem;
+    font-size: 0.68rem;
+  }
+
+  .sampi-tv-corner {
+    width: 3.8rem;
+    height: 3.8rem;
+  }
+
+  .sampi-tv-standby-mark {
+    width: 4.25rem;
+    height: 4.25rem;
+    margin-bottom: 0.55rem;
+  }
+
+  .sampi-tv-standby-title {
+    font-size: clamp(2.2rem, 7vh, 3.6rem);
+  }
+
+  .sampi-tv-standby-line {
+    margin-top: 0.85rem;
   }
 }
 
