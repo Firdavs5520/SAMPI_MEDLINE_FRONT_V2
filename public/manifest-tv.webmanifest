@@ -1,0 +1,27 @@
+{
+  "name": "Sampi Medline TV Navbat",
+  "short_name": "Sampi TV",
+  "description": "LOR hozirgi bemor navbat ekrani",
+  "lang": "uz-UZ",
+  "start_url": "/tv/lor",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#041412",
+  "theme_color": "#041412",
+  "icons": [
+    {
+      "src": "/icons/pwa-192-v6.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/pwa-512-maskable-v6.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

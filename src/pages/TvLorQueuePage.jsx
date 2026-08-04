@@ -3,16 +3,13 @@ import tvService from "../services/tvService.js";
 import { extractErrorMessage } from "../utils/format.js";
 
 const POLL_INTERVAL_MS = 4000;
-const KIOSK_READY_KEY = "sampi_tv_kiosk_ready";
+const TV_MANIFEST_PATH = "/manifest-tv.webmanifest?v=1";
 
 function TvLorQueuePage() {
   const [queue, setQueue] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pulseKey, setPulseKey] = useState("");
-  const [kioskReady, setKioskReady] = useState(
-    () => window.localStorage.getItem(KIOSK_READY_KEY) === "1"
-  );
   const audioContextRef = useRef(null);
   const abortRef = useRef(null);
   const firstAnnouncementRef = useRef(true);
@@ -35,7 +32,6 @@ function TvLorQueuePage() {
   }, []);
 
   const playQueueTone = useCallback(async () => {
-    if (!kioskReady) return;
     const context = await ensureAudioContext();
     if (!context) return;
 
@@ -54,30 +50,7 @@ function TvLorQueuePage() {
       oscillator.start(now + index * 0.14);
       oscillator.stop(now + 0.92 + index * 0.08);
     });
-  }, [ensureAudioContext, kioskReady]);
-
-  const requestFullscreen = useCallback(async () => {
-    const element = document.documentElement;
-    if (document.fullscreenElement || !element?.requestFullscreen) return;
-    await element.requestFullscreen();
-  }, []);
-
-  const enableKioskMode = useCallback(async () => {
-    try {
-      await ensureAudioContext();
-    } catch {
-      // Audio can stay muted if the browser blocks it.
-    }
-
-    try {
-      await requestFullscreen();
-    } catch {
-      // Fullscreen also depends on browser kiosk policy.
-    }
-
-    window.localStorage.setItem(KIOSK_READY_KEY, "1");
-    setKioskReady(true);
-  }, [ensureAudioContext, requestFullscreen]);
+  }, [ensureAudioContext]);
 
   const loadQueue = useCallback(async ({ silent = false } = {}) => {
     if (abortRef.current) {
@@ -125,9 +98,19 @@ function TvLorQueuePage() {
 
   useEffect(() => {
     mountedRef.current = true;
+
+    const manifestLink = document.querySelector("link[rel='manifest']");
+    const previousManifest = manifestLink?.getAttribute("href") || "";
+    if (manifestLink) {
+      manifestLink.setAttribute("href", TV_MANIFEST_PATH);
+    }
+
     return () => {
       mountedRef.current = false;
       if (abortRef.current) abortRef.current.abort();
+      if (manifestLink && previousManifest) {
+        manifestLink.setAttribute("href", previousManifest);
+      }
     };
   }, []);
 
@@ -167,20 +150,8 @@ function TvLorQueuePage() {
     };
   }, [loadQueue]);
 
-  useEffect(() => {
-    if (kioskReady) {
-      requestFullscreen().catch(() => {});
-      ensureAudioContext().catch(() => {});
-    }
-  }, [ensureAudioContext, kioskReady, requestFullscreen]);
-
   return (
-    <main
-      className={`sampi-tv-shell sampi-tv-minimal-shell ${
-        kioskReady ? "sampi-tv-kiosk-ready" : ""
-      }`}
-      onClick={enableKioskMode}
-    >
+    <main className="sampi-tv-shell sampi-tv-minimal-shell sampi-tv-kiosk-ready">
       <div className="sampi-tv-minimal-stage">
         <section
           className={`sampi-tv-current-card ${
