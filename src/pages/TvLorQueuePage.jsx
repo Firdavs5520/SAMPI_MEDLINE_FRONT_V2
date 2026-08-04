@@ -280,7 +280,7 @@ function TvLorQueuePage() {
             <div className="sampi-tv-standby" aria-live="polite">
               <div className="sampi-tv-ticket-hint">
                 <span>Chekdagi LOR raqami</span>
-                <strong>2 xonali</strong>
+                <strong>Ekranda chiqadi</strong>
               </div>
               <div className="sampi-tv-standby-kicker">LOR</div>
               <div className="sampi-tv-standby-title">Raqamingizni kuting</div>
@@ -303,7 +303,7 @@ function TvLorQueuePage() {
             <div className="sampi-tv-standby" aria-live="polite">
               <div className="sampi-tv-ticket-hint">
                 <span>Chekdagi LOR raqami</span>
-                <strong>2 xonali</strong>
+                <strong>Ekranda chiqadi</strong>
               </div>
               <div className="sampi-tv-standby-kicker">LOR</div>
               <div className="sampi-tv-standby-title">Raqamingizni kuting</div>
