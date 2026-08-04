@@ -28,6 +28,7 @@ const resolveItemType = (item, checkType) => {
 
 const formatLorIdentity = (value) => {
   const raw = String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (raw === "lor1" || raw === "lor") return "LOR";
   const match = raw.match(/lor(\d+)/);
   if (match) return `Lor-${match[1]}`;
   if (!raw) return "-";
@@ -235,38 +236,111 @@ const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
 <html lang="uz">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LOR navbat</title>
     <style>
-      @page { size: 58mm auto; margin: 0; }
+      @media print {
+        @page {
+          size: 58mm auto;
+          margin: 0;
+        }
+        body {
+          margin: 0;
+          padding: 0;
+          width: 58mm;
+          font-family: "Golos Text", Arial, sans-serif;
+          text-align: center;
+          display: flex;
+          justify-content: center;
+        }
+        .check {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+        }
+        .title {
+          font-size: 22px;
+          font-weight: 700;
+          margin-top: 0;
+        }
+        .divider {
+          border: 1px dashed black;
+          width: 90%;
+          margin: 6px 0;
+        }
+        .small {
+          font-size: 22px;
+        }
+        .number {
+          font-size: 110px;
+          font-weight: 800;
+          margin: 0;
+          letter-spacing: 2px;
+          width: 100%;
+          text-align: center;
+          line-height: 1;
+        }
+        .footer {
+          font-size: 18px;
+          margin-top: 5px;
+        }
+      }
       html, body {
         margin: 0;
         padding: 0;
-        width: 58mm;
-        font-family: Arial, sans-serif;
-        color: #000;
-        background: #fff;
+        min-height: 100vh;
       }
-      * { font-family: Arial, sans-serif; }
-      .ticket { width: 58mm; margin: 0; padding: 0; }
-      .inner { width: 48mm; margin: 0 auto; padding: 8px 0 10px; text-align: center; }
-      .brand { font-size: 14px; font-weight: 900; text-transform: uppercase; }
-      .label { margin-top: 6px; font-size: 15px; font-weight: 800; text-transform: uppercase; }
-      .queue { margin: 6px 0; font-size: 52px; line-height: 1; font-weight: 900; }
-      .text { font-size: 13px; line-height: 1.35; }
-      .divider { border-top: 2px dashed #000; margin: 7px 0; }
+      body {
+        background: #f5f5f5;
+        font-family: "Golos Text", Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        text-align: center;
+      }
+      .check {
+        width: 58mm;
+        background: #fff;
+        color: #000;
+      }
+      .title {
+        font-size: 22px;
+        font-weight: 700;
+        margin-top: 0;
+      }
+      .divider {
+        border: 1px dashed black;
+        width: 90%;
+        margin: 6px auto;
+      }
+      .small {
+        font-size: 22px;
+      }
+      .number {
+        font-size: 110px;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: 2px;
+        line-height: 1;
+      }
+      .footer {
+        font-size: 18px;
+        margin-top: 5px;
+      }
     </style>
   </head>
   <body>
-    <div class="ticket">
-      <div class="inner">
-        <div class="brand">SAMPI MEDLINE</div>
-        <div class="divider"></div>
-        <div class="label">LOR navbat</div>
-        <div class="queue">${escapeHtml(queueCode || "--")}</div>
-        <div class="text">Iltimos, raqamingiz chaqirilishini kuting.</div>
-        <div class="divider"></div>
-        <div class="text">${escapeHtml(formatCheckDate(ticket?.createdAt))}</div>
-      </div>
+    <div class="check">
+      <div class="title">SAMPI MEDLINE</div>
+      <div class="divider"></div>
+      <div class="small">LOR</div>
+      <div class="divider"></div>
+      <div class="small">Navbat raqami:</div>
+      <div class="divider"></div>
+      <div class="number">${escapeHtml(queueCode || "00")}</div>
+      <div class="divider"></div>
+      <div class="footer">Tashrifingiz uchun rahmat!</div>
+      <div class="divider"></div>
     </div>
     ${
       inline

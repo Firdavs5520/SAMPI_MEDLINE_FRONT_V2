@@ -38,8 +38,7 @@ const reportService = {
           }
         },
         lorIdentities: {
-          lor1: { totalRevenue: 0, checksCount: 0 },
-          lor2: { totalRevenue: 0, checksCount: 0 }
+          lor1: { totalRevenue: 0, checksCount: 0 }
         },
         total: {
           totalRevenue: 0,

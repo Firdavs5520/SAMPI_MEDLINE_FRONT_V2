@@ -155,6 +155,8 @@ const safeNumber = (value, fallback = 0) => {
 const formatCreatorRoleLabel = (value) =>
   String(value || "").toLowerCase() === "nurse" ? "Nurse" : "LOR";
 
+const formatLorIdentityLabel = (value) => (String(value || "").trim() ? "LOR" : "");
+
 const createInitialForm = (type = "lor") => ({
   department: type,
   specialistId: "",
@@ -260,6 +262,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const [savingSpecialist, setSavingSpecialist] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [issuingLorTicket, setIssuingLorTicket] = useState(false);
+  const [reprintingLorTicket, setReprintingLorTicket] = useState(false);
   const [pendingChecksLoading, setPendingChecksLoading] = useState(false);
   const [entries, setEntries] = useState([]);
   const [historyEntries, setHistoryEntries] = useState([]);
@@ -737,7 +740,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
   };
 
-  const handleIssueLorTicket = async () => {
+  const handleIssueLorTicket = useCallback(async () => {
     if (issuingLorTicket) return;
 
     resetMessages();
@@ -759,7 +762,47 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     } finally {
       setIssuingLorTicket(false);
     }
+  }, [issuingLorTicket]);
+
+  const handleReprintIssuedLorTicket = () => {
+    if (!issuedLorTicket || reprintingLorTicket) return;
+
+    resetMessages();
+    setReprintingLorTicket(true);
+    const printSession = openPendingPrintTab();
+
+    try {
+      const printed = writeLorQueueTicketToPrintTab(printSession, issuedLorTicket);
+      if (!printed) {
+        throw new Error("Brauzer yangi oynani blokladi. Pop-up ruxsatini yoqing.");
+      }
+    } catch (err) {
+      closePrintTab(printSession);
+      setError(extractErrorMessage(err));
+    } finally {
+      window.setTimeout(() => setReprintingLorTicket(false), 300);
+    }
   };
+
+  useEffect(() => {
+    if (!isLorFormSection || isPendingCheckMode) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key !== "Enter" || event.repeat || issuingLorTicket) return;
+
+      const target = event.target;
+      const tagName = String(target?.tagName || "").toLowerCase();
+      if (target?.isContentEditable || ["input", "textarea", "select", "button"].includes(tagName)) {
+        return;
+      }
+
+      event.preventDefault();
+      handleIssueLorTicket();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isLorFormSection, isPendingCheckMode, issuingLorTicket, handleIssueLorTicket]);
 
   const handlePickPendingCheck = (check) => {
     const roleType = String(check?.creatorRole || "").toLowerCase() === "nurse" ? "nurse" : "lor";
@@ -1215,6 +1258,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                   <p className="mt-1 text-sm text-slate-500">
                     Bemor LORga yo'naltirilganda navbat raqamini shu yerdan chiqaring.
                   </p>
+                  <p className="mt-1 text-sm font-bold text-sky-700">
+                    Enter tugmasini 1 marta bosing
+                  </p>
                 </div>
                 <Button
                   type="button"
@@ -1240,6 +1286,18 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                   <div className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
                     Bu raqam LOR panelida kutilayotgan navbatga tushdi. LOR chaqirganda TVda faqat
                     shu raqam ko'rinadi.
+                    <div className="mt-3">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="w-full sm:w-auto"
+                        loading={reprintingLorTicket}
+                        loadingText="Chiqarilmoqda..."
+                        onClick={handleReprintIssuedLorTicket}
+                      >
+                        Qayta chiqarish
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ) : null}
@@ -1325,7 +1383,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                       render: (row) =>
                         `${formatCreatorRoleLabel(row.creatorRole)}: ${row.creatorName || "-"}${
                           String(row.creatorRole).toLowerCase() === "lor" && row.lorIdentity
-                            ? ` (${String(row.lorIdentity).toUpperCase().replace("LOR", "LOR-")})`
+                            ? ` (${formatLorIdentityLabel(row.lorIdentity)})`
                             : ""
                         }`
                     },
@@ -1375,9 +1433,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 </p>
                 {String(selectedPendingCheck?.creatorRole || "").toLowerCase() === "lor" &&
                 selectedPendingCheck?.lorIdentity ? (
-                  <p>
-                    {String(selectedPendingCheck.lorIdentity).toUpperCase().replace("LOR", "LOR-")}
-                  </p>
+                  <p>{formatLorIdentityLabel(selectedPendingCheck.lorIdentity)}</p>
                 ) : null}
                 <div className="mt-2">
                   <Button

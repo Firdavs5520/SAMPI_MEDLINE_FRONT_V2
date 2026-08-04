@@ -297,7 +297,7 @@ function LorChecksPage() {
               label: "LOR",
               render: (row) => {
                 const value = String(row?.createdBy?.lorIdentity || "");
-                return value ? value.toUpperCase().replace("LOR", "LOR-") : "-";
+                return value ? "LOR" : "-";
               }
             },
             {

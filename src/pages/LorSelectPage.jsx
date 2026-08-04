@@ -41,7 +41,7 @@ function LorSelectPage() {
   const doctorTimerRef = useRef(null);
 
   const returnPath = location.state?.from?.pathname || "/lor/checks";
-  const selectedLorLabel = selectedLor ? selectedLor.toUpperCase() : "";
+  const selectedLorLabel = selectedLor ? "LOR" : "";
 
   const filteredSpecialists = useMemo(() => {
     const query = normalizeSearch(doctorSearch);
