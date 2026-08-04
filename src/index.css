@@ -4034,30 +4034,11 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
   max-width: 100%;
   overflow: hidden;
   color: #ffffff;
-  font-size: 10.5rem;
+  font-size: 15rem;
   font-weight: 900;
   line-height: 0.9;
   text-overflow: ellipsis;
   text-shadow: 0 18px 48px rgba(0, 0, 0, 0.58);
-  white-space: nowrap;
-}
-
-.sampi-tv-current-divider {
-  width: min(30rem, 52vw);
-  height: 0.18rem;
-  margin: 2.1rem auto 1.55rem;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgba(94, 234, 212, 0.82), rgba(251, 191, 36, 0.72), transparent);
-}
-
-.sampi-tv-current-doctor {
-  max-width: 100%;
-  overflow: hidden;
-  color: #fde68a;
-  font-size: 3.1rem;
-  font-weight: 900;
-  line-height: 1.08;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -4106,12 +4087,7 @@ html.theme-dark .reporter-dashboard .reporter-warning-row {
   }
 
   .sampi-tv-current-code {
-    font-size: 5.7rem;
-  }
-
-  .sampi-tv-current-doctor {
-    font-size: 2rem;
-    white-space: normal;
+    font-size: 8.5rem;
   }
 
   .sampi-tv-current-empty {

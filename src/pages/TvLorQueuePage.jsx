@@ -164,8 +164,6 @@ function TvLorQueuePage() {
             <>
               <div className="sampi-tv-current-kicker">Hozirgi bemor</div>
               <div className="sampi-tv-current-code">{current.queueCode}</div>
-              <div className="sampi-tv-current-divider" />
-              <div className="sampi-tv-current-doctor">{current.doctorLabel}</div>
             </>
           ) : (
             <div className="sampi-tv-current-empty">Navbat yo'q</div>
