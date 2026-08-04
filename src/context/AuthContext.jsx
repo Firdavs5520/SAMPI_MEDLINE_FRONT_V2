@@ -4,6 +4,12 @@ import authService from "../services/authService.js";
 import { storageKeys } from "../utils/constants.js";
 
 const AuthContext = createContext(null);
+const ACTIVE_LOR_IDENTITY = "lor1";
+
+const normalizeLorIdentity = (value) => {
+  const safe = String(value || "").trim().toLowerCase();
+  return safe === ACTIVE_LOR_IDENTITY ? ACTIVE_LOR_IDENTITY : "";
+};
 
 const parseUser = () => {
   try {
@@ -34,9 +40,11 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem(storageKeys.token));
   const [user, setUser] = useState(parseUser);
   const [lorIdentity, setLorIdentityState] = useState(
-    sessionStorage.getItem(storageKeys.lorIdentity) ||
-      localStorage.getItem(storageKeys.lorIdentity) ||
-      ""
+    normalizeLorIdentity(
+      sessionStorage.getItem(storageKeys.lorIdentity) ||
+        localStorage.getItem(storageKeys.lorIdentity) ||
+        ""
+    )
   );
   const [lorDoctor, setLorDoctorState] = useState(parseLorDoctor);
   const [loading, setLoading] = useState(false);
@@ -44,9 +52,14 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const localLorIdentity = localStorage.getItem(storageKeys.lorIdentity);
     if (localLorIdentity) {
-      sessionStorage.setItem(storageKeys.lorIdentity, localLorIdentity);
+      const safeLorIdentity = normalizeLorIdentity(localLorIdentity);
+      if (safeLorIdentity) {
+        sessionStorage.setItem(storageKeys.lorIdentity, safeLorIdentity);
+      } else {
+        sessionStorage.removeItem(storageKeys.lorIdentity);
+      }
       localStorage.removeItem(storageKeys.lorIdentity);
-      setLorIdentityState(String(localLorIdentity || "").trim().toLowerCase());
+      setLorIdentityState(safeLorIdentity);
     }
 
     const localLorDoctor = localStorage.getItem(storageKeys.lorDoctor);
@@ -91,7 +104,7 @@ export function AuthProvider({ children }) {
   }, [clearLorDoctor]);
 
   const setLorIdentity = useCallback((value) => {
-    const safeValue = String(value || "").trim().toLowerCase();
+    const safeValue = normalizeLorIdentity(value);
     if (!safeValue) {
       sessionStorage.removeItem(storageKeys.lorIdentity);
       localStorage.removeItem(storageKeys.lorIdentity);

@@ -9,7 +9,6 @@ const KIOSK_READY_KEY = "sampi_tv_kiosk_ready";
 
 const roomToneClass = {
   lor1: "sampi-tv-room-cyan",
-  lor2: "sampi-tv-room-amber",
   lor: "sampi-tv-room-emerald"
 };
 
@@ -43,7 +42,7 @@ const formatWaiting = (minutes) => {
 
 const getSupportedLorIdentity = (value) => {
   const safe = String(value || "all").trim().toLowerCase();
-  return ["lor1", "lor2"].includes(safe) ? safe : "all";
+  return safe === "lor1" ? safe : "all";
 };
 
 function QueueTile({ room, highlighted }) {
@@ -295,10 +294,8 @@ function TvLorQueuePage() {
             <strong>{queue?.current?.queueCode || "--"}</strong>
           </div>
           <div>
-            <span>Smena</span>
-            <b>
-              {queue?.shift?.fromLabel || "08:00"} - {queue?.shift?.toLabel || "02:00"}
-            </b>
+            <span>Oxirgi yangilanish</span>
+            <b>{queue?.generatedAt ? formatClock(new Date(queue.generatedAt)) : "--:--"}</b>
           </div>
           <div>
             <span>Faol LOR navbat</span>

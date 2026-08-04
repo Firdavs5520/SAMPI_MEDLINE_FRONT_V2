@@ -24,27 +24,24 @@ const getDoctorInitials = (value) => {
   return `${words[0][0] || ""}${words[1][0] || ""}`.toUpperCase();
 };
 
-const STEP_SWITCH_DELAY_MS = 540;
 const DOCTOR_CONFIRM_DELAY_MS = 460;
+const ACTIVE_LOR_IDENTITY = "lor1";
 
 function LorSelectPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { lorIdentity, lorDoctor, setLorIdentity, setLorDoctor } = useAuth();
 
-  const [selectedLor, setSelectedLor] = useState(lorIdentity || "");
+  const [selectedLor, setSelectedLor] = useState(ACTIVE_LOR_IDENTITY);
   const [specialists, setSpecialists] = useState([]);
   const [doctorSearch, setDoctorSearch] = useState("");
-  const [transitioningLor, setTransitioningLor] = useState("");
   const [confirmingDoctorId, setConfirmingDoctorId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const switchTimerRef = useRef(null);
   const doctorTimerRef = useRef(null);
 
   const returnPath = location.state?.from?.pathname || "/lor/checks";
   const selectedLorLabel = selectedLor ? selectedLor.toUpperCase() : "";
-  const isMovingToDoctor = Boolean(selectedLor || transitioningLor);
 
   const filteredSpecialists = useMemo(() => {
     const query = normalizeSearch(doctorSearch);
@@ -69,11 +66,17 @@ function LorSelectPage() {
     loadSpecialists();
   }, []);
 
+  useEffect(() => {
+    if (lorIdentity !== ACTIVE_LOR_IDENTITY) {
+      setLorIdentity(ACTIVE_LOR_IDENTITY);
+    }
+    if (selectedLor !== ACTIVE_LOR_IDENTITY) {
+      setSelectedLor(ACTIVE_LOR_IDENTITY);
+    }
+  }, [lorIdentity, selectedLor, setLorIdentity]);
+
   useEffect(
     () => () => {
-      if (switchTimerRef.current) {
-        window.clearTimeout(switchTimerRef.current);
-      }
       if (doctorTimerRef.current) {
         window.clearTimeout(doctorTimerRef.current);
       }
@@ -81,39 +84,14 @@ function LorSelectPage() {
     []
   );
 
-  const chooseLor = (value) => {
-    if (transitioningLor || selectedLor === value) return;
-
-    if (switchTimerRef.current) {
-      window.clearTimeout(switchTimerRef.current);
-    }
-
-    setError("");
-    setDoctorSearch("");
-    setTransitioningLor(value);
-
-    switchTimerRef.current = window.setTimeout(() => {
-      setSelectedLor(value);
-      setLorIdentity(value);
-      setTransitioningLor("");
-      switchTimerRef.current = null;
-    }, STEP_SWITCH_DELAY_MS);
-  };
-
-  const changeCabinet = () => {
-    if (switchTimerRef.current) {
-      window.clearTimeout(switchTimerRef.current);
-      switchTimerRef.current = null;
-    }
+  const resetDoctorSearch = () => {
     if (doctorTimerRef.current) {
       window.clearTimeout(doctorTimerRef.current);
       doctorTimerRef.current = null;
     }
-    setTransitioningLor("");
     setConfirmingDoctorId("");
-    setSelectedLor("");
     setDoctorSearch("");
-    setLorIdentity("");
+    setLorIdentity(ACTIVE_LOR_IDENTITY);
   };
 
   const chooseDoctor = (doctor) => {
@@ -135,91 +113,26 @@ function LorSelectPage() {
   }
 
   return (
-    <div
-      className={`lor-select-shell ${
-        transitioningLor || confirmingDoctorId ? "lor-select-shell-switching" : ""
-      }`}
-    >
+    <div className={`lor-select-shell ${confirmingDoctorId ? "lor-select-shell-switching" : ""}`}>
       <div className="lor-select-glow" />
       <div className="lor-select-card lor-ios-card route-enter">
         <div className="lor-select-header">
-          <span className="lor-select-chip">
-            {selectedLor ? "Doktor tanlash" : "LOR ish joyi"}
-          </span>
+          <span className="lor-select-chip">Doktor tanlash</span>
           <h1 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-[2rem]">
-            {selectedLor ? "Qaysi doktor nomidan ishlaysiz?" : "Avval kabinetni tanlang"}
+            Qaysi doktor nomidan ishlaysiz?
           </h1>
           <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
-            {selectedLor
-              ? `${selectedLorLabel} tanlandi. Endi chek chiqaradigan doktorni belgilang.`
-              : "LOR-1 yoki LOR-2 kabinetini tanlang. Keyingi qadamda barcha doktorlar chiqadi."}
+            {selectedLorLabel} faol. Chek chiqaradigan doktorni belgilang.
           </p>
         </div>
 
         <Alert type="error" message={error} />
 
         <div className="lor-step-track" aria-label="LOR tanlash bosqichlari">
-          <span
-            className={`lor-step-dot ${
-              isMovingToDoctor ? "lor-step-dot-done" : "lor-step-dot-active"
-            }`}
-          >
-            1. Kabinet
-          </span>
-          <span className={`lor-step-line ${isMovingToDoctor ? "lor-step-line-done" : ""}`} />
-          <span className={`lor-step-dot ${isMovingToDoctor ? "lor-step-dot-active" : ""}`}>
-            2. Doktor
-          </span>
+          <span className="lor-step-dot lor-step-dot-active">Doktor</span>
         </div>
 
         <div className="mt-7">
-          {!selectedLor ? (
-            <section key="cabinet-step" className="lor-select-section lor-select-stage lor-stage-in">
-              <div className="lor-stage-eyebrow">1-qadam</div>
-              <h2 className="text-center text-2xl font-black text-slate-900">Kabinetni belgilang</h2>
-              <p className="mx-auto mt-2 max-w-xl text-center text-sm font-semibold text-slate-500">
-                Tanlovdan keyin bu qism yopiladi va doktorlar ro'yxati ochiladi.
-              </p>
-
-              <div className="mt-5 grid gap-4 md:grid-cols-2">
-                <button
-                  type="button"
-                  className={`lor-choice-card lor-choice-primary ${
-                    transitioningLor === "lor1" ? "lor-choice-card-selecting" : ""
-                  }`}
-                  disabled={Boolean(transitioningLor)}
-                  onClick={() => chooseLor("lor1")}
-                >
-                  <div className="lor-choice-badge">LOR-1</div>
-                  <p className="mt-2 text-lg font-bold text-slate-900">Asosiy kabinet</p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Bemor qabulini LOR-1 nomida yuritish
-                  </p>
-                  <span className="lor-choice-action">
-                    {transitioningLor === "lor1" ? "Ochilyapti" : "Tanlash"}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`lor-choice-card lor-choice-secondary ${
-                    transitioningLor === "lor2" ? "lor-choice-card-selecting" : ""
-                  }`}
-                  disabled={Boolean(transitioningLor)}
-                  onClick={() => chooseLor("lor2")}
-                >
-                  <div className="lor-choice-badge">LOR-2</div>
-                  <p className="mt-2 text-lg font-bold text-slate-900">Qo'shimcha kabinet</p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Bemor qabulini LOR-2 nomida yuritish
-                  </p>
-                  <span className="lor-choice-action">
-                    {transitioningLor === "lor2" ? "Ochilyapti" : "Tanlash"}
-                  </span>
-                </button>
-              </div>
-            </section>
-          ) : (
             <section
               key="doctor-step"
               className="lor-select-section lor-select-stage lor-doctor-stage lor-stage-in"
@@ -235,8 +148,8 @@ function LorSelectPage() {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="lor-selected-mini">{selectedLorLabel}</span>
-                  <Button variant="secondary" className="px-3 py-2 text-xs" onClick={changeCabinet}>
-                    Kabinetni o'zgartirish
+                  <Button variant="secondary" className="px-3 py-2 text-xs" onClick={resetDoctorSearch}>
+                    Qidiruvni tozalash
                   </Button>
                 </div>
               </div>
@@ -297,7 +210,6 @@ function LorSelectPage() {
                 <div className="lor-doctor-empty mt-4">Qidiruv bo'yicha doktor topilmadi.</div>
               ) : null}
             </section>
-          )}
         </div>
       </div>
     </div>
