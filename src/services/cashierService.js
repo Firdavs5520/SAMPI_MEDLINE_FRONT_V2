@@ -32,6 +32,19 @@ const cashierService = {
     return data.data;
   },
 
+  async issueLorQueueTicket(payload = {}) {
+    const randomPart =
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const { data } = await api.post("/cashier/lor-queue-tickets", {
+      lorIdentity: "lor1",
+      idempotencyKey: `lor-ticket-${randomPart}`,
+      ...payload
+    });
+    return data.data;
+  },
+
   async getEntries(filters = {}) {
     const { data } = await api.get(`/cashier/entries${buildQuery(filters)}`);
     return data.data;

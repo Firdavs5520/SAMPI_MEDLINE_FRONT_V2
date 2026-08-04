@@ -9,6 +9,11 @@ import DatePickerField from "../components/DatePickerField.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
 import cashierService from "../services/cashierService.js";
 import {
+  closePrintTab,
+  openPendingPrintTab,
+  writeLorQueueTicketToPrintTab
+} from "../utils/printReceipt.js";
+import {
   extractErrorMessage,
   formatCurrency,
   formatMoneyInput,
@@ -224,6 +229,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const isSpecialistSection =
     forcedSection === "nurse-specialists" || forcedSection === "lor-specialists";
   const isFormSection = forcedSection === "nurse-patients" || forcedSection === "lor-patients";
+  const isLorFormSection = forcedSection === "lor-patients";
   const isHistorySection = forcedSection === "nurse-history" || forcedSection === "lor-history";
   const isDebtSection = forcedSection === "debts";
   const isSettingsSection = forcedSection === "settings";
@@ -253,12 +259,14 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const [savingEntry, setSavingEntry] = useState(false);
   const [savingSpecialist, setSavingSpecialist] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [issuingLorTicket, setIssuingLorTicket] = useState(false);
   const [pendingChecksLoading, setPendingChecksLoading] = useState(false);
   const [entries, setEntries] = useState([]);
   const [historyEntries, setHistoryEntries] = useState([]);
   const [pendingChecks, setPendingChecks] = useState([]);
   const [pendingSearch, setPendingSearch] = useState("");
   const [selectedPendingCheck, setSelectedPendingCheck] = useState(null);
+  const [issuedLorTicket, setIssuedLorTicket] = useState(null);
   const [shiftWindow, setShiftWindow] = useState({
     fromLabel: "08:00",
     toLabel: "02:00"
@@ -352,7 +360,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     () =>
       pendingChecks.map((item) => ({
         ...item,
-        _searchLabel: `${item.checkId || ""} - ${item.patientName || "-"}`
+        _searchLabel: `${item.queueCode ? `${item.queueCode} - ` : ""}${
+          item.checkId || ""
+        } - ${item.patientName || "-"}`
       })),
     [pendingChecks]
   );
@@ -557,6 +567,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     setSearchInput("");
     setPendingSearch("");
     setSelectedPendingCheck(null);
+    setIssuedLorTicket(null);
     setSuccess("");
     setError("");
   }, [forcedSection, today, lockedType, isDebtSection]);
@@ -723,6 +734,30 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       setError(extractErrorMessage(err));
     } finally {
       setSavingEntry(false);
+    }
+  };
+
+  const handleIssueLorTicket = async () => {
+    if (issuingLorTicket) return;
+
+    resetMessages();
+    setIssuingLorTicket(true);
+    const printSession = openPendingPrintTab();
+
+    try {
+      const ticket = await cashierService.issueLorQueueTicket({ lorIdentity: "lor1" });
+      setIssuedLorTicket(ticket);
+      setSuccess(`LOR navbat raqami chiqarildi: ${ticket.queueCode || "-"}.`);
+
+      const printed = writeLorQueueTicketToPrintTab(printSession, ticket);
+      if (!printed) {
+        setError("Brauzer yangi oynani blokladi. Navbat raqamini ekrandan ham aytish mumkin.");
+      }
+    } catch (err) {
+      closePrintTab(printSession);
+      setError(extractErrorMessage(err));
+    } finally {
+      setIssuingLorTicket(false);
     }
   };
 
@@ -1002,6 +1037,15 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
   const entryColumns = [
     { key: "rowNumber", label: "No" },
+    ...(lockedType === "lor"
+      ? [
+          {
+            key: "checkLorQueueCode",
+            label: "Navbat",
+            render: (row) => row.checkLorQueueCode || "-"
+          }
+        ]
+      : []),
     { key: "patientName", label: "F.I.O bemor" },
     {
       key: "amount",
@@ -1163,6 +1207,45 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
       {isFormSection ? (
         <div className="space-y-4 sm:space-y-5">
+          {isLorFormSection ? (
+            <div className="card border-sky-200 bg-sky-50/70 p-4 sm:p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-800">LOR navbat raqami</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Bemor LORga yo'naltirilganda navbat raqamini shu yerdan chiqaring.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
+                  loading={issuingLorTicket}
+                  loadingText="Chiqarilmoqda..."
+                  onClick={handleIssueLorTicket}
+                >
+                  Raqam chiqarish
+                </Button>
+              </div>
+
+              {issuedLorTicket ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-[180px_1fr]">
+                  <div className="rounded-xl border border-sky-200 bg-white px-4 py-4 text-center shadow-sm">
+                    <p className="text-xs font-black uppercase tracking-wide text-sky-700">
+                      Navbat
+                    </p>
+                    <p className="mt-1 text-5xl font-black leading-none text-slate-900">
+                      {issuedLorTicket.queueCode || "--"}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
+                    Bu raqam LOR panelida kutilayotgan navbatga tushdi. LOR chaqirganda TVda faqat
+                    shu raqam ko'rinadi.
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           <div
             className={`card p-4 sm:p-5 transition-all duration-300 ${
               isPendingCheckMode ? "border-cyan-300 ring-2 ring-cyan-100" : ""
@@ -1191,14 +1274,18 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             >
               <div className="mt-2">
                 <QuickSearchInput
-                  label="Chek qidirish"
-                  placeholder="Chek ID yoki bemor F.I.O bo'yicha qidirish..."
+                  label={isLorFormSection ? "Chek yoki navbat raqami" : "Chek qidirish"}
+                  placeholder={
+                    isLorFormSection
+                      ? "Navbat raqami, chek ID yoki bemor F.I.O bo'yicha qidirish..."
+                      : "Chek ID yoki bemor F.I.O bo'yicha qidirish..."
+                  }
                   value={pendingSearch}
                   onChange={setPendingSearch}
                   items={pendingSuggestionItems}
                   getItemLabel={(item) => item?._searchLabel || ""}
                   onPick={(item) => {
-                    setPendingSearch(item?.checkId || item?.patientName || "");
+                    setPendingSearch(item?.queueCode || item?.checkId || item?.patientName || "");
                     handlePickPendingCheck(item);
                   }}
                   emptyText="Mos chek topilmadi"
@@ -1209,6 +1296,22 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 <Table
                   data={pendingChecks}
                   columns={[
+                    ...(isLorFormSection
+                      ? [
+                          {
+                            key: "queueCode",
+                            label: "Navbat",
+                            render: (row) =>
+                              row.queueCode ? (
+                                <span className="inline-flex min-w-10 justify-center rounded-lg bg-slate-900 px-2 py-1 text-xs font-black text-white">
+                                  {row.queueCode}
+                                </span>
+                              ) : (
+                                "-"
+                              )
+                          }
+                        ]
+                      : []),
                     { key: "checkId", label: "Chek ID" },
                     { key: "patientName", label: "Bemor F.I.O" },
                     {
@@ -1258,6 +1361,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             >
               <div className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-3 text-sm text-cyan-900">
                 <p className="font-semibold">Qabul jarayoni boshlandi</p>
+                {selectedPendingCheck?.queueCode ? (
+                  <p>Navbat: {selectedPendingCheck.queueCode}</p>
+                ) : null}
                 <p>Bemor: {selectedPendingCheck?.patientName || "-"}</p>
                 <p>Jami: {formatCurrency(selectedPendingCheck?.total || 0)} so'm</p>
                 <p>Sana: {formatDateInput(selectedPendingCheck?.createdAt)}</p>

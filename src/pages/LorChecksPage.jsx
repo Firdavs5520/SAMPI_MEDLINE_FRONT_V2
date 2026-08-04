@@ -69,6 +69,15 @@ function LorChecksPage() {
     const uniq = new Map();
     checks.forEach((item) => {
       const name = String(item?.patient?.fullName || "").trim();
+      const queueCode = String(item?.lorQueue?.queueCode || "").trim();
+
+      if (queueCode) {
+        const key = `queue:${queueCode}`;
+        if (!uniq.has(key)) {
+          uniq.set(key, { id: key, name: queueCode });
+        }
+      }
+
       if (!name) return;
       const key = name.toLowerCase();
       if (!uniq.has(key)) {
@@ -290,6 +299,11 @@ function LorChecksPage() {
                 const value = String(row?.createdBy?.lorIdentity || "");
                 return value ? value.toUpperCase().replace("LOR", "LOR-") : "-";
               }
+            },
+            {
+              key: "queueCode",
+              label: "Navbat",
+              render: (row) => row?.lorQueue?.queueCode || "-"
             },
             {
               key: "patient",

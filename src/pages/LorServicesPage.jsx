@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import serviceService from "../services/serviceService.js";
 import usageService from "../services/usageService.js";
-import tvService from "../services/tvService.js";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
@@ -31,21 +30,26 @@ const LANGUAGE_OPTIONS = [
 
 const LOR_SERVICE_TEXT = {
   uz: {
-    steps: ["1. Bemor", "2. Xizmatlar", "3. Chek preview"],
+    steps: ["1. Navbat", "2. Xizmatlar", "3. Chek preview"],
     loading: "LOR xizmatlari yuklanmoqda...",
     loadingAction: "Yuklanmoqda...",
     creatingCheck: "Chek yaratilmoqda...",
     heroTitle: "LOR paneli",
-    heroSubtitle: "Chek yaratish endi bemordan boshlanadi.",
+    heroSubtitle: "Chek yaratish kassir chiqargan navbat raqamidan boshlanadi.",
     languageLabel: "Til",
     contextLabel: "Tanlangan ish joyi",
     doctorFallback: "Doktor tanlanmagan",
     switchContext: "Almashtirish",
-    patientTitle: "1-qadam: Bemor F.I.O",
-    patientHint: "Doktor allaqachon tanlangan. Endi bemor ism-familiyasini kiriting.",
+    patientTitle: "1-qadam: Navbat va bemor F.I.O",
+    patientHint: "Avval kassir chiqargan raqamni qabul qiling, keyin bemor ism-familiyasini kiriting.",
     patientLabel: "Bemor F.I.O",
     patientPlaceholder: "Masalan: Ali Valiyev",
     nextServices: "Keyingi: Xizmatlar",
+    queueTitle: "Kutilayotgan LOR raqamlari",
+    queueEmpty: "Hozircha kutilayotgan navbat yo'q.",
+    currentQueue: "Hozirgi qabul",
+    callQueue: "Qabul qilish",
+    cancelQueue: "Bekor qilish",
     servicesTitle: "2-qadam: Xizmat tanlash",
     serviceSearchLabel: "Xizmat qidirish",
     serviceSearchPlaceholder: "Masalan: Burun chayish",
@@ -297,9 +301,12 @@ function LorServicesPage() {
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [submittingCheckout, setSubmittingCheckout] = useState(false);
-  const [markingCurrentPatient, setMarkingCurrentPatient] = useState(false);
+  const [queueLoading, setQueueLoading] = useState(false);
+  const [callingTicketId, setCallingTicketId] = useState("");
+  const [cancelingTicket, setCancelingTicket] = useState(false);
 
   const [services, setServices] = useState([]);
+  const [queueState, setQueueState] = useState({ current: null, waiting: [] });
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
   const [serviceInputs, setServiceInputs] = useState({});
   const [serviceSearch, setServiceSearch] = useState("");
@@ -311,7 +318,8 @@ function LorServicesPage() {
   const patientInputRef = useRef(null);
   const serviceSearchRef = useRef(null);
   const previewRef = useRef(null);
-  const currentPatientKeyRef = useRef("");
+  const activeTicket = queueState.current;
+  const waitingTickets = queueState.waiting || [];
 
   const sortedServices = useMemo(
     () =>
@@ -387,9 +395,48 @@ function LorServicesPage() {
     }
   }, [user?.id, user?._id]);
 
+  const loadLorQueueTickets = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!lorIdentity) {
+        setQueueState({ current: null, waiting: [] });
+        return;
+      }
+
+      if (!silent) {
+        setQueueLoading(true);
+      }
+
+      try {
+        const data = await usageService.getLorQueueTickets({ lorIdentity });
+        setQueueState({
+          current: data?.current || null,
+          waiting: data?.waiting || []
+        });
+      } catch (err) {
+        if (!silent) {
+          setError(extractErrorMessage(err));
+        }
+      } finally {
+        if (!silent) {
+          setQueueLoading(false);
+        }
+      }
+    },
+    [lorIdentity]
+  );
+
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    loadLorQueueTickets();
+    const timer = setInterval(() => {
+      loadLorQueueTickets({ silent: true });
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, [loadLorQueueTickets]);
 
   useEffect(() => {
     setLanguage(getStoredLanguage(lorDoctor?.id));
@@ -418,6 +465,12 @@ function LorServicesPage() {
       prev.filter((id) => sortedServices.some((item) => item._id === id))
     );
   }, [sortedServices]);
+
+  useEffect(() => {
+    if (!activeTicket && step !== 1) {
+      setStep(1);
+    }
+  }, [activeTicket, step]);
 
   const validateDoctor = () => {
     if (!lorDoctor?.id || !lorDoctor?.name) {
@@ -463,6 +516,12 @@ function LorServicesPage() {
   };
 
   const changeLorContext = () => {
+    if (activeTicket?.id) {
+      resetMessages();
+      setError("Avval hozirgi LOR navbatini yakunlang yoki bekor qiling.");
+      return;
+    }
+
     navigate("/lor/select", { state: { from: location } });
   };
 
@@ -484,6 +543,10 @@ function LorServicesPage() {
 
       if (!lorIdentity) {
         throw new Error(text.errors.identityMissing);
+      }
+
+      if (!activeTicket?.id) {
+        throw new Error("Avval kassir chiqargan LOR raqamni qabul qiling.");
       }
 
       if (selectedServiceIds.length === 0) {
@@ -516,6 +579,7 @@ function LorServicesPage() {
         lorIdentity,
         specialistId: lorDoctor.id,
         specialistName: lorDoctor.name,
+        queueTicketId: activeTicket.id,
         patient: {
           firstName,
           lastName
@@ -527,8 +591,9 @@ function LorServicesPage() {
       setSelectedServiceIds([]);
       setServiceInputs({});
       setServiceSearch("");
-      currentPatientKeyRef.current = "";
+      setQueueState({ current: null, waiting: [] });
       setStep(1);
+      await loadLorQueueTickets({ silent: true });
 
       const written = writeCheckToPrintTab(printTab, result.check);
       if (!written) {
@@ -542,54 +607,81 @@ function LorServicesPage() {
     }
   };
 
-  const goNextFromPatient = async () => {
-    if (markingCurrentPatient) return;
+  const handleCallTicket = async (ticket) => {
+    if (!ticket?.id || callingTicketId) return;
+
     resetMessages();
-    setMarkingCurrentPatient(true);
+    setCallingTicketId(ticket.id);
 
     try {
       validateDoctor();
-      validatePatient();
 
       if (!lorIdentity) {
         throw new Error(text.errors.identityMissing);
       }
 
-      const normalizedPatient = splitFullName(patient.fullName);
-      const firstName = normalizedPatient.firstName.trim();
-      const lastName = normalizedPatient.lastName.trim();
-      const currentPatientKey = [
+      const currentTicket = await usageService.callLorQueueTicket(ticket.id, {
         lorIdentity,
-        lorDoctor?.id,
-        firstName,
-        lastName
-      ]
-        .join(":")
-        .toLowerCase();
+        specialistId: lorDoctor.id,
+        specialistName: lorDoctor.name
+      });
 
-      if (currentPatientKeyRef.current !== currentPatientKey) {
-        const currentPatient = await tvService.setLorCurrentPatient({
-          lorIdentity,
-          specialistId: lorDoctor.id,
-          specialistName: lorDoctor.name,
-          patient: {
-            firstName,
-            lastName
-          }
-        });
-
-        if (!currentPatient?.queueCode) {
-          throw new Error("Bemor TV navbatiga chiqarilmadi.");
-        }
-
-        currentPatientKeyRef.current = currentPatientKey;
-      }
-
-      setStep(2);
+      setQueueState((prev) => ({
+        current: currentTicket,
+        waiting: (prev.waiting || []).filter((item) => item.id !== ticket.id)
+      }));
+      setPatient({ fullName: currentTicket?.patient?.fullName || "" });
+      setStep(1);
+      setTimeout(() => {
+        patientInputRef.current?.focus?.();
+      }, 0);
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
-      setMarkingCurrentPatient(false);
+      setCallingTicketId("");
+    }
+  };
+
+  const handleCancelActiveTicket = async () => {
+    if (!activeTicket?.id || cancelingTicket) return;
+
+    resetMessages();
+    setCancelingTicket(true);
+
+    try {
+      await usageService.cancelLorQueueTicket(activeTicket.id, { lorIdentity });
+      setPatient({ fullName: "" });
+      setSelectedServiceIds([]);
+      setServiceInputs({});
+      setServiceSearch("");
+      setStep(1);
+      await loadLorQueueTickets({ silent: true });
+      setSuccess("LOR navbati bekor qilindi.");
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    } finally {
+      setCancelingTicket(false);
+    }
+  };
+
+  const goNextFromPatient = () => {
+    resetMessages();
+
+    try {
+      validateDoctor();
+
+      if (!lorIdentity) {
+        throw new Error(text.errors.identityMissing);
+      }
+
+      if (!activeTicket?.id) {
+        throw new Error("Avval kassir chiqargan LOR raqamni qabul qiling.");
+      }
+
+      validatePatient();
+      setStep(2);
+    } catch (err) {
+      setError(extractErrorMessage(err));
     }
   };
 
@@ -683,6 +775,7 @@ function LorServicesPage() {
           className="card border-sky-200 p-4 sm:p-5"
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
+              if (!activeTicket) return;
               event.preventDefault();
               goNextFromPatient();
             }
@@ -690,25 +783,83 @@ function LorServicesPage() {
         >
           <h2 className="text-lg font-semibold">{text.patientTitle}</h2>
           <p className="mb-3 text-sm text-slate-600">{text.patientHint}</p>
-          <Input
-            label={text.patientLabel}
-            value={patient.fullName}
-            placeholder={text.patientPlaceholder}
-            inputRef={patientInputRef}
-            onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
-          />
 
-          <div className="mt-4 flex justify-end">
-            <Button
-              className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
-              loading={markingCurrentPatient}
-              loadingText="Qabul qilinmoqda..."
-              disabled={markingCurrentPatient}
-              onClick={goNextFromPatient}
-            >
-              {text.nextServices}
-            </Button>
-          </div>
+          {!activeTicket ? (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm font-black text-slate-800">{text.queueTitle}</p>
+                {queueLoading ? (
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Yuklanmoqda...
+                  </span>
+                ) : null}
+              </div>
+
+              {waitingTickets.length ? (
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  {waitingTickets.map((ticket) => (
+                    <button
+                      key={ticket.id}
+                      type="button"
+                      onClick={() => handleCallTicket(ticket)}
+                      disabled={Boolean(callingTicketId)}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-sky-200 bg-white px-3 py-3 text-left shadow-sm transition hover:border-sky-400 disabled:cursor-wait disabled:opacity-70"
+                    >
+                      <span className="text-3xl font-black leading-none text-slate-900">
+                        {ticket.queueCode}
+                      </span>
+                      <span className="rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-black text-white">
+                        {callingTicketId === ticket.id ? "..." : text.callQueue}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-white px-3 py-4 text-sm font-semibold text-slate-500">
+                  {text.queueEmpty}
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="mb-3 flex flex-col gap-3 rounded-xl border border-sky-200 bg-sky-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wide text-sky-700">
+                    {text.currentQueue}
+                  </p>
+                  <p className="mt-1 text-4xl font-black leading-none text-slate-900">
+                    {activeTicket.queueCode || "--"}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  loading={cancelingTicket}
+                  loadingText="Bekor qilinmoqda..."
+                  onClick={handleCancelActiveTicket}
+                >
+                  {text.cancelQueue}
+                </Button>
+              </div>
+
+              <Input
+                label={text.patientLabel}
+                value={patient.fullName}
+                placeholder={text.patientPlaceholder}
+                inputRef={patientInputRef}
+                onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
+              />
+
+              <div className="mt-4 flex justify-end">
+                <Button
+                  className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
+                  onClick={goNextFromPatient}
+                >
+                  {text.nextServices}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       ) : null}
 
@@ -842,6 +993,9 @@ function LorServicesPage() {
           <p className="mb-3 text-sm text-slate-600">{text.previewHint}</p>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm">
+              Navbat: <span className="font-semibold">{activeTicket?.queueCode || "-"}</span>
+            </p>
             <p className="text-sm">
               {text.doctor}: <span className="font-semibold">{lorDoctor?.name || "-"}</span>
             </p>

@@ -37,6 +37,25 @@ const usageService = {
     return data.data;
   },
 
+  async getLorQueueTickets({ lorIdentity = "lor1", limit = 80 } = {}) {
+    const params = new URLSearchParams();
+    if (lorIdentity) params.set("lorIdentity", lorIdentity);
+    if (limit) params.set("limit", String(limit));
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const { data } = await api.get(`/usage/lor-queue-tickets${query}`);
+    return data.data;
+  },
+
+  async callLorQueueTicket(ticketId, payload = {}) {
+    const { data } = await api.post(`/usage/lor-queue-tickets/${ticketId}/call`, payload);
+    return data.data;
+  },
+
+  async cancelLorQueueTicket(ticketId, payload = {}) {
+    const { data } = await api.post(`/usage/lor-queue-tickets/${ticketId}/cancel`, payload);
+    return data.data;
+  },
+
   async getRoleSpecialists(search = "") {
     const params = new URLSearchParams();
     if (search?.trim()) {

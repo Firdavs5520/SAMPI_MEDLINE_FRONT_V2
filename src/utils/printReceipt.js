@@ -34,6 +34,11 @@ const formatLorIdentity = (value) => {
   return String(value || "-");
 };
 
+const formatQueueCode = (value) => {
+  const safe = String(value || "").replace(/\D/g, "");
+  return safe ? safe.padStart(2, "0") : "";
+};
+
 const buildItemRows = (items, itemType, checkType) => {
   return (items || [])
     .filter((item) => resolveItemType(item, checkType) === itemType)
@@ -71,6 +76,11 @@ const buildCheckPrintHtml = (check, options = {}) => {
   const lorIdentityLine =
     creatorRole === "lor"
       ? `<div class="text">${escapeHtml(formatLorIdentity(check?.createdBy?.lorIdentity))}</div>`
+      : "";
+  const lorQueueCode = formatQueueCode(check?.lorQueue?.queueCode || check?.queueCode);
+  const lorQueueLine =
+    creatorRole === "lor" && lorQueueCode
+      ? `<div class="queue-line">Navbat: ${escapeHtml(lorQueueCode)}</div>`
       : "";
 
   return `<!doctype html>
@@ -112,6 +122,12 @@ const buildCheckPrintHtml = (check, options = {}) => {
         text-align: center;
         font-size: 15px;
         margin: 2px 0;
+      }
+      .queue-line {
+        margin: 4px 0 2px;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 900;
       }
       .section-title {
         text-align: center;
@@ -160,6 +176,7 @@ const buildCheckPrintHtml = (check, options = {}) => {
         <div class="text">Bemor: ${escapeHtml(check.patient?.fullName || "-")}</div>
         <div class="text">Sana: ${escapeHtml(formatCheckDate(check.createdAt))}</div>
         ${lorIdentityLine}
+        ${lorQueueLine}
 
         <div class="divider"></div>
         ${medicineSection}
@@ -173,6 +190,82 @@ const buildCheckPrintHtml = (check, options = {}) => {
 
         ${specialistLine}
         <div class="footer">Doimo sog'-salomat bo'ling</div>
+      </div>
+    </div>
+    ${
+      inline
+        ? ""
+        : `<script>
+      let didPrint = false;
+
+      function runPrint() {
+        if (didPrint) return;
+        didPrint = true;
+        window.print();
+      }
+
+      window.onload = function () {
+        setTimeout(runPrint, 80);
+      };
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          runPrint();
+        }
+      });
+
+      window.onafterprint = function () {
+        if (window.opener && !window.opener.closed) {
+          window.opener.focus();
+        }
+        window.close();
+      };
+    </script>`
+    }
+  </body>
+</html>`;
+};
+
+const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
+  const { inline = false } = options;
+  const queueCode = formatQueueCode(ticket?.queueCode);
+
+  return `<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <title>LOR navbat</title>
+    <style>
+      @page { size: 58mm auto; margin: 0; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 58mm;
+        font-family: Arial, sans-serif;
+        color: #000;
+        background: #fff;
+      }
+      * { font-family: Arial, sans-serif; }
+      .ticket { width: 58mm; margin: 0; padding: 0; }
+      .inner { width: 48mm; margin: 0 auto; padding: 8px 0 10px; text-align: center; }
+      .brand { font-size: 14px; font-weight: 900; text-transform: uppercase; }
+      .label { margin-top: 6px; font-size: 15px; font-weight: 800; text-transform: uppercase; }
+      .queue { margin: 6px 0; font-size: 52px; line-height: 1; font-weight: 900; }
+      .text { font-size: 13px; line-height: 1.35; }
+      .divider { border-top: 2px dashed #000; margin: 7px 0; }
+    </style>
+  </head>
+  <body>
+    <div class="ticket">
+      <div class="inner">
+        <div class="brand">SAMPI MEDLINE</div>
+        <div class="divider"></div>
+        <div class="label">LOR navbat</div>
+        <div class="queue">${escapeHtml(queueCode || "--")}</div>
+        <div class="text">Iltimos, raqamingiz chaqirilishini kuting.</div>
+        <div class="divider"></div>
+        <div class="text">${escapeHtml(formatCheckDate(ticket?.createdAt))}</div>
       </div>
     </div>
     ${
@@ -241,7 +334,7 @@ const openBrowserPrintTab = () => {
   };
 };
 
-const printInsideCurrentApp = (check) => {
+const printHtmlInsideCurrentApp = (html) => {
   const iframe = document.createElement("iframe");
   iframe.setAttribute("aria-hidden", "true");
   iframe.style.position = "fixed";
@@ -272,7 +365,7 @@ const printInsideCurrentApp = (check) => {
   setTimeout(cleanup, 60000);
 
   frameDocument.open();
-  frameDocument.write(buildCheckPrintHtml(check, { inline: true }));
+  frameDocument.write(html);
   frameDocument.close();
 
   setTimeout(() => {
@@ -286,6 +379,12 @@ const printInsideCurrentApp = (check) => {
 
   return true;
 };
+
+const printInsideCurrentApp = (check) =>
+  printHtmlInsideCurrentApp(buildCheckPrintHtml(check, { inline: true }));
+
+const printLorQueueTicketInsideCurrentApp = (ticket) =>
+  printHtmlInsideCurrentApp(buildLorQueueTicketPrintHtml(ticket, { inline: true }));
 
 export const openPendingPrintTab = () => {
   if (isStandalonePwa()) {
@@ -306,6 +405,21 @@ export const writeCheckToPrintTab = (printSession, check) => {
 
   printSession.tab.document.open();
   printSession.tab.document.write(buildCheckPrintHtml(check));
+  printSession.tab.document.close();
+  return true;
+};
+
+export const writeLorQueueTicketToPrintTab = (printSession, ticket) => {
+  if (!printSession) return false;
+
+  if (printSession.__inlinePrint) {
+    return printLorQueueTicketInsideCurrentApp(ticket);
+  }
+
+  if (!printSession.tab || printSession.tab.closed) return false;
+
+  printSession.tab.document.open();
+  printSession.tab.document.write(buildLorQueueTicketPrintHtml(ticket));
   printSession.tab.document.close();
   return true;
 };
