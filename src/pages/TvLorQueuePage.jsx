@@ -1,104 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
 import tvService from "../services/tvService.js";
 import { extractErrorMessage } from "../utils/format.js";
 
 const POLL_INTERVAL_MS = 4000;
-const CLOCK_INTERVAL_MS = 1000;
 const KIOSK_READY_KEY = "sampi_tv_kiosk_ready";
 
-const roomToneClass = {
-  lor1: "sampi-tv-room-cyan",
-  lor: "sampi-tv-room-emerald"
-};
-
-const formatClock = (value = new Date()) =>
-  new Intl.DateTimeFormat("uz-UZ", {
-    timeZone: "Asia/Tashkent",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  }).format(value);
-
-const formatTime = (value) => {
-  if (!value) return "--:--";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "--:--";
-  return new Intl.DateTimeFormat("uz-UZ", {
-    timeZone: "Asia/Tashkent",
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(date);
-};
-
-const formatWaiting = (minutes) => {
-  const safeMinutes = Number(minutes);
-  if (!Number.isFinite(safeMinutes) || safeMinutes <= 0) return "hozir";
-  if (safeMinutes < 60) return `${safeMinutes} daqiqa`;
-  const hours = Math.floor(safeMinutes / 60);
-  const rest = safeMinutes % 60;
-  return rest ? `${hours} soat ${rest} daqiqa` : `${hours} soat`;
-};
-
-const getSupportedLorIdentity = (value) => {
-  const safe = String(value || "all").trim().toLowerCase();
-  return safe === "lor1" ? safe : "all";
-};
-
-function QueueTile({ room, highlighted }) {
-  const current = room?.current;
-
-  return (
-    <section
-      className={`sampi-tv-room-panel ${roomToneClass[room?.id] || roomToneClass.lor} ${
-        highlighted ? "sampi-tv-room-pulse" : ""
-      }`}
-    >
-      <div className="sampi-tv-room-head">
-        <span>{room?.label || "LOR"}</span>
-        <span>{current ? "Chaqirilgan" : "Kutilmoqda"}</span>
-      </div>
-
-      {current ? (
-        <>
-          <div className="sampi-tv-code">{current.queueCode}</div>
-          <div className="sampi-tv-doctor">{current.doctorLabel}</div>
-          <div className="sampi-tv-room-meta">
-            <span>{formatTime(current.acceptedAt)}</span>
-            <span>{formatWaiting(current.minutesSinceAccepted)}</span>
-          </div>
-        </>
-      ) : (
-        <div className="sampi-tv-empty-room">
-          <span>--</span>
-          <strong>Navbat yo'q</strong>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function QueueRow({ item, index }) {
-  return (
-    <div className="sampi-tv-row">
-      <span className="sampi-tv-row-number">{String(index + 1).padStart(2, "0")}</span>
-      <span className="sampi-tv-row-code">{item.queueCode}</span>
-      <span className="sampi-tv-row-room">{item.roomLabel}</span>
-      <span className="sampi-tv-row-time">{formatTime(item.acceptedAt)}</span>
-    </div>
-  );
-}
-
 function TvLorQueuePage() {
-  const [searchParams] = useSearchParams();
-  const lorIdentity = useMemo(
-    () => getSupportedLorIdentity(searchParams.get("lor") || searchParams.get("lorIdentity")),
-    [searchParams]
-  );
   const [queue, setQueue] = useState(null);
-  const [clock, setClock] = useState(() => new Date());
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [pulseKey, setPulseKey] = useState("");
   const [kioskReady, setKioskReady] = useState(
@@ -110,8 +19,7 @@ function TvLorQueuePage() {
   const lastAnnouncementKeyRef = useRef("");
   const mountedRef = useRef(false);
 
-  const visibleRooms = useMemo(() => queue?.rooms || [], [queue?.rooms]);
-  const latestRows = useMemo(() => queue?.entries || [], [queue?.entries]);
+  const current = queue?.current || null;
   const currentKey = queue?.announcementKey || "";
 
   const ensureAudioContext = useCallback(async () => {
@@ -181,12 +89,10 @@ function TvLorQueuePage() {
 
     if (!silent) {
       setLoading(true);
-    } else {
-      setRefreshing(true);
     }
 
     try {
-      const data = await tvService.getLorQueue({ lorIdentity, limit: 18 }, controller.signal);
+      const data = await tvService.getLorQueue({ lorIdentity: "lor1", limit: 1 }, controller.signal);
       setQueue(data);
       setError("");
 
@@ -214,9 +120,8 @@ function TvLorQueuePage() {
         abortRef.current = null;
       }
       setLoading(false);
-      setRefreshing(false);
     }
-  }, [lorIdentity, playQueueTone]);
+  }, [playQueueTone]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -246,11 +151,6 @@ function TvLorQueuePage() {
   }, [loadQueue]);
 
   useEffect(() => {
-    const timerId = window.setInterval(() => setClock(new Date()), CLOCK_INTERVAL_MS);
-    return () => window.clearInterval(timerId);
-  }, []);
-
-  useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === "visible") {
         loadQueue({ silent: true });
@@ -275,77 +175,32 @@ function TvLorQueuePage() {
   }, [ensureAudioContext, kioskReady, requestFullscreen]);
 
   return (
-    <main className={`sampi-tv-shell ${kioskReady ? "sampi-tv-kiosk-ready" : ""}`}>
-      <div className="sampi-tv-stage">
-        <header className="sampi-tv-topbar">
-          <div>
-            <div className="sampi-tv-brand">Sampi Medline</div>
-            <h1>LOR navbat monitori</h1>
-          </div>
-          <div className="sampi-tv-live">
-            <span className={error ? "sampi-tv-live-error" : ""} />
-            <strong>{formatClock(clock)}</strong>
-          </div>
-        </header>
-
-        <section className="sampi-tv-hero">
-          <div>
-            <p>Hozir chaqirilgan navbat</p>
-            <strong>{queue?.current?.queueCode || "--"}</strong>
-          </div>
-          <div>
-            <span>Oxirgi yangilanish</span>
-            <b>{queue?.generatedAt ? formatClock(new Date(queue.generatedAt)) : "--:--"}</b>
-          </div>
-          <div>
-            <span>Faol LOR navbat</span>
-            <b>{queue?.totalActive ?? 0}</b>
-          </div>
+    <main
+      className={`sampi-tv-shell sampi-tv-minimal-shell ${
+        kioskReady ? "sampi-tv-kiosk-ready" : ""
+      }`}
+      onClick={enableKioskMode}
+    >
+      <div className="sampi-tv-minimal-stage">
+        <section
+          className={`sampi-tv-current-card ${
+            currentKey && currentKey === pulseKey ? "sampi-tv-current-pulse" : ""
+          } ${error ? "sampi-tv-current-muted" : ""}`}
+        >
+          {loading ? (
+            <div className="sampi-tv-current-empty">Yuklanmoqda</div>
+          ) : current ? (
+            <>
+              <div className="sampi-tv-current-kicker">Hozirgi bemor</div>
+              <div className="sampi-tv-current-code">{current.queueCode}</div>
+              <div className="sampi-tv-current-divider" />
+              <div className="sampi-tv-current-doctor">{current.doctorLabel}</div>
+            </>
+          ) : (
+            <div className="sampi-tv-current-empty">Navbat yo'q</div>
+          )}
         </section>
-
-        {loading ? (
-          <section className="sampi-tv-loading">Navbat yuklanmoqda...</section>
-        ) : (
-          <>
-            <section className="sampi-tv-room-grid">
-              {visibleRooms.map((room) => (
-                <QueueTile
-                  key={room.id}
-                  room={room}
-                  highlighted={Boolean(currentKey && currentKey === pulseKey && room.current?.id === queue?.current?.id)}
-                />
-              ))}
-            </section>
-
-            <section className="sampi-tv-list-band">
-              <div className="sampi-tv-list-head">
-                <span>So'nggi chaqirilganlar</span>
-                <span>
-                  {refreshing ? "yangilanmoqda" : queue?.lastChangedAt ? formatTime(queue.lastChangedAt) : "--:--"}
-                </span>
-              </div>
-
-              <div className="sampi-tv-list">
-                {latestRows.length ? (
-                  latestRows.map((item, index) => (
-                    <QueueRow key={item.id} item={item} index={index} />
-                  ))
-                ) : (
-                  <div className="sampi-tv-no-rows">Hozircha LOR navbati yo'q</div>
-                )}
-              </div>
-            </section>
-          </>
-        )}
-
-        {error ? <div className="sampi-tv-error">{error}</div> : null}
       </div>
-
-      {!kioskReady ? (
-        <button type="button" className="sampi-tv-kiosk-button" onClick={enableKioskMode}>
-          TV rejimini yoqish
-        </button>
-      ) : null}
     </main>
   );
 }
