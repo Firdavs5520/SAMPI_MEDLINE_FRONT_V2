@@ -95,7 +95,7 @@ function MonthPickerField({ label, value, onChange }) {
           setViewYear(selected.year);
           setOpen((prev) => !prev);
         }}
-        className="sampi-input sampi-control flex min-h-12 w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-left text-base font-bold text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+        className="sampi-input sampi-control flex min-h-12 w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-left text-base font-bold text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
       >
         <span className="truncate">{formatMonth(value)}</span>
         <svg
@@ -112,7 +112,7 @@ function MonthPickerField({ label, value, onChange }) {
       </button>
 
       {open ? (
-        <div className="animate-dropdown-pop sampi-dropdown absolute z-40 mt-1 w-[min(86vw,320px)] rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
+        <div className="animate-dropdown-pop sampi-dropdown absolute z-40 mt-1 w-[min(86vw,320px)] rounded-lg border border-slate-200 bg-white p-3 shadow-lg">
           <div className="mb-3 flex items-center justify-between gap-2">
             <button
               type="button"

@@ -8,10 +8,11 @@ function Table({
 }) {
   const resolveClassName = (value, ...args) =>
     typeof value === "function" ? value(...args) : value;
+  const getColumnLabel = (label) => (typeof label === "string" ? label : "");
 
   return (
-    <div className="sampi-table-wrap sampi-dropdown w-full overflow-x-auto rounded-xl border border-slate-200">
-      <table className={`sampi-data-table w-full min-w-[720px] table-auto bg-white text-sm ${tableClassName}`.trim()}>
+    <div className="sampi-table-wrap sampi-dropdown w-full overflow-x-auto rounded-lg border border-slate-200">
+      <table className={`sampi-data-table w-full table-auto bg-white text-sm ${tableClassName}`.trim()}>
         <thead className={`bg-slate-50 text-left text-slate-600 ${headerClassName}`.trim()}>
           <tr>
             {columns.map((col) => (
@@ -50,7 +51,8 @@ function Table({
                     return (
                       <td
                         key={col.key}
-                        className={`whitespace-nowrap px-3 py-3 align-top text-slate-700 sm:px-4 ${resolvedCellClassName}`.trim()}
+                        data-label={getColumnLabel(col.label)}
+                        className={`px-3 py-3 align-top text-slate-700 sm:px-4 ${resolvedCellClassName}`.trim()}
                       >
                         {col.render ? col.render(row) : row[col.key]}
                       </td>

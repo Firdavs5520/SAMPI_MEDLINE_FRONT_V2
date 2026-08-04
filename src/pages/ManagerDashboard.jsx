@@ -109,9 +109,9 @@ function StatCard({ title, value, hint = "", tone = "default" }) {
   };
 
   return (
-    <div className={`manager-stat-card rounded-2xl border p-4 ${tones[tone]}`}>
+    <div className={`manager-stat-card rounded-lg border p-4 ${tones[tone]}`}>
       <span className="manager-stat-glow" aria-hidden="true" />
-      <p className="text-xs font-semibold uppercase tracking-wide opacity-80">{title}</p>
+      <p className="text-xs font-semibold opacity-80">{title}</p>
       <p className="mt-2 break-words text-xl font-bold sm:text-2xl">{value}</p>
       <p className="mt-1 min-h-5 break-words text-xs opacity-80">{hint}</p>
     </div>
@@ -138,7 +138,7 @@ function RoleSummaryCard({ title, roleKey, stats = emptyRoleStats() }) {
   const topItem = formatTopItem(stats.topItem);
 
   return (
-    <div className={`manager-role-card manager-role-card-${roleKey} rounded-2xl border p-4 ${tone}`}>
+    <div className={`manager-role-card manager-role-card-${roleKey} rounded-lg border p-4 ${tone}`}>
       <span className="manager-role-card-accent" aria-hidden="true" />
       <p className="text-sm font-bold text-slate-800">{title}</p>
 
@@ -283,24 +283,24 @@ function ManagerDashboard() {
       <div className="card manager-hero p-4 sm:p-5">
         <div className="manager-hero-grid">
           <div className="min-w-0">
-            <p className="manager-kicker">Manager nazorati</p>
-            <h1 className="mt-2 text-2xl font-black leading-tight text-slate-900 sm:text-3xl">
+            <p className="manager-kicker">Boshqaruv nazorati</p>
+            <h1 className="mt-2 text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
               Umumiy statistika
             </h1>
             <p className="mt-2 max-w-xl break-words text-sm font-medium leading-6 text-slate-600">
-              Nurse, LOR, smena va texnik holat bir joyda. Mobile’da asosiy raqamlar tepada turadi.
+              Nurse, LOR, smena va texnik holat bir joyda. Mobilda asosiy raqamlar tepada turadi.
             </p>
           </div>
 
           <div className="manager-hero-panel">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Jami daromad</p>
-            <p className="mt-2 break-words text-2xl font-black text-slate-900">
+            <p className="text-xs font-semibold text-slate-500">Jami daromad</p>
+            <p className="mt-2 break-words text-2xl font-bold text-slate-900">
               {formatCurrency(overview.total.totalRevenue)}
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <span className="manager-hero-chip">{overview.total.checksCount} chek</span>
               <span className={`manager-hero-chip ${dbConnected ? "manager-hero-chip-good" : "manager-hero-chip-bad"}`}>
-                DB {dbConnected ? "online" : "offline"}
+                Baza {dbConnected ? "online" : "offline"}
               </span>
             </div>
             <p className="mt-3 line-clamp-2 text-xs font-semibold text-slate-500">
@@ -384,7 +384,7 @@ function ManagerDashboard() {
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="manager-lor-mini rounded-2xl border border-sky-200 bg-sky-50 p-4">
+          <div className="manager-lor-mini rounded-lg border border-sky-200 bg-sky-50 p-4">
             <p className="text-sm font-bold text-slate-800">LOR</p>
             <p className="mt-2 text-2xl font-bold text-slate-900">
               {formatCurrency(overview.lorIdentities?.lor1?.totalRevenue || 0)}
@@ -505,7 +505,7 @@ function ManagerDashboard() {
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
-            title="DB holati"
+            title="Baza holati"
             value={String(monitoring?.health?.dbState || "-").toUpperCase()}
             hint={dbConnected ? "Ulanish faol" : "Ulanish muammosi bo'lishi mumkin"}
             tone={dbConnected ? "success" : "danger"}

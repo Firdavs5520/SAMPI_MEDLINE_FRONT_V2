@@ -60,7 +60,7 @@ function ThemeModeSwitch({ compact = false }) {
       <button
         type="button"
         onClick={handleToggle}
-        className={`sampi-theme-toggle sampi-control inline-flex items-center rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10 ${
+        className={`sampi-theme-toggle sampi-control inline-flex items-center rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 ${
           compact
             ? "h-10 w-10 justify-center px-0"
             : "w-full gap-2 px-3 py-2 sm:min-w-[138px] sm:justify-start"

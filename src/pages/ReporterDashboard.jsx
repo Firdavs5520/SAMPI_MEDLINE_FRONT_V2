@@ -67,9 +67,9 @@ function StatCard({ title, value, hint, tone = "cyan" }) {
   };
 
   return (
-    <div className={`reporter-stat-card rounded-xl border p-3 shadow-sm sm:p-4 ${tones[tone] || tones.slate}`}>
-      <p className="reporter-stat-title text-xs font-bold uppercase">{title}</p>
-      <p className="reporter-stat-value mt-1.5 break-words text-lg font-black leading-tight sm:mt-2 sm:text-xl">
+    <div className={`reporter-stat-card rounded-lg border p-3 shadow-sm sm:p-4 ${tones[tone] || tones.slate}`}>
+      <p className="reporter-stat-title text-xs font-semibold">{title}</p>
+      <p className="reporter-stat-value mt-1.5 break-words text-lg font-bold leading-tight sm:mt-2 sm:text-xl">
         {value}
       </p>
       {hint ? <p className="reporter-stat-hint mt-1 text-xs font-semibold">{hint}</p> : null}
@@ -199,7 +199,7 @@ function AmountField({ label, value, missing, onChange }) {
         autoComplete="off"
         placeholder="0"
         aria-label={label}
-        className={`reporter-amount-input sampi-input sampi-control min-h-14 w-full rounded-xl border px-3 py-2.5 text-base font-bold outline-none transition sm:text-lg ${
+        className={`reporter-amount-input sampi-input sampi-control min-h-14 w-full rounded-lg border px-3 py-2.5 text-base font-bold outline-none transition sm:text-lg ${
           missing ? "reporter-input-missing" : ""
         }`}
         value={value ?? ""}
@@ -404,11 +404,11 @@ function ReporterDashboard() {
   };
 
   const autoSaveLabel = {
-    idle: "Auto-save tayyor",
-    waiting: "Auto-save kutmoqda",
-    saving: "Auto-save saqlayapti",
-    saved: "Auto-save saqlandi",
-    error: "Auto-save xato",
+    idle: "Avto saqlash tayyor",
+    waiting: "Avto saqlash kutmoqda",
+    saving: "Avto saqlash saqlayapti",
+    saved: "Avto saqlash saqlandi",
+    error: "Avto saqlash xato",
     warning: "Katta summa tekshirilyapti"
   }[autoSaveStatus];
 
@@ -417,10 +417,10 @@ function ReporterDashboard() {
       <div className="reporter-hero-card card p-3 sm:p-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-cyan-700">
+            <p className="text-xs font-semibold text-cyan-700">
               Reporter
             </p>
-            <h1 className="mt-1 text-lg font-black leading-tight text-slate-900 sm:text-2xl">
+            <h1 className="mt-1 text-lg font-bold leading-tight text-slate-900 sm:text-2xl">
               Kunlik kassa va xarajat hisoboti
             </h1>
           </div>
@@ -428,7 +428,7 @@ function ReporterDashboard() {
             <DatePickerField label="Kun" value={date} onChange={handleDateChange} />
             <Link
               to="/reporter/reports"
-              className="sampi-btn inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-300"
+              className="sampi-btn inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors duration-150 hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-300"
             >
               Yillik hisobot
             </Link>
@@ -475,7 +475,7 @@ function ReporterDashboard() {
                 className="min-h-11 px-3 text-xs"
                 disabled
               >
-                Auto-save yoniq
+                Avto saqlash
               </Button>
               <Button type="button" variant="danger" className="min-h-11 px-3 text-xs" onClick={handleClear}>
                 Tozalash
@@ -513,7 +513,7 @@ function ReporterDashboard() {
               Izoh
             </span>
             <textarea
-              className="reporter-note-input sampi-input sampi-control min-h-24 w-full rounded-xl border px-3 py-2.5 text-base outline-none transition sm:text-sm"
+              className="reporter-note-input sampi-input sampi-control min-h-24 w-full rounded-lg border px-3 py-2.5 text-base outline-none transition sm:text-sm"
               value={form.note || ""}
               onChange={(event) =>
                 setForm((prev) => ({
@@ -528,7 +528,7 @@ function ReporterDashboard() {
               Saqlash
             </Button>
           </div>
-          <div className="reporter-mobile-save fixed inset-x-0 bottom-0 z-30 border-t p-3 shadow-2xl backdrop-blur sm:hidden">
+          <div className="reporter-mobile-save sticky bottom-0 z-20 rounded-lg border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur sm:hidden">
             <Button
               type="submit"
               className="min-h-12 w-full text-base"
@@ -551,7 +551,7 @@ function ReporterDashboard() {
         panelClassName="max-w-md"
         bodyClassName="space-y-4"
       >
-        <div className="reporter-warning-card rounded-xl border p-4">
+        <div className="reporter-warning-card rounded-lg border p-4">
           <p className="text-sm font-bold">
             Kiritilgan summa juda katta. Yana bir marta tekshiring.
           </p>

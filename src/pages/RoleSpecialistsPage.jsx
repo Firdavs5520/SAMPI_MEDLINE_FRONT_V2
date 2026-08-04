@@ -202,7 +202,7 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
               return (
                 <div
                   key={item._id}
-                  className="rounded-xl border border-slate-200 bg-white p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow"
+                  className="rounded-lg border border-slate-200 bg-white p-3 transition-colors duration-150 hover:border-slate-300"
                 >
                   {isEditing ? (
                     <div className="space-y-3">

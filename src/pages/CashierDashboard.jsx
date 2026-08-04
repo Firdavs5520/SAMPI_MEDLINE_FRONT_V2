@@ -248,8 +248,8 @@ function SummaryCard({ title, value, hint, tone = "default" }) {
   };
 
   return (
-    <div className={`rounded-xl border p-4 ${tones[tone] || tones.default}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">{title}</p>
+    <div className={`rounded-lg border p-4 ${tones[tone] || tones.default}`}>
+      <p className="text-xs font-semibold text-slate-600">{title}</p>
       <p className="mt-2 text-2xl font-bold text-slate-800">{value}</p>
       <p className="mt-1 text-sm text-slate-600">{hint}</p>
     </div>
@@ -1068,38 +1068,37 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     const nextQueueCode = lorTicketStatus.nextQueueCode || "01";
     const lastIssuedCode = issuedLorTicket?.queueCode || lorTicketStatus.lastIssued?.queueCode || "";
     const recentIssuedTickets = lorTicketStatus.recentIssued || [];
+    const latestPrintEvent = lorPrintEvents[0];
 
     return (
       <div className="space-y-4 sm:space-y-6">
-        <div className="card border-sky-200 bg-sky-50/70 p-4 sm:p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="card border-sky-100 bg-white p-4 text-center shadow-sm sm:p-6 lg:p-8">
+          <div className="flex flex-col gap-3 text-left sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-xl font-bold text-slate-800">LOR navbat cheki</h1>
+              <p className="text-sm font-semibold text-sky-700">LOR navbati</p>
+              <h1 className="mt-1 text-xl font-bold text-slate-900">Navbat cheki chiqarish</h1>
               <p className="mt-1 text-sm text-slate-500">
-                Bemor LORga yo'naltirilganda navbat raqami shu yerdan chiqariladi.
+                Bemor LORga yo'naltirilganda raqam shu yerdan beriladi.
               </p>
             </div>
-            <span className="inline-flex w-fit items-center rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-bold tracking-wide text-sky-800">
-              KASSIR
+            <span className="inline-flex w-fit items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+              Kassir
             </span>
           </div>
-        </div>
 
-        <div className="card border-sky-200 bg-white p-4 text-center shadow-sm sm:p-6 lg:p-8">
-          <p className="text-lg font-black uppercase tracking-wide text-slate-700">LOR</p>
-          <p className="mt-4 text-base font-bold text-slate-500 sm:text-lg">
-            Hozir chiqariladigan navbat:
-          </p>
-          <div className="mx-auto mt-3 flex min-h-40 max-w-xl items-center justify-center rounded-xl border border-sky-100 bg-sky-50 px-4 py-6 sm:min-h-56">
-            <span className="text-[7rem] font-black leading-none text-slate-900 sm:text-[10rem] lg:text-[12rem]">
-              {nextQueueCode}
-            </span>
+          <div className="mx-auto mt-6 max-w-3xl">
+            <p className="text-sm font-semibold text-slate-500 sm:text-base">Keyingi raqam</p>
+            <div className="mt-3 flex min-h-44 items-center justify-center rounded-lg border border-sky-100 bg-sky-50 px-4 py-6 sm:min-h-60">
+              <span className="text-[6.5rem] font-black leading-none text-slate-950 sm:text-[9rem] lg:text-[11rem]">
+                {nextQueueCode}
+              </span>
+            </div>
+            <p className="mt-4 text-base font-semibold text-sky-700 sm:text-lg">
+              Enter bosilganda chek darhol chiqadi
+            </p>
           </div>
-          <p className="mt-5 text-lg font-black text-sky-700 sm:text-xl">
-            Enter tugmasini 1 marta bosing
-          </p>
 
-          <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
+          <div className="mx-auto mt-5 flex max-w-2xl flex-col justify-center gap-3 sm:flex-row">
             <Button
               type="button"
               className="min-h-12 w-full bg-sky-600 px-8 text-base hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
@@ -1123,53 +1122,46 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             ) : null}
           </div>
 
-          {lastIssuedCode ? (
-            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-600">
-              Oxirgi chiqarilgan raqam:{" "}
-              <span className="text-slate-900">{lastIssuedCode}</span>
-            </div>
-          ) : null}
-
-          {recentIssuedTickets.length ? (
-            <div className="mx-auto mt-4 max-w-2xl rounded-xl border border-slate-200 bg-white px-3 py-3 text-left">
-              <p className="text-xs font-black uppercase tracking-wide text-slate-500">
-                Oxirgi 5 navbat
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {recentIssuedTickets.map((ticket) => (
-                  <button
-                    key={ticket.id || ticket._id || ticket.queueCode}
-                    type="button"
-                    className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-black text-sky-800 transition hover:border-sky-400 hover:bg-sky-100"
-                    onClick={() => handleReprintIssuedLorTicket(ticket)}
-                  >
-                    {ticket.queueCode}
-                  </button>
-                ))}
+          {(lastIssuedCode || latestPrintEvent || recentIssuedTickets.length || refreshing) ? (
+            <div className="mx-auto mt-5 max-w-3xl rounded-lg border border-slate-200 bg-slate-50 p-3 text-left">
+              <div className="flex flex-col gap-2 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+                {lastIssuedCode ? (
+                  <span>
+                    Oxirgi raqam: <b className="text-slate-900">{lastIssuedCode}</b>
+                  </span>
+                ) : (
+                  <span>Hali raqam chiqarilmagan</span>
+                )}
+                {refreshing ? <span className="font-semibold text-slate-500">Raqam yangilanmoqda...</span> : null}
               </div>
-            </div>
-          ) : null}
 
-          {lorPrintEvents.length ? (
-            <div className="mx-auto mt-4 max-w-2xl space-y-2 text-left">
-              {lorPrintEvents.map((item) => (
+              {latestPrintEvent ? (
                 <div
-                  key={item.id}
-                  className={`rounded-xl border px-3 py-2 text-xs font-bold ${
-                    printEventToneClasses[item.tone] || printEventToneClasses.info
+                  className={`mt-3 rounded-lg border px-3 py-2 text-xs font-semibold ${
+                    printEventToneClasses[latestPrintEvent.tone] || printEventToneClasses.info
                   }`}
                 >
-                  <span className="mr-2 opacity-70">{item.at}</span>
-                  {item.message}
+                  <span className="mr-2 opacity-70">{latestPrintEvent.at}</span>
+                  {latestPrintEvent.message}
                 </div>
-              ))}
-            </div>
-          ) : null}
+              ) : null}
 
-          {refreshing ? (
-            <p className="mt-3 text-xs font-bold uppercase tracking-wide text-slate-400">
-              Raqam yangilanmoqda...
-            </p>
+              {recentIssuedTickets.length ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-500">Tez qayta chiqarish:</span>
+                  {recentIssuedTickets.map((ticket) => (
+                    <button
+                      key={ticket.id || ticket._id || ticket.queueCode}
+                      type="button"
+                      className="rounded-md border border-sky-200 bg-white px-3 py-1.5 text-sm font-semibold text-sky-800 transition-colors hover:border-sky-400 hover:bg-sky-50"
+                      onClick={() => handleReprintIssuedLorTicket(ticket)}
+                    >
+                      {ticket.queueCode}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           ) : null}
         </div>
 
@@ -1222,7 +1214,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 handleSettingsChange("lateEntryWarningMinutes", event.target.value)
               }
             />
-            <label className="flex min-h-[4.25rem] items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-3 py-2.5">
+            <label className="flex min-h-[4.25rem] items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white px-3 py-2.5">
               <span>
                 <span className="block text-sm font-semibold text-slate-700">
                   Qarzda telefon talab qilish
@@ -1242,7 +1234,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             </label>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-600">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-600">
             Agar tugash vaqti boshlanishdan kichik bo'lsa, smena ertasi kungacha davom etadi.
             Masalan: 08:00 - 02:00.
           </div>
@@ -1278,7 +1270,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
               value={specialistNameInput}
               onChange={(e) => setSpecialistNameInput(e.target.value)}
               placeholder={`Masalan: ${specialistRoleLabel} 1`}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/10"
             />
             <Button className="w-full sm:w-auto" onClick={handleAddSpecialist} loading={savingSpecialist}>
               Qo'shish
@@ -1495,7 +1487,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       {isFormSection ? (
         <div className="space-y-4 sm:space-y-5">
           <div
-            className={`card p-4 sm:p-5 transition-all duration-300 ${
+            className={`card p-4 sm:p-5 transition-colors duration-150 ${
               isPendingCheckMode ? "border-cyan-300 ring-2 ring-cyan-100" : ""
             }`}
           >
@@ -1514,7 +1506,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             </div>
 
             <div
-              className={`overflow-hidden transition-all duration-500 ${
+              className={`overflow-hidden transition-[max-height,opacity] duration-300 ${
                 isPendingCheckMode
                   ? "pointer-events-none max-h-0 opacity-0"
                   : "mt-3 max-h-[1200px] opacity-100"
@@ -1601,13 +1593,13 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             </div>
 
             <div
-              className={`overflow-hidden transition-all duration-500 ${
+              className={`overflow-hidden transition-[max-height,opacity] duration-300 ${
                 isPendingCheckMode
                   ? "mt-3 max-h-80 opacity-100"
                   : "pointer-events-none max-h-0 opacity-0"
               }`}
             >
-              <div className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-3 text-sm text-cyan-900">
+              <div className="rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-3 text-sm text-cyan-900">
                 <p className="font-semibold">Qabul jarayoni boshlandi</p>
                 {selectedPendingCheck?.queueCode ? (
                   <p>Navbat: {selectedPendingCheck.queueCode}</p>
@@ -1640,14 +1632,14 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
           </div>
 
           <div
-            className={`card p-4 sm:p-5 ${sectionTheme.formCard} transition-all duration-300 ${
+            className={`card p-4 sm:p-5 ${sectionTheme.formCard} transition-opacity duration-150 ${
               isPendingCheckMode ? "opacity-100" : "opacity-80"
             }`}
           >
             <h2 className="text-lg font-semibold text-slate-800">Chekni kassada qabul qilish</h2>
 
             {!isPendingCheckMode ? (
-              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+              <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
                 Avval yuqoridagi ro'yxatdan bitta chek tanlang. Shundan keyin qabul qilish formasi ochiladi.
               </div>
             ) : (
@@ -1728,7 +1720,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                     onChange={(e) => handleFormChange("note", e.target.value)}
                     rows={2}
                     placeholder="Qo'shimcha izoh (ixtiyoriy)"
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/10"
                   />
                 </label>
 

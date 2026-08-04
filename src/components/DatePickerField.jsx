@@ -106,7 +106,7 @@ function DatePickerField({ label, value, onChange }) {
           }
           setOpen((prev) => !prev);
         }}
-        className="sampi-control flex w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+        className="sampi-control flex w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
       >
         <span>{formatDisplayDate(value)}</span>
         <svg
@@ -126,7 +126,7 @@ function DatePickerField({ label, value, onChange }) {
       </button>
 
       {open ? (
-        <div className="animate-dropdown-pop sampi-dropdown absolute z-40 mt-1 w-[min(92vw,320px)] sm:w-[280px] rounded-2xl border border-slate-200 bg-white p-3 shadow-lg">
+        <div className="animate-dropdown-pop sampi-dropdown absolute z-40 mt-1 w-[min(92vw,320px)] rounded-lg border border-slate-200 bg-white p-3 shadow-lg sm:w-[280px]">
           <div className="mb-2 flex items-center justify-between">
             <button
               type="button"

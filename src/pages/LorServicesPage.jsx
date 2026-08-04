@@ -38,7 +38,7 @@ const CANCEL_REASON_OPTIONS = [
 
 const LOR_SERVICE_TEXT = {
   uz: {
-    steps: ["1. Navbat", "2. Xizmatlar", "3. Chek preview"],
+    steps: ["1. Navbat", "2. Xizmatlar", "3. Ko'rib chiqish"],
     loading: "LOR xizmatlari yuklanmoqda...",
     loadingAction: "Yuklanmoqda...",
     creatingCheck: "Chek yaratilmoqda...",
@@ -68,8 +68,8 @@ const LOR_SERVICE_TEXT = {
     quantity: "Miqdor",
     remove: "Olib tashlash",
     back: "Orqaga",
-    nextPreview: "Keyingi: Preview",
-    previewTitle: "3-qadam: Chek preview",
+    nextPreview: "Keyingi: Ko'rib chiqish",
+    previewTitle: "3-qadam: Chekni ko'rib chiqish",
     previewHint: "Enter bosib chek chiqaring.",
     doctor: "Doktor",
     patient: "Bemor",
@@ -723,10 +723,10 @@ function LorServicesPage() {
 
           <div className="flex w-full flex-col gap-2 lg:w-auto lg:items-end">
             <div
-              className="inline-flex w-fit items-center gap-1 rounded-xl border border-cyan-200 bg-white/75 p-1"
+              className="inline-flex w-fit items-center gap-1 rounded-lg border border-cyan-200 bg-white/75 p-1"
               aria-label={text.languageLabel}
             >
-              <span className="px-2 text-[10px] font-black uppercase text-cyan-700">
+              <span className="px-2 text-[10px] font-semibold text-cyan-700">
                 {text.languageLabel}
               </span>
               {LANGUAGE_OPTIONS.map((option) => {
@@ -739,7 +739,7 @@ function LorServicesPage() {
                     title={option.title}
                     aria-pressed={active}
                     onClick={() => handleLanguageChange(option.id)}
-                    className={`min-w-10 rounded-lg px-2.5 py-1.5 text-xs font-black transition ${
+                    className={`min-w-10 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
                       active
                         ? "bg-cyan-700 text-white shadow-sm"
                         : "text-slate-600 hover:bg-cyan-50 hover:text-cyan-800"
@@ -753,10 +753,10 @@ function LorServicesPage() {
 
             <div className="sampi-lor-context-card">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-wide text-cyan-700">
+                <p className="text-[10px] font-semibold text-cyan-700">
                   {text.contextLabel}
                 </p>
-                <p className="mt-1 text-sm font-black text-slate-900">
+                <p className="mt-1 text-sm font-semibold text-slate-900">
                   {lorIdentity ? lorIdentity.toUpperCase() : "-"} -{" "}
                   {lorDoctor?.name || text.doctorFallback}
                 </p>
@@ -803,11 +803,11 @@ function LorServicesPage() {
           <p className="mb-3 text-sm text-slate-600">{text.patientHint}</p>
 
           {!activeTicket ? (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm font-black text-slate-800">{text.queueTitle}</p>
+                <p className="text-sm font-semibold text-slate-800">{text.queueTitle}</p>
                 {queueLoading ? (
-                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <span className="text-xs font-semibold text-slate-500">
                     Yuklanmoqda...
                   </span>
                 ) : null}
@@ -821,28 +821,28 @@ function LorServicesPage() {
                       type="button"
                       onClick={() => handleCallTicket(ticket)}
                       disabled={Boolean(callingTicketId)}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-sky-200 bg-white px-3 py-3 text-left shadow-sm transition hover:border-sky-400 disabled:cursor-wait disabled:opacity-70"
+                      className="flex items-center justify-between gap-3 rounded-lg border border-sky-200 bg-white px-3 py-3 text-left shadow-sm transition-colors hover:border-sky-400 disabled:cursor-wait disabled:opacity-70"
                     >
                       <span className="text-3xl font-black leading-none text-slate-900">
                         {ticket.queueCode}
                       </span>
-                      <span className="rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-black text-white">
+                      <span className="rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white">
                         {callingTicketId === ticket.id ? "..." : text.callQueue}
                       </span>
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-white px-3 py-4 text-sm font-semibold text-slate-500">
+                <div className="mt-3 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-4 text-sm font-semibold text-slate-500">
                   {text.queueEmpty}
                 </div>
               )}
             </div>
           ) : (
             <>
-              <div className="mb-3 flex flex-col gap-3 rounded-xl border border-sky-200 bg-sky-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mb-3 flex flex-col gap-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-wide text-sky-700">
+                  <p className="text-xs font-semibold text-sky-700">
                     {text.currentQueue}
                   </p>
                   <p className="mt-1 text-4xl font-black leading-none text-slate-900">
@@ -861,7 +861,7 @@ function LorServicesPage() {
               </div>
 
               {waitingTickets.length ? (
-                <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800">
+                <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800">
                   Avval {activeTicket.queueCode || "--"} raqamli bemorni yakunlang yoki bekor qiling.
                   Keyingi {waitingTickets.length} ta navbat shu vaqtgacha bloklangan.
                 </div>
@@ -915,13 +915,13 @@ function LorServicesPage() {
 
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {sortedServices.length === 0 ? (
-              <div className="md:col-span-2 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600 xl:col-span-3">
+              <div className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-600 md:col-span-2 xl:col-span-3">
                 {text.noServices}
               </div>
             ) : null}
 
             {sortedServices.length > 0 && filteredServices.length === 0 ? (
-              <div className="md:col-span-2 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600 xl:col-span-3">
+              <div className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-600 md:col-span-2 xl:col-span-3">
                 {text.noSearchResults}
               </div>
             ) : null}
@@ -935,7 +935,7 @@ function LorServicesPage() {
                   key={service._id}
                   type="button"
                   onClick={() => toggleService(service._id)}
-                  className={`rounded-xl border px-3 py-3 text-left transition ${
+                  className={`rounded-lg border px-3 py-3 text-left transition-colors ${
                     selected
                       ? "border-primary bg-cyan-50"
                       : "border-slate-200 bg-white hover:border-primary/50"
@@ -959,7 +959,7 @@ function LorServicesPage() {
                 return (
                   <div
                     key={serviceId}
-                    className="grid gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_160px_auto]"
+                    className="grid gap-3 rounded-lg border border-slate-200 p-3 md:grid-cols-[1fr_160px_auto]"
                   >
                     <div>
                       <p className="font-medium text-slate-800">{displayName}</p>
@@ -1017,7 +1017,7 @@ function LorServicesPage() {
           <h2 className="text-lg font-semibold">{text.previewTitle}</h2>
           <p className="mb-3 text-sm text-slate-600">{text.previewHint}</p>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm">
               Navbat: <span className="font-semibold">{activeTicket?.queueCode || "-"}</span>
             </p>
@@ -1057,7 +1057,7 @@ function LorServicesPage() {
           </div>
 
           {!selectedServiceIds.length ? (
-            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
               {text.needServiceWarning}
             </div>
           ) : null}
@@ -1113,14 +1113,14 @@ function LorServicesPage() {
         }
       >
         <div className="space-y-3">
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800">
             {activeTicket?.queueCode || "--"} raqamli navbat bekor qilinadi. Bu amal TVdan raqamni olib tashlaydi.
           </div>
           <div className="grid gap-2">
             {CANCEL_REASON_OPTIONS.map((option) => (
               <label
                 key={option.value}
-                className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 text-sm font-bold transition ${
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-3 text-sm font-bold transition-colors ${
                   cancelReason === option.value
                     ? "border-sky-300 bg-sky-50 text-sky-900"
                     : "border-slate-200 bg-white text-slate-700 hover:border-sky-200"
@@ -1142,7 +1142,7 @@ function LorServicesPage() {
               Izoh
             </span>
             <textarea
-              className="sampi-input sampi-control min-h-20 w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition"
+              className="sampi-input sampi-control min-h-20 w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition"
               maxLength={200}
               value={cancelNote}
               onChange={(event) => setCancelNote(event.target.value)}

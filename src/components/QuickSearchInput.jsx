@@ -58,13 +58,13 @@ function QuickSearchInput({
               setTimeout(() => setOpen(false), 120);
             }}
             placeholder={placeholder}
-            className="sampi-input sampi-control w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-9 pr-3 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 sm:text-sm"
+            className="sampi-input sampi-control w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-9 pr-3 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/10 sm:text-sm"
           />
         </span>
       </label>
 
       {open && query ? (
-        <div className="animate-dropdown-pop sampi-dropdown absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+        <div className="animate-dropdown-pop sampi-dropdown absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
           {suggestions.length > 0 ? (
             suggestions.map((entry) => (
               <button

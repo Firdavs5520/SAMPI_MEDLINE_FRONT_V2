@@ -16,7 +16,7 @@ function StatCard({ title, value, hint = "", tone = "default" }) {
   };
 
   return (
-    <div className={`rounded-2xl border p-4 ${tones[tone]}`}>
+    <div className={`rounded-lg border p-4 ${tones[tone]}`}>
       <p className="text-xs font-semibold uppercase tracking-wide opacity-80">{title}</p>
       <p className="mt-2 break-words text-xl font-bold sm:text-2xl">{value}</p>
       <p className="mt-1 min-h-5 break-words text-xs opacity-80">{hint}</p>
@@ -98,7 +98,7 @@ function LorDashboard() {
             hint="LOR xizmatlari bo'yicha o'rtacha narx"
             tone="accent"
           />
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Tezkor amallar
             </p>

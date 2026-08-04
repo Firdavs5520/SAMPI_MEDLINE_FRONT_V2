@@ -6,11 +6,14 @@ const POLL_INTERVAL_MS = 4000;
 const STREAM_RECONNECT_MS = 2500;
 const TV_MANIFEST_PATH = "/manifest-tv.webmanifest?v=1";
 
-const connectionLabels = {
-  connecting: "Ulanmoqda",
-  live: "Real-time",
-  reconnecting: "Aloqa tiklanmoqda",
-  polling: "Zaxira aloqa"
+const formatTvQueueCode = (value) => {
+  const digits = String(value ?? "").match(/\d+/g)?.join("") || "";
+  if (!digits) return "--";
+
+  const number = Number(digits);
+  if (!Number.isFinite(number)) return digits;
+  if (number < 100) return String(number).padStart(2, "0");
+  return String(number);
 };
 
 function TvLorQueuePage() {
@@ -30,6 +33,7 @@ function TvLorQueuePage() {
   const connectionStateRef = useRef("connecting");
 
   const current = queue?.current || null;
+  const displayQueueCode = current ? formatTvQueueCode(current.queueCode) : "";
   const currentKey = queue?.announcementKey || "";
   const isConnectionSoft =
     connectionState === "reconnecting" || connectionState === "polling" || Boolean(error);
@@ -262,14 +266,6 @@ function TvLorQueuePage() {
 
   return (
     <main className="sampi-tv-shell sampi-tv-minimal-shell sampi-tv-kiosk-ready">
-      <div
-        className={`sampi-tv-connection-pill ${
-          connectionState === "live" ? "sampi-tv-connection-live" : ""
-        }`}
-      >
-        {connectionLabels[connectionState] || connectionLabels.connecting}
-      </div>
-
       <div className="sampi-tv-minimal-stage">
         <section
           className={`sampi-tv-current-card ${
@@ -277,14 +273,22 @@ function TvLorQueuePage() {
           } ${isConnectionSoft ? "sampi-tv-current-muted" : ""}`}
         >
           {loading && !current ? (
-            <div className="sampi-tv-current-empty">Yuklanmoqda</div>
+            <div className="sampi-tv-standby" aria-live="polite">
+              <div className="sampi-tv-standby-kicker">LOR</div>
+              <div className="sampi-tv-standby-title">Tayyorlanmoqda</div>
+              <div className="sampi-tv-standby-line" aria-hidden="true" />
+            </div>
           ) : current ? (
             <>
               <div className="sampi-tv-current-kicker">Hozirgi bemor</div>
-              <div className="sampi-tv-current-code">{current.queueCode}</div>
+              <div className="sampi-tv-current-code">{displayQueueCode}</div>
             </>
           ) : (
-            <div className="sampi-tv-current-empty">Navbat yo'q</div>
+            <div className="sampi-tv-standby" aria-live="polite">
+              <div className="sampi-tv-standby-kicker">LOR</div>
+              <div className="sampi-tv-standby-title">Qabulga tayyor</div>
+              <div className="sampi-tv-standby-line" aria-hidden="true" />
+            </div>
           )}
         </section>
 

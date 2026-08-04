@@ -155,7 +155,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
     : [];
 
   const linkClassName = ({ isActive }) =>
-    `sampi-sidebar-link flex min-h-[44px] items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out ${
+    `sampi-sidebar-link flex min-h-[44px] items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 ease-out ${
       isCompact ? "lg:justify-center lg:px-2" : "gap-2"
     } ${
       isActive ? "bg-primary text-white shadow-sm" : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
@@ -230,7 +230,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
             ? groupedMenus.map((group) => (
                 <div
                   key={group.name}
-                  className={`sampi-sidebar-group rounded-2xl p-2 ${isCompact ? "lg:border-0 lg:bg-transparent lg:px-0" : "border border-slate-200/80 bg-slate-50/80"}`}
+                  className={`sampi-sidebar-group rounded-lg p-2 ${isCompact ? "lg:border-0 lg:bg-transparent lg:px-0" : "border border-slate-200/80 bg-slate-50/80"}`}
                 >
                   <p
                     className={`px-2 pb-1 pt-0.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 ${isCompact ? "lg:hidden" : ""}`}

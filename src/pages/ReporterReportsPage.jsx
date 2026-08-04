@@ -300,7 +300,7 @@ function ReporterReportsPage() {
           </div>
           <Link
             to="/reporter"
-            className="sampi-btn inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-300"
+            className="sampi-btn inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors duration-150 hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-300"
           >
             Kunlik to'ldirish
           </Link>
