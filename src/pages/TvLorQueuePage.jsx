@@ -27,6 +27,7 @@ function TvLorQueuePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pulseKey, setPulseKey] = useState("");
+  const [callAnnouncement, setCallAnnouncement] = useState(null);
   const [connectionState, setConnectionState] = useState("connecting");
   const audioContextRef = useRef(null);
   const queueChimeRef = useRef(null);
@@ -34,6 +35,7 @@ function TvLorQueuePage() {
   const abortRef = useRef(null);
   const eventSourceRef = useRef(null);
   const fallbackTimerRef = useRef(0);
+  const callAnnouncementTimerRef = useRef(0);
   const reconnectTimerRef = useRef(0);
   const firstAnnouncementRef = useRef(true);
   const lastAnnouncementKeyRef = useRef("");
@@ -146,16 +148,28 @@ function TvLorQueuePage() {
       setLoading(false);
 
       const nextAnnouncementKey = data?.announcementKey || "";
+      const nextAnnouncementCode = data?.current
+        ? formatTvQueueCode(data.current.queueCode)
+        : "";
       if (
         nextAnnouncementKey &&
+        nextAnnouncementCode &&
         nextAnnouncementKey !== lastAnnouncementKeyRef.current
       ) {
         if (!firstAnnouncementRef.current) {
           setPulseKey(nextAnnouncementKey);
+          window.clearTimeout(callAnnouncementTimerRef.current);
+          setCallAnnouncement({
+            key: nextAnnouncementKey,
+            code: nextAnnouncementCode
+          });
           playQueueTone().catch(() => {});
           window.setTimeout(() => {
             if (mountedRef.current) setPulseKey("");
           }, 1900);
+          callAnnouncementTimerRef.current = window.setTimeout(() => {
+            if (mountedRef.current) setCallAnnouncement(null);
+          }, 3600);
         }
         lastAnnouncementKeyRef.current = nextAnnouncementKey;
       }
@@ -330,6 +344,7 @@ function TvLorQueuePage() {
       document.documentElement.classList.remove("sampi-tv-lock");
       document.body.classList.remove("sampi-tv-lock");
       window.clearTimeout(fallbackTimerRef.current);
+      window.clearTimeout(callAnnouncementTimerRef.current);
       window.clearTimeout(reconnectTimerRef.current);
       closeEventSource();
       if (queueChimeRef.current) {
@@ -412,6 +427,21 @@ function TvLorQueuePage() {
           <span>SAMPI</span>
           <strong>MEDICINE</strong>
         </h1>
+
+        {callAnnouncement ? (
+          <div
+            className="sampi-tv-call-layer"
+            aria-live="assertive"
+            aria-atomic="true"
+            key={callAnnouncement.key}
+          >
+            <div className="sampi-tv-call-card">
+              <div className="sampi-tv-call-kicker">Navbatingiz keldi</div>
+              <div className="sampi-tv-call-number">{callAnnouncement.code}</div>
+              <div className="sampi-tv-call-note">LOR xonasiga kiring</div>
+            </div>
+          </div>
+        ) : null}
 
         <div className="sampi-tv-screen-grid">
           <section

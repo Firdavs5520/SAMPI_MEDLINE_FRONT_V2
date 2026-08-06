@@ -4201,6 +4201,101 @@ html.sampi-tv-lock #root {
   color: #dc2626;
 }
 
+.sampi-tv-call-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  padding: clamp(1.5rem, 4vw, 4.5rem);
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(248, 253, 252, 0.76), rgba(255, 255, 255, 0.9)),
+    linear-gradient(115deg, rgba(14, 116, 144, 0.09), transparent 42%, rgba(212, 175, 55, 0.12));
+  animation: sampi-tv-call-layer 3600ms ease both;
+  backdrop-filter: blur(10px);
+}
+
+.sampi-tv-call-card {
+  position: relative;
+  display: grid;
+  width: min(88vw, 82rem);
+  min-height: min(70vh, 43rem);
+  place-items: center;
+  overflow: hidden;
+  padding: clamp(2rem, 4.2vw, 4.5rem);
+  border: 1px solid rgba(14, 116, 144, 0.16);
+  border-radius: clamp(30px, 3vw, 52px);
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.98), rgba(241, 252, 250, 0.92) 48%, rgba(255, 250, 235, 0.9)),
+    linear-gradient(90deg, rgba(14, 116, 144, 0.07), transparent 46%, rgba(212, 175, 55, 0.1));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.58),
+    0 44px 110px -70px rgba(15, 23, 42, 0.48);
+  text-align: center;
+  animation: sampi-tv-call-card 3600ms cubic-bezier(0.18, 1, 0.32, 1) both;
+  isolation: isolate;
+}
+
+.sampi-tv-call-card::before,
+.sampi-tv-call-card::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.sampi-tv-call-card::before {
+  inset: clamp(1rem, 2vw, 2.2rem);
+  border: 1px solid rgba(14, 116, 144, 0.11);
+  border-radius: inherit;
+}
+
+.sampi-tv-call-card::after {
+  right: clamp(2rem, 4vw, 4rem);
+  bottom: clamp(1.4rem, 3vw, 2.8rem);
+  left: clamp(2rem, 4vw, 4rem);
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(14, 116, 144, 0.72), rgba(212, 175, 55, 0.68), transparent);
+  animation: sampi-tv-call-line 3600ms ease both;
+}
+
+.sampi-tv-call-kicker,
+.sampi-tv-call-number,
+.sampi-tv-call-note {
+  position: relative;
+  z-index: 1;
+}
+
+.sampi-tv-call-kicker {
+  align-self: end;
+  color: #0e7490;
+  font-size: clamp(1.7rem, 4vh, 3.4rem);
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.sampi-tv-call-number {
+  color: #101827;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(14rem, 47vh, 32rem);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  line-height: 0.78;
+  animation: sampi-tv-call-number 3600ms cubic-bezier(0.18, 1, 0.32, 1) both;
+}
+
+.sampi-tv-call-note {
+  align-self: start;
+  color: #334155;
+  font-size: clamp(2rem, 4.8vh, 4rem);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
 .sampi-tv-current-content,
 .sampi-tv-standby {
   display: grid;
@@ -4676,6 +4771,71 @@ html.sampi-tv-lock #root {
   }
 }
 
+@keyframes sampi-tv-call-layer {
+  0% {
+    opacity: 0;
+  }
+  9%,
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes sampi-tv-call-card {
+  0% {
+    opacity: 0;
+    transform: translateY(1.25rem) scale(0.94);
+  }
+  14%,
+  76% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-0.4rem) scale(0.985);
+  }
+}
+
+@keyframes sampi-tv-call-number {
+  0% {
+    opacity: 0;
+    transform: translateY(1rem) scale(0.86);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1.055);
+  }
+  34%,
+  76% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-0.35rem) scale(0.98);
+  }
+}
+
+@keyframes sampi-tv-call-line {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.36);
+  }
+  18%,
+  76% {
+    opacity: 0.86;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(0.72);
+  }
+}
+
 @keyframes sampi-tv-note-in {
   0% {
     opacity: 0;
@@ -4804,6 +4964,24 @@ html.sampi-tv-lock #root {
     top: clamp(1.6rem, 4.4vh, 2.6rem);
     gap: 0.5rem;
     font-size: clamp(3rem, 7.4vh, 5rem);
+  }
+
+  .sampi-tv-call-card {
+    width: min(92vw, 38rem);
+    min-height: min(64vh, 32rem);
+    border-radius: 28px;
+  }
+
+  .sampi-tv-call-number {
+    font-size: clamp(7.8rem, 29vh, 14rem);
+  }
+
+  .sampi-tv-call-kicker {
+    font-size: clamp(1.15rem, 3.2vh, 1.8rem);
+  }
+
+  .sampi-tv-call-note {
+    font-size: clamp(1.35rem, 3.6vh, 2.2rem);
   }
 
   .sampi-tv-screen-grid {
@@ -5204,6 +5382,10 @@ html.sampi-tv-lock #root {
   .sampi-modal-panel,
   .sampi-busy-panel,
   .sampi-tv-clinic-brand,
+  .sampi-tv-call-layer,
+  .sampi-tv-call-card,
+  .sampi-tv-call-card::after,
+  .sampi-tv-call-number,
   .sampi-tv-screen-grid,
   .sampi-tv-current-card,
   .sampi-tv-current-pulse,
