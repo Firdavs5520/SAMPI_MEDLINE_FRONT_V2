@@ -519,7 +519,7 @@ function TvLorQueuePage() {
                 ))
               ) : (
                 <div className="sampi-tv-waiting-empty">
-                  Yangi chek chiqsa shu yerda ko'rinadi
+                  Hozirda navbat yo'q
                 </div>
               )}
             </div>
