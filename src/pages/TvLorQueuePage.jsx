@@ -295,18 +295,18 @@ function TvLorQueuePage() {
               <div className="sampi-tv-standby-kicker">LOR</div>
               <div className="sampi-tv-standby-title">Raqamingizni kuting</div>
               <div className="sampi-tv-guidance">
-                Raqamingiz ekranda chiqqanda LOR xonasiga kiring
+                Kassa chiqargan raqamlar o'ng ro'yxatda ko'rinadi
               </div>
               <div className="sampi-tv-standby-line" aria-hidden="true" />
             </div>
           ) : current ? (
             <div className="sampi-tv-current-content" aria-live="polite">
-              <div className="sampi-tv-current-kicker">Hozir chaqirilgan raqam</div>
+              <div className="sampi-tv-current-kicker">LOR xonasidagi raqam</div>
               <div className="sampi-tv-number-shell">
                 <div className="sampi-tv-current-code">{displayQueueCode}</div>
               </div>
               <div className="sampi-tv-current-note">
-                Shu raqam sizniki bo'lsa, LOR xonasiga kiring
+                Bu raqam LOR xonasida qabul qilinmoqda
               </div>
             </div>
           ) : (
@@ -350,7 +350,7 @@ function TvLorQueuePage() {
             )}
           </div>
           <div className="sampi-tv-waiting-foot">
-            Raqamingiz markazda chiqsa, xonaga kiring
+            Markazda LOR xonasidagi raqam ko'rsatiladi
           </div>
         </aside>
 
