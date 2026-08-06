@@ -342,88 +342,73 @@ function TvLorQueuePage() {
           <strong>MEDICINE</strong>
         </h1>
 
-        <section
-          className={`sampi-tv-current-card ${
-            currentKey && currentKey === pulseKey ? "sampi-tv-current-pulse" : ""
-          } ${isConnectionSoft ? "sampi-tv-current-muted" : ""}`}
-        >
-          {loading && !current ? (
-            <div className="sampi-tv-standby" aria-live="polite">
-              <div className="sampi-tv-ticket-hint">
-                <span>Chekdagi LOR raqami</span>
-                <strong>Ekranda chiqadi</strong>
+        <div className="sampi-tv-screen-grid">
+          <section
+            className={`sampi-tv-current-card ${
+              currentKey && currentKey === pulseKey ? "sampi-tv-current-pulse" : ""
+            } ${isConnectionSoft ? "sampi-tv-current-muted" : ""}`}
+          >
+            {loading && !current ? (
+              <div className="sampi-tv-standby" aria-live="polite">
+                <div className="sampi-tv-standby-kicker">LOR</div>
+                <div className="sampi-tv-standby-title">Raqamingizni kuting</div>
+                <div className="sampi-tv-standby-line" aria-hidden="true" />
               </div>
-              <div className="sampi-tv-standby-kicker">LOR</div>
-              <div className="sampi-tv-standby-title">Raqamingizni kuting</div>
-              <div className="sampi-tv-guidance">
-                Kassa chiqargan raqamlar o'ng ro'yxatda ko'rinadi
-              </div>
-              <div className="sampi-tv-standby-line" aria-hidden="true" />
-            </div>
-          ) : current ? (
-            <div className="sampi-tv-current-content" aria-live="polite">
-              <div className="sampi-tv-current-kicker">LOR xonasidagi raqam</div>
-              <div className="sampi-tv-number-shell">
-                <div className="sampi-tv-current-code">{displayQueueCode}</div>
-              </div>
-              <div className="sampi-tv-current-note">
-                Bu raqam LOR xonasida qabul qilinmoqda
-              </div>
-            </div>
-          ) : (
-            <div className="sampi-tv-standby" aria-live="polite">
-              <div className="sampi-tv-ticket-hint">
-                <span>Chekdagi LOR raqami</span>
-                <strong>Ekranda chiqadi</strong>
-              </div>
-              <div className="sampi-tv-standby-kicker">LOR</div>
-              <div className="sampi-tv-standby-title">Raqamingizni kuting</div>
-              <div className="sampi-tv-guidance">
-                Navbat shu ekranda avtomatik ko'rinadi
-              </div>
-              <div className="sampi-tv-standby-line" aria-hidden="true" />
-            </div>
-          )}
-        </section>
-
-        <aside
-          className={`sampi-tv-waiting-menu ${
-            waitingTickets.length ? "sampi-tv-waiting-menu-active" : "sampi-tv-waiting-menu-empty"
-          }`}
-          aria-label="Kassadan chiqarilgan LOR cheklari"
-        >
-          <div className="sampi-tv-waiting-head">
-            <div>
-              <span>Navbatdagilar</span>
-              <strong>Kassa bergan LOR raqamlari</strong>
-            </div>
-            <b>{loading && !queue ? "..." : waitingTickets.length}</b>
-          </div>
-          <div className="sampi-tv-waiting-list">
-            {loading && !queue ? (
-              <div className="sampi-tv-waiting-empty">Yuklanmoqda</div>
-            ) : waitingTickets.length ? (
-              waitingTickets.map((ticket, index) => (
-                <div
-                  className={`sampi-tv-waiting-row ${
-                    index === 0 ? "sampi-tv-waiting-row-next" : ""
-                  }`}
-                  key={ticket.id || ticket._id || ticket.queueCode}
-                >
-                  <span>{formatTvQueueCode(ticket.queueCode)}</span>
-                  <small>{index === 0 ? "Keyingi" : `${index + 1}-navbat`}</small>
+            ) : current ? (
+              <div className="sampi-tv-current-content" aria-live="polite">
+                <div className="sampi-tv-current-kicker">LOR xonasidagi raqam</div>
+                <div className="sampi-tv-number-shell">
+                  <div className="sampi-tv-current-code">{displayQueueCode}</div>
                 </div>
-              ))
+                <div className="sampi-tv-current-note">
+                  Bu raqam LOR xonasida qabul qilinmoqda
+                </div>
+              </div>
             ) : (
-              <div className="sampi-tv-waiting-empty">
-                Yangi chek chiqsa shu yerda ko'rinadi
+              <div className="sampi-tv-standby" aria-live="polite">
+                <div className="sampi-tv-standby-kicker">LOR</div>
+                <div className="sampi-tv-standby-title">Raqamingizni kuting</div>
+                <div className="sampi-tv-standby-line" aria-hidden="true" />
               </div>
             )}
-          </div>
-          <div className="sampi-tv-waiting-foot">
-            Markazda LOR xonasidagi raqam ko'rsatiladi
-          </div>
-        </aside>
+          </section>
+
+          <aside
+            className={`sampi-tv-waiting-menu ${
+              waitingTickets.length ? "sampi-tv-waiting-menu-active" : "sampi-tv-waiting-menu-empty"
+            }`}
+            aria-label="Kassadan chiqarilgan LOR cheklari"
+          >
+            <div className="sampi-tv-waiting-head">
+              <div>
+                <span>Navbatdagilar</span>
+                <strong>Kassa bergan LOR raqamlari</strong>
+              </div>
+              <b>{loading && !queue ? "..." : waitingTickets.length}</b>
+            </div>
+            <div className="sampi-tv-waiting-list">
+              {loading && !queue ? (
+                <div className="sampi-tv-waiting-empty">Yuklanmoqda</div>
+              ) : waitingTickets.length ? (
+                waitingTickets.map((ticket, index) => (
+                  <div
+                    className={`sampi-tv-waiting-row ${
+                      index === 0 ? "sampi-tv-waiting-row-next" : ""
+                    }`}
+                    key={ticket.id || ticket._id || ticket.queueCode}
+                  >
+                    <span>{formatTvQueueCode(ticket.queueCode)}</span>
+                    <small>{index === 0 ? "Keyingi" : `${index + 1}-navbat`}</small>
+                  </div>
+                ))
+              ) : (
+                <div className="sampi-tv-waiting-empty">
+                  Yangi chek chiqsa shu yerda ko'rinadi
+                </div>
+              )}
+            </div>
+          </aside>
+        </div>
 
         {isConnectionSoft ? (
           <div className="sampi-tv-reconnect-note">
