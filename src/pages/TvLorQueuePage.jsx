@@ -356,12 +356,11 @@ function TvLorQueuePage() {
               </div>
             ) : current ? (
               <div className="sampi-tv-current-content" aria-live="polite">
-                <div className="sampi-tv-current-kicker">LOR xonasidagi raqam</div>
                 <div className="sampi-tv-number-shell">
                   <div className="sampi-tv-current-code">{displayQueueCode}</div>
                 </div>
                 <div className="sampi-tv-current-note">
-                  Bu raqam LOR xonasida qabul qilinmoqda
+                  Bu raqam LOR xonasida davolanmoqda
                 </div>
               </div>
             ) : (
