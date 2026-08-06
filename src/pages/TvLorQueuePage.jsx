@@ -10,6 +10,7 @@ const WAITING_TICKET_LIMIT = 6;
 const ADMIN_EXIT_PRESS_COUNT = 5;
 const ADMIN_EXIT_WINDOW_MS = 4500;
 const QUEUE_CHIME_PATH = "/audio/premium_queue_chime_close_match.wav";
+const CALL_ANNOUNCEMENT_MS = 4300;
 
 const formatTvQueueCode = (value) => {
   const digits = String(value ?? "").match(/\d+/g)?.join("") || "";
@@ -169,7 +170,7 @@ function TvLorQueuePage() {
           }, 1900);
           callAnnouncementTimerRef.current = window.setTimeout(() => {
             if (mountedRef.current) setCallAnnouncement(null);
-          }, 3600);
+          }, CALL_ANNOUNCEMENT_MS);
         }
         lastAnnouncementKeyRef.current = nextAnnouncementKey;
       }

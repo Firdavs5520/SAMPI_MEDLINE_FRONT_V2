@@ -4210,10 +4210,11 @@ html.sampi-tv-lock #root {
   padding: clamp(1.5rem, 4vw, 4.5rem);
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(248, 253, 252, 0.76), rgba(255, 255, 255, 0.9)),
-    linear-gradient(115deg, rgba(14, 116, 144, 0.09), transparent 42%, rgba(212, 175, 55, 0.12));
-  animation: sampi-tv-call-layer 3600ms ease both;
-  backdrop-filter: blur(10px);
+    linear-gradient(180deg, rgba(248, 253, 252, 0.66), rgba(255, 255, 255, 0.88)),
+    radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.82), transparent 36%),
+    linear-gradient(115deg, rgba(14, 116, 144, 0.08), transparent 44%, rgba(212, 175, 55, 0.11));
+  animation: sampi-tv-call-layer 4200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  backdrop-filter: blur(8px);
 }
 
 .sampi-tv-call-card {
@@ -4234,7 +4235,7 @@ html.sampi-tv-lock #root {
     inset 0 0 0 1px rgba(255, 255, 255, 0.58),
     0 44px 110px -70px rgba(15, 23, 42, 0.48);
   text-align: center;
-  animation: sampi-tv-call-card 3600ms cubic-bezier(0.18, 1, 0.32, 1) both;
+  animation: sampi-tv-call-card 4200ms cubic-bezier(0.16, 1, 0.3, 1) both;
   isolation: isolate;
 }
 
@@ -4258,7 +4259,7 @@ html.sampi-tv-lock #root {
   height: 5px;
   border-radius: 999px;
   background: linear-gradient(90deg, transparent, rgba(14, 116, 144, 0.72), rgba(212, 175, 55, 0.68), transparent);
-  animation: sampi-tv-call-line 3600ms ease both;
+  animation: sampi-tv-call-line 4200ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .sampi-tv-call-kicker,
@@ -4275,6 +4276,7 @@ html.sampi-tv-lock #root {
   font-weight: 900;
   line-height: 1;
   text-transform: uppercase;
+  animation: sampi-tv-call-copy 4200ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .sampi-tv-call-number {
@@ -4285,7 +4287,7 @@ html.sampi-tv-lock #root {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
   line-height: 0.78;
-  animation: sampi-tv-call-number 3600ms cubic-bezier(0.18, 1, 0.32, 1) both;
+  animation: sampi-tv-call-number 4200ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .sampi-tv-call-note {
@@ -4294,6 +4296,7 @@ html.sampi-tv-lock #root {
   font-size: clamp(2rem, 4.8vh, 4rem);
   font-weight: 900;
   line-height: 1.05;
+  animation: sampi-tv-call-copy 4200ms cubic-bezier(0.22, 1, 0.36, 1) 90ms both;
 }
 
 .sampi-tv-audio-button {
@@ -4829,49 +4832,76 @@ html.sampi-tv-lock #root {
 @keyframes sampi-tv-call-layer {
   0% {
     opacity: 0;
+    backdrop-filter: blur(0);
   }
-  9%,
-  78% {
+  12%,
+  74% {
     opacity: 1;
+    backdrop-filter: blur(8px);
   }
   100% {
     opacity: 0;
+    backdrop-filter: blur(2px);
   }
 }
 
 @keyframes sampi-tv-call-card {
   0% {
     opacity: 0;
-    transform: translateY(1.25rem) scale(0.94);
+    filter: blur(6px);
+    transform: translateY(0.9rem) scale(0.965);
   }
-  14%,
-  76% {
+  16% {
     opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1.012);
+  }
+  28%,
+  74% {
+    opacity: 1;
+    filter: blur(0);
     transform: translateY(0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translateY(-0.4rem) scale(0.985);
+    filter: blur(3px);
+    transform: translateY(-0.32rem) scale(0.982);
   }
 }
 
 @keyframes sampi-tv-call-number {
   0% {
     opacity: 0;
-    transform: translateY(1rem) scale(0.86);
+    transform: translateY(0.7rem) scale(0.78);
   }
-  18% {
+  14% {
     opacity: 1;
-    transform: translateY(0) scale(1.055);
+    transform: translateY(0) scale(1.075);
   }
-  34%,
-  76% {
+  30%,
+  74% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translateY(-0.35rem) scale(0.98);
+    transform: translateY(-0.25rem) scale(0.97);
+  }
+}
+
+@keyframes sampi-tv-call-copy {
+  0% {
+    opacity: 0;
+    transform: translateY(0.45rem);
+  }
+  18%,
+  74% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-0.2rem);
   }
 }
 
@@ -4881,7 +4911,7 @@ html.sampi-tv-lock #root {
     transform: scaleX(0.36);
   }
   18%,
-  76% {
+  74% {
     opacity: 0.86;
     transform: scaleX(1);
   }
