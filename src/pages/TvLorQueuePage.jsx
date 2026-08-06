@@ -394,6 +394,7 @@ function TvLorQueuePage() {
                     className={`sampi-tv-waiting-row ${
                       index === 0 ? "sampi-tv-waiting-row-next" : ""
                     }`}
+                    style={{ "--row-delay": `${260 + index * 70}ms` }}
                     key={ticket.id || ticket._id || ticket.queueCode}
                   >
                     <span>{formatTvQueueCode(ticket.queueCode)}</span>
