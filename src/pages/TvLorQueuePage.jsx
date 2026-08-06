@@ -337,6 +337,11 @@ function TvLorQueuePage() {
   return (
     <main className="sampi-tv-shell sampi-tv-minimal-shell sampi-tv-kiosk-ready">
       <div className="sampi-tv-minimal-stage">
+        <h1 className="sampi-tv-clinic-brand" aria-label="SAMPI MEDICINE">
+          <span>SAMPI</span>
+          <strong>MEDICINE</strong>
+        </h1>
+
         <section
           className={`sampi-tv-current-card ${
             currentKey && currentKey === pulseKey ? "sampi-tv-current-pulse" : ""

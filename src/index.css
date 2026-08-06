@@ -4157,6 +4157,47 @@ html.sampi-tv-lock #root {
   min-width: 0;
 }
 
+.sampi-tv-clinic-brand {
+  position: absolute;
+  top: clamp(1rem, 2.6vh, 2rem);
+  left: 50%;
+  z-index: 4;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  max-width: calc(100vw - 3rem);
+  gap: clamp(0.55rem, 1vh, 1rem);
+  margin: 0;
+  overflow: hidden;
+  font-size: clamp(3.2rem, 6.4vh, 6.2rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 0.86;
+  pointer-events: none;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.sampi-tv-clinic-brand span,
+.sampi-tv-clinic-brand strong {
+  display: inline-block;
+  min-width: 0;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.1),
+    0 2px 0 rgba(255, 255, 255, 0.86);
+}
+
+.sampi-tv-clinic-brand span {
+  color: #0e7490;
+}
+
+.sampi-tv-clinic-brand strong {
+  color: #dc2626;
+}
+
 .sampi-tv-current-content,
 .sampi-tv-standby {
   display: grid;
@@ -4565,6 +4606,11 @@ html.sampi-tv-lock #root {
 }
 
 @media (max-width: 1280px) and (min-width: 981px) {
+  .sampi-tv-clinic-brand {
+    top: 0.95rem;
+    font-size: clamp(2.8rem, 5.6vh, 4.8rem);
+  }
+
   .sampi-tv-current-content,
   .sampi-tv-standby {
     width: min(76vw, 58rem);
@@ -4613,6 +4659,13 @@ html.sampi-tv-lock #root {
 }
 
 @media (max-width: 980px) {
+  .sampi-tv-clinic-brand {
+    top: 0.85rem;
+    max-width: calc(100vw - 1.5rem);
+    gap: 0.5rem;
+    font-size: clamp(2.15rem, 4.8vh, 3.35rem);
+  }
+
   .sampi-tv-minimal-stage {
     width: 100vw;
     height: 100vh;
@@ -4746,6 +4799,11 @@ html.sampi-tv-lock #root {
 }
 
 @media (max-height: 720px) and (min-width: 981px) {
+  .sampi-tv-clinic-brand {
+    top: 0.7rem;
+    font-size: clamp(2.25rem, 5vh, 3.4rem);
+  }
+
   .sampi-tv-current-content,
   .sampi-tv-standby {
     gap: 0.75rem;
