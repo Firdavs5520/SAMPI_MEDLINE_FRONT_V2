@@ -381,22 +381,33 @@ function TvLorQueuePage() {
           )}
         </section>
 
-        <aside className="sampi-tv-waiting-menu" aria-label="Kassadan chiqarilgan LOR cheklari">
+        <aside
+          className={`sampi-tv-waiting-menu ${
+            waitingTickets.length ? "sampi-tv-waiting-menu-active" : "sampi-tv-waiting-menu-empty"
+          }`}
+          aria-label="Kassadan chiqarilgan LOR cheklari"
+        >
           <div className="sampi-tv-waiting-head">
-            <span>Kassa cheklari</span>
-            <strong>LOR navbatida</strong>
+            <div>
+              <span>Navbatdagilar</span>
+              <strong>Kassa bergan LOR raqamlari</strong>
+            </div>
+            <b>{loading && !queue ? "..." : waitingTickets.length}</b>
           </div>
           <div className="sampi-tv-waiting-list">
             {loading && !queue ? (
               <div className="sampi-tv-waiting-empty">Yuklanmoqda</div>
             ) : waitingTickets.length ? (
-              waitingTickets.map((ticket) => (
+              waitingTickets.map((ticket, index) => (
                 <div
-                  className="sampi-tv-waiting-row"
+                  className={`sampi-tv-waiting-row ${
+                    index === 0 ? "sampi-tv-waiting-row-next" : ""
+                  }`}
                   key={ticket.id || ticket._id || ticket.queueCode}
                 >
+                  <i>{index === 0 ? "Keyingi" : index + 1}</i>
                   <span>{formatTvQueueCode(ticket.queueCode)}</span>
-                  <small>Kutmoqda</small>
+                  <small>{index === 0 ? "Tayyor turing" : "Kutmoqda"}</small>
                 </div>
               ))
             ) : (
