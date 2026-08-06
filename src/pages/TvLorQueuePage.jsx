@@ -397,7 +397,7 @@ function TvLorQueuePage() {
                     key={ticket.id || ticket._id || ticket.queueCode}
                   >
                     <span>{formatTvQueueCode(ticket.queueCode)}</span>
-                    <small>{index === 0 ? "Keyingi" : `${index + 1}-navbat`}</small>
+                    {index === 0 ? <small>Keyingi</small> : null}
                   </div>
                 ))
               ) : (
