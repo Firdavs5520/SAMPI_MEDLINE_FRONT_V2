@@ -28,6 +28,7 @@ function TvLorQueuePage() {
   const [error, setError] = useState("");
   const [pulseKey, setPulseKey] = useState("");
   const [callAnnouncement, setCallAnnouncement] = useState(null);
+  const [audioStatus, setAudioStatus] = useState("needs-interaction");
   const [connectionState, setConnectionState] = useState("connecting");
   const audioContextRef = useRef(null);
   const queueChimeRef = useRef(null);
@@ -82,7 +83,7 @@ function TvLorQueuePage() {
 
   const playSyntheticQueueTone = useCallback(async () => {
     const context = await ensureAudioContext();
-    if (!context) return;
+    if (!context) return false;
 
     const now = context.currentTime;
     const gain = context.createGain();
@@ -99,6 +100,7 @@ function TvLorQueuePage() {
       oscillator.start(now + index * 0.14);
       oscillator.stop(now + 0.92 + index * 0.08);
     });
+    return true;
   }, [ensureAudioContext]);
 
   const playQueueTone = useCallback(async () => {
@@ -110,36 +112,34 @@ function TvLorQueuePage() {
         audio.muted = false;
         audio.volume = 0.9;
         await audio.play();
+        audioUnlockedRef.current = true;
+        setAudioStatus("ready");
         return;
       } catch {
         // Browser autoplay rules may block the file; keep the TV cue alive with Web Audio.
       }
     }
 
-    await playSyntheticQueueTone();
+    try {
+      const playedFallback = await playSyntheticQueueTone();
+      if (playedFallback) {
+        audioUnlockedRef.current = true;
+        setAudioStatus("ready");
+        return;
+      }
+    } catch {
+      // Keep the user-facing state below; most TV browsers need one touch/click first.
+    }
+
+    setAudioStatus("blocked");
   }, [ensureQueueChime, playSyntheticQueueTone]);
 
   const unlockQueueAudio = useCallback(() => {
-    const audio = ensureQueueChime();
-    if (!audio || audioUnlockedRef.current) return;
-
-    const previousVolume = audio.volume;
-    audio.muted = true;
-    audio
-      .play()
-      .then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.muted = false;
-        audio.volume = previousVolume;
-        audioUnlockedRef.current = true;
-      })
-      .catch(() => {
-        audio.muted = false;
-        audio.volume = previousVolume;
-      });
-    ensureAudioContext().catch(() => {});
-  }, [ensureAudioContext, ensureQueueChime]);
+    if (audioUnlockedRef.current) return;
+    playQueueTone().catch(() => {
+      setAudioStatus("blocked");
+    });
+  }, [playQueueTone]);
 
   const applyQueueData = useCallback(
     (data) => {
@@ -359,14 +359,17 @@ function TvLorQueuePage() {
   }, [closeEventSource, connectStream, ensureQueueChime]);
 
   useEffect(() => {
-    window.addEventListener("pointerdown", unlockQueueAudio, { passive: true });
-    window.addEventListener("touchstart", unlockQueueAudio, { passive: true });
-    window.addEventListener("keydown", unlockQueueAudio);
+    const onAudioKeyDown = (event) => {
+      if (audioUnlockedRef.current) return;
+      if (event.key === "Enter" || event.key === " ") {
+        unlockQueueAudio();
+      }
+    };
+
+    window.addEventListener("keydown", onAudioKeyDown);
 
     return () => {
-      window.removeEventListener("pointerdown", unlockQueueAudio);
-      window.removeEventListener("touchstart", unlockQueueAudio);
-      window.removeEventListener("keydown", unlockQueueAudio);
+      window.removeEventListener("keydown", onAudioKeyDown);
     };
   }, [unlockQueueAudio]);
 
@@ -441,6 +444,17 @@ function TvLorQueuePage() {
               <div className="sampi-tv-call-note">LOR xonasiga kiring</div>
             </div>
           </div>
+        ) : null}
+
+        {audioStatus !== "ready" ? (
+          <button
+            className={`sampi-tv-audio-button sampi-tv-audio-button-${audioStatus}`}
+            type="button"
+            onClick={unlockQueueAudio}
+          >
+            <span aria-hidden="true" />
+            Ovozni yoqish
+          </button>
         ) : null}
 
         <div className="sampi-tv-screen-grid">

@@ -4296,6 +4296,61 @@ html.sampi-tv-lock #root {
   line-height: 1.05;
 }
 
+.sampi-tv-audio-button {
+  position: absolute;
+  right: clamp(1rem, 2.4vw, 2.2rem);
+  bottom: clamp(1rem, 2.4vh, 1.8rem);
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.62rem;
+  min-height: 3rem;
+  padding: 0.72rem 1.05rem;
+  border: 1px solid rgba(14, 116, 144, 0.18);
+  border-radius: 999px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(241, 252, 250, 0.82)),
+    rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 18px 42px -28px rgba(15, 23, 42, 0.36);
+  color: #0f596b;
+  cursor: pointer;
+  font: inherit;
+  font-size: clamp(0.88rem, 1.6vh, 1.1rem);
+  font-weight: 900;
+  line-height: 1;
+  opacity: 0.96;
+  text-align: center;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.sampi-tv-audio-button:hover,
+.sampi-tv-audio-button:focus-visible {
+  border-color: rgba(14, 116, 144, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    0 22px 48px -30px rgba(14, 116, 144, 0.42);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.sampi-tv-audio-button span {
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 999px;
+  background: #d4af37;
+  box-shadow: 0 0 0 0.34rem rgba(212, 175, 55, 0.16);
+}
+
+.sampi-tv-audio-button-blocked {
+  color: #102033;
+}
+
 .sampi-tv-current-content,
 .sampi-tv-standby {
   display: grid;
@@ -5386,6 +5441,7 @@ html.sampi-tv-lock #root {
   .sampi-tv-call-card,
   .sampi-tv-call-card::after,
   .sampi-tv-call-number,
+  .sampi-tv-audio-button,
   .sampi-tv-screen-grid,
   .sampi-tv-current-card,
   .sampi-tv-current-pulse,
