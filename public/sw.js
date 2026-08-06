@@ -1,9 +1,9 @@
-const CACHE_NAME = "sampi-medline-v7";
+const CACHE_NAME = "sampi-medline-v8";
 const APP_SHELL = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
-  "/manifest.webmanifest?v=7",
+  "/manifest.webmanifest?v=8",
   "/manifest-tv.webmanifest",
   "/manifest-tv.webmanifest?v=2",
   "/favicon.svg",

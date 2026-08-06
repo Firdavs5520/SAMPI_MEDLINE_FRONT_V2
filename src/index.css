@@ -4633,6 +4633,129 @@ html.sampi-tv-lock #root {
   }
 }
 
+.sampi-version-toast {
+  position: fixed;
+  right: clamp(1rem, 2.4vw, 1.6rem);
+  bottom: clamp(1rem, 2.4vw, 1.6rem);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 0.82rem 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 22px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(245, 251, 255, 0.72)),
+    rgba(255, 255, 255, 0.82);
+  box-shadow:
+    0 24px 70px rgba(15, 23, 42, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: #102033;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(0, 0.8rem, 0) scale(0.98);
+  transition:
+    opacity 220ms ease,
+    transform 260ms ease;
+  -webkit-backdrop-filter: blur(24px) saturate(1.35);
+  backdrop-filter: blur(24px) saturate(1.35);
+}
+
+.sampi-version-toast-show {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.sampi-version-toast-icon {
+  display: grid;
+  flex: 0 0 2.6rem;
+  width: 2.6rem;
+  height: 2.6rem;
+  place-items: center;
+  border-radius: 15px;
+  background:
+    radial-gradient(circle at 24% 20%, rgba(255, 255, 255, 0.42), transparent 28%),
+    linear-gradient(135deg, #0b7f94, #16a7c3 54%, #d7a51c);
+  box-shadow:
+    0 14px 28px rgba(11, 127, 148, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.sampi-version-toast-copy {
+  min-width: 0;
+}
+
+.sampi-version-toast strong,
+.sampi-version-toast span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sampi-version-toast strong {
+  color: #0f1f33;
+  font-size: 0.96rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+
+.sampi-version-toast span {
+  margin-top: 0.18rem;
+  color: rgba(15, 31, 51, 0.66);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+.sampi-version-toast-tv {
+  right: clamp(1rem, 1.8vw, 1.8rem);
+  bottom: clamp(1rem, 1.8vw, 1.8rem);
+  width: min(21rem, calc(100vw - 2rem));
+  padding: 0.7rem 0.84rem;
+  border-color: rgba(196, 230, 236, 0.82);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(245, 252, 251, 0.76)),
+    rgba(255, 255, 255, 0.84);
+  box-shadow:
+    0 18px 48px rgba(19, 45, 68, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+@media (prefers-color-scheme: dark) {
+  .sampi-version-toast:not(.sampi-version-toast-tv) {
+    border-color: rgba(148, 163, 184, 0.24);
+    background:
+      linear-gradient(135deg, rgba(15, 23, 42, 0.86), rgba(21, 33, 49, 0.74)),
+      rgba(15, 23, 42, 0.82);
+    color: #f8fafc;
+  }
+
+  .sampi-version-toast:not(.sampi-version-toast-tv) strong {
+    color: #f8fafc;
+  }
+
+  .sampi-version-toast:not(.sampi-version-toast-tv) span {
+    color: rgba(226, 232, 240, 0.68);
+  }
+}
+
+@media (max-width: 640px) {
+  .sampi-version-toast {
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: calc(100vw - 1.5rem);
+    border-radius: 18px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .route-enter,
   .route-enter > div > *,
@@ -4672,7 +4795,8 @@ html.sampi-tv-lock #root {
   .sampi-alert,
   .sampi-modal-overlay,
   .sampi-modal-panel,
-  .sampi-busy-panel {
+  .sampi-busy-panel,
+  .sampi-version-toast {
     animation: none !important;
     transition: none !important;
   }
