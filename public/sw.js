@@ -1,4 +1,4 @@
-const CACHE_NAME = "sampi-medline-v8";
+const CACHE_NAME = "sampi-medline-v9";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -12,7 +12,8 @@ const APP_SHELL = [
   "/icons/pwa-256-v6.png",
   "/icons/pwa-512-v6.png",
   "/icons/pwa-512-maskable-v6.png",
-  "/icons/apple-touch-icon-v6.png"
+  "/icons/apple-touch-icon-v6.png",
+  "/audio/premium_queue_chime_close_match.wav"
 ];
 
 self.addEventListener("install", (event) => {

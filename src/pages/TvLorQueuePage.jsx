@@ -9,6 +9,7 @@ const TV_MANIFEST_PATH = "/manifest-tv.webmanifest?v=2";
 const WAITING_TICKET_LIMIT = 6;
 const ADMIN_EXIT_PRESS_COUNT = 5;
 const ADMIN_EXIT_WINDOW_MS = 4500;
+const QUEUE_CHIME_PATH = "/audio/premium_queue_chime_close_match.wav";
 
 const formatTvQueueCode = (value) => {
   const digits = String(value ?? "").match(/\d+/g)?.join("") || "";
@@ -28,6 +29,8 @@ function TvLorQueuePage() {
   const [pulseKey, setPulseKey] = useState("");
   const [connectionState, setConnectionState] = useState("connecting");
   const audioContextRef = useRef(null);
+  const queueChimeRef = useRef(null);
+  const audioUnlockedRef = useRef(false);
   const abortRef = useRef(null);
   const eventSourceRef = useRef(null);
   const fallbackTimerRef = useRef(0);
@@ -64,7 +67,18 @@ function TvLorQueuePage() {
     return audioContextRef.current;
   }, []);
 
-  const playQueueTone = useCallback(async () => {
+  const ensureQueueChime = useCallback(() => {
+    if (typeof window === "undefined") return null;
+    if (!queueChimeRef.current) {
+      const audio = new Audio(QUEUE_CHIME_PATH);
+      audio.preload = "auto";
+      audio.volume = 0.9;
+      queueChimeRef.current = audio;
+    }
+    return queueChimeRef.current;
+  }, []);
+
+  const playSyntheticQueueTone = useCallback(async () => {
     const context = await ensureAudioContext();
     if (!context) return;
 
@@ -84,6 +98,46 @@ function TvLorQueuePage() {
       oscillator.stop(now + 0.92 + index * 0.08);
     });
   }, [ensureAudioContext]);
+
+  const playQueueTone = useCallback(async () => {
+    const audio = ensureQueueChime();
+    if (audio) {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.muted = false;
+        audio.volume = 0.9;
+        await audio.play();
+        return;
+      } catch {
+        // Browser autoplay rules may block the file; keep the TV cue alive with Web Audio.
+      }
+    }
+
+    await playSyntheticQueueTone();
+  }, [ensureQueueChime, playSyntheticQueueTone]);
+
+  const unlockQueueAudio = useCallback(() => {
+    const audio = ensureQueueChime();
+    if (!audio || audioUnlockedRef.current) return;
+
+    const previousVolume = audio.volume;
+    audio.muted = true;
+    audio
+      .play()
+      .then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.muted = false;
+        audio.volume = previousVolume;
+        audioUnlockedRef.current = true;
+      })
+      .catch(() => {
+        audio.muted = false;
+        audio.volume = previousVolume;
+      });
+    ensureAudioContext().catch(() => {});
+  }, [ensureAudioContext, ensureQueueChime]);
 
   const applyQueueData = useCallback(
     (data) => {
@@ -261,6 +315,7 @@ function TvLorQueuePage() {
     mountedRef.current = true;
     document.documentElement.classList.add("sampi-tv-lock");
     document.body.classList.add("sampi-tv-lock");
+    ensureQueueChime()?.load();
 
     const manifestLink = document.querySelector("link[rel='manifest']");
     const previousManifest = manifestLink?.getAttribute("href") || "";
@@ -277,12 +332,28 @@ function TvLorQueuePage() {
       window.clearTimeout(fallbackTimerRef.current);
       window.clearTimeout(reconnectTimerRef.current);
       closeEventSource();
+      if (queueChimeRef.current) {
+        queueChimeRef.current.pause();
+        queueChimeRef.current = null;
+      }
       if (abortRef.current) abortRef.current.abort();
       if (manifestLink && previousManifest) {
         manifestLink.setAttribute("href", previousManifest);
       }
     };
-  }, [closeEventSource, connectStream]);
+  }, [closeEventSource, connectStream, ensureQueueChime]);
+
+  useEffect(() => {
+    window.addEventListener("pointerdown", unlockQueueAudio, { passive: true });
+    window.addEventListener("touchstart", unlockQueueAudio, { passive: true });
+    window.addEventListener("keydown", unlockQueueAudio);
+
+    return () => {
+      window.removeEventListener("pointerdown", unlockQueueAudio);
+      window.removeEventListener("touchstart", unlockQueueAudio);
+      window.removeEventListener("keydown", unlockQueueAudio);
+    };
+  }, [unlockQueueAudio]);
 
   useEffect(() => {
     let stopped = false;
