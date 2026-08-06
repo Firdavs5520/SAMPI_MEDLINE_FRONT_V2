@@ -875,8 +875,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       loadLorQueueTicketStatus({ silent: true, showErrors: false });
     } catch (err) {
       closePrintTab(printSession);
-      setError(extractErrorMessage(err));
-      addLorPrintEvent("Raqam chiqarishda xato bo'ldi.", "error");
+      const message = extractErrorMessage(err);
+      setError(message);
+      addLorPrintEvent(`Raqam chiqarishda xato bo'ldi: ${message}`, "error");
     } finally {
       issuingLorTicketRef.current = false;
       setIssuingLorTicket(false);
