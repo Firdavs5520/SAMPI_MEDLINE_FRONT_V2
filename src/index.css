@@ -4137,8 +4137,7 @@ html.sampi-tv-lock #root {
   text-align: center;
 }
 
-.sampi-tv-current-card::before,
-.sampi-tv-current-card::after {
+.sampi-tv-current-card::before {
   content: "";
   position: absolute;
   pointer-events: none;
@@ -4149,17 +4148,6 @@ html.sampi-tv-lock #root {
   background:
     linear-gradient(90deg, rgba(14, 116, 144, 0.075), transparent 22%, transparent 78%, rgba(212, 175, 55, 0.082)),
     linear-gradient(180deg, rgba(255, 255, 255, 0.58), transparent 22%, transparent 74%, rgba(255, 255, 255, 0.5));
-}
-
-.sampi-tv-current-card::after {
-  left: 50%;
-  bottom: clamp(1rem, 2.2vw, 2.1rem);
-  width: min(48rem, 64vw);
-  height: 5px;
-  transform: translateX(-50%);
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgba(14, 116, 144, 0.74), rgba(212, 175, 55, 0.7), transparent);
-  box-shadow: 0 10px 28px -18px rgba(14, 116, 144, 0.8);
 }
 
 .sampi-tv-current-card > * {
@@ -4265,23 +4253,11 @@ html.sampi-tv-lock #root {
 }
 
 .sampi-tv-current-note {
-  position: relative;
-  padding: 0 0 clamp(0.48rem, 0.9vh, 0.7rem);
+  padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-}
-
-.sampi-tv-current-note::after {
-  content: "";
-  position: absolute;
-  right: 18%;
-  bottom: 0;
-  left: 18%;
-  height: 4px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgba(14, 116, 144, 0.55), rgba(212, 175, 55, 0.45), transparent);
 }
 
 .sampi-tv-ticket-hint {
