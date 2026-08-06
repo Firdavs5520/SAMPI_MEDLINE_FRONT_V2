@@ -5,6 +5,7 @@ import { extractErrorMessage } from "../utils/format.js";
 const POLL_INTERVAL_MS = 4000;
 const STREAM_RECONNECT_MS = 2500;
 const TV_MANIFEST_PATH = "/manifest-tv.webmanifest?v=2";
+const WAITING_TICKET_LIMIT = 6;
 
 const formatTvQueueCode = (value) => {
   const digits = String(value ?? "").match(/\d+/g)?.join("") || "";
@@ -34,6 +35,9 @@ function TvLorQueuePage() {
 
   const current = queue?.current || null;
   const displayQueueCode = current ? formatTvQueueCode(current.queueCode) : "";
+  const waitingTickets = Array.isArray(queue?.waiting)
+    ? queue.waiting.slice(0, WAITING_TICKET_LIMIT)
+    : [];
   const currentKey = queue?.announcementKey || "";
   const isConnectionSoft =
     connectionState === "reconnecting" || connectionState === "polling" || Boolean(error);
@@ -110,7 +114,10 @@ function TvLorQueuePage() {
       }
 
       try {
-        const data = await tvService.getLorQueue({ lorIdentity: "lor1", limit: 1 }, controller.signal);
+        const data = await tvService.getLorQueue(
+          { lorIdentity: "lor1", limit: WAITING_TICKET_LIMIT },
+          controller.signal
+        );
         applyQueueData(data);
         if (connectionStateRef.current !== "live") {
           setConnectionState("polling");
@@ -150,7 +157,10 @@ function TvLorQueuePage() {
     closeEventSource();
     setConnectionState("connecting");
 
-    const source = tvService.openLorQueueStream({ lorIdentity: "lor1", limit: 1 });
+    const source = tvService.openLorQueueStream({
+      lorIdentity: "lor1",
+      limit: WAITING_TICKET_LIMIT
+    });
     eventSourceRef.current = source;
 
     const handleStreamData = (event) => {
@@ -314,6 +324,35 @@ function TvLorQueuePage() {
             </div>
           )}
         </section>
+
+        <aside className="sampi-tv-waiting-menu" aria-label="Kassadan chiqarilgan LOR cheklari">
+          <div className="sampi-tv-waiting-head">
+            <span>Kassa cheklari</span>
+            <strong>LOR navbatida</strong>
+          </div>
+          <div className="sampi-tv-waiting-list">
+            {loading && !queue ? (
+              <div className="sampi-tv-waiting-empty">Yuklanmoqda</div>
+            ) : waitingTickets.length ? (
+              waitingTickets.map((ticket) => (
+                <div
+                  className="sampi-tv-waiting-row"
+                  key={ticket.id || ticket._id || ticket.queueCode}
+                >
+                  <span>{formatTvQueueCode(ticket.queueCode)}</span>
+                  <small>Kutmoqda</small>
+                </div>
+              ))
+            ) : (
+              <div className="sampi-tv-waiting-empty">
+                Yangi chek chiqsa shu yerda ko'rinadi
+              </div>
+            )}
+          </div>
+          <div className="sampi-tv-waiting-foot">
+            Raqamingiz markazda chiqsa, xonaga kiring
+          </div>
+        </aside>
 
         {isConnectionSoft ? (
           <div className="sampi-tv-reconnect-note">
