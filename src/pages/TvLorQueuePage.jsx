@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import tvService from "../services/tvService.js";
+import { useAuth } from "../context/AuthContext.jsx";
 import { extractErrorMessage } from "../utils/format.js";
 
 const POLL_INTERVAL_MS = 4000;
 const STREAM_RECONNECT_MS = 2500;
 const TV_MANIFEST_PATH = "/manifest-tv.webmanifest?v=2";
 const WAITING_TICKET_LIMIT = 6;
+const ADMIN_EXIT_PRESS_COUNT = 5;
+const ADMIN_EXIT_WINDOW_MS = 4500;
 
 const formatTvQueueCode = (value) => {
   const digits = String(value ?? "").match(/\d+/g)?.join("") || "";
@@ -18,6 +21,7 @@ const formatTvQueueCode = (value) => {
 };
 
 function TvLorQueuePage() {
+  const { logout } = useAuth();
   const [queue, setQueue] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -32,6 +36,7 @@ function TvLorQueuePage() {
   const lastAnnouncementKeyRef = useRef("");
   const mountedRef = useRef(false);
   const connectionStateRef = useRef("connecting");
+  const adminExitRef = useRef({ count: 0, timer: 0 });
 
   const current = queue?.current || null;
   const displayQueueCode = current ? formatTvQueueCode(current.queueCode) : "";
@@ -41,6 +46,11 @@ function TvLorQueuePage() {
   const currentKey = queue?.announcementKey || "";
   const isConnectionSoft =
     connectionState === "reconnecting" || connectionState === "polling" || Boolean(error);
+
+  const logoutTvSession = useCallback(() => {
+    logout();
+    window.location.replace("/login");
+  }, [logout]);
 
   const ensureAudioContext = useCallback(async () => {
     if (!window.AudioContext && !window.webkitAudioContext) return null;
@@ -200,6 +210,52 @@ function TvLorQueuePage() {
   useEffect(() => {
     connectionStateRef.current = connectionState;
   }, [connectionState]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const shouldLogout =
+      params.get("logout") === "1" || params.get("exit") === "1";
+
+    if (shouldLogout) {
+      logoutTvSession();
+    }
+  }, [logoutTvSession]);
+
+  useEffect(() => {
+    const resetAdminExit = () => {
+      window.clearTimeout(adminExitRef.current.timer);
+      adminExitRef.current = { count: 0, timer: 0 };
+    };
+
+    const onKeyDown = (event) => {
+      const isExitKey = event.key === "0" || event.key === "Escape";
+      if (!isExitKey) {
+        resetAdminExit();
+        return;
+      }
+
+      window.clearTimeout(adminExitRef.current.timer);
+      const nextCount = adminExitRef.current.count + 1;
+
+      if (nextCount >= ADMIN_EXIT_PRESS_COUNT) {
+        resetAdminExit();
+        logoutTvSession();
+        return;
+      }
+
+      adminExitRef.current = {
+        count: nextCount,
+        timer: window.setTimeout(resetAdminExit, ADMIN_EXIT_WINDOW_MS)
+      };
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      resetAdminExit();
+    };
+  }, [logoutTvSession]);
 
   useEffect(() => {
     mountedRef.current = true;
