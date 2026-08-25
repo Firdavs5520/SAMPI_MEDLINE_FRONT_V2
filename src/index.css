@@ -4111,10 +4111,10 @@ html.sampi-tv-lock #root {
 
 .sampi-tv-screen-grid {
   position: absolute;
-  inset: clamp(11.4rem, 21.4vh, 15rem) clamp(1.2rem, 2.6vw, 3rem) clamp(1.1rem, 2.3vh, 2rem);
+  inset: clamp(10.5rem, 20.5vh, 13.8rem) clamp(1.2rem, 2.6vw, 3rem) clamp(0.85rem, 1.8vh, 1.5rem);
   z-index: 2;
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(24rem, 2fr);
+  grid-template-columns: minmax(0, 1.75fr) minmax(25rem, 1fr);
   gap: clamp(1.1rem, 2vw, 2.2rem);
   min-width: 0;
   min-height: 0;
@@ -4359,9 +4359,10 @@ html.sampi-tv-lock #root {
 
 .sampi-tv-current-content,
 .sampi-tv-standby {
+  box-sizing: border-box;
   display: grid;
   place-items: center;
-  width: min(100%, 72rem);
+  width: min(100%, 68rem);
   min-width: 0;
   gap: clamp(0.85rem, 1.9vh, 1.45rem);
   padding: clamp(1rem, 2vh, 1.6rem) clamp(1rem, 2vw, 2rem);
@@ -4468,12 +4469,14 @@ html.sampi-tv-lock #root {
 
 .sampi-tv-standby-title {
   margin: 0;
-  max-width: min(94vw, 88rem);
+  max-width: 100%;
   color: #122033;
-  font-size: clamp(6.4rem, 14.5vh, 12rem);
+  font-size: clamp(5.2rem, min(12vh, 6.6vw), 8rem);
   font-weight: 900;
-  line-height: 0.9;
+  line-height: 1.06;
   text-shadow: none;
+  word-break: normal;
+  overflow-wrap: normal;
   text-wrap: balance;
 }
 
@@ -4497,8 +4500,8 @@ html.sampi-tv-lock #root {
   width: 100%;
   height: 100%;
   max-height: none;
-  gap: clamp(0.9rem, 1.5vh, 1.25rem);
-  padding: clamp(1.15rem, 1.9vw, 1.65rem);
+  gap: clamp(0.65rem, 1.05vh, 0.95rem);
+  padding: clamp(1rem, 1.55vw, 1.35rem);
   transform: none;
   overflow: hidden;
   border: 1px solid rgba(14, 116, 144, 0.18);
@@ -4558,7 +4561,7 @@ html.sampi-tv-lock #root {
 
 .sampi-tv-waiting-head span {
   color: #0f596b;
-  font-size: clamp(1.6rem, 3vh, 2.5rem);
+  font-size: clamp(1.45rem, 2.65vh, 2.2rem);
   font-weight: 900;
   line-height: 1.05;
 }
@@ -4567,7 +4570,7 @@ html.sampi-tv-lock #root {
   display: block;
   margin-top: 0.34rem;
   color: #64748b;
-  font-size: clamp(0.96rem, 1.7vh, 1.35rem);
+  font-size: clamp(0.84rem, 1.45vh, 1.16rem);
   font-weight: 900;
   line-height: 1.12;
   text-wrap: balance;
@@ -4606,7 +4609,7 @@ html.sampi-tv-lock #root {
   display: grid;
   min-height: 0;
   align-content: start;
-  gap: clamp(0.62rem, 1.05vh, 0.9rem);
+  gap: clamp(0.48rem, 0.8vh, 0.72rem);
   overflow: hidden;
 }
 
@@ -4615,9 +4618,9 @@ html.sampi-tv-lock #root {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  min-height: clamp(4.6rem, 8.7vh, 7rem);
-  gap: clamp(0.9rem, 1.2vw, 1.2rem);
-  padding: clamp(0.7rem, 1.25vh, 1rem) clamp(1rem, 1.55vw, 1.35rem);
+  min-height: clamp(4.35rem, 7.6vh, 5.55rem);
+  gap: clamp(0.62rem, 0.9vw, 0.95rem);
+  padding: clamp(0.52rem, 0.9vh, 0.78rem) clamp(0.9rem, 1.35vw, 1.18rem);
   overflow: hidden;
   border: 1px solid rgba(14, 116, 144, 0.14);
   border-radius: 20px;
@@ -4685,9 +4688,9 @@ html.sampi-tv-lock #root {
   z-index: 2;
   color: #102033;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: clamp(4.5rem, 9.4vh, 7.2rem);
+  font-size: clamp(3.3rem, 6.3vh, 4.8rem);
   font-weight: 900;
-  line-height: 0.86;
+  line-height: 0.82;
   min-width: 0;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
@@ -4702,13 +4705,13 @@ html.sampi-tv-lock #root {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: clamp(5.4rem, 7.2vw, 7.4rem);
+  min-width: clamp(4.9rem, 6.4vw, 6.8rem);
   padding: clamp(0.42rem, 0.9vh, 0.58rem) clamp(0.62rem, 0.95vw, 0.9rem);
   border: 1px solid rgba(14, 116, 144, 0.13);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.7);
   color: #0e7490;
-  font-size: clamp(0.86rem, 1.35vh, 1.08rem);
+  font-size: clamp(0.78rem, 1.2vh, 0.98rem);
   font-weight: 900;
   line-height: 1;
   text-align: center;

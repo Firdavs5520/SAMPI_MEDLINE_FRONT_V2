@@ -1,7 +1,7 @@
 {
   "name": "sampi-medline-frontend",
   "private": true,
-  "version": "1.0.5",
+  "version": "1.0.6",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -16,7 +16,8 @@
     "desktop:exe": "npm run desktop:installer",
     "icons:premium": "electron scripts/generate-premium-icons.cjs",
     "smoke:electron-routes": "electron scripts/smoke-electron-routes.cjs",
-    "smoke:multi-role": "electron scripts/smoke-multi-role-routes.cjs"
+    "smoke:multi-role": "electron scripts/smoke-multi-role-routes.cjs",
+    "smoke:tv-layout": "electron scripts/smoke-tv-layout.cjs"
   },
   "build": {
     "appId": "uz.sampimedline.desktop",
