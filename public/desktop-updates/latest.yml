@@ -1,0 +1,8 @@
+version: 1.0.3
+files:
+  - url: sampi-medline-setup.exe
+    sha512: dYfUC5ozc2ibkigevI03cJyhrcXW1jgLBYkzXfiL/BQr1hmDhCHatRJxS4tHhnQDmcqO08jIRbkNJEtcoJ3WHA==
+    size: 104019633
+path: sampi-medline-setup.exe
+sha512: dYfUC5ozc2ibkigevI03cJyhrcXW1jgLBYkzXfiL/BQr1hmDhCHatRJxS4tHhnQDmcqO08jIRbkNJEtcoJ3WHA==
+releaseDate: '2026-08-25T04:58:10.303Z'

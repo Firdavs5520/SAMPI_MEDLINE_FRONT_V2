@@ -1,0 +1,15 @@
+{
+  "appId": "uz.sampimedline.tv",
+  "appName": "Sampi Medline TV",
+  "webDir": "dist",
+  "server": {
+    "url": "https://sampi-medline.vercel.app/tv/lor",
+    "hostname": "sampi-medline.vercel.app",
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

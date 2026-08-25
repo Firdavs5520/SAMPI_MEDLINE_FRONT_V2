@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import AppVersionFooter from "./components/AppVersionFooter.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import RequireLorIdentity from "./components/RequireLorIdentity.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
@@ -26,8 +27,10 @@ import { useAuth } from "./context/AuthContext.jsx";
 import { roleHomePath } from "./utils/constants.js";
 
 function App() {
+  const location = useLocation();
   const { token, role, lorIdentity, lorDoctor } = useAuth();
   const hasLorContext = Boolean(lorIdentity && lorDoctor?.id);
+  const showAppVersion = !location.pathname.startsWith("/tv");
 
   const home =
     token && role
@@ -39,129 +42,132 @@ function App() {
       : "/login";
 
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to={home} replace />} />
-      <Route path="/login" element={<LoginPage />} />
+    <>
+      <Routes>
+        <Route path="/" element={<Navigate to={home} replace />} />
+        <Route path="/login" element={<LoginPage />} />
 
-      <Route element={<ProtectedRoute allowedRoles={["tv"]} />}>
-        <Route path="/tv" element={<Navigate to="/tv/lor" replace />} />
-        <Route path="/tv/lor" element={<TvLorQueuePage />} />
-      </Route>
-
-      <Route element={<ProtectedRoute allowedRoles={["nurse"]} />}>
-        <Route element={<DashboardLayout />}>
-          <Route path="/nurse" element={<NurseDashboard />} />
-          <Route path="/nurse/checks" element={<NurseChecksPage />} />
-          <Route
-            path="/nurse/specialists"
-            element={<RoleSpecialistsPage mode="nurse" />}
-          />
-          <Route path="/nurse/medicines" element={<NurseMedicinesPage />} />
-          <Route path="/nurse/services" element={<NurseServicesPage />} />
+        <Route element={<ProtectedRoute allowedRoles={["tv"]} />}>
+          <Route path="/tv" element={<Navigate to="/tv/lor" replace />} />
+          <Route path="/tv/lor" element={<TvLorQueuePage />} />
         </Route>
-      </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={["lor"]} />}>
-        <Route element={<DashboardLayout />}>
-          <Route
-            path="/lor"
-            element={<Navigate to={hasLorContext ? "/lor/checks" : "/lor/select"} replace />}
-          />
-          <Route
-            path="/lor/select"
-            element={<LorSelectPage />}
-          />
-
-          <Route element={<RequireLorIdentity />}>
-            <Route path="/lor/checks" element={<LorChecksPage />} />
-            <Route path="/lor/services" element={<LorServicesPage />} />
+        <Route element={<ProtectedRoute allowedRoles={["nurse"]} />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/nurse" element={<NurseDashboard />} />
+            <Route path="/nurse/checks" element={<NurseChecksPage />} />
             <Route
-              path="/lor/specialists"
-              element={<RoleSpecialistsPage mode="lor" />}
+              path="/nurse/specialists"
+              element={<RoleSpecialistsPage mode="nurse" />}
             />
-            <Route path="/lor/services/add" element={<LorServiceCreatePage />} />
+            <Route path="/nurse/medicines" element={<NurseMedicinesPage />} />
+            <Route path="/nurse/services" element={<NurseServicesPage />} />
           </Route>
         </Route>
-      </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={["delivery"]} />}>
-        <Route element={<DashboardLayout />}>
-          <Route path="/delivery" element={<DeliveryDashboard />} />
+        <Route element={<ProtectedRoute allowedRoles={["lor"]} />}>
+          <Route element={<DashboardLayout />}>
+            <Route
+              path="/lor"
+              element={<Navigate to={hasLorContext ? "/lor/checks" : "/lor/select"} replace />}
+            />
+            <Route
+              path="/lor/select"
+              element={<LorSelectPage />}
+            />
+
+            <Route element={<RequireLorIdentity />}>
+              <Route path="/lor/checks" element={<LorChecksPage />} />
+              <Route path="/lor/services" element={<LorServicesPage />} />
+              <Route
+                path="/lor/specialists"
+                element={<RoleSpecialistsPage mode="lor" />}
+              />
+              <Route path="/lor/services/add" element={<LorServiceCreatePage />} />
+            </Route>
+          </Route>
         </Route>
-      </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={["cashier"]} />}>
-        <Route element={<DashboardLayout />}>
-          <Route path="/cashier" element={<Navigate to="/cashier/lor-queue" replace />} />
-          <Route
-            path="/cashier/lor-queue"
-            element={<CashierDashboard forcedSection="lor-queue" />}
-          />
-          <Route
-            path="/cashier/nurse-patients"
-            element={<CashierDashboard forcedSection="nurse-patients" />}
-          />
-          <Route
-            path="/cashier/lor-patients"
-            element={<CashierDashboard forcedSection="lor-patients" />}
-          />
-          <Route
-            path="/cashier/nurse-entries"
-            element={<CashierDashboard forcedSection="nurse-entries" />}
-          />
-          <Route
-            path="/cashier/nurse-history"
-            element={<CashierDashboard forcedSection="nurse-history" />}
-          />
-          <Route
-            path="/cashier/lor-entries"
-            element={<CashierDashboard forcedSection="lor-entries" />}
-          />
-          <Route
-            path="/cashier/lor-history"
-            element={<CashierDashboard forcedSection="lor-history" />}
-          />
-          <Route
-            path="/cashier/nurse-specialists"
-            element={<CashierDashboard forcedSection="nurse-specialists" />}
-          />
-          <Route
-            path="/cashier/lor-specialists"
-            element={<CashierDashboard forcedSection="lor-specialists" />}
-          />
-          <Route
-            path="/cashier/journal"
-            element={<CashierDashboard forcedSection="journal" />}
-          />
-          <Route
-            path="/cashier/debts"
-            element={<CashierDashboard forcedSection="debts" />}
-          />
-          <Route
-            path="/cashier/settings"
-            element={<CashierDashboard forcedSection="settings" />}
-          />
+        <Route element={<ProtectedRoute allowedRoles={["delivery"]} />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/delivery" element={<DeliveryDashboard />} />
+          </Route>
         </Route>
-      </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={["reporter"]} />}>
-        <Route element={<DashboardLayout />}>
-          <Route path="/reporter" element={<ReporterDashboard />} />
-          <Route path="/reporter/reports" element={<ReporterReportsPage />} />
+        <Route element={<ProtectedRoute allowedRoles={["cashier"]} />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/cashier" element={<Navigate to="/cashier/lor-queue" replace />} />
+            <Route
+              path="/cashier/lor-queue"
+              element={<CashierDashboard forcedSection="lor-queue" />}
+            />
+            <Route
+              path="/cashier/nurse-patients"
+              element={<CashierDashboard forcedSection="nurse-patients" />}
+            />
+            <Route
+              path="/cashier/lor-patients"
+              element={<CashierDashboard forcedSection="lor-patients" />}
+            />
+            <Route
+              path="/cashier/nurse-entries"
+              element={<CashierDashboard forcedSection="nurse-entries" />}
+            />
+            <Route
+              path="/cashier/nurse-history"
+              element={<CashierDashboard forcedSection="nurse-history" />}
+            />
+            <Route
+              path="/cashier/lor-entries"
+              element={<CashierDashboard forcedSection="lor-entries" />}
+            />
+            <Route
+              path="/cashier/lor-history"
+              element={<CashierDashboard forcedSection="lor-history" />}
+            />
+            <Route
+              path="/cashier/nurse-specialists"
+              element={<CashierDashboard forcedSection="nurse-specialists" />}
+            />
+            <Route
+              path="/cashier/lor-specialists"
+              element={<CashierDashboard forcedSection="lor-specialists" />}
+            />
+            <Route
+              path="/cashier/journal"
+              element={<CashierDashboard forcedSection="journal" />}
+            />
+            <Route
+              path="/cashier/debts"
+              element={<CashierDashboard forcedSection="debts" />}
+            />
+            <Route
+              path="/cashier/settings"
+              element={<CashierDashboard forcedSection="settings" />}
+            />
+          </Route>
         </Route>
-      </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
-        <Route element={<DashboardLayout />}>
-          <Route path="/manager" element={<ManagerDashboard />} />
-          <Route path="/manager/stock" element={<ManagerStockPage />} />
-          <Route path="/manager/most-used" element={<ManagerMostUsedPage />} />
-          <Route path="/manager/usage-history" element={<ManagerUsageHistoryPage />} />
+        <Route element={<ProtectedRoute allowedRoles={["reporter"]} />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/reporter" element={<ReporterDashboard />} />
+            <Route path="/reporter/reports" element={<ReporterReportsPage />} />
+          </Route>
         </Route>
-      </Route>
 
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/manager" element={<ManagerDashboard />} />
+            <Route path="/manager/stock" element={<ManagerStockPage />} />
+            <Route path="/manager/most-used" element={<ManagerMostUsedPage />} />
+            <Route path="/manager/usage-history" element={<ManagerUsageHistoryPage />} />
+          </Route>
+        </Route>
+
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+      {showAppVersion ? <AppVersionFooter /> : null}
+    </>
   );
 }
 

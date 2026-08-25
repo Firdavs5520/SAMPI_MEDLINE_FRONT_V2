@@ -9,9 +9,47 @@ import "./index.css";
 const VERSION_NOTICE_ID = "sampi-version-toast";
 const VERSION_NOTICE_HIDE_MS = 6200;
 const VERSION_UPDATE_CHECK_MS = 5 * 60 * 1000;
+const INDEX_VERSION_CHECK_MS = 2 * 60 * 1000;
+const TV_VERSION_RELOAD_DELAY_MS = 1800;
 let versionNoticeTimer;
+let versionReloadTimer;
+let currentAssetSignature = "";
+let indexVersionWatcherStarted = false;
 
-const showVersionNotice = ({ activated = false } = {}) => {
+const isTvScreenPath = () => window.location.pathname.startsWith("/tv");
+
+const normalizeAssetUrl = (value) => {
+  if (!value) return "";
+
+  try {
+    const url = new URL(value, window.location.href);
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return value;
+  }
+};
+
+const getAssetSignatureFromDocument = (documentLike) =>
+  [...documentLike.querySelectorAll('script[src], link[rel="stylesheet"][href]')]
+    .map((node) => normalizeAssetUrl(node.getAttribute("src") || node.getAttribute("href")))
+    .filter((value) => value.includes("/assets/"))
+    .sort()
+    .join("|");
+
+const getAssetSignatureFromHtml = (html) => {
+  const parsedDocument = new DOMParser().parseFromString(html, "text/html");
+  return getAssetSignatureFromDocument(parsedDocument);
+};
+
+const scheduleTvVersionReload = () => {
+  if (!isTvScreenPath() || versionReloadTimer) return;
+
+  versionReloadTimer = window.setTimeout(() => {
+    window.location.reload();
+  }, TV_VERSION_RELOAD_DELAY_MS);
+};
+
+const showVersionNotice = ({ activated = false, autoReload = false } = {}) => {
   if (typeof document === "undefined") return;
 
   let notice = document.getElementById(VERSION_NOTICE_ID);
@@ -36,12 +74,14 @@ const showVersionNotice = ({ activated = false } = {}) => {
     title.textContent = activated ? "Yangi versiya faollashdi" : "Yangi versiya tayyor";
   }
   if (text) {
-    text.textContent = activated
+    text.textContent = autoReload
+      ? "TV ekrani o'zi yangilanmoqda"
+      : activated
       ? "Ekran tinch ishlashda davom etadi"
       : "Keyingi refreshda avtomatik yangilanadi";
   }
 
-  const isTvScreen = window.location.pathname.startsWith("/tv");
+  const isTvScreen = isTvScreenPath();
   notice.className = `sampi-version-toast${isTvScreen ? " sampi-version-toast-tv" : ""}`;
 
   window.requestAnimationFrame(() => notice.classList.add("sampi-version-toast-show"));
@@ -51,11 +91,65 @@ const showVersionNotice = ({ activated = false } = {}) => {
   }, VERSION_NOTICE_HIDE_MS);
 };
 
+const handleNewVersionReady = ({ activated = false } = {}) => {
+  const autoReload = isTvScreenPath();
+  showVersionNotice({ activated, autoReload });
+
+  if (autoReload) {
+    scheduleTvVersionReload();
+  }
+};
+
+const checkIndexVersion = async () => {
+  if (document.visibilityState !== "visible") return;
+
+  if (!currentAssetSignature) {
+    currentAssetSignature = getAssetSignatureFromDocument(document);
+  }
+
+  const url = new URL("/index.html", window.location.origin);
+  url.searchParams.set("__sampi_update_check", Date.now().toString());
+
+  const response = await fetch(url.href, {
+    cache: "no-store",
+    headers: {
+      "Cache-Control": "no-cache"
+    }
+  });
+  if (!response.ok) return;
+
+  const nextAssetSignature = getAssetSignatureFromHtml(await response.text());
+  if (
+    currentAssetSignature &&
+    nextAssetSignature &&
+    nextAssetSignature !== currentAssetSignature
+  ) {
+    currentAssetSignature = nextAssetSignature;
+    handleNewVersionReady();
+  }
+};
+
+const startIndexVersionWatcher = () => {
+  if (indexVersionWatcherStarted) return;
+
+  indexVersionWatcherStarted = true;
+  currentAssetSignature = getAssetSignatureFromDocument(document);
+
+  const runCheck = () => {
+    checkIndexVersion().catch(() => {});
+  };
+
+  window.setInterval(runCheck, INDEX_VERSION_CHECK_MS);
+  document.addEventListener("visibilitychange", runCheck);
+  window.addEventListener("online", runCheck);
+};
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     if (!import.meta.env.PROD) return;
 
     try {
+      startIndexVersionWatcher();
       let hadController = Boolean(navigator.serviceWorker.controller);
       const registration = await navigator.serviceWorker.register("/sw.js");
 
@@ -64,13 +158,13 @@ if ("serviceWorker" in navigator) {
 
         worker.addEventListener("statechange", () => {
           if (worker.state === "installed" && navigator.serviceWorker.controller) {
-            showVersionNotice();
+            handleNewVersionReady();
           }
         });
       };
 
       if (registration.waiting && navigator.serviceWorker.controller) {
-        showVersionNotice();
+        handleNewVersionReady();
       }
 
       registration.addEventListener("updatefound", () => {
@@ -79,7 +173,7 @@ if ("serviceWorker" in navigator) {
 
       navigator.serviceWorker.addEventListener("controllerchange", () => {
         if (hadController) {
-          showVersionNotice({ activated: true });
+          handleNewVersionReady({ activated: true });
         }
         hadController = true;
       });
@@ -94,6 +188,13 @@ if ("serviceWorker" in navigator) {
       document.addEventListener("visibilitychange", checkForUpdate);
     } catch {
       // The app should keep working even when a TV browser blocks service workers.
+      startIndexVersionWatcher();
+    }
+  });
+} else {
+  window.addEventListener("load", () => {
+    if (import.meta.env.PROD) {
+      startIndexVersionWatcher();
     }
   });
 }

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sampi Medline TV</string>
+    <string name="title_activity_main">Sampi Medline TV</string>
+    <string name="package_name">uz.sampimedline.tv</string>
+    <string name="custom_url_scheme">uz.sampimedline.tv</string>
+</resources>

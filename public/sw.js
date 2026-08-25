@@ -54,6 +54,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  if (url.searchParams.has("__sampi_update_check")) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)

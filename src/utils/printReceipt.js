@@ -389,6 +389,26 @@ const isStandalonePwa = () => {
   }
 };
 
+const isElectronDesktopApp = () => {
+  try {
+    return /Electron\//i.test(window.navigator.userAgent || "") || Boolean(window.sampiDesktop);
+  } catch {
+    return false;
+  }
+};
+
+const printHtmlWithDesktopApp = (html) => {
+  const desktopPrint = window.sampiDesktop?.printReceiptHtml;
+  if (typeof desktopPrint !== "function") return false;
+
+  desktopPrint(html).catch((error) => {
+    console.error("Silent receipt print failed:", error);
+    printHtmlInsideCurrentApp(html);
+  });
+
+  return true;
+};
+
 const openInlinePrintSession = () => ({
   __inlinePrint: true
 });
@@ -455,13 +475,15 @@ const printHtmlInsideCurrentApp = (html) => {
 };
 
 const printInsideCurrentApp = (check) =>
+  printHtmlWithDesktopApp(buildCheckPrintHtml(check, { inline: true })) ||
   printHtmlInsideCurrentApp(buildCheckPrintHtml(check, { inline: true }));
 
 const printLorQueueTicketInsideCurrentApp = (ticket) =>
+  printHtmlWithDesktopApp(buildLorQueueTicketPrintHtml(ticket, { inline: true })) ||
   printHtmlInsideCurrentApp(buildLorQueueTicketPrintHtml(ticket, { inline: true }));
 
 export const openPendingPrintTab = () => {
-  if (isStandalonePwa()) {
+  if (isStandalonePwa() || isElectronDesktopApp()) {
     return openInlinePrintSession();
   }
 

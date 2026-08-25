@@ -467,7 +467,7 @@ function TvLorQueuePage() {
             {loading && !current ? (
               <div className="sampi-tv-standby" aria-live="polite">
                 <div className="sampi-tv-standby-kicker">LOR</div>
-                <div className="sampi-tv-standby-title">Raqamingizni kuting</div>
+                <div className="sampi-tv-standby-title">Navbatingizni kuting</div>
                 <div className="sampi-tv-standby-line" aria-hidden="true" />
               </div>
             ) : current ? (
@@ -482,7 +482,7 @@ function TvLorQueuePage() {
             ) : (
               <div className="sampi-tv-standby" aria-live="polite">
                 <div className="sampi-tv-standby-kicker">LOR</div>
-                <div className="sampi-tv-standby-title">Raqamingizni kuting</div>
+                <div className="sampi-tv-standby-title">Navbatingizni kuting</div>
                 <div className="sampi-tv-standby-line" aria-hidden="true" />
               </div>
             )}
