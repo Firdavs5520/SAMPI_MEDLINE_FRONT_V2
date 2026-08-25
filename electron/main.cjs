@@ -34,7 +34,7 @@ autoUpdater.on("update-downloaded", () => {
   }
 
   updateInstallTimer = setTimeout(() => {
-    autoUpdater.quitAndInstall(false, true);
+    autoUpdater.quitAndInstall(true, true);
   }, AUTO_INSTALL_DELAY_MS);
 });
 
