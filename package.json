@@ -13,7 +13,8 @@
     "android:apk": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android-apk.ps1",
     "desktop:dev": "electron .",
     "desktop:installer": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-windows-installer.ps1",
-    "desktop:exe": "npm run desktop:installer"
+    "desktop:exe": "npm run desktop:installer",
+    "smoke:electron-routes": "electron scripts/smoke-electron-routes.cjs"
   },
   "build": {
     "appId": "uz.sampimedline.desktop",
