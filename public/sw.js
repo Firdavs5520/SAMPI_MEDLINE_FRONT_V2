@@ -1,18 +1,20 @@
-const CACHE_NAME = "sampi-medline-v9";
+const CACHE_NAME = "sampi-medline-v10";
 const APP_SHELL = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
-  "/manifest.webmanifest?v=8",
+  "/manifest.webmanifest?v=9",
   "/manifest-tv.webmanifest",
   "/manifest-tv.webmanifest?v=2",
   "/favicon.svg",
+  "/favicon.svg?v=7",
   "/favicon.ico",
-  "/icons/pwa-192-v6.png",
-  "/icons/pwa-256-v6.png",
-  "/icons/pwa-512-v6.png",
-  "/icons/pwa-512-maskable-v6.png",
-  "/icons/apple-touch-icon-v6.png",
+  "/favicon.ico?v=7",
+  "/icons/pwa-192-v7.png",
+  "/icons/pwa-256-v7.png",
+  "/icons/pwa-512-v7.png",
+  "/icons/pwa-512-maskable-v7.png",
+  "/icons/apple-touch-icon-v7.png",
   "/audio/premium_queue_chime_close_match.wav"
 ];
 
