@@ -133,7 +133,24 @@ const readLayoutMetrics = async (win) =>
       const waitingList = document.querySelector(".sampi-tv-waiting-list");
       const waitingMenu = document.querySelector(".sampi-tv-waiting-menu");
       const currentCard = document.querySelector(".sampi-tv-current-card");
+      const shell = document.querySelector(".sampi-tv-minimal-shell");
+      const runningAnimations = (shell ? shell.getAnimations({ subtree: true }) : [])
+        .filter((animation) => ["pending", "running"].includes(animation.playState))
+        .map((animation) => {
+          const target = animation.effect && animation.effect.target;
+          return {
+            name: animation.animationName || "",
+            playState: animation.playState,
+            target:
+              (target && typeof target.className === "string" && target.className) ||
+              (target && target.tagName) ||
+              "",
+          };
+        });
       return {
+        tvLockEnabled:
+          document.documentElement.classList.contains("sampi-tv-lock") &&
+          document.body.classList.contains("sampi-tv-lock"),
         viewport: { width: innerWidth, height: innerHeight },
         page: {
           scrollWidth: document.documentElement.scrollWidth,
@@ -155,6 +172,8 @@ const readLayoutMetrics = async (win) =>
           currentCard ? currentCard.getBoundingClientRect().bottom <= innerHeight + 1 : false,
         rowsFitWidth: rows.every((row) => row.scrollWidth <= row.clientWidth + 1),
         rowsFitHeight: rows.every((row) => row.childrenInside),
+        runningAnimations,
+        noRunningAnimations: runningAnimations.length === 0,
         noPageOverflow:
           document.documentElement.scrollWidth <= innerWidth + 1 &&
           document.documentElement.scrollHeight <= innerHeight + 1,
@@ -193,6 +212,7 @@ const captureViewport = async (viewport) => {
   win.close();
 
   const failed = [
+    ["tvLockEnabled", metrics.tvLockEnabled],
     ["titleInsideCard", metrics.titleInsideCard],
     ["titleTextFits", metrics.titleTextFits],
     ["waitingListFits", metrics.waitingListFits],
@@ -200,6 +220,7 @@ const captureViewport = async (viewport) => {
     ["currentCardInsideViewport", metrics.currentCardInsideViewport],
     ["rowsFitWidth", metrics.rowsFitWidth],
     ["rowsFitHeight", metrics.rowsFitHeight],
+    ["noRunningAnimations", metrics.noRunningAnimations],
     ["noPageOverflow", metrics.noPageOverflow],
   ].filter(([, ok]) => !ok);
 

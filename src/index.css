@@ -4781,6 +4781,24 @@ html.sampi-tv-lock #root {
   backdrop-filter: none;
 }
 
+html.sampi-tv-lock .sampi-tv-minimal-shell,
+html.sampi-tv-lock .sampi-tv-minimal-shell *,
+html.sampi-tv-lock .sampi-tv-minimal-shell *::before,
+html.sampi-tv-lock .sampi-tv-minimal-shell *::after {
+  animation: none !important;
+  transition: none !important;
+  will-change: auto !important;
+}
+
+html.sampi-tv-lock .sampi-tv-waiting-row-next::after {
+  content: none !important;
+}
+
+html.sampi-tv-lock .sampi-tv-standby-line {
+  opacity: 0.92;
+  transform: none !important;
+}
+
 @keyframes sampi-tv-brand-in {
   0% {
     opacity: 0;
