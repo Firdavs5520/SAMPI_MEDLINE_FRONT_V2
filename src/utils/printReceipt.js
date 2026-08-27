@@ -53,7 +53,7 @@ const buildItemRows = (items, itemType, checkType) => {
     .join("");
 };
 
-const buildCheckPrintHtml = (check, options = {}) => {
+export const buildCheckPrintHtml = (check, options = {}) => {
   const { inline = false } = options;
   const medicineRows = buildItemRows(check.items, "medicine", check.type);
   const serviceRows = buildItemRows(check.items, "service", check.type);
@@ -95,17 +95,21 @@ const buildCheckPrintHtml = (check, options = {}) => {
         margin: 0;
         padding: 0;
         width: 58mm;
+        min-height: 0;
+        overflow: visible;
         font-family: Arial, sans-serif;
         font-size: 12px;
         color: #000;
         background: #fff;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
 
       * {
         font-family: Arial, sans-serif;
       }
 
-      .ticket { width: 58mm; margin: 0; padding: 0; }
+      .ticket { box-sizing: border-box; width: 58mm; margin: 0; padding: 0 0 2mm; }
       .inner { width: 48mm; margin: 0 auto; padding: 6px 0; }
       .check-title {
         text-align: center;
@@ -168,7 +172,7 @@ const buildCheckPrintHtml = (check, options = {}) => {
     </style>
   </head>
   <body>
-    <div class="ticket">
+    <div class="ticket" data-sampi-receipt="check">
       <div class="inner">
         <div class="check-title">SAMPI MEDLINE</div>
 
@@ -228,7 +232,7 @@ const buildCheckPrintHtml = (check, options = {}) => {
 </html>`;
 };
 
-const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
+export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
   const { inline = false } = options;
   const queueCode = formatQueueCode(ticket?.queueCode);
 
@@ -289,17 +293,21 @@ const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
       html, body {
         margin: 0;
         padding: 0;
-        min-height: 100vh;
+        width: 58mm;
+        min-height: 0;
+        overflow: visible;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
       body {
-        background: #f5f5f5;
+        background: #fff;
         font-family: "Golos Text", Arial, sans-serif;
-        display: flex;
-        justify-content: center;
         text-align: center;
       }
       .check {
+        box-sizing: border-box;
         width: 58mm;
+        padding: 0 0 2mm;
         background: #fff;
         color: #000;
       }
@@ -330,7 +338,7 @@ const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
     </style>
   </head>
   <body>
-    <div class="check">
+    <div class="check" data-sampi-receipt="lor-queue">
       <div class="title">SAMPI MEDLINE</div>
       <div class="divider"></div>
       <div class="small">LOR</div>

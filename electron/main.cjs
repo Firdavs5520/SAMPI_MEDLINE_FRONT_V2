@@ -10,6 +10,11 @@ const RECEIPT_PRINTER_NAME = process.env.SAMPI_RECEIPT_PRINTER || "XP-58";
 const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
 const AUTO_INSTALL_DELAY_MS = 5000;
 const PRINT_JOB_TIMEOUT_MS = 20000;
+const RECEIPT_WIDTH_MICRONS = 58000;
+const MICRONS_PER_CSS_PIXEL = 25400 / 96;
+const RECEIPT_HEIGHT_PADDING_MICRONS = 4000;
+const RECEIPT_MIN_HEIGHT_MICRONS = 45000;
+const RECEIPT_MAX_HEIGHT_MICRONS = 420000;
 
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
@@ -70,15 +75,69 @@ const resolveReceiptPrinter = async (webContents) => {
   return printers.find(matchesPreferred) || printers.find((printer) => printer.isDefault) || printers[0] || null;
 };
 
+const stripExecutableReceiptContent = (html) =>
+  String(html || "")
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, "");
+
+const waitForReceiptLayout = (webContents) =>
+  webContents.executeJavaScript(
+    `new Promise((resolve) => {
+      const done = () => {
+        const receipt =
+          document.querySelector("[data-sampi-receipt]") ||
+          document.querySelector(".ticket") ||
+          document.querySelector(".check") ||
+          document.body;
+        const box = receipt.getBoundingClientRect();
+        const text = String(document.body?.innerText || "").trim();
+        resolve({
+          textLength: text.length,
+          preview: text.slice(0, 120),
+          width: Math.ceil(Math.max(box.width, receipt.scrollWidth, document.body.scrollWidth)),
+          height: Math.ceil(Math.max(box.height, receipt.scrollHeight))
+        });
+      };
+
+      const afterFonts = () => requestAnimationFrame(() => requestAnimationFrame(done));
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(afterFonts).catch(afterFonts);
+      } else {
+        afterFonts();
+      }
+    })()`,
+    true
+  );
+
+const resolveReceiptPageSize = async (webContents) => {
+  const metrics = await waitForReceiptLayout(webContents);
+  if (!metrics.textLength || metrics.height < 24) {
+    throw new Error(`Receipt rendered empty before print: ${JSON.stringify(metrics)}`);
+  }
+
+  return {
+    width: RECEIPT_WIDTH_MICRONS,
+    height: Math.min(
+      RECEIPT_MAX_HEIGHT_MICRONS,
+      Math.max(
+        RECEIPT_MIN_HEIGHT_MICRONS,
+        Math.ceil(metrics.height * MICRONS_PER_CSS_PIXEL) + RECEIPT_HEIGHT_PADDING_MICRONS
+      )
+    ),
+    metrics,
+  };
+};
+
 const printHtmlSilently = async (parentWindow, html, options = {}) => {
   const printWindow = new BrowserWindow({
-    width: 380,
-    height: 700,
+    width: 260,
+    height: 720,
     show: false,
     parent: parentWindow || undefined,
     webPreferences: {
       contextIsolation: true,
-      javascript: false,
+      javascript: true,
       nodeIntegration: false,
       sandbox: true,
       webSecurity: true,
@@ -86,8 +145,10 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
   });
 
   try {
-    await printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    const safeHtml = stripExecutableReceiptContent(html);
+    const encodedHtml = Buffer.from(safeHtml, "utf8").toString("base64");
+    await printWindow.loadURL(`data:text/html;charset=utf-8;base64,${encodedHtml}`);
+    const receiptPageSize = await resolveReceiptPageSize(printWindow.webContents);
 
     const printer = await resolveReceiptPrinter(printWindow.webContents);
     if (!printer) {
@@ -102,6 +163,12 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
       margins: {
         marginType: "none",
       },
+      pageSize: {
+        width: receiptPageSize.width,
+        height: receiptPageSize.height,
+      },
+      landscape: false,
+      scaleFactor: 100,
     };
 
     await new Promise((resolve, reject) => {
@@ -123,6 +190,7 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
     return {
       ok: true,
       printer: printer.name,
+      pageSize: receiptPageSize,
     };
   } finally {
     if (!printWindow.isDestroyed()) {
