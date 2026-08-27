@@ -91,37 +91,88 @@ const stripExecutableReceiptContent = (html) =>
     .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, "")
     .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, "");
 
-const waitForReceiptLayout = (webContents) =>
-  webContents.executeJavaScript(
-    `new Promise((resolve) => {
-      const done = () => {
-        const receipt =
-          document.querySelector("[data-sampi-receipt]") ||
-          document.querySelector(".ticket") ||
-          document.querySelector(".check") ||
-          document.body;
-        const box = receipt.getBoundingClientRect();
-        const text = String(document.body?.innerText || "").trim();
-        resolve({
-          textLength: text.length,
-          preview: text.slice(0, 120),
-          width: Math.ceil(Math.max(box.width, receipt.scrollWidth, document.body.scrollWidth)),
-          height: Math.ceil(Math.max(box.height, receipt.scrollHeight))
-        });
-      };
+const extractReceiptText = (html) =>
+  String(html || "")
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, " ")
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
-      const afterFonts = () => requestAnimationFrame(() => requestAnimationFrame(done));
-      if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(afterFonts).catch(afterFonts);
-      } else {
-        afterFonts();
-      }
-    })()`,
-    true
-  );
+const countMatches = (value, pattern) => String(value || "").match(pattern)?.length || 0;
 
-const resolveReceiptPageSize = async (webContents) => {
-  const metrics = await waitForReceiptLayout(webContents);
+const getFallbackReceiptMetrics = (html, error) => {
+  const text = extractReceiptText(html);
+  const isQueueTicket =
+    /data-sampi-receipt=["']lor-queue["']/i.test(html) ||
+    /Navbat raqami:/i.test(text);
+  const rowCount = countMatches(html, /class=["'][^"']*\brow\b[^"']*["']/gi);
+  const dividerCount = countMatches(html, /class=["'][^"']*\bdivider\b[^"']*["']/gi);
+  const estimatedHeight = isQueueTicket
+    ? 284
+    : Math.max(220, 190 + rowCount * 22 + dividerCount * 8 + Math.ceil(text.length / 34) * 10);
+
+  return {
+    textLength: text.length,
+    preview: text.slice(0, 120),
+    width: 220,
+    height: estimatedHeight,
+    fallback: true,
+    error: error?.message || String(error || "")
+  };
+};
+
+const waitForReceiptLayout = async (webContents, html) => {
+  const metrics = await webContents
+    .executeJavaScript(
+      `new Promise((resolve) => {
+        const done = () => {
+          try {
+            const receipt =
+              document.querySelector("[data-sampi-receipt]") ||
+              document.querySelector(".ticket") ||
+              document.querySelector(".check") ||
+              document.body;
+            const box = receipt.getBoundingClientRect();
+            const bodyText = document.body ? document.body.innerText : "";
+            const text = String(bodyText || "").trim();
+            resolve({
+              textLength: text.length,
+              preview: text.slice(0, 120),
+              width: Math.ceil(Math.max(box.width, receipt.scrollWidth, document.body.scrollWidth)),
+              height: Math.ceil(Math.max(box.height, receipt.scrollHeight))
+            });
+          } catch (error) {
+            resolve({
+              textLength: 0,
+              preview: "",
+              width: 0,
+              height: 0,
+              error: error && error.message ? error.message : String(error)
+            });
+          }
+        };
+
+        const afterFonts = () => requestAnimationFrame(() => requestAnimationFrame(done));
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(afterFonts).catch(afterFonts);
+        } else {
+          afterFonts();
+        }
+      })()`,
+      true
+    )
+    .catch((error) => getFallbackReceiptMetrics(html, error));
+
+  if (metrics?.textLength && metrics.height >= 24) {
+    return metrics;
+  }
+
+  return getFallbackReceiptMetrics(html, metrics?.error || "Receipt layout metrics were empty.");
+};
+
+const resolveReceiptPageSize = async (webContents, html) => {
+  const metrics = await waitForReceiptLayout(webContents, html);
   if (!metrics.textLength || metrics.height < 24) {
     throw new Error(`Receipt rendered empty before print: ${JSON.stringify(metrics)}`);
   }
@@ -158,7 +209,7 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
     const safeHtml = stripExecutableReceiptContent(html);
     const encodedHtml = Buffer.from(safeHtml, "utf8").toString("base64");
     await printWindow.loadURL(`data:text/html;charset=utf-8;base64,${encodedHtml}`);
-    const receiptPageSize = await resolveReceiptPageSize(printWindow.webContents);
+    const receiptPageSize = await resolveReceiptPageSize(printWindow.webContents, safeHtml);
 
     const printer = await resolveReceiptPrinter(printWindow.webContents);
     if (!printer) {

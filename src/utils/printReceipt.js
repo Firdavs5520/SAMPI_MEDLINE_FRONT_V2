@@ -405,12 +405,29 @@ const isElectronDesktopApp = () => {
   }
 };
 
+const cleanDesktopPrintError = (error) => {
+  const raw = String(error?.message || error || "").trim();
+  const nestedMatch = raw.match(/Error invoking remote method '[^']+': Error: (.+)$/);
+  const message = nestedMatch?.[1] || raw;
+
+  if (/Script failed to execute/i.test(message)) {
+    return "Chek printerga tayyorlanmadi. Ilovani yangilab, qayta urinib ko'ring.";
+  }
+
+  if (message) return message;
+  return "Chekni avtomatik printerga yuborib bo'lmadi.";
+};
+
 const printHtmlWithDesktopApp = async (html) => {
   const desktopPrint = window.sampiDesktop?.printReceiptHtml;
   if (typeof desktopPrint !== "function") return null;
 
-  const result = await desktopPrint(html);
-  return Boolean(result?.ok ?? true);
+  try {
+    const result = await desktopPrint(html);
+    return Boolean(result?.ok ?? true);
+  } catch (error) {
+    throw new Error(cleanDesktopPrintError(error));
+  }
 };
 
 const openInlinePrintSession = () => ({
