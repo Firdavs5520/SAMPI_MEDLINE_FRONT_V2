@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Menu, ipcMain, shell } = require("electron");
 const { autoUpdater } = require("electron-updater");
+const { spawn } = require("node:child_process");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 
@@ -18,6 +19,9 @@ const RECEIPT_HEIGHT_PADDING_MICRONS = 4000;
 const RECEIPT_MIN_HEIGHT_MICRONS = 45000;
 const RECEIPT_MAX_HEIGHT_MICRONS = 420000;
 const RECEIPT_PRINTER_CONFIG_FILE = "receipt-printer.json";
+const RAW_THERMAL_WIDTH_PX = 384;
+const RAW_CAPTURE_MAX_HEIGHT_PX = 2400;
+const RAW_PRINT_TIMEOUT_MS = 20000;
 
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
@@ -191,6 +195,285 @@ const resolveReceiptPageSize = async (webContents, html) => {
   };
 };
 
+const isReceiptHtml = (html) =>
+  /data-sampi-receipt=["'](?:check|lor-queue)["']/i.test(String(html || ""));
+
+const isLikelyThermalReceiptPrinter = (printer) => {
+  const haystack = normalizePrinterName(
+    [printer?.name, printer?.displayName, printer?.description].filter(Boolean).join(" ")
+  );
+  return ["xp58", "xprinter", "thermal", "receipt"].some((token) => haystack.includes(token));
+};
+
+const shouldUseRawReceiptPrint = (printer, html, options = {}) =>
+  process.platform === "win32" &&
+  isReceiptHtml(html) &&
+  !options.forceHtmlPrint &&
+  isLikelyThermalReceiptPrinter(printer);
+
+const getPowerShellPath = () =>
+  path.join(
+    process.env.SystemRoot || "C:\\Windows",
+    "System32",
+    "WindowsPowerShell",
+    "v1.0",
+    "powershell.exe"
+  );
+
+const encodePowerShellArg = (value) => Buffer.from(String(value || ""), "utf8").toString("base64");
+
+const RAW_PRINT_POWERSHELL_SCRIPT = `
+param(
+  [Parameter(Mandatory=$true)][string]$PrinterNameBase64,
+  [Parameter(Mandatory=$true)][string]$DataPathBase64
+)
+
+$printerName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($PrinterNameBase64))
+$dataPath = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($DataPathBase64))
+
+$source = @"
+using System;
+using System.Runtime.InteropServices;
+
+public class SampiRawPrinter {
+  [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
+  public class DOCINFOA {
+    [MarshalAs(UnmanagedType.LPStr)]
+    public string pDocName;
+    [MarshalAs(UnmanagedType.LPStr)]
+    public string pOutputFile;
+    [MarshalAs(UnmanagedType.LPStr)]
+    public string pDataType;
+  }
+
+  [DllImport("winspool.Drv", EntryPoint="OpenPrinterA", SetLastError=true, CharSet=CharSet.Ansi, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+  public static extern bool OpenPrinter(string szPrinter, out IntPtr hPrinter, IntPtr pd);
+
+  [DllImport("winspool.Drv", EntryPoint="ClosePrinter", SetLastError=true, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+  public static extern bool ClosePrinter(IntPtr hPrinter);
+
+  [DllImport("winspool.Drv", EntryPoint="StartDocPrinterA", SetLastError=true, CharSet=CharSet.Ansi, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+  public static extern bool StartDocPrinter(IntPtr hPrinter, int level, [In, MarshalAs(UnmanagedType.LPStruct)] DOCINFOA di);
+
+  [DllImport("winspool.Drv", EntryPoint="EndDocPrinter", SetLastError=true, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+  public static extern bool EndDocPrinter(IntPtr hPrinter);
+
+  [DllImport("winspool.Drv", EntryPoint="StartPagePrinter", SetLastError=true, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+  public static extern bool StartPagePrinter(IntPtr hPrinter);
+
+  [DllImport("winspool.Drv", EntryPoint="EndPagePrinter", SetLastError=true, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+  public static extern bool EndPagePrinter(IntPtr hPrinter);
+
+  [DllImport("winspool.Drv", EntryPoint="WritePrinter", SetLastError=true, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+  public static extern bool WritePrinter(IntPtr hPrinter, byte[] bytes, int count, out int written);
+}
+"@
+
+function ThrowLastPrinterError([string]$message) {
+  $code = [Runtime.InteropServices.Marshal]::GetLastWin32Error()
+  $detail = (New-Object ComponentModel.Win32Exception($code)).Message
+  throw "$message ($code): $detail"
+}
+
+Add-Type -TypeDefinition $source
+$data = [IO.File]::ReadAllBytes($dataPath)
+$hPrinter = [IntPtr]::Zero
+
+if (-not [SampiRawPrinter]::OpenPrinter($printerName, [ref]$hPrinter, [IntPtr]::Zero)) {
+  ThrowLastPrinterError "Printer ochilmadi"
+}
+
+$doc = New-Object SampiRawPrinter+DOCINFOA
+$doc.pDocName = "Sampi Medline receipt"
+$doc.pDataType = "RAW"
+
+try {
+  if (-not [SampiRawPrinter]::StartDocPrinter($hPrinter, 1, $doc)) {
+    ThrowLastPrinterError "Print vazifasi boshlanmadi"
+  }
+
+  try {
+    if (-not [SampiRawPrinter]::StartPagePrinter($hPrinter)) {
+      ThrowLastPrinterError "Print sahifasi boshlanmadi"
+    }
+
+    try {
+      [int]$written = 0
+      if (-not [SampiRawPrinter]::WritePrinter($hPrinter, $data, $data.Length, [ref]$written)) {
+        ThrowLastPrinterError "Printerga ma'lumot yozilmadi"
+      }
+      if ($written -ne $data.Length) {
+        throw "Printerga ma'lumot to'liq yozilmadi: $written / $($data.Length)"
+      }
+    } finally {
+      [void][SampiRawPrinter]::EndPagePrinter($hPrinter)
+    }
+  } finally {
+    [void][SampiRawPrinter]::EndDocPrinter($hPrinter)
+  }
+} finally {
+  if ($hPrinter -ne [IntPtr]::Zero) {
+    [void][SampiRawPrinter]::ClosePrinter($hPrinter)
+  }
+}
+`;
+
+const runRawPrinterScript = async (printerName, data) => {
+  const tempDir = path.join(app.getPath("temp"), "sampi-medline-print");
+  const nonce = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const dataPath = path.join(tempDir, `${nonce}.bin`);
+  const scriptPath = path.join(tempDir, `${nonce}.ps1`);
+
+  await fs.mkdir(tempDir, { recursive: true });
+  await fs.writeFile(dataPath, data);
+  await fs.writeFile(scriptPath, RAW_PRINT_POWERSHELL_SCRIPT, "utf8");
+
+  try {
+    await new Promise((resolve, reject) => {
+      const child = spawn(
+        getPowerShellPath(),
+        [
+          "-NoProfile",
+          "-NonInteractive",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          scriptPath,
+          encodePowerShellArg(printerName),
+          encodePowerShellArg(dataPath),
+        ],
+        { windowsHide: true }
+      );
+      let stderr = "";
+      let stdout = "";
+      const timeout = setTimeout(() => {
+        child.kill();
+        reject(new Error("RAW printer vazifasi vaqtida tugamadi."));
+      }, RAW_PRINT_TIMEOUT_MS);
+
+      child.stdout.on("data", (chunk) => {
+        stdout += chunk.toString();
+      });
+      child.stderr.on("data", (chunk) => {
+        stderr += chunk.toString();
+      });
+      child.on("error", (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+      child.on("exit", (code) => {
+        clearTimeout(timeout);
+        if (code === 0) {
+          resolve();
+          return;
+        }
+        reject(new Error((stderr || stdout || `PowerShell printer script failed with ${code}`).trim()));
+      });
+    });
+  } finally {
+    await Promise.allSettled([fs.unlink(dataPath), fs.unlink(scriptPath)]);
+  }
+};
+
+const findContentBounds = (bitmap, width, height) => {
+  const hasInkOnRow = (y) => {
+    for (let x = 0; x < width; x += 1) {
+      const offset = (y * width + x) * 4;
+      const blue = bitmap[offset];
+      const green = bitmap[offset + 1];
+      const red = bitmap[offset + 2];
+      const alpha = bitmap[offset + 3];
+      if (alpha > 16 && red * 0.299 + green * 0.587 + blue * 0.114 < 245) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  let top = 0;
+  while (top < height && !hasInkOnRow(top)) top += 1;
+
+  let bottom = height - 1;
+  while (bottom >= top && !hasInkOnRow(bottom)) bottom -= 1;
+
+  if (bottom < top) {
+    throw new Error("Chek rasmi bo'sh chiqdi.");
+  }
+
+  return {
+    top: Math.max(0, top - 8),
+    bottom: Math.min(height - 1, bottom + 12),
+  };
+};
+
+const buildEscPosRasterPayload = (image) => {
+  const { width, height } = image.getSize();
+  const bitmap = image.toBitmap();
+  const bounds = findContentBounds(bitmap, width, height);
+  const sourceHeight = bounds.bottom - bounds.top + 1;
+  const targetWidth = RAW_THERMAL_WIDTH_PX;
+  const targetHeight = Math.max(1, Math.ceil((sourceHeight * targetWidth) / width));
+  const rowBytes = Math.ceil(targetWidth / 8);
+  const raster = Buffer.alloc(rowBytes * targetHeight);
+
+  for (let y = 0; y < targetHeight; y += 1) {
+    const sourceY = bounds.top + Math.min(sourceHeight - 1, Math.floor((y * sourceHeight) / targetHeight));
+    for (let x = 0; x < targetWidth; x += 1) {
+      const sourceX = Math.min(width - 1, Math.floor((x * width) / targetWidth));
+      const offset = (sourceY * width + sourceX) * 4;
+      const blue = bitmap[offset];
+      const green = bitmap[offset + 1];
+      const red = bitmap[offset + 2];
+      const alpha = bitmap[offset + 3];
+      const luminance = red * 0.299 + green * 0.587 + blue * 0.114;
+      if (alpha > 16 && luminance < 205) {
+        raster[y * rowBytes + Math.floor(x / 8)] |= 0x80 >> (x % 8);
+      }
+    }
+  }
+
+  const header = Buffer.from([
+    0x1b,
+    0x40,
+    0x1b,
+    0x61,
+    0x01,
+    0x1d,
+    0x76,
+    0x30,
+    0x00,
+    rowBytes & 0xff,
+    (rowBytes >> 8) & 0xff,
+    targetHeight & 0xff,
+    (targetHeight >> 8) & 0xff,
+  ]);
+  const footer = Buffer.from([0x0a, 0x0a, 0x0a, 0x1d, 0x56, 0x42, 0x00]);
+
+  return Buffer.concat([header, raster, footer]);
+};
+
+const printReceiptAsRawRaster = async (printWindow, printerName, metrics) => {
+  const captureHeight = Math.min(
+    RAW_CAPTURE_MAX_HEIGHT_PX,
+    Math.max(180, Math.ceil(Number(metrics?.height) || 0) + 24)
+  );
+  printWindow.setContentSize(260, captureHeight);
+  await new Promise((resolve) => setTimeout(resolve, 160));
+  const image = await printWindow.webContents.capturePage({
+    x: 0,
+    y: 0,
+    width: 260,
+    height: captureHeight,
+  });
+  const payload = buildEscPosRasterPayload(image);
+  await runRawPrinterScript(printerName, payload);
+  return {
+    mode: "raw-raster",
+    width: RAW_THERMAL_WIDTH_PX,
+    bytes: payload.length,
+  };
+};
+
 const printHtmlSilently = async (parentWindow, html, options = {}) => {
   const printWindow = new BrowserWindow({
     width: 260,
@@ -215,6 +498,20 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
     const printer = await resolveReceiptPrinter(printWindow.webContents, options.printerName);
     if (!printer) {
       throw new Error("No printer is available for silent receipt printing.");
+    }
+
+    if (shouldUseRawReceiptPrint(printer, safeHtml, options)) {
+      const rawReceipt = await printReceiptAsRawRaster(
+        printWindow,
+        printer.name,
+        receiptPageSize.metrics
+      );
+      return {
+        ok: true,
+        printer: printer.name,
+        pageSize: receiptPageSize,
+        ...rawReceipt,
+      };
     }
 
     const printOptions = {

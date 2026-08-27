@@ -1,8 +1,8 @@
-version: 1.0.12
+version: 1.0.13
 files:
   - url: sampi-medline-setup.exe
-    sha512: 43VZT+/FCDfndGBlyFQSKgTZMUJ2/rREr5kVcxG6rbn2sf4h4opUZb4x72ZLFEyOx9LiRYtJ20zpt4ELvfH5Ow==
-    size: 104202028
+    sha512: 5jXuktWEN+lKTGImH0UL/+tk8TKldlamPJ5YpjJ4YBh3YxX6U/0fDXytfWK6jqc1pT/6L8RhXlOxgFgikLmSLg==
+    size: 104204689
 path: sampi-medline-setup.exe
-sha512: 43VZT+/FCDfndGBlyFQSKgTZMUJ2/rREr5kVcxG6rbn2sf4h4opUZb4x72ZLFEyOx9LiRYtJ20zpt4ELvfH5Ow==
-releaseDate: '2026-08-27T07:40:41.281Z'
+sha512: 5jXuktWEN+lKTGImH0UL/+tk8TKldlamPJ5YpjJ4YBh3YxX6U/0fDXytfWK6jqc1pT/6L8RhXlOxgFgikLmSLg==
+releaseDate: '2026-08-27T07:55:40.726Z'
