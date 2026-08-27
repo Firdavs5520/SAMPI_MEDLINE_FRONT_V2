@@ -9,12 +9,12 @@ import Alert from "../components/Alert.jsx";
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login, token, role, lorIdentity, loading } = useAuth();
+  const { login, token, role, lorIdentity, lorDoctor, loading } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
   const homePath =
-    role === "lor" ? (lorIdentity ? "/lor/checks" : "/lor/select") : roleHomePath[role];
+    role === "lor" ? (lorIdentity && lorDoctor?.id ? "/lor/checks" : "/lor/select") : roleHomePath[role];
 
   if (token && role) {
     return <Navigate to={homePath} replace />;

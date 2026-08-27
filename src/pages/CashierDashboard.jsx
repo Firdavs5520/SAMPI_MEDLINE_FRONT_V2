@@ -20,6 +20,7 @@ import {
   formatPhoneInput,
   toTitleCaseName
 } from "../utils/format.js";
+import { toTashkentYmd } from "../utils/date.js";
 
 const SECTION_META = {
   "nurse-patients": {
@@ -140,13 +141,7 @@ const specialistTypeOptions = [
   { value: "lor", label: "LOR" }
 ];
 
-const getTodayString = () => {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+const getTodayString = () => toTashkentYmd();
 
 const formatDateInput = (value) => {
   if (!value) return getTodayString();
@@ -858,7 +853,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       setSuccess(`LOR navbat raqami chiqarildi: ${ticket.queueCode || "-"}.`);
       addLorPrintEvent(`${ticket.queueCode || "-"} raqam serverda yaratildi.`, "success");
 
-      const printed = writeLorQueueTicketToPrintTab(printSession, ticket);
+      const printed = await writeLorQueueTicketToPrintTab(printSession, ticket);
       if (!printed) {
         setError("Brauzer yangi oynani blokladi. Navbat raqamini ekrandan ham aytish mumkin.");
         addLorPrintEvent("Print yuborilmadi, popup ruxsatini tekshiring.", "warning");
@@ -884,7 +879,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
   }, [addLorPrintEvent, loadLorQueueTicketStatus]);
 
-  const handleReprintIssuedLorTicket = (ticket = issuedLorTicket) => {
+  const handleReprintIssuedLorTicket = async (ticket = issuedLorTicket) => {
     const targetTicket = ticket || issuedLorTicket;
     if (!targetTicket || reprintingLorTicket) return;
 
@@ -900,7 +895,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     );
 
     try {
-      const printed = writeLorQueueTicketToPrintTab(printSession, targetTicket);
+      const printed = await writeLorQueueTicketToPrintTab(printSession, targetTicket);
       if (!printed) {
         throw new Error("Brauzer yangi oynani blokladi. Pop-up ruxsatini yoqing.");
       }

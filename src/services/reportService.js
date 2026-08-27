@@ -98,8 +98,10 @@ const reportService = {
     return data.data || [];
   },
 
-  async getUsageHistory() {
-    const { data } = await api.get("/reports/medicine-usage");
+  async getUsageHistory({ limit = 300 } = {}) {
+    const { data } = await api.get("/reports/medicine-usage", {
+      params: { limit }
+    });
     return data.data || [];
   },
 

@@ -1,5 +1,26 @@
 import api, { apiBaseURL } from "./api.js";
-import { storageKeys } from "../utils/constants.js";
+let streamTokenCache = {
+  token: "",
+  expiresAt: 0
+};
+
+const STREAM_TOKEN_REFRESH_SKEW_MS = 30000;
+
+const getStreamToken = async () => {
+  const now = Date.now();
+  if (streamTokenCache.token && streamTokenCache.expiresAt - STREAM_TOKEN_REFRESH_SKEW_MS > now) {
+    return streamTokenCache.token;
+  }
+
+  const { data } = await api.get("/tv/lor-queue/stream-token");
+  const payload = data.data || {};
+  streamTokenCache = {
+    token: payload.token || "",
+    expiresAt: payload.expiresAt ? new Date(payload.expiresAt).getTime() : now
+  };
+
+  return streamTokenCache.token;
+};
 
 const tvService = {
   async setLorCurrentPatient(payload) {
@@ -16,12 +37,12 @@ const tvService = {
     return data.data;
   },
 
-  openLorQueueStream({ lorIdentity = "lor1", limit = 1 } = {}) {
-    const token = localStorage.getItem(storageKeys.token);
+  async openLorQueueStream({ lorIdentity = "lor1", limit = 1 } = {}) {
+    const streamToken = await getStreamToken();
     const url = new URL(`${apiBaseURL}/tv/lor-queue/stream`);
     if (lorIdentity) url.searchParams.set("lorIdentity", lorIdentity);
     if (limit) url.searchParams.set("limit", String(limit));
-    if (token) url.searchParams.set("token", token);
+    if (streamToken) url.searchParams.set("streamToken", streamToken);
     return new EventSource(url.toString());
   }
 };

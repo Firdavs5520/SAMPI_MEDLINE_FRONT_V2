@@ -11,7 +11,8 @@ function RequireLorIdentity() {
 
   const isSelectPage = location.pathname === "/lor/select";
   const hasIdentity = Boolean(lorIdentity);
-  const needsDoctor = location.pathname === "/lor/services";
+  const needsDoctor =
+    location.pathname === "/lor/checks" || location.pathname === "/lor/services";
 
   if (!hasIdentity && !isSelectPage) {
     return <Navigate to="/lor/select" replace state={{ from: location }} />;

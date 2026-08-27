@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toTashkentYmd } from "../utils/date.js";
 
 const WEEK_DAYS = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"];
 
@@ -88,7 +89,7 @@ function DatePickerField({ label, value, onChange }) {
     year: "numeric",
     month: "long"
   });
-  const todayYmd = toYmd(new Date());
+  const todayYmd = toTashkentYmd();
 
   const moveMonth = (delta) => {
     setViewMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));

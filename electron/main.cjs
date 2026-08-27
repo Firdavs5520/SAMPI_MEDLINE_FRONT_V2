@@ -10,6 +10,7 @@ const RECEIPT_PRINTER_NAME = process.env.SAMPI_RECEIPT_PRINTER || "XP-58";
 const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
 const AUTO_INSTALL_DELAY_MS = 5000;
 const PRINT_JOB_TIMEOUT_MS = 20000;
+const PRINT_WINDOW_CLOSE_DELAY_MS = 1500;
 const RECEIPT_WIDTH_MICRONS = 58000;
 const MICRONS_PER_CSS_PIXEL = 25400 / 96;
 const RECEIPT_HEIGHT_PADDING_MICRONS = 4000;
@@ -72,7 +73,16 @@ const resolveReceiptPrinter = async (webContents) => {
     return names.some((name) => name === preferredName || name.includes(preferredName));
   };
 
-  return printers.find(matchesPreferred) || printers.find((printer) => printer.isDefault) || printers[0] || null;
+  const preferredPrinter = printers.find(matchesPreferred);
+  if (preferredPrinter) return preferredPrinter;
+
+  const printerNames = printers
+    .map((printer) => printer.displayName || printer.name)
+    .filter(Boolean)
+    .join(", ");
+  throw new Error(
+    `${RECEIPT_PRINTER_NAME} printer topilmadi.${printerNames ? ` Topilgan printerlar: ${printerNames}` : ""}`
+  );
 };
 
 const stripExecutableReceiptContent = (html) =>
@@ -193,6 +203,7 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
       pageSize: receiptPageSize,
     };
   } finally {
+    await new Promise((resolve) => setTimeout(resolve, PRINT_WINDOW_CLOSE_DELAY_MS));
     if (!printWindow.isDestroyed()) {
       printWindow.close();
     }

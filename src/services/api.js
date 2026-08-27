@@ -40,6 +40,11 @@ api.interceptors.response.use(
         ? "Tarmoq xatosi. Serverga ulanib bo'lmadi."
         : "Noma'lum xatolik yuz berdi.");
 
+    if (error && typeof error === "object") {
+      error.message = message;
+      return Promise.reject(error);
+    }
+
     return Promise.reject(new Error(message));
   }
 );

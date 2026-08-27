@@ -213,7 +213,7 @@ function LorChecksPage() {
     setQuery("");
   };
 
-  const handleReprintCheck = (row) => {
+  const handleReprintCheck = async (row) => {
     const checkKey = getCheckKey(row);
     if (!checkKey || reprintingCheckKey) return;
 
@@ -222,7 +222,7 @@ function LorChecksPage() {
     const printSession = openPendingPrintTab();
 
     try {
-      const printed = writeCheckToPrintTab(printSession, row);
+      const printed = await writeCheckToPrintTab(printSession, row);
       if (!printed) {
         throw new Error("Brauzer yangi oynani blokladi. Oynaga ruxsatni yoqing.");
       }

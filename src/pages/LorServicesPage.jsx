@@ -606,7 +606,7 @@ function LorServicesPage() {
       setStep(1);
       await loadLorQueueTickets({ silent: true });
 
-      const written = writeCheckToPrintTab(printTab, result.check);
+      const written = await writeCheckToPrintTab(printTab, result.check);
       if (!written) {
         setError(text.popupBlocked);
       }

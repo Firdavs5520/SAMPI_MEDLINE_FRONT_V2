@@ -5,6 +5,7 @@ import Alert from "../components/Alert.jsx";
 import Button from "../components/Button.jsx";
 import DatePickerField from "../components/DatePickerField.jsx";
 import { extractErrorMessage, formatCurrency, formatDateTime } from "../utils/format.js";
+import { toTashkentYmd } from "../utils/date.js";
 
 const PERIOD_OPTIONS = [
   { value: "today", label: "Bugun" },
@@ -37,13 +38,7 @@ const departmentLabels = {
   procedure: "Nurse"
 };
 
-const getTodayString = () => {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+const getTodayString = () => toTashkentYmd();
 
 const emptyRoleStats = () => ({
   totalRevenue: 0,

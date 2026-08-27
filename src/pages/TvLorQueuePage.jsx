@@ -10,7 +10,7 @@ const WAITING_TICKET_LIMIT = 80;
 const ADMIN_EXIT_PRESS_COUNT = 5;
 const ADMIN_EXIT_WINDOW_MS = 4500;
 const QUEUE_CHIME_PATH = "/audio/premium_queue_chime_close_match.wav";
-const CALL_ANNOUNCEMENT_MS = 4300;
+const CALL_ANNOUNCEMENT_MS = 15000;
 
 const formatTvQueueCode = (value) => {
   const digits = String(value ?? "").match(/\d+/g)?.join("") || "";
@@ -47,6 +47,7 @@ function TvLorQueuePage() {
   const fallbackTimerRef = useRef(0);
   const callAnnouncementTimerRef = useRef(0);
   const reconnectTimerRef = useRef(0);
+  const streamAttemptRef = useRef(0);
   const firstAnnouncementRef = useRef(true);
   const lastAnnouncementKeyRef = useRef("");
   const mountedRef = useRef(false);
@@ -254,45 +255,61 @@ function TvLorQueuePage() {
     window.clearTimeout(reconnectTimerRef.current);
     closeEventSource();
     setConnectionState("connecting");
+    const attemptId = streamAttemptRef.current + 1;
+    streamAttemptRef.current = attemptId;
 
-    const source = tvService.openLorQueueStream({
+    tvService.openLorQueueStream({
       lorIdentity: "lor1",
       limit: WAITING_TICKET_LIMIT
-    });
-    eventSourceRef.current = source;
+    })
+      .then((source) => {
+        if (!mountedRef.current || streamAttemptRef.current !== attemptId) {
+          source.close();
+          return;
+        }
 
-    const handleStreamData = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        setConnectionState("live");
-        applyQueueData(data);
-      } catch {
-        setError("TV navbat ma'lumoti noto'g'ri keldi.");
-      }
-    };
+        eventSourceRef.current = source;
 
-    source.onopen = () => {
-      if (mountedRef.current) {
-        setConnectionState("live");
-      }
-    };
-    source.addEventListener("snapshot", handleStreamData);
-    source.addEventListener("queue", handleStreamData);
-    source.addEventListener("stream-error", (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        setError(data?.message || "TV navbat stream xatosi.");
-      } catch {
-        setError("TV navbat stream xatosi.");
-      }
-    });
-    source.onerror = () => {
-      if (!mountedRef.current) return;
-      setConnectionState("reconnecting");
-      closeEventSource();
-      loadQueue({ silent: true });
-      reconnectTimerRef.current = window.setTimeout(connectStream, STREAM_RECONNECT_MS);
-    };
+        const handleStreamData = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            setConnectionState("live");
+            applyQueueData(data);
+          } catch {
+            setError("TV navbat ma'lumoti noto'g'ri keldi.");
+          }
+        };
+
+        source.onopen = () => {
+          if (mountedRef.current) {
+            setConnectionState("live");
+          }
+        };
+        source.addEventListener("snapshot", handleStreamData);
+        source.addEventListener("queue", handleStreamData);
+        source.addEventListener("stream-error", (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            setError(data?.message || "TV navbat stream xatosi.");
+          } catch {
+            setError("TV navbat stream xatosi.");
+          }
+        });
+        source.onerror = () => {
+          if (!mountedRef.current) return;
+          setConnectionState("reconnecting");
+          closeEventSource();
+          loadQueue({ silent: true });
+          reconnectTimerRef.current = window.setTimeout(connectStream, STREAM_RECONNECT_MS);
+        };
+      })
+      .catch((err) => {
+        if (!mountedRef.current || streamAttemptRef.current !== attemptId) return;
+        setError(extractErrorMessage(err));
+        setConnectionState("reconnecting");
+        loadQueue({ silent: true });
+        reconnectTimerRef.current = window.setTimeout(connectStream, STREAM_RECONNECT_MS);
+      });
   }, [applyQueueData, closeEventSource, loadQueue]);
 
   useEffect(() => {
@@ -366,6 +383,7 @@ function TvLorQueuePage() {
       window.clearTimeout(fallbackTimerRef.current);
       window.clearTimeout(callAnnouncementTimerRef.current);
       window.clearTimeout(reconnectTimerRef.current);
+      streamAttemptRef.current += 1;
       closeEventSource();
       if (queueChimeRef.current) {
         queueChimeRef.current.pause();

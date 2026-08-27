@@ -63,10 +63,11 @@ const cashierService = {
     return data.data;
   },
 
-  async getPendingChecks({ role = "all", search = "" } = {}) {
+  async getPendingChecks({ role = "all", search = "", limit = 200 } = {}) {
     const params = new URLSearchParams();
     if (role) params.set("role", role);
     if (search?.trim()) params.set("search", search.trim());
+    if (limit) params.set("limit", String(limit));
     const query = params.toString() ? `?${params.toString()}` : "";
     const { data } = await api.get(`/cashier/pending-checks${query}`);
     return data.data || [];

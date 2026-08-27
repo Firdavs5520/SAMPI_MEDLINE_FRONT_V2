@@ -405,16 +405,12 @@ const isElectronDesktopApp = () => {
   }
 };
 
-const printHtmlWithDesktopApp = (html) => {
+const printHtmlWithDesktopApp = async (html) => {
   const desktopPrint = window.sampiDesktop?.printReceiptHtml;
-  if (typeof desktopPrint !== "function") return false;
+  if (typeof desktopPrint !== "function") return null;
 
-  desktopPrint(html).catch((error) => {
-    console.error("Silent receipt print failed:", error);
-    printHtmlInsideCurrentApp(html);
-  });
-
-  return true;
+  const result = await desktopPrint(html);
+  return Boolean(result?.ok ?? true);
 };
 
 const openInlinePrintSession = () => ({
@@ -482,13 +478,25 @@ const printHtmlInsideCurrentApp = (html) => {
   return true;
 };
 
-const printInsideCurrentApp = (check) =>
-  printHtmlWithDesktopApp(buildCheckPrintHtml(check, { inline: true })) ||
-  printHtmlInsideCurrentApp(buildCheckPrintHtml(check, { inline: true }));
+const printInsideCurrentApp = async (check) => {
+  const html = buildCheckPrintHtml(check, { inline: true });
+  const desktopResult = await printHtmlWithDesktopApp(html);
+  if (desktopResult !== null) return desktopResult;
+  if (isElectronDesktopApp()) {
+    throw new Error("Desktop printer ulanishi topilmadi. Ilovani yopib qayta oching.");
+  }
+  return printHtmlInsideCurrentApp(html);
+};
 
-const printLorQueueTicketInsideCurrentApp = (ticket) =>
-  printHtmlWithDesktopApp(buildLorQueueTicketPrintHtml(ticket, { inline: true })) ||
-  printHtmlInsideCurrentApp(buildLorQueueTicketPrintHtml(ticket, { inline: true }));
+const printLorQueueTicketInsideCurrentApp = async (ticket) => {
+  const html = buildLorQueueTicketPrintHtml(ticket, { inline: true });
+  const desktopResult = await printHtmlWithDesktopApp(html);
+  if (desktopResult !== null) return desktopResult;
+  if (isElectronDesktopApp()) {
+    throw new Error("Desktop printer ulanishi topilmadi. Ilovani yopib qayta oching.");
+  }
+  return printHtmlInsideCurrentApp(html);
+};
 
 export const openPendingPrintTab = () => {
   if (isStandalonePwa() || isElectronDesktopApp()) {
@@ -498,11 +506,11 @@ export const openPendingPrintTab = () => {
   return openBrowserPrintTab();
 };
 
-export const writeCheckToPrintTab = (printSession, check) => {
+export const writeCheckToPrintTab = async (printSession, check) => {
   if (!printSession) return false;
 
   if (printSession.__inlinePrint) {
-    return printInsideCurrentApp(check);
+    return await printInsideCurrentApp(check);
   }
 
   if (!printSession.tab || printSession.tab.closed) return false;
@@ -513,11 +521,11 @@ export const writeCheckToPrintTab = (printSession, check) => {
   return true;
 };
 
-export const writeLorQueueTicketToPrintTab = (printSession, ticket) => {
+export const writeLorQueueTicketToPrintTab = async (printSession, ticket) => {
   if (!printSession) return false;
 
   if (printSession.__inlinePrint) {
-    return printLorQueueTicketInsideCurrentApp(ticket);
+    return await printLorQueueTicketInsideCurrentApp(ticket);
   }
 
   if (!printSession.tab || printSession.tab.closed) return false;

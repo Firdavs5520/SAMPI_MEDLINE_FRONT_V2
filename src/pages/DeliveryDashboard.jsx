@@ -101,6 +101,8 @@ function DeliveryDashboard() {
   };
 
   const handleBatchRestock = async () => {
+    if (savingStock) return;
+
     resetMessages();
     setSavingStock(true);
 

@@ -20,11 +20,11 @@ const parseUser = () => {
   }
 };
 
-const parseLorDoctor = () => {
+const parseStoredSpecialist = (key) => {
   try {
     const rawDoctor =
-      sessionStorage.getItem(storageKeys.lorDoctor) ||
-      localStorage.getItem(storageKeys.lorDoctor);
+      sessionStorage.getItem(key) ||
+      localStorage.getItem(key);
     const doctor = rawDoctor ? JSON.parse(rawDoctor) : null;
     if (!doctor?.id || !doctor?.name) return null;
     return {
@@ -35,6 +35,9 @@ const parseLorDoctor = () => {
     return null;
   }
 };
+
+const parseLorDoctor = () => parseStoredSpecialist(storageKeys.lorDoctor);
+const parseNurseSpecialist = () => parseStoredSpecialist(storageKeys.nurseSpecialist);
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem(storageKeys.token));
@@ -47,6 +50,7 @@ export function AuthProvider({ children }) {
     )
   );
   const [lorDoctor, setLorDoctorState] = useState(parseLorDoctor);
+  const [nurseSpecialist, setNurseSpecialistState] = useState(parseNurseSpecialist);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -68,12 +72,25 @@ export function AuthProvider({ children }) {
       localStorage.removeItem(storageKeys.lorDoctor);
       setLorDoctorState(parseLorDoctor());
     }
+
+    const localNurseSpecialist = localStorage.getItem(storageKeys.nurseSpecialist);
+    if (localNurseSpecialist) {
+      sessionStorage.setItem(storageKeys.nurseSpecialist, localNurseSpecialist);
+      localStorage.removeItem(storageKeys.nurseSpecialist);
+      setNurseSpecialistState(parseNurseSpecialist());
+    }
   }, []);
 
   const clearLorDoctor = useCallback(() => {
     sessionStorage.removeItem(storageKeys.lorDoctor);
     localStorage.removeItem(storageKeys.lorDoctor);
     setLorDoctorState(null);
+  }, []);
+
+  const clearNurseSpecialist = useCallback(() => {
+    sessionStorage.removeItem(storageKeys.nurseSpecialist);
+    localStorage.removeItem(storageKeys.nurseSpecialist);
+    setNurseSpecialistState(null);
   }, []);
 
   const login = useCallback(async (email, password) => {
@@ -90,18 +107,20 @@ export function AuthProvider({ children }) {
         localStorage.removeItem(storageKeys.lorIdentity);
         setLorIdentityState("");
         clearLorDoctor();
+        clearNurseSpecialist();
       } else {
         sessionStorage.removeItem(storageKeys.lorIdentity);
         localStorage.removeItem(storageKeys.lorIdentity);
         setLorIdentityState("");
         clearLorDoctor();
+        clearNurseSpecialist();
       }
 
       return payload.user;
     } finally {
       setLoading(false);
     }
-  }, [clearLorDoctor]);
+  }, [clearLorDoctor, clearNurseSpecialist]);
 
   const setLorIdentity = useCallback((value) => {
     const safeValue = normalizeLorIdentity(value);
@@ -135,17 +154,36 @@ export function AuthProvider({ children }) {
     setLorDoctorState(safeDoctor);
   }, [clearLorDoctor]);
 
+  const setNurseSpecialist = useCallback((specialist) => {
+    const safeSpecialist = {
+      id: String(specialist?.id || specialist?._id || "").trim(),
+      name: String(specialist?.name || "").trim()
+    };
+
+    if (!safeSpecialist.id || !safeSpecialist.name) {
+      clearNurseSpecialist();
+      return;
+    }
+
+    sessionStorage.setItem(storageKeys.nurseSpecialist, JSON.stringify(safeSpecialist));
+    localStorage.removeItem(storageKeys.nurseSpecialist);
+    setNurseSpecialistState(safeSpecialist);
+  }, [clearNurseSpecialist]);
+
   const logout = useCallback(() => {
     localStorage.removeItem(storageKeys.token);
     localStorage.removeItem(storageKeys.user);
     localStorage.removeItem(storageKeys.lorIdentity);
     localStorage.removeItem(storageKeys.lorDoctor);
+    localStorage.removeItem(storageKeys.nurseSpecialist);
     sessionStorage.removeItem(storageKeys.lorIdentity);
     sessionStorage.removeItem(storageKeys.lorDoctor);
+    sessionStorage.removeItem(storageKeys.nurseSpecialist);
     setToken(null);
     setUser(null);
     setLorIdentityState("");
     setLorDoctorState(null);
+    setNurseSpecialistState(null);
   }, []);
 
   useEffect(() => {
@@ -164,12 +202,15 @@ export function AuthProvider({ children }) {
       token,
       lorIdentity,
       lorDoctor,
+      nurseSpecialist,
       loading,
       isAuthenticated: Boolean(token),
       login,
       setLorIdentity,
       setLorDoctor,
       clearLorDoctor,
+      setNurseSpecialist,
+      clearNurseSpecialist,
       logout
     }),
     [
@@ -177,11 +218,14 @@ export function AuthProvider({ children }) {
       token,
       lorIdentity,
       lorDoctor,
+      nurseSpecialist,
       loading,
       login,
       setLorIdentity,
       setLorDoctor,
       clearLorDoctor,
+      setNurseSpecialist,
+      clearNurseSpecialist,
       logout
     ]
   );

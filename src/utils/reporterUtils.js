@@ -1,3 +1,5 @@
+import { toTashkentYmd } from "./date.js";
+
 export const reporterAmountFields = [
   { key: "expenseAmount", label: "Harajat" },
   { key: "medicineAmount", label: "Dori" },
@@ -28,12 +30,7 @@ export const reporterMonthLabels = [
   "Dekabr"
 ];
 
-export const toYmd = (date = new Date()) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+export const toYmd = toTashkentYmd;
 
 export const toMonth = (date = new Date()) => toYmd(date).slice(0, 7);
 

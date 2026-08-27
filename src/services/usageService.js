@@ -8,6 +8,39 @@ const createIdempotencyKey = (prefix = "checkout") => {
   return `${prefix}-${randomPart}`;
 };
 
+const pendingCheckoutKeys = new Map();
+
+const stableStringify = (value) => {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(",")}]`;
+  }
+
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(value);
+};
+
+const getCheckoutKey = (prefix, payload) => {
+  const signature = `${prefix}:${stableStringify(payload || {})}`;
+  const existing = pendingCheckoutKeys.get(signature);
+  if (existing) return { signature, key: existing };
+
+  const key = createIdempotencyKey(prefix);
+  pendingCheckoutKeys.set(signature, key);
+  return { signature, key };
+};
+
+const shouldKeepCheckoutKey = (error) =>
+  !error?.response ||
+  error?.code === "ECONNABORTED" ||
+  error?.code === "ERR_NETWORK" ||
+  error?.code === "ETIMEDOUT";
+
 const usageService = {
   async useMedicine(payload) {
     const { data } = await api.post("/usage/medicine", payload);
@@ -20,21 +53,39 @@ const usageService = {
   },
 
   async createCheckout(payload) {
-    const { data } = await api.post("/usage/checkout", payload, {
-      headers: {
-        "X-Idempotency-Key": createIdempotencyKey("nurse")
+    const { signature, key } = getCheckoutKey("nurse", payload);
+    try {
+      const { data } = await api.post("/usage/checkout", payload, {
+        headers: {
+          "X-Idempotency-Key": key
+        }
+      });
+      pendingCheckoutKeys.delete(signature);
+      return data.data;
+    } catch (error) {
+      if (!shouldKeepCheckoutKey(error)) {
+        pendingCheckoutKeys.delete(signature);
       }
-    });
-    return data.data;
+      throw error;
+    }
   },
 
   async createLorCheckout(payload) {
-    const { data } = await api.post("/usage/lor-checkout", payload, {
-      headers: {
-        "X-Idempotency-Key": createIdempotencyKey("lor")
+    const { signature, key } = getCheckoutKey("lor", payload);
+    try {
+      const { data } = await api.post("/usage/lor-checkout", payload, {
+        headers: {
+          "X-Idempotency-Key": key
+        }
+      });
+      pendingCheckoutKeys.delete(signature);
+      return data.data;
+    } catch (error) {
+      if (!shouldKeepCheckoutKey(error)) {
+        pendingCheckoutKeys.delete(signature);
       }
-    });
-    return data.data;
+      throw error;
+    }
   },
 
   async getLorQueueTickets({ lorIdentity = "lor1", limit = 80 } = {}) {

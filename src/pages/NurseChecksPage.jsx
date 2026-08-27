@@ -5,6 +5,8 @@ import Alert from "../components/Alert.jsx";
 import Table from "../components/Table.jsx";
 import Button from "../components/Button.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
+import SelectMenu from "../components/SelectMenu.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { extractErrorMessage, formatCurrency, formatDateTime } from "../utils/format.js";
 
 const paymentMethodLabels = {
@@ -14,12 +16,30 @@ const paymentMethodLabels = {
 };
 
 function NurseChecksPage() {
+  const { nurseSpecialist, setNurseSpecialist } = useAuth();
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
   const [checks, setChecks] = useState([]);
+  const [specialists, setSpecialists] = useState([]);
   const [query, setQuery] = useState("");
   const hasLoadedRef = useRef(false);
+  const selectedSpecialist = useMemo(() => {
+    const selected =
+      specialists.find((item) => item._id === nurseSpecialist?.id) ||
+      (!specialists.length && nurseSpecialist?.id
+        ? { _id: nurseSpecialist.id, name: nurseSpecialist.name }
+        : null);
+    if (!selected?._id || !selected?.name) return null;
+    return {
+      id: selected._id,
+      name: selected.name
+    };
+  }, [nurseSpecialist?.id, nurseSpecialist?.name, specialists]);
+  const specialistOptions = useMemo(
+    () => specialists.map((item) => ({ value: item._id, label: item.name })),
+    [specialists]
+  );
   const checkSuggestions = useMemo(() => {
     const uniq = new Map();
     checks.forEach((item) => {
@@ -33,6 +53,19 @@ function NurseChecksPage() {
     return Array.from(uniq.values());
   }, [checks]);
 
+  const loadSpecialists = useCallback(async () => {
+    const data = await usageService.getRoleSpecialists();
+    const list = data || [];
+    setSpecialists(list);
+    if (
+      (!nurseSpecialist?.id ||
+        !list.some((item) => item._id === nurseSpecialist.id)) &&
+      list[0]?._id
+    ) {
+      setNurseSpecialist({ id: list[0]._id, name: list[0].name });
+    }
+  }, [nurseSpecialist?.id, setNurseSpecialist]);
+
   const loadChecks = useCallback(async (searchValue = "") => {
     const isInitial = !hasLoadedRef.current;
     if (!isInitial) {
@@ -40,7 +73,11 @@ function NurseChecksPage() {
     }
     setError("");
     try {
-      const data = await usageService.getMyChecks(searchValue);
+      if (!selectedSpecialist?.id) {
+        setChecks([]);
+        return;
+      }
+      const data = await usageService.getMyChecks(searchValue, "", selectedSpecialist);
       setChecks(data);
     } catch (err) {
       setError(extractErrorMessage(err));
@@ -49,14 +86,28 @@ function NurseChecksPage() {
       setLoading(false);
       setSearching(false);
     }
-  }, []);
+  }, [selectedSpecialist]);
+
+  useEffect(() => {
+    loadSpecialists().catch((err) => {
+      setError(extractErrorMessage(err));
+      setLoading(false);
+    });
+  }, [loadSpecialists]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       loadChecks(query.trim());
     }, 220);
     return () => clearTimeout(timer);
-  }, [query, loadChecks]);
+  }, [query, selectedSpecialist?.id, loadChecks]);
+
+  const handleSpecialistChange = (specialistId) => {
+    const specialist = specialists.find((item) => item._id === specialistId);
+    if (!specialist) return;
+    setNurseSpecialist({ id: specialist._id, name: specialist.name });
+    hasLoadedRef.current = false;
+  };
 
   const clearSearch = () => {
     setQuery("");
@@ -74,7 +125,14 @@ function NurseChecksPage() {
           Faqat siz yaratgan nurse cheklari chiqadi. Bemor ism-familiyasi bo'yicha qidiring.
         </p>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
+        <div className="mt-4 grid gap-3 md:grid-cols-[minmax(220px,320px)_1fr_auto]">
+          <SelectMenu
+            label="Hamshira"
+            value={selectedSpecialist?.id || ""}
+            options={specialistOptions}
+            onChange={handleSpecialistChange}
+            disabled={!specialistOptions.length || searching}
+          />
           <QuickSearchInput
             label="Bemor ism-familiyasi"
             placeholder="Masalan: Ali Valiyev"

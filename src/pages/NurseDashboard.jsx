@@ -20,6 +20,7 @@ import {
   openPendingPrintTab,
   writeCheckToPrintTab
 } from "../utils/printReceipt.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const STEP_LABELS = [
   "1. Hamshira",
@@ -113,12 +114,13 @@ function NurseStepCard({ label, index, active, done }) {
 }
 
 function NurseDashboard() {
+  const { nurseSpecialist, setNurseSpecialist } = useAuth();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(1);
 
   const [specialists, setSpecialists] = useState([]);
-  const [selectedSpecialistId, setSelectedSpecialistId] = useState("");
+  const [selectedSpecialistId, setSelectedSpecialistId] = useState(nurseSpecialist?.id || "");
   const [specialistSearch, setSpecialistSearch] = useState("");
 
   const [medicines, setMedicines] = useState([]);
@@ -212,9 +214,12 @@ function NurseDashboard() {
 
     setSelectedSpecialistId((prev) => {
       if (prev && data.some((item) => item._id === prev)) return prev;
+      if (nurseSpecialist?.id && data.some((item) => item._id === nurseSpecialist.id)) {
+        return nurseSpecialist.id;
+      }
       return data[0]?._id || "";
     });
-  }, []);
+  }, [nurseSpecialist?.id]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -238,6 +243,15 @@ function NurseDashboard() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    if (!selectedSpecialist?._id || !selectedSpecialist?.name) return;
+    if (nurseSpecialist?.id === selectedSpecialist._id) return;
+    setNurseSpecialist({
+      id: selectedSpecialist._id,
+      name: selectedSpecialist.name
+    });
+  }, [nurseSpecialist?.id, selectedSpecialist, setNurseSpecialist]);
 
   useEffect(() => {
     const focusElement = (element) => {
@@ -381,7 +395,7 @@ function NurseDashboard() {
         services: servicesPayload
       });
 
-      const printed = writeCheckToPrintTab(printSession, result.check);
+      const printed = await writeCheckToPrintTab(printSession, result.check);
       if (!printed) setError("Brauzer yangi oynani blokladi. Ruxsat bering.");
       setSuccess("Chek muvaffaqiyatli yaratildi.");
       setPatient({ fullName: "" });

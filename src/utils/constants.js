@@ -3,6 +3,7 @@ export const storageKeys = {
   user: "sampi_user",
   lorIdentity: "sampi_lor_identity",
   lorDoctor: "sampi_lor_doctor",
+  nurseSpecialist: "sampi_nurse_specialist",
   themeMode: "sampi_theme_mode"
 };
 
