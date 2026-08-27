@@ -11,12 +11,20 @@ const API_URLS = [
 ];
 
 const viewports = [
-  { name: "tv-fhd-50", width: 1920, height: 1080 },
-  { name: "tv-capture-50", width: 1910, height: 970 },
-  { name: "tv-hd-fallback", width: 1366, height: 768 },
+  { name: "tv-fhd-50", width: 1920, height: 1080, ticketCount: 80 },
+  { name: "tv-capture-50", width: 1910, height: 970, ticketCount: 40 },
+  { name: "tv-hd-fallback", width: 1366, height: 768, ticketCount: 24 },
 ];
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const getWaitingGridMeta = (count) => {
+  if (count > 60) return { columns: 5, densityClass: "sampi-tv-waiting-menu-ultra" };
+  if (count > 30) return { columns: 4, densityClass: "sampi-tv-waiting-menu-ultra" };
+  if (count > 16) return { columns: 3, densityClass: "sampi-tv-waiting-menu-dense" };
+  if (count > 6) return { columns: 2, densityClass: "sampi-tv-waiting-menu-compact" };
+  return { columns: 1, densityClass: "" };
+};
 
 const createTvWindow = async ({ name, width, height }) => {
   const partition = `smoke-tv-layout-${name}-${Date.now()}-${Math.random()
@@ -44,7 +52,10 @@ const createTvWindow = async ({ name, width, height }) => {
   });
 };
 
-const injectWaitingTickets = async (win) => {
+const injectWaitingTickets = async (win, ticketCount) => {
+  const grid = getWaitingGridMeta(ticketCount);
+  const rows = Math.max(1, Math.ceil(ticketCount / grid.columns));
+
   await win.webContents.executeJavaScript(`
     (() => {
       const menu = document.querySelector(".sampi-tv-waiting-menu");
@@ -56,8 +67,24 @@ const injectWaitingTickets = async (win) => {
 
       menu.classList.remove("sampi-tv-waiting-menu-empty");
       menu.classList.add("sampi-tv-waiting-menu-active");
-      count.textContent = "6";
-      list.innerHTML = [1, 2, 3, 4, 5, 6].map((value, index) => {
+      menu.classList.remove(
+        "sampi-tv-waiting-menu-grid",
+        "sampi-tv-waiting-menu-compact",
+        "sampi-tv-waiting-menu-dense",
+        "sampi-tv-waiting-menu-ultra"
+      );
+      if (${ticketCount} > 6) {
+        menu.classList.add("sampi-tv-waiting-menu-grid");
+      }
+      if (${JSON.stringify(grid.densityClass)}) {
+        menu.classList.add(${JSON.stringify(grid.densityClass)});
+      }
+      count.textContent = String(${ticketCount});
+      list.style.gridTemplateColumns =
+        ${ticketCount} > 6 ? "repeat(${grid.columns}, minmax(0, 1fr))" : "";
+      list.style.gridTemplateRows =
+        ${ticketCount} > 6 ? "repeat(${rows}, minmax(0, 1fr))" : "";
+      list.innerHTML = Array.from({ length: ${ticketCount} }, (_, index) => index + 1).map((value, index) => {
         const code = String(value).padStart(2, "0");
         return '<div class="sampi-tv-waiting-row ' +
           (index === 0 ? 'sampi-tv-waiting-row-next' : '') +
@@ -96,6 +123,12 @@ const readLayoutMetrics = async (win) =>
         child.top >= parent.top - pad &&
         child.right <= parent.right + pad &&
         child.bottom <= parent.bottom + pad;
+      const intersects = (a, b, pad = 0) =>
+        Boolean(a && b) &&
+        a.left < b.right + pad &&
+        a.right > b.left - pad &&
+        a.top < b.bottom + pad &&
+        a.bottom > b.top - pad;
       const rows = [...document.querySelectorAll(".sampi-tv-waiting-row")].map((el) => {
         const box = el.getBoundingClientRect();
         const children = [...el.children]
@@ -133,6 +166,7 @@ const readLayoutMetrics = async (win) =>
       const waitingList = document.querySelector(".sampi-tv-waiting-list");
       const waitingMenu = document.querySelector(".sampi-tv-waiting-menu");
       const currentCard = document.querySelector(".sampi-tv-current-card");
+      const audioButton = rect(".sampi-tv-audio-button");
       const shell = document.querySelector(".sampi-tv-minimal-shell");
       const runningAnimations = (shell ? shell.getAnimations({ subtree: true }) : [])
         .filter((animation) => ["pending", "running"].includes(animation.playState))
@@ -158,9 +192,12 @@ const readLayoutMetrics = async (win) =>
         },
         currentCard: rect(".sampi-tv-current-card"),
         title: rect(".sampi-tv-standby-title"),
+        audioButton,
         waitingMenu: rect(".sampi-tv-waiting-menu"),
         waitingList: rect(".sampi-tv-waiting-list"),
         rows,
+        rowCount: rows.length,
+        waitingBadgeText: document.querySelector(".sampi-tv-waiting-head b")?.textContent.trim() || "",
         titleInsideCard: inside(rect(".sampi-tv-standby-title"), rect(".sampi-tv-current-card"), 1),
         titleTextFits:
           title ? title.scrollWidth <= title.clientWidth + 1 : false,
@@ -172,6 +209,8 @@ const readLayoutMetrics = async (win) =>
           currentCard ? currentCard.getBoundingClientRect().bottom <= innerHeight + 1 : false,
         rowsFitWidth: rows.every((row) => row.scrollWidth <= row.clientWidth + 1),
         rowsFitHeight: rows.every((row) => row.childrenInside),
+        rowsClearAudioButton:
+          !audioButton || rows.every((row) => !intersects(row, audioButton, 1)),
         runningAnimations,
         noRunningAnimations: runningAnimations.length === 0,
         noPageOverflow:
@@ -196,7 +235,7 @@ const captureViewport = async (viewport) => {
   `);
   await win.loadURL(`${TEST_ORIGIN}/tv/lor?layout=${Date.now()}`);
   await delay(1300);
-  await injectWaitingTickets(win);
+  await injectWaitingTickets(win, viewport.ticketCount);
   await win.webContents.executeJavaScript(`
     new Promise((resolve) => {
       requestAnimationFrame(() => requestAnimationFrame(resolve));
@@ -213,6 +252,8 @@ const captureViewport = async (viewport) => {
 
   const failed = [
     ["tvLockEnabled", metrics.tvLockEnabled],
+    ["allRowsRendered", metrics.rowCount === viewport.ticketCount],
+    ["waitingBadgeMatches", metrics.waitingBadgeText === String(viewport.ticketCount)],
     ["titleInsideCard", metrics.titleInsideCard],
     ["titleTextFits", metrics.titleTextFits],
     ["waitingListFits", metrics.waitingListFits],
@@ -220,6 +261,7 @@ const captureViewport = async (viewport) => {
     ["currentCardInsideViewport", metrics.currentCardInsideViewport],
     ["rowsFitWidth", metrics.rowsFitWidth],
     ["rowsFitHeight", metrics.rowsFitHeight],
+    ["rowsClearAudioButton", metrics.rowsClearAudioButton],
     ["noRunningAnimations", metrics.noRunningAnimations],
     ["noPageOverflow", metrics.noPageOverflow],
   ].filter(([, ok]) => !ok);
@@ -249,10 +291,11 @@ const run = async () => {
     JSON.stringify(
       {
         ok: true,
-        screenshots: results.map(({ name, width, height, screenshotPath }) => ({
+        screenshots: results.map(({ name, width, height, ticketCount, screenshotPath }) => ({
           name,
           width,
           height,
+          ticketCount,
           screenshotPath,
         })),
       },

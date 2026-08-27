@@ -1,4 +1,4 @@
-const CACHE_NAME = "sampi-medline-v12";
+const CACHE_NAME = "sampi-medline-v13";
 const APP_SHELL = [
   "/",
   "/index.html",

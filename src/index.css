@@ -4304,8 +4304,9 @@ html.sampi-tv-lock #root {
 
 .sampi-tv-audio-button {
   position: absolute;
+  top: clamp(1rem, 2.4vh, 1.8rem);
   right: clamp(1rem, 2.4vw, 2.2rem);
-  bottom: clamp(1rem, 2.4vh, 1.8rem);
+  bottom: auto;
   z-index: 10;
   display: inline-flex;
   align-items: center;
@@ -4722,6 +4723,86 @@ html.sampi-tv-lock #root {
   border-color: rgba(212, 175, 55, 0.32);
   background: #102033;
   color: #ffffff;
+}
+
+.sampi-tv-waiting-menu-grid {
+  gap: clamp(0.46rem, 0.75vh, 0.72rem);
+}
+
+.sampi-tv-waiting-menu-grid .sampi-tv-waiting-list {
+  align-content: stretch;
+  gap: clamp(0.24rem, 0.5vh, 0.44rem);
+}
+
+.sampi-tv-waiting-menu-grid .sampi-tv-waiting-row {
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  height: 100%;
+  gap: 0;
+  justify-content: center;
+  padding: clamp(0.24rem, 0.42vh, 0.42rem) clamp(0.42rem, 0.68vw, 0.68rem);
+  border-radius: clamp(11px, 0.9vw, 16px);
+}
+
+.sampi-tv-waiting-menu-grid .sampi-tv-waiting-row span {
+  font-size: clamp(2.35rem, 4.9vh, 3.9rem);
+  line-height: 0.88;
+  text-align: center;
+}
+
+.sampi-tv-waiting-menu-grid .sampi-tv-waiting-row small {
+  display: none;
+}
+
+.sampi-tv-waiting-menu-dense .sampi-tv-waiting-list {
+  gap: clamp(0.2rem, 0.42vh, 0.34rem);
+}
+
+.sampi-tv-waiting-menu-dense .sampi-tv-waiting-row {
+  padding: clamp(0.18rem, 0.34vh, 0.32rem) clamp(0.32rem, 0.55vw, 0.52rem);
+  border-radius: clamp(9px, 0.75vw, 13px);
+}
+
+.sampi-tv-waiting-menu-dense .sampi-tv-waiting-row span {
+  font-size: clamp(1.82rem, 3.8vh, 3rem);
+}
+
+.sampi-tv-waiting-menu-ultra {
+  gap: clamp(0.35rem, 0.62vh, 0.55rem);
+  padding: clamp(0.72rem, 1.12vw, 1rem);
+}
+
+.sampi-tv-waiting-menu-ultra .sampi-tv-waiting-head {
+  align-items: center;
+}
+
+.sampi-tv-waiting-menu-ultra .sampi-tv-waiting-head span {
+  font-size: clamp(1.18rem, 2vh, 1.72rem);
+}
+
+.sampi-tv-waiting-menu-ultra .sampi-tv-waiting-head strong {
+  display: none;
+}
+
+.sampi-tv-waiting-menu-ultra .sampi-tv-waiting-head b {
+  min-width: clamp(2.45rem, 4.4vh, 3.4rem);
+  height: clamp(2.45rem, 4.4vh, 3.4rem);
+  border-radius: 14px;
+  font-size: clamp(1.1rem, 2.2vh, 1.7rem);
+}
+
+.sampi-tv-waiting-menu-ultra .sampi-tv-waiting-list {
+  gap: clamp(0.14rem, 0.32vh, 0.28rem);
+}
+
+.sampi-tv-waiting-menu-ultra .sampi-tv-waiting-row {
+  padding: 0.12rem 0.24rem;
+  border-radius: clamp(7px, 0.62vw, 10px);
+}
+
+.sampi-tv-waiting-menu-ultra .sampi-tv-waiting-row span {
+  font-size: clamp(1.35rem, 2.75vh, 2.28rem);
+  line-height: 0.96;
 }
 
 .sampi-tv-waiting-empty {

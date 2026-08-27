@@ -6,7 +6,7 @@ import { extractErrorMessage } from "../utils/format.js";
 const POLL_INTERVAL_MS = 4000;
 const STREAM_RECONNECT_MS = 2500;
 const TV_MANIFEST_PATH = "/manifest-tv.webmanifest?v=2";
-const WAITING_TICKET_LIMIT = 6;
+const WAITING_TICKET_LIMIT = 80;
 const ADMIN_EXIT_PRESS_COUNT = 5;
 const ADMIN_EXIT_WINDOW_MS = 4500;
 const QUEUE_CHIME_PATH = "/audio/premium_queue_chime_close_match.wav";
@@ -20,6 +20,14 @@ const formatTvQueueCode = (value) => {
   if (!Number.isFinite(number)) return digits;
   if (number < 100) return String(number).padStart(2, "0");
   return String(number);
+};
+
+const getWaitingGridMeta = (count) => {
+  if (count > 60) return { columns: 5, densityClass: "sampi-tv-waiting-menu-ultra" };
+  if (count > 30) return { columns: 4, densityClass: "sampi-tv-waiting-menu-ultra" };
+  if (count > 16) return { columns: 3, densityClass: "sampi-tv-waiting-menu-dense" };
+  if (count > 6) return { columns: 2, densityClass: "sampi-tv-waiting-menu-compact" };
+  return { columns: 1, densityClass: "" };
 };
 
 function TvLorQueuePage() {
@@ -47,9 +55,20 @@ function TvLorQueuePage() {
 
   const current = queue?.current || null;
   const displayQueueCode = current ? formatTvQueueCode(current.queueCode) : "";
-  const waitingTickets = Array.isArray(queue?.waiting)
-    ? queue.waiting.slice(0, WAITING_TICKET_LIMIT)
-    : [];
+  const waitingTickets = Array.isArray(queue?.waiting) ? queue.waiting : [];
+  const waitingTicketCount = waitingTickets.length;
+  const waitingGrid = getWaitingGridMeta(waitingTicketCount);
+  const waitingGridRows = Math.max(
+    1,
+    Math.ceil(waitingTicketCount / waitingGrid.columns)
+  );
+  const waitingListStyle =
+    waitingTicketCount > 6
+      ? {
+          gridTemplateColumns: `repeat(${waitingGrid.columns}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${waitingGridRows}, minmax(0, 1fr))`
+        }
+      : undefined;
   const currentKey = queue?.announcementKey || "";
   const isConnectionSoft =
     connectionState === "reconnecting" || connectionState === "polling" || Boolean(error);
@@ -490,7 +509,11 @@ function TvLorQueuePage() {
 
           <aside
             className={`sampi-tv-waiting-menu ${
-              waitingTickets.length ? "sampi-tv-waiting-menu-active" : "sampi-tv-waiting-menu-empty"
+              waitingTicketCount ? "sampi-tv-waiting-menu-active" : "sampi-tv-waiting-menu-empty"
+            } ${
+              waitingTicketCount > 6 ? "sampi-tv-waiting-menu-grid" : ""
+            } ${
+              waitingGrid.densityClass
             }`}
             aria-label="Kassadan chiqarilgan LOR cheklari"
           >
@@ -499,12 +522,12 @@ function TvLorQueuePage() {
                 <span>Navbatdagilar</span>
                 <strong>Kassa bergan LOR raqamlari</strong>
               </div>
-              <b>{loading && !queue ? "..." : waitingTickets.length}</b>
+              <b>{loading && !queue ? "..." : waitingTicketCount}</b>
             </div>
-            <div className="sampi-tv-waiting-list">
+            <div className="sampi-tv-waiting-list" style={waitingListStyle}>
               {loading && !queue ? (
                 <div className="sampi-tv-waiting-empty">Yuklanmoqda</div>
-              ) : waitingTickets.length ? (
+              ) : waitingTicketCount ? (
                 waitingTickets.map((ticket, index) => (
                   <div
                     className={`sampi-tv-waiting-row ${
