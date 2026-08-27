@@ -40,6 +40,82 @@ const formatQueueCode = (value) => {
   return safe ? safe.padStart(2, "0") : "";
 };
 
+const buildCheckThermalReceipt = (check) => {
+  const creatorRole = String(check?.createdBy?.role || "").toLowerCase();
+  const lorQueueCode = formatQueueCode(check?.lorQueue?.queueCode || check?.queueCode);
+  const blocks = [
+    { text: "SAMPI MEDLINE", align: "center", bold: true, size: "double" },
+    { kind: "divider" },
+    { text: `Bemor: ${check?.patient?.fullName || "-"}` },
+    { text: `Sana: ${formatCheckDate(check?.createdAt)}` },
+  ];
+
+  if (creatorRole === "lor") {
+    blocks.push({ text: formatLorIdentity(check?.createdBy?.lorIdentity), align: "center", bold: true });
+  }
+
+  if (creatorRole === "lor" && lorQueueCode) {
+    blocks.push({ text: `Navbat: ${lorQueueCode}`, align: "center", bold: true, size: "double" });
+  }
+
+  const appendItems = (title, itemType) => {
+    const items = (check?.items || []).filter((item) => resolveItemType(item, check?.type) === itemType);
+    if (!items.length) return;
+
+    blocks.push({ kind: "divider" });
+    blocks.push({ text: title, align: "center", bold: true });
+    blocks.push({ kind: "divider" });
+
+    items.forEach((item) => {
+      const quantity = Number(item.quantity) || 0;
+      const unitPrice = Number(item.price) || 0;
+      blocks.push({
+        kind: "row",
+        left: `${item.name} x${quantity}`,
+        right: `${formatNumber(unitPrice * quantity)} so'm`,
+      });
+    });
+  };
+
+  appendItems("Dorilar", "medicine");
+  appendItems("Xizmatlar", "service");
+
+  blocks.push({ kind: "divider" });
+  blocks.push({
+    kind: "row",
+    left: "Jami:",
+    right: `${formatNumber(check?.total)} so'm`,
+    bold: true,
+  });
+  blocks.push({ kind: "divider" });
+
+  if (creatorRole === "nurse") {
+    blocks.push({ text: `Hamshira: ${check?.createdBy?.name || "-"}`, align: "center", bold: true });
+  } else if (creatorRole === "lor") {
+    blocks.push({ text: check?.createdBy?.name || "-", align: "center", bold: true });
+  }
+
+  blocks.push({ text: "Doimo sog'-salomat bo'ling", align: "center" });
+  return { type: "check", blocks };
+};
+
+const buildLorQueueThermalReceipt = (ticket) => {
+  const queueCode = formatQueueCode(ticket?.queueCode);
+  return {
+    type: "lor-queue",
+    blocks: [
+      { text: "SAMPI MEDLINE", align: "center", bold: true, size: "double" },
+      { kind: "divider" },
+      { text: "LOR", align: "center", bold: true, size: "double" },
+      { kind: "divider" },
+      { text: "Navbat raqami:", align: "center", bold: true },
+      { text: queueCode || "00", align: "center", bold: true, size: "large" },
+      { kind: "divider" },
+      { text: "Tashrifingiz uchun rahmat!", align: "center" },
+    ],
+  };
+};
+
 const buildItemRows = (items, itemType, checkType) => {
   return (items || [])
     .filter((item) => resolveItemType(item, checkType) === itemType)
@@ -418,12 +494,12 @@ const cleanDesktopPrintError = (error) => {
   return "Chekni avtomatik printerga yuborib bo'lmadi.";
 };
 
-const printHtmlWithDesktopApp = async (html) => {
+const printHtmlWithDesktopApp = async (html, options = {}) => {
   const desktopPrint = window.sampiDesktop?.printReceiptHtml;
   if (typeof desktopPrint !== "function") return null;
 
   try {
-    const result = await desktopPrint(html);
+    const result = await desktopPrint(html, options);
     return Boolean(result?.ok ?? true);
   } catch (error) {
     throw new Error(cleanDesktopPrintError(error));
@@ -497,7 +573,9 @@ const printHtmlInsideCurrentApp = (html) => {
 
 const printInsideCurrentApp = async (check) => {
   const html = buildCheckPrintHtml(check, { inline: true });
-  const desktopResult = await printHtmlWithDesktopApp(html);
+  const desktopResult = await printHtmlWithDesktopApp(html, {
+    thermalReceipt: buildCheckThermalReceipt(check),
+  });
   if (desktopResult !== null) return desktopResult;
   if (isElectronDesktopApp()) {
     throw new Error("Desktop printer ulanishi topilmadi. Ilovani yopib qayta oching.");
@@ -507,7 +585,9 @@ const printInsideCurrentApp = async (check) => {
 
 const printLorQueueTicketInsideCurrentApp = async (ticket) => {
   const html = buildLorQueueTicketPrintHtml(ticket, { inline: true });
-  const desktopResult = await printHtmlWithDesktopApp(html);
+  const desktopResult = await printHtmlWithDesktopApp(html, {
+    thermalReceipt: buildLorQueueThermalReceipt(ticket),
+  });
   if (desktopResult !== null) return desktopResult;
   if (isElectronDesktopApp()) {
     throw new Error("Desktop printer ulanishi topilmadi. Ilovani yopib qayta oching.");

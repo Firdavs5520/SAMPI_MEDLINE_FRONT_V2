@@ -211,6 +211,156 @@ const shouldUseRawReceiptPrint = (printer, html, options = {}) =>
   !options.forceHtmlPrint &&
   isLikelyThermalReceiptPrinter(printer);
 
+const THERMAL_LINE_CHARS = 32;
+
+const normalizeThermalText = (value) =>
+  String(value ?? "")
+    .replace(/[\u2018\u2019\u02bb]/g, "'")
+    .replace(/[\u201c\u201d]/g, '"')
+    .replace(/\u2013|\u2014/g, "-")
+    .replace(/[^\x09\x0a\x0d\x20-\x7e]/g, "?")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+
+const wrapThermalText = (value, maxChars = THERMAL_LINE_CHARS) => {
+  const text = normalizeThermalText(value);
+  if (!text) return [""];
+
+  const words = text.split(/\s+/);
+  const lines = [];
+  let current = "";
+
+  for (const word of words) {
+    if (word.length > maxChars) {
+      if (current) {
+        lines.push(current);
+        current = "";
+      }
+      for (let index = 0; index < word.length; index += maxChars) {
+        lines.push(word.slice(index, index + maxChars));
+      }
+      continue;
+    }
+
+    const next = current ? `${current} ${word}` : word;
+    if (next.length > maxChars) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = next;
+    }
+  }
+
+  if (current) lines.push(current);
+  return lines;
+};
+
+const alignCommand = (align = "left") => {
+  const normalized = String(align || "left").toLowerCase();
+  if (normalized === "center") return Buffer.from([0x1b, 0x61, 0x01]);
+  if (normalized === "right") return Buffer.from([0x1b, 0x61, 0x02]);
+  return Buffer.from([0x1b, 0x61, 0x00]);
+};
+
+const sizeCommand = (size = "normal") => {
+  switch (size) {
+    case "double":
+      return Buffer.from([0x1d, 0x21, 0x11]);
+    case "large":
+      return Buffer.from([0x1d, 0x21, 0x22]);
+    case "wide":
+      return Buffer.from([0x1d, 0x21, 0x10]);
+    case "tall":
+      return Buffer.from([0x1d, 0x21, 0x01]);
+    default:
+      return Buffer.from([0x1d, 0x21, 0x00]);
+  }
+};
+
+const boldCommand = (enabled) => Buffer.from([0x1b, 0x45, enabled ? 0x01 : 0x00]);
+
+const textBuffer = (value) => Buffer.from(`${normalizeThermalText(value)}\n`, "ascii");
+
+const appendThermalLine = (buffers, block = {}) => {
+  const size = block.size || "normal";
+  const maxChars =
+    size === "large" ? 10 : size === "double" ? 16 : size === "wide" ? 16 : THERMAL_LINE_CHARS;
+  const lines = wrapThermalText(block.text, maxChars);
+
+  buffers.push(alignCommand(block.align));
+  buffers.push(sizeCommand(size));
+  buffers.push(boldCommand(Boolean(block.bold)));
+  for (const line of lines) {
+    buffers.push(textBuffer(line));
+  }
+  buffers.push(boldCommand(false));
+  buffers.push(sizeCommand("normal"));
+  buffers.push(alignCommand("left"));
+};
+
+const formatThermalRow = (left, right) => {
+  const safeRight = normalizeThermalText(right).slice(0, THERMAL_LINE_CHARS);
+  const availableLeft = Math.max(8, THERMAL_LINE_CHARS - safeRight.length - 1);
+  const leftLines = wrapThermalText(left, availableLeft);
+  const lines = [];
+
+  leftLines.forEach((line, index) => {
+    if (index === 0) {
+      const spacing = Math.max(1, THERMAL_LINE_CHARS - line.length - safeRight.length);
+      lines.push(`${line}${" ".repeat(spacing)}${safeRight}`);
+    } else {
+      lines.push(line);
+    }
+  });
+
+  return lines;
+};
+
+const appendThermalRow = (buffers, block = {}) => {
+  buffers.push(alignCommand("left"));
+  buffers.push(sizeCommand("normal"));
+  buffers.push(boldCommand(Boolean(block.bold)));
+  for (const line of formatThermalRow(block.left, block.right)) {
+    buffers.push(textBuffer(line));
+  }
+  buffers.push(boldCommand(false));
+};
+
+const appendThermalDivider = (buffers) => {
+  buffers.push(alignCommand("center"));
+  buffers.push(textBuffer("-".repeat(THERMAL_LINE_CHARS)));
+  buffers.push(alignCommand("left"));
+};
+
+const buildEscPosTextPayload = (receipt = {}) => {
+  const blocks = Array.isArray(receipt.blocks) ? receipt.blocks : [];
+  if (!blocks.length) {
+    throw new Error("RAW text chek ma'lumoti bo'sh.");
+  }
+
+  const buffers = [
+    Buffer.from([0x1b, 0x40]),
+    Buffer.from([0x1b, 0x74, 0x00]),
+    Buffer.from([0x1b, 0x33, 0x18]),
+  ];
+
+  for (const block of blocks) {
+    if (block?.kind === "divider") {
+      appendThermalDivider(buffers);
+    } else if (block?.kind === "row") {
+      appendThermalRow(buffers, block);
+    } else if (block?.kind === "feed") {
+      const count = Math.min(6, Math.max(1, Number(block.lines) || 1));
+      buffers.push(Buffer.from("\n".repeat(count), "ascii"));
+    } else {
+      appendThermalLine(buffers, block);
+    }
+  }
+
+  buffers.push(Buffer.from([0x0a, 0x0a, 0x0a, 0x1d, 0x56, 0x42, 0x00]));
+  return Buffer.concat(buffers);
+};
+
 const getPowerShellPath = () =>
   path.join(
     process.env.SystemRoot || "C:\\Windows",
@@ -474,6 +624,16 @@ const printReceiptAsRawRaster = async (printWindow, printerName, metrics) => {
   };
 };
 
+const printReceiptAsRawText = async (printerName, receipt) => {
+  const payload = buildEscPosTextPayload(receipt);
+  await runRawPrinterScript(printerName, payload);
+  return {
+    mode: "raw-text",
+    width: THERMAL_LINE_CHARS,
+    bytes: payload.length,
+  };
+};
+
 const printHtmlSilently = async (parentWindow, html, options = {}) => {
   const printWindow = new BrowserWindow({
     width: 260,
@@ -501,6 +661,16 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
     }
 
     if (shouldUseRawReceiptPrint(printer, safeHtml, options)) {
+      if (options.thermalReceipt) {
+        const rawReceipt = await printReceiptAsRawText(printer.name, options.thermalReceipt);
+        return {
+          ok: true,
+          printer: printer.name,
+          pageSize: receiptPageSize,
+          ...rawReceipt,
+        };
+      }
+
       const rawReceipt = await printReceiptAsRawRaster(
         printWindow,
         printer.name,
