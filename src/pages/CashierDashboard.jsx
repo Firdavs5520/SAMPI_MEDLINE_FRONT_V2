@@ -143,6 +143,21 @@ const specialistTypeOptions = [
 
 const getTodayString = () => toTashkentYmd();
 
+const canUseDesktopPrinterSettings = () =>
+  typeof window !== "undefined" &&
+  typeof window.sampiDesktop?.listPrinters === "function" &&
+  typeof window.sampiDesktop?.setReceiptPrinter === "function";
+
+const emptyPrinterSettings = {
+  available: false,
+  loading: false,
+  saving: false,
+  printers: [],
+  selectedPrinterName: "",
+  defaultPrinterName: "",
+  fallbackPrinterName: "XP-58"
+};
+
 const formatDateInput = (value) => {
   if (!value) return getTodayString();
   const date = new Date(value);
@@ -320,6 +335,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const [settingsForm, setSettingsForm] = useState(() =>
     normalizeSettingsForm(defaultCashierSettings)
   );
+  const [printerSettings, setPrinterSettings] = useState(emptyPrinterSettings);
   const [closingDebtId, setClosingDebtId] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -377,6 +393,16 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
     return specialistTypeOptions;
   }, [lockedType, filters.department]);
+  const receiptPrinterOptions = useMemo(
+    () =>
+      printerSettings.printers.map((printer) => ({
+        value: printer.name,
+        label: `${printer.displayName || printer.name}${
+          printer.isDefault ? " (Windows asosiy)" : ""
+        }`
+      })),
+    [printerSettings.printers]
+  );
 
   const calculatedDebt = useMemo(() => {
     const amount = safeNumber(form.amount, 0);
@@ -580,6 +606,38 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
   }, [isFormSection, lockedType]);
 
+  const loadPrinterSettings = useCallback(async ({ silent = false } = {}) => {
+    if (!canUseDesktopPrinterSettings()) {
+      setPrinterSettings((prev) => ({
+        ...prev,
+        available: false,
+        loading: false,
+        saving: false
+      }));
+      return;
+    }
+
+    if (!silent) {
+      setPrinterSettings((prev) => ({ ...prev, available: true, loading: true }));
+    }
+
+    try {
+      const data = await window.sampiDesktop.listPrinters();
+      setPrinterSettings((prev) => ({
+        ...prev,
+        available: true,
+        loading: false,
+        printers: data?.printers || [],
+        selectedPrinterName: data?.selectedPrinterName || "",
+        defaultPrinterName: data?.defaultPrinterName || "",
+        fallbackPrinterName: data?.fallbackPrinterName || "XP-58"
+      }));
+    } catch (err) {
+      setPrinterSettings((prev) => ({ ...prev, available: true, loading: false }));
+      setError(extractErrorMessage(err));
+    }
+  }, []);
+
   const loadSettings = useCallback(async () => {
     setLoading(true);
     try {
@@ -709,6 +767,12 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     loadLorQueueTicketStatus,
     loadSettings
   ]);
+
+  useEffect(() => {
+    if (isSettingsSection) {
+      loadPrinterSettings();
+    }
+  }, [isSettingsSection, loadPrinterSettings]);
 
   useEffect(() => {
     loadSpecialists();
@@ -1010,6 +1074,33 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }));
   };
 
+  const handleReceiptPrinterChange = async (printerName) => {
+    if (!canUseDesktopPrinterSettings() || printerSettings.saving) return;
+
+    setError("");
+    setSuccess("");
+    setPrinterSettings((prev) => ({
+      ...prev,
+      saving: true,
+      selectedPrinterName: printerName
+    }));
+
+    try {
+      const saved = await window.sampiDesktop.setReceiptPrinter(printerName);
+      setPrinterSettings((prev) => ({
+        ...prev,
+        saving: false,
+        selectedPrinterName: saved?.printerName || printerName
+      }));
+      setSuccess("Chek printeri saqlandi.");
+      await loadPrinterSettings({ silent: true });
+    } catch (err) {
+      setPrinterSettings((prev) => ({ ...prev, saving: false }));
+      setError(extractErrorMessage(err));
+      await loadPrinterSettings({ silent: true });
+    }
+  };
+
   const handleSaveSettings = async (event) => {
     event.preventDefault();
     resetMessages();
@@ -1241,6 +1332,69 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             </Button>
           </div>
         </form>
+
+        {printerSettings.available ? (
+          <div className="card space-y-4 p-4 sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-800">Chek printeri</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Tanlangan printer navbat va cheklarni bitta bosishda chiqaradi.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full sm:w-auto"
+                loading={printerSettings.loading}
+                disabled={printerSettings.saving}
+                onClick={() => loadPrinterSettings()}
+              >
+                Yangilash
+              </Button>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+              <SelectMenu
+                label="Printer"
+                value={printerSettings.selectedPrinterName}
+                options={receiptPrinterOptions}
+                onChange={handleReceiptPrinterChange}
+                disabled={
+                  printerSettings.loading ||
+                  printerSettings.saving ||
+                  receiptPrinterOptions.length === 0
+                }
+              />
+              <Button
+                type="button"
+                className="min-h-12 w-full md:w-auto"
+                loading={printerSettings.saving}
+                disabled={
+                  printerSettings.loading ||
+                  printerSettings.saving ||
+                  !printerSettings.selectedPrinterName
+                }
+                onClick={() => handleReceiptPrinterChange(printerSettings.selectedPrinterName)}
+              >
+                Printerni saqlash
+              </Button>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-600">
+              Hozirgi printer:{" "}
+              <strong className="text-slate-800">
+                {printerSettings.selectedPrinterName ||
+                  `${printerSettings.fallbackPrinterName} (avtomatik)`}
+              </strong>
+              {printerSettings.defaultPrinterName ? (
+                <span className="ml-2 text-slate-500">
+                  Windows asosiy: {printerSettings.defaultPrinterName}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         <Alert type="success" message={success} />
         <Alert type="error" message={error} />

@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Menu, ipcMain, shell } = require("electron");
 const { autoUpdater } = require("electron-updater");
+const fs = require("node:fs/promises");
 const path = require("node:path");
 
 const APP_URL = process.env.SAMPI_DESKTOP_URL || "https://sampi-medline.vercel.app/";
@@ -16,6 +17,7 @@ const MICRONS_PER_CSS_PIXEL = 25400 / 96;
 const RECEIPT_HEIGHT_PADDING_MICRONS = 4000;
 const RECEIPT_MIN_HEIGHT_MICRONS = 45000;
 const RECEIPT_MAX_HEIGHT_MICRONS = 420000;
+const RECEIPT_PRINTER_CONFIG_FILE = "receipt-printer.json";
 
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
@@ -53,6 +55,30 @@ const normalizePrinterName = (value) =>
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 
+const getReceiptPrinterConfigPath = () =>
+  path.join(app.getPath("userData"), RECEIPT_PRINTER_CONFIG_FILE);
+
+const readReceiptPrinterConfig = async () => {
+  try {
+    const raw = await fs.readFile(getReceiptPrinterConfigPath(), "utf8");
+    const parsed = JSON.parse(raw);
+    return {
+      printerName: String(parsed?.printerName || "").trim()
+    };
+  } catch {
+    return { printerName: "" };
+  }
+};
+
+const writeReceiptPrinterConfig = async (config) => {
+  const payload = {
+    printerName: String(config?.printerName || "").trim()
+  };
+  await fs.mkdir(app.getPath("userData"), { recursive: true });
+  await fs.writeFile(getReceiptPrinterConfigPath(), JSON.stringify(payload, null, 2), "utf8");
+  return payload;
+};
+
 const isTrustedRendererUrl = (value) => {
   if (value === "about:blank") {
     return true;
@@ -65,12 +91,34 @@ const isTrustedRendererUrl = (value) => {
   }
 };
 
-const resolveReceiptPrinter = async (webContents) => {
+const listPrinters = async (webContents) => {
   const printers = await webContents.getPrintersAsync();
+  return printers.map((printer) => ({
+    name: printer.name,
+    displayName: printer.displayName || printer.name,
+    description: printer.description || "",
+    status: printer.status,
+    isDefault: Boolean(printer.isDefault)
+  }));
+};
+
+const resolveReceiptPrinter = async (webContents, requestedPrinterName = "") => {
+  const printers = await listPrinters(webContents);
+  const savedConfig = await readReceiptPrinterConfig();
+  const configuredName =
+    String(requestedPrinterName || "").trim() ||
+    savedConfig.printerName ||
+    RECEIPT_PRINTER_NAME;
   const preferredName = normalizePrinterName(RECEIPT_PRINTER_NAME);
+  const configuredPrinterName = normalizePrinterName(configuredName);
   const matchesPreferred = (printer) => {
     const names = [printer.name, printer.displayName].map(normalizePrinterName);
-    return names.some((name) => name === preferredName || name.includes(preferredName));
+    return names.some(
+      (name) =>
+        name === configuredPrinterName ||
+        name.includes(configuredPrinterName) ||
+        (!savedConfig.printerName && (name === preferredName || name.includes(preferredName)))
+    );
   };
 
   const preferredPrinter = printers.find(matchesPreferred);
@@ -81,7 +129,7 @@ const resolveReceiptPrinter = async (webContents) => {
     .filter(Boolean)
     .join(", ");
   throw new Error(
-    `${RECEIPT_PRINTER_NAME} printer topilmadi.${printerNames ? ` Topilgan printerlar: ${printerNames}` : ""}`
+    `${configuredName} printer topilmadi.${printerNames ? ` Topilgan printerlar: ${printerNames}` : ""}`
   );
 };
 
@@ -122,54 +170,7 @@ const getFallbackReceiptMetrics = (html, error) => {
   };
 };
 
-const waitForReceiptLayout = async (webContents, html) => {
-  const metrics = await webContents
-    .executeJavaScript(
-      `new Promise((resolve) => {
-        const done = () => {
-          try {
-            const receipt =
-              document.querySelector("[data-sampi-receipt]") ||
-              document.querySelector(".ticket") ||
-              document.querySelector(".check") ||
-              document.body;
-            const box = receipt.getBoundingClientRect();
-            const bodyText = document.body ? document.body.innerText : "";
-            const text = String(bodyText || "").trim();
-            resolve({
-              textLength: text.length,
-              preview: text.slice(0, 120),
-              width: Math.ceil(Math.max(box.width, receipt.scrollWidth, document.body.scrollWidth)),
-              height: Math.ceil(Math.max(box.height, receipt.scrollHeight))
-            });
-          } catch (error) {
-            resolve({
-              textLength: 0,
-              preview: "",
-              width: 0,
-              height: 0,
-              error: error && error.message ? error.message : String(error)
-            });
-          }
-        };
-
-        const afterFonts = () => requestAnimationFrame(() => requestAnimationFrame(done));
-        if (document.fonts && document.fonts.ready) {
-          document.fonts.ready.then(afterFonts).catch(afterFonts);
-        } else {
-          afterFonts();
-        }
-      })()`,
-      true
-    )
-    .catch((error) => getFallbackReceiptMetrics(html, error));
-
-  if (metrics?.textLength && metrics.height >= 24) {
-    return metrics;
-  }
-
-  return getFallbackReceiptMetrics(html, metrics?.error || "Receipt layout metrics were empty.");
-};
+const waitForReceiptLayout = async (_webContents, html) => getFallbackReceiptMetrics(html);
 
 const resolveReceiptPageSize = async (webContents, html) => {
   const metrics = await waitForReceiptLayout(webContents, html);
@@ -211,7 +212,7 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
     await printWindow.loadURL(`data:text/html;charset=utf-8;base64,${encodedHtml}`);
     const receiptPageSize = await resolveReceiptPageSize(printWindow.webContents, safeHtml);
 
-    const printer = await resolveReceiptPrinter(printWindow.webContents);
+    const printer = await resolveReceiptPrinter(printWindow.webContents, options.printerName);
     if (!printer) {
       throw new Error("No printer is available for silent receipt printing.");
     }
@@ -272,6 +273,44 @@ ipcMain.handle("sampi:print-receipt-html", async (event, html, options = {}) => 
 
   const parentWindow = BrowserWindow.fromWebContents(event.sender);
   return printHtmlSilently(parentWindow, html, options);
+});
+
+ipcMain.handle("sampi:list-printers", async (event) => {
+  if (!isTrustedRendererUrl(event.senderFrame?.url || "")) {
+    throw new Error("Printer request came from an untrusted page.");
+  }
+
+  const printers = await listPrinters(event.sender);
+  const config = await readReceiptPrinterConfig();
+  const defaultPrinter = printers.find((printer) => printer.isDefault) || null;
+
+  return {
+    printers,
+    selectedPrinterName: config.printerName,
+    defaultPrinterName: defaultPrinter?.name || "",
+    fallbackPrinterName: RECEIPT_PRINTER_NAME
+  };
+});
+
+ipcMain.handle("sampi:set-receipt-printer", async (event, printerName) => {
+  if (!isTrustedRendererUrl(event.senderFrame?.url || "")) {
+    throw new Error("Printer setting request came from an untrusted page.");
+  }
+
+  const safePrinterName = String(printerName || "").trim();
+  if (!safePrinterName) {
+    return writeReceiptPrinterConfig({ printerName: "" });
+  }
+
+  const printers = await listPrinters(event.sender);
+  const selected = printers.find((printer) =>
+    [printer.name, printer.displayName].some((name) => name === safePrinterName)
+  );
+  if (!selected) {
+    throw new Error(`${safePrinterName} printer topilmadi.`);
+  }
+
+  return writeReceiptPrinterConfig({ printerName: selected.name });
 });
 
 const createWindow = () => {
