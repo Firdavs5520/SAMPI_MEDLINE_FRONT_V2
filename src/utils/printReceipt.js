@@ -114,6 +114,7 @@ const buildLorQueueThermalReceipt = (ticket) => {
   return {
     type: "lor-queue",
     blocks: [
+      { kind: "feed", lines: 1 },
       { text: "SAMPI MEDLINE", align: "center", bold: true, size: "double" },
       { kind: "divider" },
       { text: lorLabel, align: "center", bold: true, size: "double" },
@@ -639,7 +640,6 @@ const printInsideCurrentApp = async (check) => {
 const printLorQueueTicketInsideCurrentApp = async (ticket) => {
   const html = buildLorQueueTicketPrintHtml(ticket, { inline: true });
   const desktopResult = await printHtmlWithDesktopApp(html, {
-    forceHtmlPrint: true,
     thermalReceipt: buildLorQueueThermalReceipt(ticket),
   });
   if (desktopResult !== null) return desktopResult;

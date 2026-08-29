@@ -496,13 +496,14 @@ const buildThermalReceiptFromHtml = (html) => {
     return {
       type: "lor-queue",
       blocks: [
+        { kind: "feed", lines: 1 },
         { text: "SAMPI MEDLINE", align: "center", bold: true, size: "double" },
         { kind: "divider" },
         { text: lorLabel, align: "center", bold: true, size: "double" },
         { kind: "divider" },
         { text: "Navbat raqami:", align: "center", bold: true, size: "double" },
         { kind: "divider" },
-        { text: queueCode, align: "center", bold: true, size: "huge" },
+        { text: queueCode, align: "center", bold: true, size: "large" },
         { kind: "divider" },
         { text: "Tashrifingiz uchun rahmat!", align: "center", bold: true },
         { kind: "divider" },
