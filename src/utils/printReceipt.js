@@ -73,6 +73,7 @@ const buildCheckThermalReceipt = (check) => {
         kind: "row",
         left: `${item.name} x${quantity}`,
         right: `${formatNumber(unitPrice * quantity)} so'm`,
+        font: "small",
       });
     });
   };
@@ -109,7 +110,7 @@ const buildLorQueueThermalReceipt = (ticket) => {
       { text: "LOR", align: "center", bold: true, size: "double" },
       { kind: "divider" },
       { text: "Navbat raqami:", align: "center", bold: true },
-      { text: queueCode || "00", align: "center", bold: true, size: "large" },
+      { text: queueCode || "00", align: "center", bold: true, size: "double" },
       { kind: "divider" },
       { text: "Tashrifingiz uchun rahmat!", align: "center" },
     ],
