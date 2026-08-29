@@ -450,6 +450,8 @@ const buildThermalReceiptFromHtml = (html) => {
   const isQueueTicket =
     /data-sampi-receipt=["']lor-queue["']/i.test(source) || /Navbat raqami:/i.test(source);
   const queueCode = firstClassText(source, "number") || htmlToPlainText(source).match(/\b\d{1,4}\b/)?.[0] || "00";
+  const queueSmallLines = allClassText(source, "small");
+  const lorLabel = queueSmallLines.find((line) => /^LOR(?:-\d+)?$/i.test(line)) || "LOR-1";
 
   if (isQueueTicket && !/data-sampi-receipt=["']check["']/i.test(source)) {
     return {
@@ -457,12 +459,14 @@ const buildThermalReceiptFromHtml = (html) => {
       blocks: [
         { text: "SAMPI MEDLINE", align: "center", bold: true, size: "double" },
         { kind: "divider" },
-        { text: "LOR", align: "center", bold: true },
+        { text: lorLabel, align: "center", bold: true, size: "double" },
         { kind: "divider" },
-        { text: "Navbat raqami:", align: "center", bold: true },
-        { text: queueCode, align: "center", bold: true, size: "double" },
+        { text: "Navbat raqami:", align: "center", bold: true, size: "double" },
         { kind: "divider" },
-        { text: "Tashrifingiz uchun rahmat!", align: "center" },
+        { text: queueCode, align: "center", bold: true, size: "large" },
+        { kind: "divider" },
+        { text: "Tashrifingiz uchun rahmat!", align: "center", bold: true },
+        { kind: "divider" },
       ],
     };
   }

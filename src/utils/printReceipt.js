@@ -40,6 +40,14 @@ const formatQueueCode = (value) => {
   return safe ? safe.padStart(2, "0") : "";
 };
 
+const formatLorQueueTicketLabel = (ticket) => {
+  const raw = String(ticket?.lorIdentity || ticket?.lor || "lor1")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  if (raw.includes("lor2")) return "LOR-2";
+  return "LOR-1";
+};
+
 const buildCheckThermalReceipt = (check) => {
   const creatorRole = String(check?.createdBy?.role || "").toLowerCase();
   const lorQueueCode = formatQueueCode(check?.lorQueue?.queueCode || check?.queueCode);
@@ -102,17 +110,20 @@ const buildCheckThermalReceipt = (check) => {
 
 const buildLorQueueThermalReceipt = (ticket) => {
   const queueCode = formatQueueCode(ticket?.queueCode);
+  const lorLabel = formatLorQueueTicketLabel(ticket);
   return {
     type: "lor-queue",
     blocks: [
       { text: "SAMPI MEDLINE", align: "center", bold: true, size: "double" },
       { kind: "divider" },
-      { text: "LOR", align: "center", bold: true, size: "double" },
+      { text: lorLabel, align: "center", bold: true, size: "double" },
       { kind: "divider" },
-      { text: "Navbat raqami:", align: "center", bold: true },
-      { text: queueCode || "00", align: "center", bold: true, size: "double" },
+      { text: "Navbat raqami:", align: "center", bold: true, size: "double" },
       { kind: "divider" },
-      { text: "Tashrifingiz uchun rahmat!", align: "center" },
+      { text: queueCode || "00", align: "center", bold: true, size: "large" },
+      { kind: "divider" },
+      { text: "Tashrifingiz uchun rahmat!", align: "center", bold: true },
+      { kind: "divider" },
     ],
   };
 };
@@ -312,13 +323,18 @@ export const buildCheckPrintHtml = (check, options = {}) => {
 export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
   const { inline = false } = options;
   const queueCode = formatQueueCode(ticket?.queueCode);
+  const lorLabel = formatLorQueueTicketLabel(ticket);
 
   return `<!doctype html>
 <html lang="uz">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LOR navbat</title>
+    <title>Navbat Cheki</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
       @media print {
         @page {
@@ -370,18 +386,23 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
       html, body {
         margin: 0;
         padding: 0;
-        width: 58mm;
-        min-height: 0;
+        min-height: 100%;
         overflow: visible;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
       body {
-        background: #fff;
+        min-height: 100vh;
+        background: #f5f5f5;
         font-family: "Golos Text", Arial, sans-serif;
+        display: flex;
+        justify-content: center;
         text-align: center;
       }
       .check {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         box-sizing: border-box;
         width: 58mm;
         padding: 0 0 2mm;
@@ -406,6 +427,8 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         font-weight: 800;
         margin: 0;
         letter-spacing: 2px;
+        width: 100%;
+        text-align: center;
         line-height: 1;
       }
       .footer {
@@ -418,7 +441,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
     <div class="check" data-sampi-receipt="lor-queue">
       <div class="title">SAMPI MEDLINE</div>
       <div class="divider"></div>
-      <div class="small">LOR</div>
+      <div class="small">${escapeHtml(lorLabel)}</div>
       <div class="divider"></div>
       <div class="small">Navbat raqami:</div>
       <div class="divider"></div>

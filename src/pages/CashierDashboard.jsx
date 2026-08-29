@@ -1158,22 +1158,37 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     const latestPrintEvent = lorPrintEvents[0];
 
     return (
-      <div className="sampi-lor-ticket-page">
-        <div className="sampi-lor-ticket-window">
-          <span className="sampi-lor-ticket-role">Kassir</span>
-          <h1>LOR</h1>
-          <p className="sampi-lor-ticket-subtitle">Hozir chiqariladigan navbat:</p>
-
-          <div className="sampi-lor-ticket-number-panel">
-            <span className="sampi-lor-ticket-number">{nextQueueCode}</span>
+      <div className="space-y-4 sm:space-y-6">
+        <div className="card border-sky-100 bg-white p-4 text-center shadow-sm sm:p-6 lg:p-8">
+          <div className="flex flex-col gap-3 text-left sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-sky-700">LOR navbati</p>
+              <h1 className="mt-1 text-xl font-bold text-slate-900">Navbat cheki chiqarish</h1>
+              <p className="mt-1 text-sm text-slate-500">
+                Bemor LORga yo'naltirilganda raqam shu yerdan beriladi.
+              </p>
+            </div>
+            <span className="inline-flex w-fit items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+              Kassir
+            </span>
           </div>
 
-          <p className="sampi-lor-ticket-hint">Enter tugmasini 1 marta bosing</p>
+          <div className="mx-auto mt-6 max-w-3xl">
+            <p className="text-sm font-semibold text-slate-500 sm:text-base">Keyingi raqam</p>
+            <div className="mt-3 flex min-h-44 items-center justify-center rounded-lg border border-sky-100 bg-sky-50 px-4 py-6 sm:min-h-60">
+              <span className="text-[6.5rem] font-black leading-none text-slate-950 sm:text-[9rem] lg:text-[11rem]">
+                {nextQueueCode}
+              </span>
+            </div>
+            <p className="mt-4 text-base font-semibold text-sky-700 sm:text-lg">
+              Enter bosilganda chek darhol chiqadi
+            </p>
+          </div>
 
-          <div className="sampi-lor-ticket-actions">
+          <div className="mx-auto mt-5 flex max-w-2xl flex-col justify-center gap-3 sm:flex-row">
             <Button
               type="button"
-              className="sampi-lor-ticket-button sampi-lor-ticket-button-primary"
+              className="min-h-12 w-full bg-sky-600 px-8 text-base hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
               loading={issuingLorTicket}
               loadingText="Chiqarilmoqda..."
               onClick={handleIssueLorTicket}
@@ -1184,7 +1199,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
               <Button
                 type="button"
                 variant="secondary"
-                className="sampi-lor-ticket-button sampi-lor-ticket-button-secondary"
+                className="min-h-12 w-full px-8 text-base sm:w-auto"
                 loading={reprintingLorTicket}
                 loadingText="Chiqarilmoqda..."
                 onClick={handleReprintIssuedLorTicket}
@@ -1195,36 +1210,37 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
           </div>
 
           {(lastIssuedCode || latestPrintEvent || recentIssuedTickets.length || refreshing) ? (
-            <div className="sampi-lor-ticket-status">
-              <div className="sampi-lor-ticket-status-top">
+            <div className="mx-auto mt-5 max-w-3xl rounded-lg border border-slate-200 bg-slate-50 p-3 text-left">
+              <div className="flex flex-col gap-2 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
                 {lastIssuedCode ? (
                   <span>
-                    Oxirgi raqam: <b>{lastIssuedCode}</b>
+                    Oxirgi raqam: <b className="text-slate-900">{lastIssuedCode}</b>
                   </span>
                 ) : (
                   <span>Hali raqam chiqarilmagan</span>
                 )}
-                {refreshing ? <span>Raqam yangilanmoqda...</span> : null}
+                {refreshing ? <span className="font-semibold text-slate-500">Raqam yangilanmoqda...</span> : null}
               </div>
 
               {latestPrintEvent ? (
                 <div
-                  className={`sampi-lor-ticket-event ${
+                  className={`mt-3 rounded-lg border px-3 py-2 text-xs font-semibold ${
                     printEventToneClasses[latestPrintEvent.tone] || printEventToneClasses.info
                   }`}
                 >
-                  <span>{latestPrintEvent.at}</span>
+                  <span className="mr-2 opacity-70">{latestPrintEvent.at}</span>
                   {latestPrintEvent.message}
                 </div>
               ) : null}
 
               {recentIssuedTickets.length ? (
-                <div className="sampi-lor-ticket-reprint-list">
-                  <span>Tez qayta chiqarish:</span>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-500">Tez qayta chiqarish:</span>
                   {recentIssuedTickets.map((ticket) => (
                     <button
                       key={ticket.id || ticket._id || ticket.queueCode}
                       type="button"
+                      className="rounded-md border border-sky-200 bg-white px-3 py-1.5 text-sm font-semibold text-sky-800 transition-colors hover:border-sky-400 hover:bg-sky-50"
                       onClick={() => handleReprintIssuedLorTicket(ticket)}
                     >
                       {ticket.queueCode}
@@ -1236,10 +1252,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
           ) : null}
         </div>
 
-        <div className="sampi-lor-ticket-alerts">
-          <Alert type="success" message={success} />
-          <Alert type="error" message={error} />
-        </div>
+        <Alert type="success" message={success} />
+        <Alert type="error" message={error} />
       </div>
     );
   }
