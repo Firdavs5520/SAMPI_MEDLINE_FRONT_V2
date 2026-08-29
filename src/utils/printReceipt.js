@@ -362,13 +362,15 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
           width: 100%;
         }
         .title {
-          width: 100%;
-          font-size: 25px;
+          width: 90%;
+          max-width: 90%;
+          font-size: 24px;
           font-weight: 600;
           line-height: 1.05;
           margin-top: 0;
           white-space: nowrap;
           letter-spacing: 0;
+          overflow: hidden;
         }
         .divider {
           border: 0;
@@ -377,27 +379,37 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
           margin: 4px 0;
         }
         .small {
+          width: 90%;
+          max-width: 90%;
           font-size: 21px;
           font-weight: 600;
           line-height: 1.05;
           letter-spacing: 0;
+          overflow: hidden;
         }
         .number {
           font-size: 132px;
           font-weight: 700;
           margin: 0;
           letter-spacing: 0;
-          width: 100%;
+          width: 90%;
+          max-width: 90%;
           text-align: center;
           line-height: 0.86;
           white-space: nowrap;
           font-variant-numeric: tabular-nums;
+          overflow: hidden;
         }
         .footer {
-          font-size: 17px;
+          width: 90%;
+          max-width: 90%;
+          font-size: 16px;
           font-weight: 600;
           line-height: 1.15;
           margin-top: 3px;
+          white-space: nowrap;
+          letter-spacing: 0;
+          overflow: hidden;
         }
       }
       html, body {
@@ -428,13 +440,15 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         color: #000;
       }
       .title {
-        width: 100%;
-        font-size: 25px;
+        width: 90%;
+        max-width: 90%;
+        font-size: 24px;
         font-weight: 600;
         line-height: 1.05;
         margin-top: 0;
         white-space: nowrap;
         letter-spacing: 0;
+        overflow: hidden;
       }
       .divider {
         border: 0;
@@ -443,27 +457,37 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         margin: 4px auto;
       }
       .small {
+        width: 90%;
+        max-width: 90%;
         font-size: 21px;
         font-weight: 600;
         line-height: 1.05;
         letter-spacing: 0;
+        overflow: hidden;
       }
       .number {
         font-size: 132px;
         font-weight: 700;
         margin: 0;
         letter-spacing: 0;
-        width: 100%;
+        width: 90%;
+        max-width: 90%;
         text-align: center;
         line-height: 0.86;
         white-space: nowrap;
         font-variant-numeric: tabular-nums;
+        overflow: hidden;
       }
       .footer {
-        font-size: 17px;
+        width: 90%;
+        max-width: 90%;
+        font-size: 16px;
         font-weight: 600;
         line-height: 1.15;
         margin-top: 3px;
+        white-space: nowrap;
+        letter-spacing: 0;
+        overflow: hidden;
       }
     </style>
   </head>

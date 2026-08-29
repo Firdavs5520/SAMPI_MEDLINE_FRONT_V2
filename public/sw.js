@@ -1,12 +1,12 @@
-const CACHE_NAME = "sampi-medline-v18";
+const CACHE_NAME = "sampi-medline-v19";
 const CLIENT_REFRESH_DELAY_MS = 1800;
 const APP_SHELL = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
-  "/manifest.webmanifest?v=13",
+  "/manifest.webmanifest?v=14",
   "/manifest-tv.webmanifest",
-  "/manifest-tv.webmanifest?v=6",
+  "/manifest-tv.webmanifest?v=7",
   "/favicon.svg",
   "/favicon.svg?v=7",
   "/favicon.ico",
