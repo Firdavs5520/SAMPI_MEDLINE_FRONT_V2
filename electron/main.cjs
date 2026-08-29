@@ -174,6 +174,29 @@ const getFallbackReceiptMetrics = (html, error) => {
 
 const waitForReceiptLayout = async (_webContents, html) => getFallbackReceiptMetrics(html);
 
+const waitForReceiptFonts = async (webContents) => {
+  try {
+    await webContents.executeJavaScript(
+      `
+        new Promise((resolve) => {
+          const done = () => requestAnimationFrame(() => requestAnimationFrame(resolve));
+          if (document.fonts && document.fonts.ready) {
+            Promise.race([
+              document.fonts.ready.catch(() => undefined),
+              new Promise((fontResolve) => setTimeout(fontResolve, 800))
+            ]).then(done).catch(done);
+            return;
+          }
+          done();
+        })
+      `,
+      true
+    );
+  } catch {
+    // Printing must continue even if a driver/webview cannot report font readiness.
+  }
+};
+
 const resolveReceiptPageSize = async (webContents, html) => {
   const metrics = await waitForReceiptLayout(webContents, html);
   if (!metrics.textLength || metrics.height < 24) {
@@ -460,7 +483,7 @@ const buildThermalReceiptFromHtml = (html) => {
         { text: "LOR", align: "center", bold: true },
         { kind: "divider" },
         { text: "Navbat raqami:", align: "center", bold: true },
-        { text: queueCode, align: "center", bold: true, size: "double" },
+        { text: queueCode, align: "center", bold: true, size: "large" },
         { kind: "divider" },
         { text: "Tashrifingiz uchun rahmat!", align: "center" },
       ],
@@ -884,6 +907,7 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
     const safeHtml = stripExecutableReceiptContent(html);
     const encodedHtml = Buffer.from(safeHtml, "utf8").toString("base64");
     await printWindow.loadURL(`data:text/html;charset=utf-8;base64,${encodedHtml}`);
+    await waitForReceiptFonts(printWindow.webContents);
     const receiptPageSize = await resolveReceiptPageSize(printWindow.webContents, safeHtml);
 
     const printer = await resolveReceiptPrinter(printWindow.webContents, options.printerName);
@@ -912,13 +936,16 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
       margins: {
         marginType: "none",
       },
-      pageSize: {
-        width: receiptPageSize.width,
-        height: receiptPageSize.height,
-      },
       landscape: false,
       scaleFactor: 100,
     };
+
+    if (!options.useDriverPageSize) {
+      printOptions.pageSize = {
+        width: receiptPageSize.width,
+        height: receiptPageSize.height,
+      };
+    }
 
     await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {

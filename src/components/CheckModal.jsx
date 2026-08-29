@@ -10,16 +10,26 @@ const escapeHtml = (value) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
+const golosPrintImport =
+  '@import url("https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap");';
+const golosPrintFamily = '"Golos Text", Arial, sans-serif';
+
 const getItemType = (item, checkType) => String(item?.itemType || checkType || "").toLowerCase();
 const getItemsByType = (check, type) =>
   (check?.items || []).filter((item) => getItemType(item, check.type) === type);
 const getLineTotal = (item) => (Number(item?.price) || 0) * (Number(item?.quantity) || 0);
 const formatLorIdentity = (value) => {
   const raw = String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (raw === "lor1" || raw === "lor") return "LOR";
   const match = raw.match(/lor(\d+)/);
   if (match) return `Lor-${match[1]}`;
   if (!raw) return "-";
   return String(value || "-");
+};
+
+const formatQueueCode = (value) => {
+  const safe = String(value || "").replace(/\D/g, "");
+  return safe ? safe.padStart(2, "0") : "";
 };
 
 const buildRowsHtml = (items) =>
@@ -44,6 +54,22 @@ const buildPrintHtml = (check) => {
     serviceItems.length > 0
       ? `<div class="section-title">Xizmatlar</div><div class="divider"></div>${buildRowsHtml(serviceItems)}<div class="divider"></div>`
       : "";
+  const creatorRole = String(check?.createdBy?.role || "").toLowerCase();
+  const lorIdentityLine =
+    creatorRole === "lor"
+      ? `<div class="text">${escapeHtml(formatLorIdentity(check?.createdBy?.lorIdentity))}</div>`
+      : "";
+  const lorQueueCode = formatQueueCode(check?.lorQueue?.queueCode || check?.queueCode);
+  const lorQueueLine =
+    creatorRole === "lor" && lorQueueCode
+      ? `<div class="queue-line">Navbat: ${escapeHtml(lorQueueCode)}</div>`
+      : "";
+  const specialistLine =
+    creatorRole === "nurse"
+      ? `<div class="meta"><div>Hamshira: ${escapeHtml(check.createdBy?.name || "-")}</div></div>`
+      : creatorRole === "lor"
+        ? `<div class="meta"><div>${escapeHtml(check.createdBy?.name || "-")}</div></div>`
+        : "";
 
   return `<!doctype html>
 <html lang="uz">
@@ -51,19 +77,24 @@ const buildPrintHtml = (check) => {
     <meta charset="UTF-8" />
     <title>Chek</title>
     <style>
+      ${golosPrintImport}
       @page { size: 58mm auto; margin: 0; }
       html, body {
         margin: 0;
         padding: 0;
         width: 58mm;
-        font-family: Arial, sans-serif;
+        font-family: ${golosPrintFamily};
         font-size: 13px;
         color: #000;
         background: #fff;
       }
 
+      * {
+        font-family: ${golosPrintFamily};
+      }
+
       .ticket { width: 58mm; margin: 0; padding: 0; }
-      .inner { width: 48mm; margin: 0 auto; padding: 6px 0; }
+      .inner { width: 52mm; margin: 0 auto; padding: 6px 0; }
       .check-title {
         text-align: center;
         font-size: 30px;
@@ -84,6 +115,12 @@ const buildPrintHtml = (check) => {
         text-align: center;
         font-size: 18px;
         font-weight: 800;
+      }
+      .queue-line {
+        margin: 4px 0 2px;
+        text-align: center;
+        font-size: 22px;
+        font-weight: 900;
       }
       .row {
         display: flex;
@@ -130,14 +167,14 @@ const buildPrintHtml = (check) => {
         border: 1px solid #111;
         background: #fff;
         padding: 6px 8px;
-        font-family: Arial, sans-serif;
+        font-family: ${golosPrintFamily};
         font-size: 12px;
         cursor: pointer;
       }
     </style>
   </head>
   <body>
-    <div class="ticket">
+    <div class="ticket" data-sampi-receipt="check">
       <div class="inner">
         <div class="help">Chop etish uchun Enter tugmasini bosing</div>
         <div class="check-title">SAMPI MEDLINE</div>
@@ -145,11 +182,8 @@ const buildPrintHtml = (check) => {
 
         <div class="text">Bemor: ${escapeHtml(check.patient?.fullName || "-")}</div>
         <div class="text">Sana: ${escapeHtml(formatDateTime(check.createdAt))}</div>
-        ${
-          String(check?.createdBy?.role || "").toLowerCase() === "lor"
-            ? `<div class="text">${escapeHtml(formatLorIdentity(check?.createdBy?.lorIdentity))}</div>`
-            : ""
-        }
+        ${lorIdentityLine}
+        ${lorQueueLine}
 
         <div class="divider"></div>
         ${medicineSection}
@@ -161,13 +195,7 @@ const buildPrintHtml = (check) => {
         </div>
         <div class="divider"></div>
 
-        ${
-          String(check?.createdBy?.role || "").toLowerCase() === "nurse"
-            ? `<div class="meta"><div>Hamshira: ${escapeHtml(check.createdBy?.name || "-")}</div></div>`
-            : String(check?.createdBy?.role || "").toLowerCase() === "lor"
-              ? `<div class="meta"><div>${escapeHtml(check.createdBy?.name || "-")}</div></div>`
-              : ""
-        }
+        ${specialistLine}
         <div class="footer">Doimo sog'-salomat bo'ling</div>
         <button id="printBtn" class="print-btn">Chop etish (Enter tugmasi)</button>
       </div>
@@ -178,7 +206,15 @@ const buildPrintHtml = (check) => {
       function runPrint() {
         if (didPrint) return;
         didPrint = true;
-        window.print();
+        const printNow = () => window.print();
+        if (document.fonts && document.fonts.ready) {
+          Promise.race([
+            document.fonts.ready.catch(() => undefined),
+            new Promise((resolve) => setTimeout(resolve, 600))
+          ]).then(printNow).catch(printNow);
+          return;
+        }
+        printNow();
       }
 
       window.onload = function () {
