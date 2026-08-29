@@ -12,7 +12,7 @@ const RECEIPT_PRINTER_NAME = process.env.SAMPI_RECEIPT_PRINTER || "XP-58";
 const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
 const AUTO_INSTALL_DELAY_MS = 5000;
 const PRINT_JOB_TIMEOUT_MS = 20000;
-const PRINT_WINDOW_CLOSE_DELAY_MS = 1500;
+const PRINT_WINDOW_CLOSE_DELAY_MS = 350;
 const RECEIPT_WIDTH_MICRONS = 58000;
 const MICRONS_PER_CSS_PIXEL = 25400 / 96;
 const RECEIPT_HEIGHT_PADDING_MICRONS = 4000;
@@ -173,29 +173,6 @@ const getFallbackReceiptMetrics = (html, error) => {
 };
 
 const waitForReceiptLayout = async (_webContents, html) => getFallbackReceiptMetrics(html);
-
-const waitForReceiptFonts = async (webContents) => {
-  try {
-    await webContents.executeJavaScript(
-      `
-        new Promise((resolve) => {
-          const done = () => requestAnimationFrame(() => requestAnimationFrame(resolve));
-          if (document.fonts && document.fonts.ready) {
-            Promise.race([
-              document.fonts.ready.catch(() => undefined),
-              new Promise((fontResolve) => setTimeout(fontResolve, 800))
-            ]).then(done).catch(done);
-            return;
-          }
-          done();
-        })
-      `,
-      true
-    );
-  } catch {
-    // Printing must continue even if a driver/webview cannot report font readiness.
-  }
-};
 
 const resolveReceiptPageSize = async (webContents, html) => {
   const metrics = await waitForReceiptLayout(webContents, html);
@@ -483,7 +460,7 @@ const buildThermalReceiptFromHtml = (html) => {
         { text: "LOR", align: "center", bold: true },
         { kind: "divider" },
         { text: "Navbat raqami:", align: "center", bold: true },
-        { text: queueCode, align: "center", bold: true, size: "large" },
+        { text: queueCode, align: "center", bold: true, size: "double" },
         { kind: "divider" },
         { text: "Tashrifingiz uchun rahmat!", align: "center" },
       ],
@@ -803,7 +780,7 @@ try {
   }
 }
 
-Start-Sleep -Milliseconds 2500
+Start-Sleep -Milliseconds 800
 $snapshot = Get-SampiPrinterSnapshot
 $jobs = Get-SampiPrintJobs
 $failedJobs = @($jobs | Where-Object { [string]$_.JobStatus -match "Error|Retained|Offline|Blocked|Paper|Paused" })
@@ -907,7 +884,6 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
     const safeHtml = stripExecutableReceiptContent(html);
     const encodedHtml = Buffer.from(safeHtml, "utf8").toString("base64");
     await printWindow.loadURL(`data:text/html;charset=utf-8;base64,${encodedHtml}`);
-    await waitForReceiptFonts(printWindow.webContents);
     const receiptPageSize = await resolveReceiptPageSize(printWindow.webContents, safeHtml);
 
     const printer = await resolveReceiptPrinter(printWindow.webContents, options.printerName);
@@ -936,16 +912,13 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
       margins: {
         marginType: "none",
       },
+      pageSize: {
+        width: receiptPageSize.width,
+        height: receiptPageSize.height,
+      },
       landscape: false,
       scaleFactor: 100,
     };
-
-    if (!options.useDriverPageSize) {
-      printOptions.pageSize = {
-        width: receiptPageSize.width,
-        height: receiptPageSize.height,
-      };
-    }
 
     await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {

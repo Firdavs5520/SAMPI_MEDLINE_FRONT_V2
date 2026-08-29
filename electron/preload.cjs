@@ -40,10 +40,7 @@ const injectSilentReceiptPrint = () => {
           typeof window.sampiDesktop.printReceiptHtml === "function"
         ) {
           const html = "<!doctype html>\\n" + document.documentElement.outerHTML;
-          window.sampiDesktop.printReceiptHtml(html, {
-            forceHtmlPrint: true,
-            useDriverPageSize: true
-          }).then(notifyAfterPrint).catch((error) => {
+          window.sampiDesktop.printReceiptHtml(html).then(notifyAfterPrint).catch((error) => {
             console.error("Silent receipt print failed:", error);
             window.dispatchEvent(new CustomEvent("sampi:receipt-print-error", {
               detail: error?.message || "Chekni avtomatik printerga yuborib bo'lmadi."

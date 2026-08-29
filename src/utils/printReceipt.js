@@ -40,13 +40,6 @@ const formatQueueCode = (value) => {
   return safe ? safe.padStart(2, "0") : "";
 };
 
-const golosPrintImport =
-  '@import url("https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap");';
-const golosPrintFamily = '"Golos Text", Arial, sans-serif';
-
-const getQueueDigitClass = (value) =>
-  `digits-${Math.min(4, Math.max(1, String(value || "").length))}`;
-
 const buildCheckThermalReceipt = (check) => {
   const creatorRole = String(check?.createdBy?.role || "").toLowerCase();
   const lorQueueCode = formatQueueCode(check?.lorQueue?.queueCode || check?.queueCode);
@@ -117,7 +110,7 @@ const buildLorQueueThermalReceipt = (ticket) => {
       { text: "LOR", align: "center", bold: true, size: "double" },
       { kind: "divider" },
       { text: "Navbat raqami:", align: "center", bold: true },
-      { text: queueCode || "00", align: "center", bold: true, size: "large" },
+      { text: queueCode || "00", align: "center", bold: true, size: "double" },
       { kind: "divider" },
       { text: "Tashrifingiz uchun rahmat!", align: "center" },
     ],
@@ -174,7 +167,6 @@ export const buildCheckPrintHtml = (check, options = {}) => {
     <meta charset="UTF-8" />
     <title>Chek</title>
     <style>
-      ${golosPrintImport}
       @page { size: 58mm auto; margin: 0; }
       html, body {
         margin: 0;
@@ -182,7 +174,7 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         width: 58mm;
         min-height: 0;
         overflow: visible;
-        font-family: ${golosPrintFamily};
+        font-family: Arial, sans-serif;
         font-size: 12px;
         color: #000;
         background: #fff;
@@ -191,11 +183,11 @@ export const buildCheckPrintHtml = (check, options = {}) => {
       }
 
       * {
-        font-family: ${golosPrintFamily};
+        font-family: Arial, sans-serif;
       }
 
       .ticket { box-sizing: border-box; width: 58mm; margin: 0; padding: 0 0 2mm; }
-      .inner { width: 52mm; margin: 0 auto; padding: 6px 0; }
+      .inner { width: 48mm; margin: 0 auto; padding: 6px 0; }
       .check-title {
         text-align: center;
         font-size: 14px;
@@ -216,7 +208,7 @@ export const buildCheckPrintHtml = (check, options = {}) => {
       .queue-line {
         margin: 4px 0 2px;
         text-align: center;
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 900;
       }
       .section-title {
@@ -291,19 +283,11 @@ export const buildCheckPrintHtml = (check, options = {}) => {
       function runPrint() {
         if (didPrint) return;
         didPrint = true;
-        const printNow = () => window.print();
-        if (document.fonts && document.fonts.ready) {
-          Promise.race([
-            document.fonts.ready.catch(() => undefined),
-            new Promise((resolve) => setTimeout(resolve, 600))
-          ]).then(printNow).catch(printNow);
-          return;
-        }
-        printNow();
+        window.print();
       }
 
       window.onload = function () {
-        setTimeout(runPrint, 120);
+        setTimeout(runPrint, 80);
       };
 
       document.addEventListener("keydown", function (event) {
@@ -328,7 +312,6 @@ export const buildCheckPrintHtml = (check, options = {}) => {
 export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
   const { inline = false } = options;
   const queueCode = formatQueueCode(ticket?.queueCode);
-  const queueDigitClass = getQueueDigitClass(queueCode || "00");
 
   return `<!doctype html>
 <html lang="uz">
@@ -337,7 +320,6 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LOR navbat</title>
     <style>
-      ${golosPrintImport}
       @media print {
         @page {
           size: 58mm auto;
@@ -347,7 +329,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
           margin: 0;
           padding: 0;
           width: 58mm;
-          font-family: ${golosPrintFamily};
+          font-family: "Golos Text", Arial, sans-serif;
           text-align: center;
           display: flex;
           justify-content: center;
@@ -356,13 +338,11 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
           display: flex;
           flex-direction: column;
           align-items: center;
-          box-sizing: border-box;
-          width: 58mm;
-          padding: 0 1.5mm 2mm;
+          width: 100%;
         }
         .title {
           font-size: 22px;
-          font-weight: 900;
+          font-weight: 700;
           margin-top: 0;
         }
         .divider {
@@ -374,20 +354,14 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
           font-size: 22px;
         }
         .number {
-          display: block;
-          font-weight: 900;
-          margin: 1mm 0 0;
-          letter-spacing: 0;
+          font-size: 110px;
+          font-weight: 800;
+          margin: 0;
+          letter-spacing: 2px;
           width: 100%;
           text-align: center;
-          line-height: 0.88;
-          font-variant-numeric: tabular-nums;
-          font-feature-settings: "tnum" 1;
+          line-height: 1;
         }
-        .number.digits-1 { font-size: 205px; }
-        .number.digits-2 { font-size: 176px; }
-        .number.digits-3 { font-size: 128px; }
-        .number.digits-4 { font-size: 96px; }
         .footer {
           font-size: 18px;
           margin-top: 5px;
@@ -404,22 +378,19 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
       }
       body {
         background: #fff;
-        font-family: ${golosPrintFamily};
+        font-family: "Golos Text", Arial, sans-serif;
         text-align: center;
-      }
-      * {
-        font-family: ${golosPrintFamily};
       }
       .check {
         box-sizing: border-box;
         width: 58mm;
-        padding: 0 1.5mm 2mm;
+        padding: 0 0 2mm;
         background: #fff;
         color: #000;
       }
       .title {
         font-size: 22px;
-        font-weight: 900;
+        font-weight: 700;
         margin-top: 0;
       }
       .divider {
@@ -431,20 +402,12 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         font-size: 22px;
       }
       .number {
-        display: block;
-        width: 100%;
-        font-weight: 900;
-        margin: 1mm 0 0;
-        letter-spacing: 0;
+        font-size: 110px;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: 2px;
         line-height: 1;
-        text-align: center;
-        font-variant-numeric: tabular-nums;
-        font-feature-settings: "tnum" 1;
       }
-      .number.digits-1 { font-size: 205px; }
-      .number.digits-2 { font-size: 176px; }
-      .number.digits-3 { font-size: 128px; }
-      .number.digits-4 { font-size: 96px; }
       .footer {
         font-size: 18px;
         margin-top: 5px;
@@ -459,7 +422,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
       <div class="divider"></div>
       <div class="small">Navbat raqami:</div>
       <div class="divider"></div>
-      <div class="number ${queueDigitClass}">${escapeHtml(queueCode || "00")}</div>
+      <div class="number">${escapeHtml(queueCode || "00")}</div>
       <div class="divider"></div>
       <div class="footer">Tashrifingiz uchun rahmat!</div>
       <div class="divider"></div>
@@ -473,19 +436,11 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
       function runPrint() {
         if (didPrint) return;
         didPrint = true;
-        const printNow = () => window.print();
-        if (document.fonts && document.fonts.ready) {
-          Promise.race([
-            document.fonts.ready.catch(() => undefined),
-            new Promise((resolve) => setTimeout(resolve, 600))
-          ]).then(printNow).catch(printNow);
-          return;
-        }
-        printNow();
+        window.print();
       }
 
       window.onload = function () {
-        setTimeout(runPrint, 120);
+        setTimeout(runPrint, 80);
       };
 
       document.addEventListener("keydown", function (event) {
@@ -545,11 +500,7 @@ const printHtmlWithDesktopApp = async (html, options = {}) => {
   if (typeof desktopPrint !== "function") return null;
 
   try {
-    const result = await desktopPrint(html, {
-      forceHtmlPrint: true,
-      useDriverPageSize: true,
-      ...options,
-    });
+    const result = await desktopPrint(html, options);
     return Boolean(result?.ok ?? true);
   } catch (error) {
     throw new Error(cleanDesktopPrintError(error));
@@ -566,7 +517,7 @@ const openBrowserPrintTab = () => {
 
   printTab.document.open();
   printTab.document.write(
-    `<!doctype html><html><head><title>Chek tayyorlanmoqda...</title><style>${golosPrintImport}body{font-family:${golosPrintFamily};font-size:16px;font-weight:700;padding:12px;}</style></head><body>Chek tayyorlanmoqda...</body></html>`
+    "<!doctype html><html><head><title>Chek tayyorlanmoqda...</title><style>body{font-family:Arial,sans-serif;font-size:16px;font-weight:700;padding:12px;}</style></head><body>Chek tayyorlanmoqda...</body></html>"
   );
   printTab.document.close();
   return {
