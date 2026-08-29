@@ -621,11 +621,13 @@ const encodePowerShellArg = (value) => Buffer.from(String(value || ""), "utf8").
 const RAW_PRINT_POWERSHELL_SCRIPT = `
 param(
   [Parameter(Mandatory=$true)][string]$PrinterNameBase64,
-  [Parameter(Mandatory=$true)][string]$DataPathBase64
+  [Parameter(Mandatory=$true)][string]$DataPathBase64,
+  [Parameter(Mandatory=$true)][string]$JobNameBase64
 )
 
 $printerName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($PrinterNameBase64))
 $dataPath = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($DataPathBase64))
+$jobName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($JobNameBase64))
 
 $source = @"
 using System;
@@ -671,16 +673,81 @@ function ThrowLastPrinterError([string]$message) {
   throw "$message ($code): $detail"
 }
 
+function Get-SampiPrinterSnapshot {
+  try {
+    $escapedName = $printerName.Replace("'", "''")
+    return Get-CimInstance Win32_Printer -Filter "Name='$escapedName'" -ErrorAction Stop
+  } catch {
+    return $null
+  }
+}
+
+function Get-SampiPrintJobs {
+  try {
+    return @(Get-PrintJob -PrinterName $printerName -ErrorAction Stop | Where-Object { $_.DocumentName -eq $jobName })
+  } catch {
+    return @()
+  }
+}
+
+function Test-SampiBadPrinterState($snapshot) {
+  if ($null -eq $snapshot) {
+    return $false
+  }
+
+  if ($snapshot.WorkOffline) {
+    return $true
+  }
+
+  if ([string]$snapshot.Status -eq "Error") {
+    return $true
+  }
+
+  if (($snapshot.PrinterState -as [int]) -ne 0) {
+    return $true
+  }
+
+  $detected = $snapshot.DetectedErrorState -as [int]
+  return $detected -gt 0 -and $detected -ne 2
+}
+
+function Get-SampiPrinterStatusText($snapshot, $jobs) {
+  $status = if ($null -eq $snapshot) { "topilmadi" } else { [string]$snapshot.Status }
+  $offline = if ($null -eq $snapshot) { "unknown" } else { [string]$snapshot.WorkOffline }
+  $state = if ($null -eq $snapshot) { "unknown" } else { [string]$snapshot.PrinterState }
+  $detected = if ($null -eq $snapshot) { "unknown" } else { [string]$snapshot.DetectedErrorState }
+  $jobStatus = ($jobs | ForEach-Object { [string]$_.JobStatus }) -join ", "
+  if ([string]::IsNullOrWhiteSpace($jobStatus)) {
+    $jobStatus = "yo'q"
+  }
+  return "Status=$status; WorkOffline=$offline; PrinterState=$state; DetectedErrorState=$detected; JobStatus=$jobStatus"
+}
+
 Add-Type -TypeDefinition $source
 $data = [IO.File]::ReadAllBytes($dataPath)
 $hPrinter = [IntPtr]::Zero
+
+$snapshot = Get-SampiPrinterSnapshot
+if ($null -ne $snapshot -and $snapshot.WorkOffline) {
+  try {
+    $snapshot.WorkOffline = $false
+    Set-CimInstance -InputObject $snapshot -ErrorAction Stop | Out-Null
+    Start-Sleep -Milliseconds 700
+    $snapshot = Get-SampiPrinterSnapshot
+  } catch {
+  }
+}
+
+if (Test-SampiBadPrinterState $snapshot) {
+  throw ("XP-58 printer Windowsda tayyor emas. " + (Get-SampiPrinterStatusText $snapshot @()))
+}
 
 if (-not [SampiRawPrinter]::OpenPrinter($printerName, [ref]$hPrinter, [IntPtr]::Zero)) {
   ThrowLastPrinterError "Printer ochilmadi"
 }
 
 $doc = New-Object SampiRawPrinter+DOCINFOA
-$doc.pDocName = "Sampi Medline receipt"
+$doc.pDocName = $jobName
 $doc.pDataType = "RAW"
 
 try {
@@ -712,6 +779,18 @@ try {
     [void][SampiRawPrinter]::ClosePrinter($hPrinter)
   }
 }
+
+Start-Sleep -Milliseconds 2500
+$snapshot = Get-SampiPrinterSnapshot
+$jobs = Get-SampiPrintJobs
+$failedJobs = @($jobs | Where-Object { [string]$_.JobStatus -match "Error|Retained|Offline|Blocked|Paper|Paused" })
+if ((Test-SampiBadPrinterState $snapshot) -or $failedJobs.Count -gt 0) {
+  try {
+    $jobs | Remove-PrintJob -ErrorAction SilentlyContinue
+  } catch {
+  }
+  throw ("XP-58 printer chekni chiqara olmadi. " + (Get-SampiPrinterStatusText $snapshot $jobs))
+}
 `;
 
 const runRawPrinterScript = async (printerName, data) => {
@@ -719,6 +798,7 @@ const runRawPrinterScript = async (printerName, data) => {
   const nonce = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const dataPath = path.join(tempDir, `${nonce}.bin`);
   const scriptPath = path.join(tempDir, `${nonce}.ps1`);
+  const jobName = `Sampi Medline receipt ${nonce}`;
 
   await fs.mkdir(tempDir, { recursive: true });
   await fs.writeFile(dataPath, data);
@@ -737,6 +817,7 @@ const runRawPrinterScript = async (printerName, data) => {
           scriptPath,
           encodePowerShellArg(printerName),
           encodePowerShellArg(dataPath),
+          encodePowerShellArg(jobName),
         ],
         { windowsHide: true }
       );
@@ -766,6 +847,8 @@ const runRawPrinterScript = async (printerName, data) => {
         reject(new Error((stderr || stdout || `PowerShell printer script failed with ${code}`).trim()));
       });
     });
+
+    return { jobName };
   } finally {
     await Promise.allSettled([fs.unlink(dataPath), fs.unlink(scriptPath)]);
   }
@@ -773,11 +856,12 @@ const runRawPrinterScript = async (printerName, data) => {
 
 const printReceiptAsRawText = async (printerName, receipt) => {
   const payload = buildEscPosTextPayload(receipt);
-  await runRawPrinterScript(printerName, payload);
+  const job = await runRawPrinterScript(printerName, payload);
   return {
     mode: "raw-text",
     width: THERMAL_LINE_CHARS,
     bytes: payload.length,
+    jobName: job.jobName,
   };
 };
 
