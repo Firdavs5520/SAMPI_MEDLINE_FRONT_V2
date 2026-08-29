@@ -5,7 +5,7 @@ import { extractErrorMessage } from "../utils/format.js";
 
 const POLL_INTERVAL_MS = 4000;
 const STREAM_RECONNECT_MS = 2500;
-const TV_MANIFEST_PATH = "/manifest-tv.webmanifest?v=2";
+const TV_MANIFEST_PATH = "/manifest-tv.webmanifest?v=3";
 const WAITING_TICKET_LIMIT = 80;
 const ADMIN_EXIT_PRESS_COUNT = 5;
 const ADMIN_EXIT_WINDOW_MS = 4500;
