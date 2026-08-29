@@ -8,15 +8,25 @@ import "./index.css";
 
 const VERSION_NOTICE_ID = "sampi-version-toast";
 const VERSION_NOTICE_HIDE_MS = 6200;
-const VERSION_UPDATE_CHECK_MS = 5 * 60 * 1000;
-const INDEX_VERSION_CHECK_MS = 2 * 60 * 1000;
-const TV_VERSION_RELOAD_DELAY_MS = 1800;
+const VERSION_UPDATE_CHECK_MS = 60 * 1000;
+const INDEX_VERSION_CHECK_MS = 60 * 1000;
+const VERSION_AUTO_RELOAD_DELAY_MS = 1800;
 let versionNoticeTimer;
 let versionReloadTimer;
 let currentAssetSignature = "";
 let indexVersionWatcherStarted = false;
 
 const isTvScreenPath = () => window.location.pathname.startsWith("/tv");
+
+const isDesktopApp = () => {
+  try {
+    return Boolean(window.sampiDesktop) || /Electron\//i.test(window.navigator.userAgent || "");
+  } catch {
+    return false;
+  }
+};
+
+const shouldAutoReloadForVersion = () => isTvScreenPath() || isDesktopApp();
 
 const normalizeAssetUrl = (value) => {
   if (!value) return "";
@@ -41,12 +51,12 @@ const getAssetSignatureFromHtml = (html) => {
   return getAssetSignatureFromDocument(parsedDocument);
 };
 
-const scheduleTvVersionReload = () => {
-  if (!isTvScreenPath() || versionReloadTimer) return;
+const scheduleVersionReload = () => {
+  if (!shouldAutoReloadForVersion() || versionReloadTimer) return;
 
   versionReloadTimer = window.setTimeout(() => {
     window.location.reload();
-  }, TV_VERSION_RELOAD_DELAY_MS);
+  }, VERSION_AUTO_RELOAD_DELAY_MS);
 };
 
 const showVersionNotice = ({ activated = false, autoReload = false } = {}) => {
@@ -74,11 +84,14 @@ const showVersionNotice = ({ activated = false, autoReload = false } = {}) => {
     title.textContent = activated ? "Yangi versiya faollashdi" : "Yangi versiya tayyor";
   }
   if (text) {
-    text.textContent = autoReload
+    const autoReloadText = isTvScreenPath()
       ? "TV ekrani o'zi yangilanmoqda"
+      : "Ilova o'zi yangilanmoqda";
+    text.textContent = autoReload
+      ? autoReloadText
       : activated
-      ? "Ekran tinch ishlashda davom etadi"
-      : "Keyingi refreshda avtomatik yangilanadi";
+        ? "Ekran tinch ishlashda davom etadi"
+        : "Keyingi refreshda avtomatik yangilanadi";
   }
 
   const isTvScreen = isTvScreenPath();
@@ -92,11 +105,11 @@ const showVersionNotice = ({ activated = false, autoReload = false } = {}) => {
 };
 
 const handleNewVersionReady = ({ activated = false } = {}) => {
-  const autoReload = isTvScreenPath();
+  const autoReload = shouldAutoReloadForVersion();
   showVersionNotice({ activated, autoReload });
 
   if (autoReload) {
-    scheduleTvVersionReload();
+    scheduleVersionReload();
   }
 };
 

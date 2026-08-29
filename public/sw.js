@@ -1,11 +1,12 @@
-const CACHE_NAME = "sampi-medline-v15";
+const CACHE_NAME = "sampi-medline-v16";
+const CLIENT_REFRESH_DELAY_MS = 1800;
 const APP_SHELL = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
-  "/manifest.webmanifest?v=10",
+  "/manifest.webmanifest?v=11",
   "/manifest-tv.webmanifest",
-  "/manifest-tv.webmanifest?v=3",
+  "/manifest-tv.webmanifest?v=4",
   "/favicon.svg",
   "/favicon.svg?v=7",
   "/favicon.ico",
@@ -27,7 +28,39 @@ self.addEventListener("install", (event) => {
   );
 });
 
+const isElectronRuntime = () => /Electron\//i.test(self.navigator?.userAgent || "");
+
+const shouldRefreshClient = (client) => {
+  try {
+    const url = new URL(client.url);
+    if (url.origin !== self.location.origin) return false;
+    if (url.pathname.startsWith("/print")) return false;
+    return isElectronRuntime() || url.pathname.startsWith("/tv");
+  } catch {
+    return false;
+  }
+};
+
+const refreshVersionClients = async () => {
+  await new Promise((resolve) => setTimeout(resolve, CLIENT_REFRESH_DELAY_MS));
+  const clientList = await self.clients.matchAll({
+    type: "window",
+    includeUncontrolled: true
+  });
+
+  await Promise.all(
+    clientList.map((client) => {
+      if (!shouldRefreshClient(client) || typeof client.navigate !== "function") {
+        return Promise.resolve();
+      }
+      return client.navigate(client.url).catch(() => null);
+    })
+  );
+};
+
 self.addEventListener("activate", (event) => {
+  let hadPreviousCache = false;
+
   event.waitUntil(
     caches
       .keys()
@@ -35,6 +68,7 @@ self.addEventListener("activate", (event) => {
         Promise.all(
           keys.map((key) => {
             if (key !== CACHE_NAME) {
+              hadPreviousCache = true;
               return caches.delete(key);
             }
             return Promise.resolve();
@@ -42,6 +76,12 @@ self.addEventListener("activate", (event) => {
         )
       )
       .then(() => self.clients.claim())
+      .then(() => {
+        if (hadPreviousCache) {
+          return refreshVersionClients();
+        }
+        return Promise.resolve();
+      })
   );
 });
 
