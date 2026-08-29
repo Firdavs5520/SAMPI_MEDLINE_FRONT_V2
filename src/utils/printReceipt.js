@@ -120,7 +120,7 @@ const buildLorQueueThermalReceipt = (ticket) => {
       { kind: "divider" },
       { text: "Navbat raqami:", align: "center", bold: true, size: "double" },
       { kind: "divider" },
-      { text: queueCode || "00", align: "center", bold: true, size: "huge" },
+      { text: queueCode || "00", align: "center", bold: true, size: "large" },
       { kind: "divider" },
       { text: "Tashrifingiz uchun rahmat!", align: "center", bold: true },
       { kind: "divider" },
@@ -639,6 +639,7 @@ const printInsideCurrentApp = async (check) => {
 const printLorQueueTicketInsideCurrentApp = async (ticket) => {
   const html = buildLorQueueTicketPrintHtml(ticket, { inline: true });
   const desktopResult = await printHtmlWithDesktopApp(html, {
+    forceHtmlPrint: true,
     thermalReceipt: buildLorQueueThermalReceipt(ticket),
   });
   if (desktopResult !== null) return desktopResult;

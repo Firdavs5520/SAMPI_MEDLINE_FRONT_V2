@@ -172,7 +172,44 @@ const getFallbackReceiptMetrics = (html, error) => {
   };
 };
 
-const waitForReceiptLayout = async (_webContents, html) => getFallbackReceiptMetrics(html);
+const waitForReceiptLayout = async (webContents, html) => {
+  const fallbackMetrics = getFallbackReceiptMetrics(html);
+
+  try {
+    return await webContents.executeJavaScript(
+      `new Promise((resolve) => {
+        const fallback = ${JSON.stringify(fallbackMetrics)};
+        const done = () => {
+          const body = document.body;
+          const root = document.documentElement;
+          const receipt = document.querySelector("[data-sampi-receipt]") || body;
+          const rect = receipt ? receipt.getBoundingClientRect() : { width: 0, height: 0 };
+          const text = String(body?.innerText || "").replace(/\\s+/g, " ").trim();
+          resolve({
+            ...fallback,
+            textLength: text.length || fallback.textLength,
+            preview: text.slice(0, 120) || fallback.preview,
+            width: Math.ceil(Math.max(rect.width || 0, root?.scrollWidth || 0, fallback.width)),
+            height: Math.ceil(Math.max(rect.height || 0, root?.scrollHeight || 0, body?.scrollHeight || 0, fallback.height)),
+            fallback: false
+          });
+        };
+
+        const waitForFonts = document.fonts?.ready
+          ? Promise.race([
+              document.fonts.ready,
+              new Promise((resolveFontWait) => setTimeout(resolveFontWait, 1200))
+            ])
+          : Promise.resolve();
+
+        waitForFonts.then(() => requestAnimationFrame(() => requestAnimationFrame(done)));
+      })()`,
+      true
+    );
+  } catch (error) {
+    return getFallbackReceiptMetrics(html, error);
+  }
+};
 
 const resolveReceiptPageSize = async (webContents, html) => {
   const metrics = await waitForReceiptLayout(webContents, html);
