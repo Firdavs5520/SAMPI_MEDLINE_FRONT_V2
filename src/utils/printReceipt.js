@@ -120,7 +120,7 @@ const buildLorQueueThermalReceipt = (ticket) => {
       { kind: "divider" },
       { text: "Navbat raqami:", align: "center", bold: true, size: "double" },
       { kind: "divider" },
-      { text: queueCode || "00", align: "center", bold: true, size: "large" },
+      { text: queueCode || "00", align: "center", bold: true, size: "huge" },
       { kind: "divider" },
       { text: "Tashrifingiz uchun rahmat!", align: "center", bold: true },
       { kind: "divider" },
@@ -336,6 +336,9 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
       rel="stylesheet"
     />
     <style>
+      * {
+        box-sizing: border-box;
+      }
       @media print {
         @page {
           size: 58mm auto;
@@ -349,6 +352,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
           text-align: center;
           display: flex;
           justify-content: center;
+          align-items: flex-start;
         }
         .check {
           display: flex;
@@ -357,30 +361,42 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
           width: 100%;
         }
         .title {
-          font-size: 22px;
-          font-weight: 700;
+          width: 100%;
+          font-size: 25px;
+          font-weight: 600;
+          line-height: 1.05;
           margin-top: 0;
+          white-space: nowrap;
+          letter-spacing: 0;
         }
         .divider {
-          border: 1px dashed black;
+          border: 0;
+          border-top: 1.5px dashed #000;
           width: 90%;
-          margin: 6px 0;
+          margin: 4px 0;
         }
         .small {
-          font-size: 22px;
+          font-size: 21px;
+          font-weight: 600;
+          line-height: 1.05;
+          letter-spacing: 0;
         }
         .number {
-          font-size: 110px;
-          font-weight: 800;
+          font-size: 132px;
+          font-weight: 700;
           margin: 0;
-          letter-spacing: 2px;
+          letter-spacing: 0;
           width: 100%;
           text-align: center;
-          line-height: 1;
+          line-height: 0.86;
+          white-space: nowrap;
+          font-variant-numeric: tabular-nums;
         }
         .footer {
-          font-size: 18px;
-          margin-top: 5px;
+          font-size: 17px;
+          font-weight: 600;
+          line-height: 1.15;
+          margin-top: 3px;
         }
       }
       html, body {
@@ -397,6 +413,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         font-family: "Golos Text", Arial, sans-serif;
         display: flex;
         justify-content: center;
+        align-items: flex-start;
         text-align: center;
       }
       .check {
@@ -410,30 +427,42 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         color: #000;
       }
       .title {
-        font-size: 22px;
-        font-weight: 700;
+        width: 100%;
+        font-size: 25px;
+        font-weight: 600;
+        line-height: 1.05;
         margin-top: 0;
+        white-space: nowrap;
+        letter-spacing: 0;
       }
       .divider {
-        border: 1px dashed black;
+        border: 0;
+        border-top: 1.5px dashed #000;
         width: 90%;
-        margin: 6px auto;
+        margin: 4px auto;
       }
       .small {
-        font-size: 22px;
+        font-size: 21px;
+        font-weight: 600;
+        line-height: 1.05;
+        letter-spacing: 0;
       }
       .number {
-        font-size: 110px;
-        font-weight: 800;
+        font-size: 132px;
+        font-weight: 700;
         margin: 0;
-        letter-spacing: 2px;
+        letter-spacing: 0;
         width: 100%;
         text-align: center;
-        line-height: 1;
+        line-height: 0.86;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
       }
       .footer {
-        font-size: 18px;
-        margin-top: 5px;
+        font-size: 17px;
+        font-weight: 600;
+        line-height: 1.15;
+        margin-top: 3px;
       }
     </style>
   </head>

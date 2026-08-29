@@ -373,6 +373,8 @@ const sizeCommand = (size = "normal") => {
   switch (size) {
     case "double":
       return Buffer.from([0x1d, 0x21, 0x11]);
+    case "huge":
+      return Buffer.from([0x1d, 0x21, 0x33]);
     case "large":
       return Buffer.from([0x1d, 0x21, 0x22]);
     case "wide":
@@ -463,7 +465,7 @@ const buildThermalReceiptFromHtml = (html) => {
         { kind: "divider" },
         { text: "Navbat raqami:", align: "center", bold: true, size: "double" },
         { kind: "divider" },
-        { text: queueCode, align: "center", bold: true, size: "large" },
+        { text: queueCode, align: "center", bold: true, size: "huge" },
         { kind: "divider" },
         { text: "Tashrifingiz uchun rahmat!", align: "center", bold: true },
         { kind: "divider" },
@@ -529,7 +531,12 @@ const buildThermalReceiptFromHtml = (html) => {
 const appendThermalLine = (buffers, block = {}) => {
   const size = block.size || "normal";
   const lineChars = block.font === "small" ? THERMAL_SMALL_LINE_CHARS : THERMAL_LINE_CHARS;
-  const maxChars = size === "double" || size === "wide" ? Math.floor(lineChars / 2) : lineChars;
+  const maxChars =
+    size === "huge"
+      ? Math.floor(lineChars / 4)
+      : size === "double" || size === "wide"
+        ? Math.floor(lineChars / 2)
+        : lineChars;
   const lines = wrapThermalText(block.text, maxChars);
 
   buffers.push(alignCommand("left"));
