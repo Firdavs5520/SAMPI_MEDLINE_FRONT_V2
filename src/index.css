@@ -1475,6 +1475,263 @@ html.theme-dark .sampi-cashier-popover {
   color: #fee2e2 !important;
 }
 
+.sampi-lor-ticket-page {
+  display: grid;
+  min-height: min(760px, calc(100vh - 7rem));
+  place-items: center;
+  gap: 1rem;
+  padding: clamp(1rem, 2.4vw, 2rem);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 16% 12%, rgba(39, 60, 117, 0.08), transparent 28%),
+    radial-gradient(circle at 86% 82%, rgba(14, 116, 144, 0.08), transparent 30%),
+    #f5f6fa;
+}
+
+.sampi-lor-ticket-window {
+  position: relative;
+  width: min(100%, 760px);
+  overflow: hidden;
+  padding: clamp(1.25rem, 3vw, 2.35rem);
+  border: 1px solid rgba(39, 60, 117, 0.09);
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.15),
+    0 28px 70px -54px rgba(39, 60, 117, 0.6);
+  color: #2f3640;
+  text-align: center;
+}
+
+.sampi-lor-ticket-role {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.1rem;
+  padding: 0.38rem 0.85rem;
+  border: 1px solid rgba(39, 60, 117, 0.12);
+  border-radius: 999px;
+  background: #f5f6fa;
+  color: #273c75;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.sampi-lor-ticket-window h1 {
+  margin: 0 0 0.55rem;
+  color: #2f3640;
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.sampi-lor-ticket-subtitle {
+  margin: 0;
+  color: #718093;
+  font-size: clamp(1rem, 2vw, 1.28rem);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.sampi-lor-ticket-number-panel {
+  display: grid;
+  min-height: clamp(14rem, 34vh, 22rem);
+  place-items: center;
+  margin: clamp(1rem, 2.5vw, 1.55rem) auto 0;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(245, 246, 250, 0.84), rgba(255, 255, 255, 0.96)),
+    #f5f6fa;
+}
+
+.sampi-lor-ticket-number {
+  color: #273c75;
+  font-family: "Golos Text", Arial, Helvetica, sans-serif;
+  font-size: clamp(8rem, 22vw, 13rem);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  line-height: 0.92;
+}
+
+.sampi-lor-ticket-hint {
+  margin: clamp(1rem, 2.4vw, 1.35rem) 0 0;
+  color: #718093;
+  font-size: clamp(1.08rem, 2.2vw, 1.55rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.sampi-lor-ticket-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: clamp(0.95rem, 2vw, 1.25rem);
+}
+
+.sampi-lor-ticket-button {
+  min-height: 3rem !important;
+  min-width: min(100%, 11.5rem);
+  border-radius: 10px !important;
+  padding: 0.72rem 1.45rem !important;
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease !important;
+}
+
+.sampi-lor-ticket-button:hover {
+  transform: translateY(-1px);
+}
+
+.sampi-lor-ticket-button-primary {
+  background: #273c75 !important;
+  box-shadow: 0 14px 30px -22px rgba(39, 60, 117, 0.9);
+  color: #ffffff !important;
+}
+
+.sampi-lor-ticket-button-primary:hover {
+  background: #192a56 !important;
+}
+
+.sampi-lor-ticket-button-secondary {
+  border: 1px solid rgba(39, 60, 117, 0.14) !important;
+  background: #eef2fb !important;
+  color: #273c75 !important;
+}
+
+.sampi-lor-ticket-button-secondary:hover {
+  background: #e3e9f7 !important;
+}
+
+.sampi-lor-ticket-status {
+  width: min(100%, 620px);
+  margin: clamp(1rem, 2.4vw, 1.35rem) auto 0;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(39, 60, 117, 0.1);
+  color: #718093;
+  text-align: left;
+}
+
+.sampi-lor-ticket-status-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.sampi-lor-ticket-status-top b {
+  color: #273c75;
+}
+
+.sampi-lor-ticket-event {
+  margin-top: 0.75rem;
+  border-radius: 10px;
+  padding: 0.68rem 0.78rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.sampi-lor-ticket-event span {
+  margin-right: 0.55rem;
+  opacity: 0.68;
+}
+
+.sampi-lor-ticket-reprint-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.52rem;
+  margin-top: 0.75rem;
+}
+
+.sampi-lor-ticket-reprint-list > span {
+  color: #718093;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.sampi-lor-ticket-reprint-list button {
+  border: 1px solid rgba(39, 60, 117, 0.12);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #273c75;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  padding: 0.42rem 0.72rem;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.sampi-lor-ticket-reprint-list button:hover {
+  border-color: rgba(39, 60, 117, 0.32);
+  background: #f5f6fa;
+  transform: translateY(-1px);
+}
+
+.sampi-lor-ticket-alerts {
+  width: min(100%, 760px);
+}
+
+@media (max-width: 640px) {
+  .sampi-lor-ticket-page {
+    min-height: calc(100vh - 6rem);
+    padding: 0.75rem;
+    border-radius: 18px;
+  }
+
+  .sampi-lor-ticket-window {
+    padding: 1rem;
+  }
+
+  .sampi-lor-ticket-role {
+    position: static;
+    width: fit-content;
+    margin: 0 auto 0.75rem;
+  }
+
+  .sampi-lor-ticket-number-panel {
+    min-height: 11rem;
+  }
+
+  .sampi-lor-ticket-number {
+    font-size: clamp(6.4rem, 38vw, 9rem);
+  }
+
+  .sampi-lor-ticket-actions {
+    flex-direction: column;
+  }
+
+  .sampi-lor-ticket-button {
+    width: 100%;
+  }
+
+  .sampi-lor-ticket-status,
+  .sampi-lor-ticket-status-top {
+    text-align: center;
+  }
+
+  .sampi-lor-ticket-status-top,
+  .sampi-lor-ticket-reprint-list {
+    justify-content: center;
+  }
+}
+
 .nurse-dashboard {
   --nurse-primary: #0e7490;
   --nurse-accent: #f97316;
