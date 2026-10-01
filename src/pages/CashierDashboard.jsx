@@ -20,7 +20,7 @@ import {
   formatPhoneInput,
   toTitleCaseName
 } from "../utils/format.js";
-import { toTashkentYmd } from "../utils/date.js";
+import { getCurrentShiftYmd } from "../utils/date.js";
 
 const SECTION_META = {
   "nurse-patients": {
@@ -141,7 +141,8 @@ const specialistTypeOptions = [
   { value: "lor", label: "LOR" }
 ];
 
-const getTodayString = () => toTashkentYmd();
+const getTodayString = (settings = defaultCashierSettings) => getCurrentShiftYmd(settings);
+const SHIFT_DATE_REFRESH_MS = 60000;
 
 const canUseDesktopPrinterSettings = () =>
   typeof window !== "undefined" &&
@@ -267,7 +268,8 @@ function SummaryCard({ title, value, hint, tone = "default" }) {
 }
 
 function CashierDashboard({ forcedSection = "nurse-patients" }) {
-  const today = useMemo(() => getTodayString(), []);
+  // "Bugun" = joriy smena sanasi; smena almashganda (masalan 02:00 da) yangilanadi.
+  const [today, setToday] = useState(() => getTodayString());
   const sectionMeta = SECTION_META[forcedSection] || SECTION_META["nurse-patients"];
   const lockedType = sectionMeta.lockedType;
   const isSpecialistSection =
@@ -501,8 +503,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       if (isEntriesSection) {
         if (isDebtSection) {
           const [entriesPayload, summaryPayload] = await Promise.all([
-            cashierService.getEntries({ ...effectiveFilters, timeScope: "all", debtOnly: true }),
-            cashierService.getSummary({ ...effectiveFilters, timeScope: "all", debtOnly: true })
+            // Qarzlar sanadan qat'i nazar ko'rsatiladi: o'tgan kunlardagi qarzdorlar ham.
+            cashierService.getEntries({ ...effectiveFilters, timeScope: "any", debtOnly: true }),
+            cashierService.getSummary({ ...effectiveFilters, timeScope: "any", debtOnly: true })
           ]);
 
           setEntries(entriesPayload?.entries || []);
@@ -776,6 +779,29 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
   useEffect(() => {
     loadSpecialists();
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    let shiftSettings = defaultCashierSettings;
+    const refreshToday = () => setToday(getTodayString(shiftSettings));
+
+    cashierService
+      .getSettings()
+      .then((data) => {
+        if (!active || !data) return;
+        shiftSettings = data;
+        refreshToday();
+      })
+      .catch(() => {
+        // Sozlamalar kelmasa standart smena vaqti bilan davom etamiz.
+      });
+
+    const timer = setInterval(refreshToday, SHIFT_DATE_REFRESH_MS);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -1138,6 +1164,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         fromLabel: data?.shiftStartTime || defaultCashierSettings.shiftStartTime,
         toLabel: data?.shiftEndTime || defaultCashierSettings.shiftEndTime
       });
+      setToday(getTodayString(data || defaultCashierSettings));
       hasLoadedOnceRef.current = false;
       setSuccess("Kassa sozlamalari saqlandi.");
     } catch (err) {
@@ -1908,17 +1935,19 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             ) : null}
             <div className="mt-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-800">
               {isDebtSection
-                ? "Faqat qarzdorlar ko'rsatiladi. Qarz yopilgach yozuv oddiy ro'yxatga qaytadi."
+                ? "Barcha kunlardagi ochiq qarzlar ko'rsatiladi. Qarz yopilgach yozuv oddiy ro'yxatga qaytadi."
                 : isHistorySection
                 ? `${shiftWindow.fromLabel} - ${shiftWindow.toLabel} oralig'idan tashqari yozuvlar tarixi.`
                 : `Joriy ro'yxat faqat ${shiftWindow.fromLabel} - ${shiftWindow.toLabel}. Qolgan yozuvlar tarix bo'limida saqlanadi.`}
             </div>
             <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-              <DatePickerField
-                label="Sana"
-                value={filters.date}
-                onChange={(nextDate) => setFilters((prev) => ({ ...prev, date: nextDate || today }))}
-              />
+              {!isDebtSection ? (
+                <DatePickerField
+                  label="Sana"
+                  value={filters.date}
+                  onChange={(nextDate) => setFilters((prev) => ({ ...prev, date: nextDate || today }))}
+                />
+              ) : null}
 
               {!lockedType ? (
                 <SelectMenu

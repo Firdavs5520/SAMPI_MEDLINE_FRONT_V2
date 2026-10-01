@@ -47,7 +47,7 @@ function LoginPage() {
               sampi-medline.vercel.app
             </div>
             <h1 className="mt-7 max-w-md text-4xl font-black leading-tight text-slate-950">
-              Sampi Medline
+              Sampi Medicine
             </h1>
             <p className="mt-3 max-w-sm text-sm font-medium leading-6 text-slate-600">
               Klinikadagi ish oqimi uchun yagona boshqaruv paneli.
@@ -73,7 +73,7 @@ function LoginPage() {
                 <div className="sampi-login-mark mb-4 flex h-12 w-12 items-center justify-center rounded-xl text-base font-black">
                   SM
                 </div>
-                <h1 className="text-2xl font-black text-slate-900">Sampi Medline</h1>
+                <h1 className="text-2xl font-black text-slate-900">Sampi Medicine</h1>
                 <p className="mt-1 text-sm font-medium text-slate-500">Tizimga kirish</p>
               </div>
               <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">

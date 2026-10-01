@@ -22,6 +22,7 @@ const injectSilentReceiptPrint = () => {
         return (
           title.includes("chek") ||
           title.includes("navbat") ||
+          text.includes("SAMPI MEDICINE") ||
           text.includes("SAMPI MEDLINE") ||
           text.includes("Navbat raqami:")
         );

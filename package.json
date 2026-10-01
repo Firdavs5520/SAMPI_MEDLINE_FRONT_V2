@@ -1,5 +1,5 @@
 {
-  "name": "sampi-medline-frontend",
+  "name": "sampi-medicine-frontend",
   "private": true,
   "version": "1.0.23",
   "type": "module",
@@ -22,7 +22,7 @@
   },
   "build": {
     "appId": "uz.sampimedline.desktop",
-    "productName": "Sampi Medline",
+    "productName": "Sampi Medicine",
     "asar": true,
     "compression": "maximum",
     "electronLanguages": [
@@ -65,7 +65,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Sampi Medline",
+      "shortcutName": "Sampi Medicine",
       "deleteAppDataOnUninstall": false
     }
   },

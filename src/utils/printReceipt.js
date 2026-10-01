@@ -52,7 +52,7 @@ const buildCheckThermalReceipt = (check) => {
   const creatorRole = String(check?.createdBy?.role || "").toLowerCase();
   const lorQueueCode = formatQueueCode(check?.lorQueue?.queueCode || check?.queueCode);
   const blocks = [
-    { text: "SAMPI MEDLINE", align: "center", bold: true, size: "double" },
+    { text: "SAMPI MEDICINE", align: "center", bold: true, size: "double" },
     { kind: "divider" },
     { text: `Bemor: ${check?.patient?.fullName || "-"}` },
     { text: `Sana: ${formatCheckDate(check?.createdAt)}` },
@@ -115,7 +115,7 @@ const buildLorQueueThermalReceipt = (ticket) => {
     type: "lor-queue",
     blocks: [
       { kind: "feed", lines: 1 },
-      { text: "SAMPI MEDLINE", align: "center", bold: true, size: "double" },
+      { text: "SAMPI MEDICINE", align: "center", bold: true, size: "double" },
       { kind: "divider" },
       { text: lorLabel, align: "center", bold: true, size: "double" },
       { kind: "divider" },
@@ -263,7 +263,7 @@ export const buildCheckPrintHtml = (check, options = {}) => {
   <body>
     <div class="ticket" data-sampi-receipt="check">
       <div class="inner">
-        <div class="check-title">SAMPI MEDLINE</div>
+        <div class="check-title">SAMPI MEDICINE</div>
 
         <div class="divider"></div>
 
@@ -493,7 +493,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
   </head>
   <body>
     <div class="check" data-sampi-receipt="lor-queue">
-      <div class="title">SAMPI MEDLINE</div>
+      <div class="title">SAMPI MEDICINE</div>
       <div class="divider"></div>
       <div class="small">${escapeHtml(lorLabel)}</div>
       <div class="divider"></div>

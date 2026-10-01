@@ -32,7 +32,7 @@ const checkForAppUpdates = () => {
   }
 
   autoUpdater.checkForUpdates().catch((error) => {
-    console.warn("Sampi Medline update check failed:", error.message);
+    console.warn("Sampi Medicine update check failed:", error.message);
   });
 };
 
@@ -49,7 +49,7 @@ autoUpdater.on("update-downloaded", () => {
 });
 
 autoUpdater.on("error", (error) => {
-  console.warn("Sampi Medline updater error:", error.message);
+  console.warn("Sampi Medicine updater error:", error.message);
 });
 
 const normalizePrinterName = (value) =>
@@ -497,7 +497,7 @@ const buildThermalReceiptFromHtml = (html) => {
       type: "lor-queue",
       blocks: [
         { kind: "feed", lines: 1 },
-        { text: "SAMPI MEDLINE", align: "center", bold: true, size: "double" },
+        { text: "SAMPI MEDICINE", align: "center", bold: true, size: "double" },
         { kind: "divider" },
         { text: lorLabel, align: "center", bold: true, size: "double" },
         { kind: "divider" },
@@ -512,7 +512,7 @@ const buildThermalReceiptFromHtml = (html) => {
   }
 
   const blocks = [];
-  const title = firstClassText(source, "check-title") || "SAMPI MEDLINE";
+  const title = firstClassText(source, "check-title") || "SAMPI MEDICINE";
   blocks.push({ text: title, align: "center", bold: true, size: "double" });
   blocks.push({ kind: "divider" });
 
@@ -847,7 +847,7 @@ const runRawPrinterScript = async (printerName, data) => {
   const nonce = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const dataPath = path.join(tempDir, `${nonce}.bin`);
   const scriptPath = path.join(tempDir, `${nonce}.ps1`);
-  const jobName = `Sampi Medline receipt ${nonce}`;
+  const jobName = `Sampi Medicine receipt ${nonce}`;
 
   await fs.mkdir(tempDir, { recursive: true });
   await fs.writeFile(dataPath, data);
