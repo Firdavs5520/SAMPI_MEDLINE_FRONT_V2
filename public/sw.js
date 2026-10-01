@@ -28,14 +28,13 @@ self.addEventListener("install", (event) => {
   );
 });
 
-const isElectronRuntime = () => /Electron\//i.test(self.navigator?.userAgent || "");
-
 const shouldRefreshClient = (client) => {
   try {
     const url = new URL(client.url);
     if (url.origin !== self.location.origin) return false;
     if (url.pathname.startsWith("/print")) return false;
-    return isElectronRuntime() || url.pathname.startsWith("/tv");
+    // Desktop (Electron) oynalari main.jsx da foydalanuvchi bo'sh turganda yangilanadi.
+    return url.pathname.startsWith("/tv");
   } catch {
     return false;
   }

@@ -18,7 +18,8 @@
     "smoke:electron-routes": "electron scripts/smoke-electron-routes.cjs",
     "smoke:multi-role": "electron scripts/smoke-multi-role-routes.cjs",
     "smoke:tv-layout": "electron scripts/smoke-tv-layout.cjs",
-    "smoke:receipt-print": "electron scripts/smoke-receipt-print.cjs"
+    "smoke:receipt-print": "electron scripts/smoke-receipt-print.cjs",
+    "test": "node --test \"tests/**/*.test.js\""
   },
   "build": {
     "appId": "uz.sampimedline.desktop",
