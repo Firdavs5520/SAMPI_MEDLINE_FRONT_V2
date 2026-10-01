@@ -87,28 +87,13 @@ const cashierService = {
     return data.data;
   },
 
-  async deleteSpecialist(specialistId) {
-    const { data } = await api.delete(`/cashier/specialists/${specialistId}`);
-    return data.data;
-  },
-
   async createEntry(payload) {
     const { data } = await api.post("/cashier/entries", payload);
     return data.data;
   },
 
-  async updateEntry(entryId, payload) {
-    const { data } = await api.patch(`/cashier/entries/${entryId}`, payload);
-    return data.data;
-  },
-
   async payDebt(entryId, payload) {
     const { data } = await api.post(`/cashier/entries/${entryId}/payments`, payload);
-    return data.data;
-  },
-
-  async deleteEntry(entryId) {
-    const { data } = await api.delete(`/cashier/entries/${entryId}`);
     return data.data;
   }
 };

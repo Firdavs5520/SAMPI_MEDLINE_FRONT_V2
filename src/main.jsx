@@ -51,12 +51,45 @@ const getAssetSignatureFromHtml = (html) => {
   return getAssetSignatureFromDocument(parsedDocument);
 };
 
+const DESKTOP_IDLE_BEFORE_RELOAD_MS = 60 * 1000;
+const DESKTOP_IDLE_CHECK_MS = 5 * 1000;
+let lastUserActivityAt = Date.now();
+
+["pointerdown", "keydown", "input", "wheel", "touchstart"].forEach((eventName) => {
+  window.addEventListener(
+    eventName,
+    () => {
+      lastUserActivityAt = Date.now();
+    },
+    { capture: true, passive: true }
+  );
+});
+
+const isEditingField = () => {
+  const element = document.activeElement;
+  if (!element) return false;
+  const tagName = String(element.tagName || "").toLowerCase();
+  return element.isContentEditable || ["input", "textarea", "select"].includes(tagName);
+};
+
+// Kassir yoki hamshira ishlayotgan paytda sahifa yangilanib, kiritilgan
+// ma'lumot yo'qolmasligi uchun desktopda faqat 1 daqiqa harakatsizlikdan keyin.
+const isSafeToReload = () =>
+  isTvScreenPath() ||
+  (Date.now() - lastUserActivityAt >= DESKTOP_IDLE_BEFORE_RELOAD_MS && !isEditingField());
+
 const scheduleVersionReload = () => {
   if (!shouldAutoReloadForVersion() || versionReloadTimer) return;
 
-  versionReloadTimer = window.setTimeout(() => {
-    window.location.reload();
-  }, VERSION_AUTO_RELOAD_DELAY_MS);
+  const tryReload = () => {
+    if (isSafeToReload()) {
+      window.location.reload();
+      return;
+    }
+    versionReloadTimer = window.setTimeout(tryReload, DESKTOP_IDLE_CHECK_MS);
+  };
+
+  versionReloadTimer = window.setTimeout(tryReload, VERSION_AUTO_RELOAD_DELAY_MS);
 };
 
 const showVersionNotice = ({ activated = false, autoReload = false } = {}) => {
@@ -86,7 +119,7 @@ const showVersionNotice = ({ activated = false, autoReload = false } = {}) => {
   if (text) {
     const autoReloadText = isTvScreenPath()
       ? "TV ekrani o'zi yangilanmoqda"
-      : "Ilova o'zi yangilanmoqda";
+      : "Ilova bo'sh turganda o'zi yangilanadi";
     text.textContent = autoReload
       ? autoReloadText
       : activated
