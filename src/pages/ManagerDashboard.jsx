@@ -5,7 +5,7 @@ import Alert from "../components/Alert.jsx";
 import Button from "../components/Button.jsx";
 import DatePickerField from "../components/DatePickerField.jsx";
 import { extractErrorMessage, formatCurrency, formatDateTime } from "../utils/format.js";
-import { toTashkentYmd } from "../utils/date.js";
+import { getCurrentShiftYmd } from "../utils/date.js";
 
 const PERIOD_OPTIONS = [
   { value: "today", label: "Bugun" },
@@ -38,7 +38,7 @@ const departmentLabels = {
   procedure: "Nurse"
 };
 
-const getTodayString = () => toTashkentYmd();
+const getTodayString = () => getCurrentShiftYmd();
 
 const emptyRoleStats = () => ({
   totalRevenue: 0,
@@ -229,9 +229,12 @@ function ManagerDashboard() {
         total: { ...emptyRoleStats(), ...(overviewData?.total || {}) }
       });
       setShiftReport({
-        ...emptyShiftReport(nextShiftDate),
+        ...emptyShiftReport(nextShiftDate || undefined),
         ...shiftData
       });
+      if (shiftData?.date) {
+        setShiftDate(shiftData.date);
+      }
       setMonitoring({
         ...emptyMonitoring(),
         ...monitoringData
@@ -248,7 +251,8 @@ function ManagerDashboard() {
   };
 
   useEffect(() => {
-    loadDashboard({ nextPeriod: "today", nextShiftDate: getTodayString(), initial: true });
+    // Bo'sh sana: backend joriy smena sanasini o'zi aniqlaydi (sozlamalar bo'yicha).
+    loadDashboard({ nextPeriod: "today", nextShiftDate: "", initial: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -259,7 +263,7 @@ function ManagerDashboard() {
   };
 
   const handleShiftDateChange = (nextDate) => {
-    const safeDate = nextDate || getTodayString();
+    const safeDate = nextDate || "";
     setShiftDate(safeDate);
     loadDashboard({ nextPeriod: period, nextShiftDate: safeDate });
   };
@@ -415,7 +419,11 @@ function ManagerDashboard() {
           <StatCard
             title="To'langan"
             value={`${formatCurrency(shiftReport?.totals?.totalPaidAmount || 0)} so'm`}
-            hint="Smenada qabul qilingan to'lov"
+            hint={
+              Number(shiftReport?.totals?.debtRepaymentAmount || 0) > 0
+                ? `Shundan eski qarzlar: ${formatCurrency(shiftReport.totals.debtRepaymentAmount)} so'm`
+                : "Smenada kassaga tushgan to'lov"
+            }
             tone="success"
           />
           <StatCard

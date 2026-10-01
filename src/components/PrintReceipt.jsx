@@ -7,7 +7,7 @@ function PrintReceipt({ check }) {
     <div className="print-area mx-auto w-[58mm] bg-white p-0 text-black font-golos">
       <div className="mx-auto w-[48mm] py-2 font-golos">
         <div className="text-center text-[20px] font-bold leading-tight ">
-          Sampi Medline
+          Sampi Medicine
         </div>
         <div className="mt-1 border-t-2 border-black" />
 

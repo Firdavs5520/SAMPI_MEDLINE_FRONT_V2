@@ -10,7 +10,7 @@ app.on("window-all-closed", (event) => {
   event.preventDefault();
 });
 
-const premiumIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Sampi Medline">
+const premiumIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Sampi Medicine">
   <defs>
     <linearGradient id="bg" x1="62" y1="46" x2="462" y2="470" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#063846"/>

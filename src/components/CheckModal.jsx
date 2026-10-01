@@ -140,7 +140,7 @@ const buildPrintHtml = (check) => {
     <div class="ticket">
       <div class="inner">
         <div class="help">Chop etish uchun Enter tugmasini bosing</div>
-        <div class="check-title">SAMPI MEDLINE</div>
+        <div class="check-title">SAMPI MEDICINE</div>
         <div class="divider"></div>
 
         <div class="text">Bemor: ${escapeHtml(check.patient?.fullName || "-")}</div>
@@ -247,7 +247,7 @@ function CheckModal({ open, check, onClose }) {
       <div className="space-y-4 font-golos">
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 font-golos">
           <h4 className="text-center text-2xl font-black uppercase tracking-wide text-slate-800">
-            SAMPI MEDLINE
+            SAMPI MEDICINE
           </h4>
           <div className="mt-3 border-t border-dashed border-slate-300" />
 

@@ -23,7 +23,7 @@ const getDisplayName = (user) => {
 const getPageLabel = (role, pathname) => {
   const menus = sidebarMenus[role] || [];
   const current = menus.find((item) => item.path === pathname);
-  return current?.label || roleLabels[role] || "Sampi Medline";
+  return current?.label || roleLabels[role] || "Sampi Medicine";
 };
 
 function Navbar({ onMenuOpen }) {

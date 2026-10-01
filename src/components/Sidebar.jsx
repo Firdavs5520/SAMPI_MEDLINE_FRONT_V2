@@ -194,7 +194,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
                 isCompact ? "lg:pointer-events-none" : ""
               }`}
             >
-              Sampi Medline
+              Sampi Medicine
             </h2>
             <button
               type="button"
