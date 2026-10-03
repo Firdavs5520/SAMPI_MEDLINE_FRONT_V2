@@ -37,7 +37,7 @@
     "publish": [
       {
         "provider": "generic",
-        "url": "https://sampi-medline.vercel.app/desktop-updates/"
+        "url": "https://sampi-medicine.vercel.app/desktop-updates/"
       }
     ],
     "files": [
