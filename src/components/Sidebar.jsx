@@ -187,7 +187,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
 
   return (
     <aside
-      className={`sampi-sidebar fixed inset-y-0 left-0 z-40 w-[88vw] max-w-[22rem] transform border-r border-slate-200 lg:static lg:max-w-none lg:translate-x-0 ${compact ? "lg:w-20" : "lg:w-64"} ${open ? "translate-x-0" : "-translate-x-full"}`}
+      className={`sampi-sidebar fixed inset-y-0 left-0 z-40 w-[88vw] max-w-[22rem] transform border-r border-slate-200 lg:sticky lg:top-0 lg:h-dvh lg:max-w-none lg:shrink-0 lg:translate-x-0 ${compact ? "lg:w-20" : "lg:w-64"} ${open ? "translate-x-0" : "-translate-x-full"}`}
     >
       <div className="flex h-full flex-col">
         <div className={`flex items-center border-b border-slate-200 py-4 ${isCompact ? "justify-center px-2" : "justify-between px-4 sm:px-5"}`}>
