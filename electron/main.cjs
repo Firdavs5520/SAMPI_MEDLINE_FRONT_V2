@@ -4,7 +4,7 @@ const { spawn } = require("node:child_process");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 
-const APP_URL = process.env.SAMPI_DESKTOP_URL || "https://sampi-medline.vercel.app/";
+const APP_URL = process.env.SAMPI_DESKTOP_URL || "https://sampi-medicine.vercel.app/";
 const APP_ORIGIN = new URL(APP_URL).origin;
 const APP_ICON = path.join(__dirname, "../build/icon.ico");
 const PRELOAD_SCRIPT = path.join(__dirname, "preload.cjs");

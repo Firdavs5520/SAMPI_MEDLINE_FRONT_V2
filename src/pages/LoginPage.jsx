@@ -44,7 +44,7 @@ function LoginPage() {
           <div className="sampi-login-copy">
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/70 bg-white/75 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-cyan-800 shadow-sm">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              sampi-medline.vercel.app
+              sampi-medicine.vercel.app
             </div>
             <h1 className="mt-7 max-w-md text-4xl font-black leading-tight text-slate-950">
               Sampi Medicine
