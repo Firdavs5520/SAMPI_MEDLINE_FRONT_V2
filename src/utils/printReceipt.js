@@ -179,11 +179,11 @@ export const buildCheckPrintHtml = (check, options = {}) => {
     <meta charset="UTF-8" />
     <title>Chek</title>
     <style>
-      @page { size: 58mm auto; margin: 0; }
+      @page { size: 80mm auto; margin: 0; }
       html, body {
         margin: 0;
         padding: 0;
-        width: 58mm;
+        width: 80mm;
         min-height: 0;
         overflow: visible;
         font-family: Arial, sans-serif;
@@ -198,8 +198,8 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         font-family: Arial, sans-serif;
       }
 
-      .ticket { box-sizing: border-box; width: 58mm; margin: 0; padding: 0 0 2mm; }
-      .inner { width: 48mm; margin: 0 auto; padding: 6px 0; }
+      .ticket { box-sizing: border-box; width: 80mm; margin: 0; padding: 0 0 2mm; }
+      .inner { width: 72mm; margin: 0 auto; padding: 6px 0; }
       .check-title {
         text-align: center;
         font-size: 14px;
@@ -342,13 +342,13 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
       }
       @media print {
         @page {
-          size: 58mm auto;
+          size: 80mm auto;
           margin: 0;
         }
         body {
           margin: 0;
           padding: 0;
-          width: 58mm;
+          width: 80mm;
           font-family: "Golos Text", Arial, sans-serif;
           text-align: center;
           display: flex;
@@ -434,7 +434,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         flex-direction: column;
         align-items: center;
         box-sizing: border-box;
-        width: 58mm;
+        width: 80mm;
         padding: 0 0 2mm;
         background: #fff;
         color: #000;

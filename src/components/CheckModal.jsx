@@ -51,19 +51,19 @@ const buildPrintHtml = (check) => {
     <meta charset="UTF-8" />
     <title>Chek</title>
     <style>
-      @page { size: 58mm auto; margin: 0; }
+      @page { size: 80mm auto; margin: 0; }
       html, body {
         margin: 0;
         padding: 0;
-        width: 58mm;
+        width: 80mm;
         font-family: Arial, sans-serif;
         font-size: 13px;
         color: #000;
         background: #fff;
       }
 
-      .ticket { width: 58mm; margin: 0; padding: 0; }
-      .inner { width: 48mm; margin: 0 auto; padding: 6px 0; }
+      .ticket { width: 80mm; margin: 0; padding: 0; }
+      .inner { width: 72mm; margin: 0 auto; padding: 6px 0; }
       .check-title {
         text-align: center;
         font-size: 30px;
