@@ -506,7 +506,6 @@ const buildThermalReceiptFromHtml = (html) => {
     return {
       type: "lor-queue",
       blocks: [
-        { kind: "feed", lines: 1 },
         { text: "SAMPI MEDICINE", align: "center", bold: true, size: "double" },
         { kind: "divider" },
         { text: lorLabel, align: "center", bold: true, size: "double" },
@@ -664,8 +663,8 @@ const buildEscPosTextPayload = (receipt = {}) => {
     }
   }
 
-  // Avto-kesgich: qog'ozni pichoqqacha surib, qisman kesadi (GS V 66 n).
-  buffers.push(Buffer.from([0x0a, 0x0a, 0x1d, 0x56, 0x42, 0x10]));
+  // Pastda ~10mm bo'sh joy qoldirib, avto-kesgich qisman kesadi (GS V 66 n).
+  buffers.push(Buffer.from([0x0a, 0x0a, 0x0a, 0x1d, 0x56, 0x42, 0x30]));
   return Buffer.concat(buffers);
 };
 

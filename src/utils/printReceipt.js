@@ -114,7 +114,6 @@ const buildLorQueueThermalReceipt = (ticket) => {
   return {
     type: "lor-queue",
     blocks: [
-      { kind: "feed", lines: 1 },
       { text: "SAMPI MEDICINE", align: "center", bold: true, size: "double" },
       { kind: "divider" },
       { text: lorLabel, align: "center", bold: true, size: "double" },
@@ -198,7 +197,7 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         font-family: Arial, sans-serif;
       }
 
-      .ticket { box-sizing: border-box; width: 80mm; margin: 0; padding: 0 0 2mm; }
+      .ticket { box-sizing: border-box; width: 80mm; margin: 0; padding: 0 0 10mm; }
       .inner { width: 72mm; margin: 0 auto; padding: 6px 0; }
       .check-title {
         text-align: center;
@@ -435,7 +434,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         align-items: center;
         box-sizing: border-box;
         width: 80mm;
-        padding: 0 0 2mm;
+        padding: 0 0 10mm;
         background: #fff;
         color: #000;
       }
