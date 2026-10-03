@@ -27,6 +27,9 @@ export const roleLabels = {
   tv: "TV navbat"
 };
 
+// Navbardagi tugma bilan to'liq ekrandan chiqilganini bildiradi (sessiya davomida).
+export const FULLSCREEN_OFF_KEY = "sampi_fullscreen_off";
+
 export const sidebarMenus = {
   nurse: [
     { label: "Dorilar va xizmatlar tanlash", path: "/nurse", end: true, icon: "grid" },

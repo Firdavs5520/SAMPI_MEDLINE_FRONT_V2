@@ -5,6 +5,7 @@ import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import "./index.css";
+import { FULLSCREEN_OFF_KEY } from "./utils/constants.js";
 
 const VERSION_NOTICE_ID = "sampi-version-toast";
 const VERSION_NOTICE_HIDE_MS = 6200;
@@ -68,8 +69,18 @@ let lastUserActivityAt = Date.now();
 // Sayt va PWA to'liq ekranda ishlaydi. Brauzer to'liq ekranni faqat foydalanuvchi
 // harakatidan keyin ruxsat beradi, shuning uchun birinchi bosish/tugmada yoqiladi
 // (Esc bilan chiqilsa, keyingi bosishda yana yoqiladi).
+const isAutoFullscreenDisabled = () => {
+  try {
+    return window.sessionStorage.getItem(FULLSCREEN_OFF_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
 const requestAutoFullscreen = (event) => {
   if (event?.key === "Escape") return;
+  // Navbardagi tugma bilan to'liq ekrandan chiqilgan bo'lsa, qayta avtomatik yoqilmaydi.
+  if (isAutoFullscreenDisabled()) return;
   if (isDesktopApp() || document.fullscreenElement || !document.fullscreenEnabled) return;
   document.documentElement.requestFullscreen?.({ navigationUI: "hide" }).catch(() => {});
 };
