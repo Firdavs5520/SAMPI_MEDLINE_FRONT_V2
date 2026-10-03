@@ -55,7 +55,7 @@ function DashboardLayout() {
   }
 
   return (
-    <div className="app-shell flex min-h-screen w-full overflow-x-hidden bg-slate-100">
+    <div className="app-shell flex min-h-screen w-full overflow-x-clip bg-slate-100">
       <div className="sampi-shell-texture" aria-hidden="true" />
       <Sidebar
         open={sidebarOpen}
