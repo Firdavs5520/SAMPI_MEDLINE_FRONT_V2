@@ -65,6 +65,19 @@ let lastUserActivityAt = Date.now();
   );
 });
 
+// Sayt va PWA to'liq ekranda ishlaydi. Brauzer to'liq ekranni faqat foydalanuvchi
+// harakatidan keyin ruxsat beradi, shuning uchun birinchi bosish/tugmada yoqiladi
+// (Esc bilan chiqilsa, keyingi bosishda yana yoqiladi).
+const requestAutoFullscreen = (event) => {
+  if (event?.key === "Escape") return;
+  if (isDesktopApp() || document.fullscreenElement || !document.fullscreenEnabled) return;
+  document.documentElement.requestFullscreen?.({ navigationUI: "hide" }).catch(() => {});
+};
+
+["pointerup", "keyup"].forEach((eventName) => {
+  window.addEventListener(eventName, requestAutoFullscreen, { capture: true, passive: true });
+});
+
 const isEditingField = () => {
   const element = document.activeElement;
   if (!element) return false;

@@ -539,18 +539,6 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
 </html>`;
 };
 
-const isStandalonePwa = () => {
-  try {
-    return (
-      window.matchMedia("(display-mode: standalone)").matches ||
-      window.navigator.standalone === true ||
-      document.referrer.startsWith("android-app://")
-    );
-  } catch {
-    return false;
-  }
-};
-
 const isElectronDesktopApp = () => {
   try {
     return /Electron\//i.test(window.navigator.userAgent || "") || Boolean(window.sampiDesktop);
@@ -587,21 +575,6 @@ const printHtmlWithDesktopApp = async (html, options = {}) => {
 const openInlinePrintSession = () => ({
   __inlinePrint: true
 });
-
-const openBrowserPrintTab = () => {
-  const printTab = window.open("about:blank", "_blank");
-  if (!printTab) return null;
-
-  printTab.document.open();
-  printTab.document.write(
-    "<!doctype html><html><head><title>Chek tayyorlanmoqda...</title><style>body{font-family:Arial,sans-serif;font-size:16px;font-weight:700;padding:12px;}</style></head><body>Chek tayyorlanmoqda...</body></html>"
-  );
-  printTab.document.close();
-  return {
-    __inlinePrint: false,
-    tab: printTab
-  };
-};
 
 const printHtmlInsideCurrentApp = (html) => {
   const iframe = document.createElement("iframe");
@@ -673,13 +646,9 @@ const printLorQueueTicketInsideCurrentApp = async (ticket) => {
   return printHtmlInsideCurrentApp(html);
 };
 
-export const openPendingPrintTab = () => {
-  if (isStandalonePwa() || isElectronDesktopApp()) {
-    return openInlinePrintSession();
-  }
-
-  return openBrowserPrintTab();
-};
+// Chek ilova qayerda ochilgan bo'lsa (sayt, PWA, desktop) o'sha joyning o'zida
+// chop etiladi; yangi brauzer oynasi ochilmaydi.
+export const openPendingPrintTab = () => openInlinePrintSession();
 
 export const writeCheckToPrintTab = async (printSession, check) => {
   if (!printSession) return false;
