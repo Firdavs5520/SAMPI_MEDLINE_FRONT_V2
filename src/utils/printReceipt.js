@@ -202,6 +202,8 @@ export const buildCheckPrintHtml = (check, options = {}) => {
          shuning uchun hammasi chapdagi 72mm ichida (2mm ichki chekka bilan) turadi. */
       .ticket { box-sizing: border-box; width: 72mm; margin: 0; padding: 0; }
       .inner { box-sizing: border-box; width: 72mm; margin: 0; padding: 6px 2mm; }
+      /* Oxirida alohida belgi (chiziq/nuqta) qo'yilmaydi: drayver uzun oq oraliqni hujjat
+         oxiri deb kesadi, belgi esa keyin alohida bo'lak bo'lib chiqadi. */
       .check-title {
         text-align: center;
         font-size: 14px;
@@ -260,12 +262,6 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         text-align: center;
         font-size: 14px;
       }
-      /* Pichoq bosish kallagidan ~12mm yuqorida, drayver esa oxirgi bosilgan nuqtadan keyin
-         qog'oz surmay kesadi (Save Paper Mode oq joyni olib tashlaydi). Shuning uchun 22mm
-         bo'sh joy va oxirida kichik nuqta: kesim matndan ~10mm pastdan o'tadi, nuqta esa
-         keyingi chekning tepasida deyarli ko'rinmaydi. */
-      .cut-tail { width: 100%; height: 22mm; display: flex; align-items: flex-end; justify-content: center; }
-      .cut-tail::after { content: ""; width: 1.5mm; border-top: 1px solid #000; }
     </style>
   </head>
   <body>
@@ -293,7 +289,6 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         ${specialistLine}
         <div class="footer">Doimo sog'-salomat bo'ling</div>
       </div>
-      <div class="cut-tail"></div>
     </div>
     ${
       inline
@@ -500,12 +495,6 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         letter-spacing: 0;
         overflow: hidden;
       }
-      /* Pichoq bosish kallagidan ~12mm yuqorida, drayver esa oxirgi bosilgan nuqtadan keyin
-         qog'oz surmay kesadi (Save Paper Mode oq joyni olib tashlaydi). Shuning uchun 22mm
-         bo'sh joy va oxirida kichik nuqta: kesim matndan ~10mm pastdan o'tadi, nuqta esa
-         keyingi chekning tepasida deyarli ko'rinmaydi. */
-      .cut-tail { width: 100%; height: 22mm; display: flex; align-items: flex-end; justify-content: center; }
-      .cut-tail::after { content: ""; width: 1.5mm; border-top: 1px solid #000; }
     </style>
   </head>
   <body>
@@ -520,7 +509,6 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
       <div class="divider"></div>
       <div class="footer">Tashrifingiz uchun rahmat!</div>
       <div class="divider"></div>
-      <div class="cut-tail"></div>
     </div>
     ${
       inline
