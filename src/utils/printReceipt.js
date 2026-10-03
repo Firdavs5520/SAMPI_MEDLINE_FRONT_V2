@@ -197,8 +197,11 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         font-family: Arial, sans-serif;
       }
 
-      .ticket { box-sizing: border-box; width: 80mm; margin: 0; padding: 0; }
-      .inner { width: 72mm; margin: 0 auto; padding: 6px 0; }
+      /* 80mm qog'ozda printer faqat 72mm (576 nuqta) kenglikni bosadi va u sahifaning
+         chap chetidan boshlanadi. Kontent 80mm markazida bo'lsa o'ng tomoni kesiladi,
+         shuning uchun hammasi chapdagi 72mm ichida (2mm ichki chekka bilan) turadi. */
+      .ticket { box-sizing: border-box; width: 72mm; margin: 0; padding: 0; }
+      .inner { box-sizing: border-box; width: 72mm; margin: 0; padding: 6px 2mm; }
       .check-title {
         text-align: center;
         font-size: 14px;
@@ -357,15 +360,14 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
           background: #fff !important;
           font-family: "Golos Text", Arial, sans-serif;
           text-align: center;
-          display: flex;
-          justify-content: center;
-          align-items: flex-start;
+          display: block;
         }
         .check {
           display: flex;
           flex-direction: column;
           align-items: center;
-          width: 100%;
+          /* Bosiladigan kenglik 72mm, chap chetdan. */
+          width: 72mm;
         }
         .title {
           width: 90%;
@@ -431,7 +433,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         background: #f5f5f5;
         font-family: "Golos Text", Arial, sans-serif;
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: flex-start;
         text-align: center;
       }
@@ -440,7 +442,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         flex-direction: column;
         align-items: center;
         box-sizing: border-box;
-        width: 80mm;
+        width: 72mm;
         padding: 0;
         background: #fff;
         color: #000;
