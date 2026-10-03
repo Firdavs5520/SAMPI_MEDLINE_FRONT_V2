@@ -156,7 +156,7 @@ const emptyPrinterSettings = {
   printers: [],
   selectedPrinterName: "",
   defaultPrinterName: "",
-  fallbackPrinterName: "XP-58"
+  fallbackPrinterName: "XP-80"
 };
 
 const formatDateInput = (value) => {
@@ -633,7 +633,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         printers: data?.printers || [],
         selectedPrinterName: data?.selectedPrinterName || "",
         defaultPrinterName: data?.defaultPrinterName || "",
-        fallbackPrinterName: data?.fallbackPrinterName || "XP-58"
+        fallbackPrinterName: data?.fallbackPrinterName || "XP-80"
       }));
     } catch (err) {
       setPrinterSettings((prev) => ({ ...prev, available: true, loading: false }));

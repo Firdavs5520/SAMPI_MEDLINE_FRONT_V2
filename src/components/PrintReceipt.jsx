@@ -4,8 +4,8 @@ function PrintReceipt({ check }) {
   if (!check) return null;
 
   return (
-    <div className="print-area mx-auto w-[58mm] bg-white p-0 text-black font-golos">
-      <div className="mx-auto w-[48mm] py-2 font-golos">
+    <div className="print-area mx-auto w-[80mm] bg-white p-0 text-black font-golos">
+      <div className="mx-auto w-[72mm] py-2 font-golos">
         <div className="text-center text-[20px] font-bold leading-tight ">
           Sampi Medicine
         </div>

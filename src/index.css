@@ -5604,7 +5604,7 @@ html.sampi-tv-lock .sampi-tv-standby-line {
 
 @media print {
   @page {
-    size: 58mm auto;
+    size: 80mm auto;
     margin: 0;
   }
 
@@ -5627,7 +5627,7 @@ html.sampi-tv-lock .sampi-tv-standby-line {
     position: absolute;
     left: 0;
     top: 0;
-    width: 58mm;
+    width: 80mm;
     margin: 0;
     padding: 0;
     overflow: hidden;

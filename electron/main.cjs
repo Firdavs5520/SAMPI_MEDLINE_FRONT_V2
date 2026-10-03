@@ -8,12 +8,13 @@ const APP_URL = process.env.SAMPI_DESKTOP_URL || "https://sampi-medicine.vercel.
 const APP_ORIGIN = new URL(APP_URL).origin;
 const APP_ICON = path.join(__dirname, "../build/icon.ico");
 const PRELOAD_SCRIPT = path.join(__dirname, "preload.cjs");
-const RECEIPT_PRINTER_NAME = process.env.SAMPI_RECEIPT_PRINTER || "XP-58";
+const RECEIPT_PRINTER_NAME = process.env.SAMPI_RECEIPT_PRINTER || "XP-80";
 const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
 const AUTO_INSTALL_DELAY_MS = 5000;
 const PRINT_JOB_TIMEOUT_MS = 20000;
 const PRINT_WINDOW_CLOSE_DELAY_MS = 350;
-const RECEIPT_WIDTH_MICRONS = 58000;
+// XPrinter 80mm qog'oz (bosiladigan kenglik 72mm, 576 nuqta).
+const RECEIPT_WIDTH_MICRONS = 80000;
 const MICRONS_PER_CSS_PIXEL = 25400 / 96;
 const RECEIPT_HEIGHT_PADDING_MICRONS = 4000;
 const RECEIPT_MIN_HEIGHT_MICRONS = 45000;
@@ -126,6 +127,12 @@ const resolveReceiptPrinter = async (webContents, requestedPrinterName = "") => 
   const preferredPrinter = printers.find(matchesPreferred);
   if (preferredPrinter) return preferredPrinter;
 
+  // Printer tanlanmagan bo'lsa, nomi chek printeriga o'xshaganini olamiz (XP-80C, POS-80 ...).
+  if (!requestedPrinterName && !savedConfig.printerName) {
+    const thermalPrinter = printers.find(isLikelyThermalReceiptPrinter);
+    if (thermalPrinter) return thermalPrinter;
+  }
+
   const printerNames = printers
     .map((printer) => printer.displayName || printer.name)
     .filter(Boolean)
@@ -165,7 +172,7 @@ const getFallbackReceiptMetrics = (html, error) => {
   return {
     textLength: text.length,
     preview: text.slice(0, 120),
-    width: 220,
+    width: 302,
     height: estimatedHeight,
     fallback: true,
     error: error?.message || String(error || "")
@@ -237,7 +244,7 @@ const isLikelyThermalReceiptPrinter = (printer) => {
   const haystack = normalizePrinterName(
     [printer?.name, printer?.displayName, printer?.description].filter(Boolean).join(" ")
   );
-  return ["xp58", "xprinter", "thermal", "receipt"].some((token) => haystack.includes(token));
+  return ["xp80", "xp58", "pos80", "80mm", "xprinter", "thermal", "receipt"].some((token) => haystack.includes(token));
 };
 
 const shouldUseRawReceiptPrint = (printer, html, options = {}) =>
@@ -246,14 +253,17 @@ const shouldUseRawReceiptPrint = (printer, html, options = {}) =>
   !options.forceHtmlPrint &&
   isLikelyThermalReceiptPrinter(printer);
 
-const THERMAL_LINE_CHARS = 32;
-const THERMAL_SMALL_LINE_CHARS = 42;
+// 80mm printer: A shrift 48 ta, B shrift 64 ta belgi bir qatorga sig'adi.
+const THERMAL_LINE_CHARS = 48;
+const THERMAL_SMALL_LINE_CHARS = 64;
 
 const sanitizeThermalText = (value) =>
   transliterateThermalText(value)
     .replace(/[\u2018\u2019\u02bb]/g, "'")
     .replace(/[\u201c\u201d]/g, '"')
     .replace(/\u2013|\u2014/g, "-")
+    // Narxdagi minglik ajratgich (uz-UZ da bo'linmas probel) printerda "?" bo'lib chiqmasin.
+    .replace(/[\u00a0\u202f\u2007\u2009]/g, " ")
     .replace(/[^\x09\x0a\x0d\x20-\x7e]/g, "?");
 
 const normalizeThermalText = (value) =>
@@ -572,6 +582,8 @@ const appendThermalLine = (buffers, block = {}) => {
   const maxChars =
     size === "huge"
       ? Math.floor(lineChars / 4)
+      : size === "large"
+        ? Math.floor(lineChars / 3)
       : size === "double" || size === "wide"
         ? Math.floor(lineChars / 2)
         : lineChars;
@@ -652,7 +664,8 @@ const buildEscPosTextPayload = (receipt = {}) => {
     }
   }
 
-  buffers.push(Buffer.from([0x0a, 0x0a, 0x0a, 0x1d, 0x56, 0x42, 0x00]));
+  // Avto-kesgich: qog'ozni pichoqqacha surib, qisman kesadi (GS V 66 n).
+  buffers.push(Buffer.from([0x0a, 0x0a, 0x1d, 0x56, 0x42, 0x10]));
   return Buffer.concat(buffers);
 };
 
@@ -788,7 +801,7 @@ if ($null -ne $snapshot -and $snapshot.WorkOffline) {
 }
 
 if (Test-SampiBadPrinterState $snapshot) {
-  throw ("XP-58 printer Windowsda tayyor emas. " + (Get-SampiPrinterStatusText $snapshot @()))
+  throw ("Chek printeri Windowsda tayyor emas. " + (Get-SampiPrinterStatusText $snapshot @()))
 }
 
 if (-not [SampiRawPrinter]::OpenPrinter($printerName, [ref]$hPrinter, [IntPtr]::Zero)) {
@@ -838,7 +851,7 @@ if ((Test-SampiBadPrinterState $snapshot) -or $failedJobs.Count -gt 0) {
     $jobs | Remove-PrintJob -ErrorAction SilentlyContinue
   } catch {
   }
-  throw ("XP-58 printer chekni chiqara olmadi. " + (Get-SampiPrinterStatusText $snapshot $jobs))
+  throw ("Chek printeri chekni chiqara olmadi. " + (Get-SampiPrinterStatusText $snapshot $jobs))
 }
 `;
 
@@ -916,7 +929,7 @@ const printReceiptAsRawText = async (printerName, receipt) => {
 
 const printHtmlSilently = async (parentWindow, html, options = {}) => {
   const printWindow = new BrowserWindow({
-    width: 260,
+    width: 340,
     height: 720,
     show: false,
     parent: parentWindow || undefined,
