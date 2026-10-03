@@ -62,7 +62,7 @@ const buildPrintHtml = (check) => {
         background: #fff;
       }
 
-      .ticket { width: 80mm; margin: 0; padding: 0; }
+      .ticket { width: 80mm; margin: 0; padding: 0 0 10mm; }
       .inner { width: 72mm; margin: 0 auto; padding: 6px 0; }
       .check-title {
         text-align: center;
