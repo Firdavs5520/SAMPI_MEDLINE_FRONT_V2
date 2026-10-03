@@ -114,6 +114,13 @@ function MenuIcon({ name, className = "h-5 w-5" }) {
           <path d="M14 8h6v6" />
         </svg>
       );
+    case "wallet":
+      return (
+        <svg viewBox="0 0 24 24" className={className} {...common}>
+          <path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5" />
+          <path d="M16 13h.01" />
+        </svg>
+      );
     case "settings":
       return (
         <svg viewBox="0 0 24 24" className={className} {...common}>
@@ -137,7 +144,10 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
     return window.matchMedia("(min-width: 1024px)").matches;
   });
   const isCompact = compact && isDesktop;
-  const menus = sidebarMenus[role] || [];
+  const roleMenus = sidebarMenus[role] || [];
+  // bottom: true bo'lgan bandlar menyuning pastidagi "Sozlamalar" bo'limida chiqadi.
+  const menus = roleMenus.filter((item) => !item.bottom);
+  const bottomMenus = roleMenus.filter((item) => item.bottom);
   const hasGroups = menus.some((item) => item.group);
   const groupedMenus = hasGroups
     ? menus.reduce((acc, item) => {
@@ -225,7 +235,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
           </button>
         </div>
 
-        <nav className={`overflow-y-auto p-4 ${isCompact ? "space-y-2" : "space-y-3"}`}>
+        <nav className={`flex-1 overflow-y-auto p-4 ${isCompact ? "space-y-2" : "space-y-3"}`}>
           {hasGroups
             ? groupedMenus.map((group) => (
                 <div
@@ -272,6 +282,31 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
                 </NavLink>
               ))}
         </nav>
+
+        {bottomMenus.length ? (
+          <div className={`border-t border-slate-200 p-4 ${isCompact ? "space-y-2" : "space-y-1.5"}`}>
+            <p
+              className={`flex items-center gap-1.5 px-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-slate-500 ${isCompact ? "lg:hidden" : ""}`}
+            >
+              <MenuIcon name="settings" className="h-3.5 w-3.5" />
+              Sozlamalar
+            </p>
+            {bottomMenus.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.end === true}
+                onClick={onClose}
+                title={isCompact ? item.label : undefined}
+                aria-label={item.label}
+                className={linkClassName}
+              >
+                <MenuIcon name={item.icon} />
+                <span className={`truncate ${isCompact ? "lg:hidden" : ""}`}>{item.label}</span>
+              </NavLink>
+            ))}
+          </div>
+        ) : null}
       </div>
     </aside>
   );

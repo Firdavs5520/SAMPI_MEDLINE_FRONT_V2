@@ -53,6 +53,22 @@ const cashierService = {
     return data.data;
   },
 
+  async getExpenses(date) {
+    const query = date ? `?date=${encodeURIComponent(date)}` : "";
+    const { data } = await api.get(`/cashier/expenses${query}`);
+    return data.data;
+  },
+
+  async createExpense(payload) {
+    const { data } = await api.post("/cashier/expenses", payload);
+    return data.data;
+  },
+
+  async cancelExpense(expenseId) {
+    const { data } = await api.post(`/cashier/expenses/${expenseId}/cancel`);
+    return data.data;
+  },
+
   async getEntries(filters = {}) {
     const { data } = await api.get(`/cashier/entries${buildQuery(filters)}`);
     return data.data;
