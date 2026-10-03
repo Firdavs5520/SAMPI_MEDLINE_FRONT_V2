@@ -3,6 +3,7 @@ const { autoUpdater } = require("electron-updater");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs/promises");
 const path = require("node:path");
+const { renderReceiptRaster, buildEscPosRasterPayload } = require("./receiptRaster.cjs");
 
 const APP_URL = process.env.SAMPI_DESKTOP_URL || "https://sampi-medline.vercel.app/";
 const APP_ORIGIN = new URL(APP_URL).origin;
@@ -12,9 +13,12 @@ const TRUSTED_ORIGINS = new Set([
   "https://sampi-medline.vercel.app",
   "https://sampi-medicine.vercel.app"
 ]);
-// Chek odatda saytdagi HTML ko'rinishida (o'sha dizayn) oynasiz chop etiladi.
-// SAMPI_RAW_RECEIPT=1 bo'lsa, eski matnli ESC/POS rejimi ishlatiladi.
+// Chek printeriga chek saytdagi HTML ko'rinishida (o'sha dizayn) rasm qilib, ESC/POS
+// buyruqlari bilan yuboriladi: qog'oz surish va kesishni drayver emas, ilova boshqaradi.
+// SAMPI_RAW_RECEIPT=1 bo'lsa eski matnli ESC/POS, SAMPI_HTML_RECEIPT=1 bo'lsa drayver
+// orqali HTML chop etish ishlatiladi.
 const USE_RAW_RECEIPT_PRINT = process.env.SAMPI_RAW_RECEIPT === "1";
+const USE_HTML_RECEIPT_PRINT = process.env.SAMPI_HTML_RECEIPT === "1";
 const APP_ICON = path.join(__dirname, "../build/icon.ico");
 const PRELOAD_SCRIPT = path.join(__dirname, "preload.cjs");
 const RECEIPT_PRINTER_NAME = process.env.SAMPI_RECEIPT_PRINTER || "XP-80";
@@ -285,6 +289,13 @@ const isLikelyThermalReceiptPrinter = (printer) => {
 
 const shouldUseRawReceiptPrint = (printer, html, options = {}) =>
   USE_RAW_RECEIPT_PRINT &&
+  process.platform === "win32" &&
+  isReceiptHtml(html) &&
+  !options.forceHtmlPrint &&
+  isLikelyThermalReceiptPrinter(printer);
+
+const shouldUseRasterReceiptPrint = (printer, html, options = {}) =>
+  !USE_HTML_RECEIPT_PRINT &&
   process.platform === "win32" &&
   isReceiptHtml(html) &&
   !options.forceHtmlPrint &&
@@ -963,6 +974,18 @@ const printReceiptAsRawText = async (printerName, receipt) => {
   };
 };
 
+const printReceiptAsRawRaster = async (printerName, raster) => {
+  const payload = buildEscPosRasterPayload(raster);
+  const job = await runRawPrinterScript(printerName, payload);
+  return {
+    mode: "raw-raster",
+    width: raster.widthDots,
+    height: raster.heightDots,
+    bytes: payload.length,
+    jobName: job.jobName,
+  };
+};
+
 const printHtmlSilently = async (parentWindow, html, options = {}) => {
   const printWindow = new BrowserWindow({
     width: 340,
@@ -1000,6 +1023,27 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
         pageSize: receiptPageSize,
         ...rawReceipt,
       };
+    }
+
+    if (shouldUseRasterReceiptPrint(printer, safeHtml, options)) {
+      let raster = null;
+      try {
+        raster = await renderReceiptRaster(safeHtml);
+      } catch (error) {
+        // Rasm tayyorlanmasa, drayver orqali HTML chop etishga o'tiladi. Printerga yuborishdagi
+        // xato esa qaytariladi (chek ikki marta chiqmasligi uchun).
+        console.error("Receipt raster render failed, falling back to HTML print:", error);
+      }
+
+      if (raster) {
+        const rasterReceipt = await printReceiptAsRawRaster(printer.name, raster);
+        return {
+          ok: true,
+          printer: printer.name,
+          pageSize: receiptPageSize,
+          ...rasterReceipt,
+        };
+      }
     }
 
     const printOptions = {
