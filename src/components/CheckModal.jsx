@@ -62,7 +62,7 @@ const buildPrintHtml = (check) => {
         background: #fff;
       }
 
-      .ticket { width: 80mm; margin: 0; padding: 0 0 10mm; }
+      .ticket { width: 80mm; margin: 0; padding: 0; }
       .inner { width: 72mm; margin: 0 auto; padding: 6px 0; }
       .check-title {
         text-align: center;
@@ -134,6 +134,9 @@ const buildPrintHtml = (check) => {
         font-size: 12px;
         cursor: pointer;
       }
+      /* Drayver (Save Paper Mode) pastdagi oq joyni kesmasligi uchun 10mm dan keyin qisqa chiziq. */
+      .cut-tail { width: 100%; height: 10mm; display: flex; align-items: flex-end; justify-content: center; }
+      .cut-tail::after { content: ""; width: 14mm; border-top: 1px solid #000; }
     </style>
   </head>
   <body>
@@ -171,6 +174,7 @@ const buildPrintHtml = (check) => {
         <div class="footer">Doimo sog'-salomat bo'ling</div>
         <button id="printBtn" class="print-btn">Chop etish (Enter tugmasi)</button>
       </div>
+      <div class="cut-tail"></div>
     </div>
     <script>
       let didPrint = false;

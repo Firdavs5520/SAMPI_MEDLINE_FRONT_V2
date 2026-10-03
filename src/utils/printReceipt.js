@@ -197,7 +197,7 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         font-family: Arial, sans-serif;
       }
 
-      .ticket { box-sizing: border-box; width: 80mm; margin: 0; padding: 0 0 10mm; }
+      .ticket { box-sizing: border-box; width: 80mm; margin: 0; padding: 0; }
       .inner { width: 72mm; margin: 0 auto; padding: 6px 0; }
       .check-title {
         text-align: center;
@@ -257,6 +257,9 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         text-align: center;
         font-size: 14px;
       }
+      /* Drayver (Save Paper Mode) pastdagi oq joyni kesmasligi uchun 10mm dan keyin qisqa chiziq. */
+      .cut-tail { width: 100%; height: 10mm; display: flex; align-items: flex-end; justify-content: center; }
+      .cut-tail::after { content: ""; width: 14mm; border-top: 1px solid #000; }
     </style>
   </head>
   <body>
@@ -284,6 +287,7 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         ${specialistLine}
         <div class="footer">Doimo sog'-salomat bo'ling</div>
       </div>
+      <div class="cut-tail"></div>
     </div>
     ${
       inline
@@ -434,7 +438,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         align-items: center;
         box-sizing: border-box;
         width: 80mm;
-        padding: 0 0 10mm;
+        padding: 0;
         background: #fff;
         color: #000;
       }
@@ -488,6 +492,9 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         letter-spacing: 0;
         overflow: hidden;
       }
+      /* Drayver (Save Paper Mode) pastdagi oq joyni kesmasligi uchun 10mm dan keyin qisqa chiziq. */
+      .cut-tail { width: 100%; height: 10mm; display: flex; align-items: flex-end; justify-content: center; }
+      .cut-tail::after { content: ""; width: 14mm; border-top: 1px solid #000; }
     </style>
   </head>
   <body>
@@ -502,6 +509,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
       <div class="divider"></div>
       <div class="footer">Tashrifingiz uchun rahmat!</div>
       <div class="divider"></div>
+      <div class="cut-tail"></div>
     </div>
     ${
       inline
