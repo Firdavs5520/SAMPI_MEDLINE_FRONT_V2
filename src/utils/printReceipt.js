@@ -197,8 +197,11 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         font-family: Arial, sans-serif;
       }
 
-      .ticket { box-sizing: border-box; width: 80mm; margin: 0; padding: 0; }
-      .inner { width: 72mm; margin: 0 auto; padding: 6px 0; }
+      /* 80mm qog'ozda printer faqat 72mm (576 nuqta) kenglikni bosadi va u sahifaning
+         chap chetidan boshlanadi. Kontent 80mm markazida bo'lsa o'ng tomoni kesiladi,
+         shuning uchun hammasi chapdagi 72mm ichida (2mm ichki chekka bilan) turadi. */
+      .ticket { box-sizing: border-box; width: 72mm; margin: 0; padding: 0; }
+      .inner { box-sizing: border-box; width: 72mm; margin: 0; padding: 6px 2mm; }
       .check-title {
         text-align: center;
         font-size: 14px;
@@ -257,9 +260,12 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         text-align: center;
         font-size: 14px;
       }
-      /* Drayver (Save Paper Mode) pastdagi oq joyni kesmasligi uchun 10mm dan keyin qisqa chiziq. */
-      .cut-tail { width: 100%; height: 10mm; display: flex; align-items: flex-end; justify-content: center; }
-      .cut-tail::after { content: ""; width: 14mm; border-top: 1px solid #000; }
+      /* Pichoq bosish kallagidan ~12mm yuqorida, drayver esa oxirgi bosilgan nuqtadan keyin
+         qog'oz surmay kesadi (Save Paper Mode oq joyni olib tashlaydi). Shuning uchun 22mm
+         bo'sh joy va oxirida kichik nuqta: kesim matndan ~10mm pastdan o'tadi, nuqta esa
+         keyingi chekning tepasida deyarli ko'rinmaydi. */
+      .cut-tail { width: 100%; height: 22mm; display: flex; align-items: flex-end; justify-content: center; }
+      .cut-tail::after { content: ""; width: 1.5mm; border-top: 1px solid #000; }
     </style>
   </head>
   <body>
@@ -357,15 +363,14 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
           background: #fff !important;
           font-family: "Golos Text", Arial, sans-serif;
           text-align: center;
-          display: flex;
-          justify-content: center;
-          align-items: flex-start;
+          display: block;
         }
         .check {
           display: flex;
           flex-direction: column;
           align-items: center;
-          width: 100%;
+          /* Bosiladigan kenglik 72mm, chap chetdan. */
+          width: 72mm;
         }
         .title {
           width: 90%;
@@ -431,7 +436,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         background: #f5f5f5;
         font-family: "Golos Text", Arial, sans-serif;
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: flex-start;
         text-align: center;
       }
@@ -440,7 +445,7 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         flex-direction: column;
         align-items: center;
         box-sizing: border-box;
-        width: 80mm;
+        width: 72mm;
         padding: 0;
         background: #fff;
         color: #000;
@@ -495,9 +500,12 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         letter-spacing: 0;
         overflow: hidden;
       }
-      /* Drayver (Save Paper Mode) pastdagi oq joyni kesmasligi uchun 10mm dan keyin qisqa chiziq. */
-      .cut-tail { width: 100%; height: 10mm; display: flex; align-items: flex-end; justify-content: center; }
-      .cut-tail::after { content: ""; width: 14mm; border-top: 1px solid #000; }
+      /* Pichoq bosish kallagidan ~12mm yuqorida, drayver esa oxirgi bosilgan nuqtadan keyin
+         qog'oz surmay kesadi (Save Paper Mode oq joyni olib tashlaydi). Shuning uchun 22mm
+         bo'sh joy va oxirida kichik nuqta: kesim matndan ~10mm pastdan o'tadi, nuqta esa
+         keyingi chekning tepasida deyarli ko'rinmaydi. */
+      .cut-tail { width: 100%; height: 22mm; display: flex; align-items: flex-end; justify-content: center; }
+      .cut-tail::after { content: ""; width: 1.5mm; border-top: 1px solid #000; }
     </style>
   </head>
   <body>
