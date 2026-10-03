@@ -260,9 +260,12 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         text-align: center;
         font-size: 14px;
       }
-      /* Drayver (Save Paper Mode) pastdagi oq joyni kesmasligi uchun 10mm dan keyin qisqa chiziq. */
-      .cut-tail { width: 100%; height: 10mm; display: flex; align-items: flex-end; justify-content: center; }
-      .cut-tail::after { content: ""; width: 14mm; border-top: 1px solid #000; }
+      /* Pichoq bosish kallagidan ~12mm yuqorida, drayver esa oxirgi bosilgan nuqtadan keyin
+         qog'oz surmay kesadi (Save Paper Mode oq joyni olib tashlaydi). Shuning uchun 22mm
+         bo'sh joy va oxirida kichik nuqta: kesim matndan ~10mm pastdan o'tadi, nuqta esa
+         keyingi chekning tepasida deyarli ko'rinmaydi. */
+      .cut-tail { width: 100%; height: 22mm; display: flex; align-items: flex-end; justify-content: center; }
+      .cut-tail::after { content: ""; width: 1.5mm; border-top: 1px solid #000; }
     </style>
   </head>
   <body>
@@ -497,9 +500,12 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
         letter-spacing: 0;
         overflow: hidden;
       }
-      /* Drayver (Save Paper Mode) pastdagi oq joyni kesmasligi uchun 10mm dan keyin qisqa chiziq. */
-      .cut-tail { width: 100%; height: 10mm; display: flex; align-items: flex-end; justify-content: center; }
-      .cut-tail::after { content: ""; width: 14mm; border-top: 1px solid #000; }
+      /* Pichoq bosish kallagidan ~12mm yuqorida, drayver esa oxirgi bosilgan nuqtadan keyin
+         qog'oz surmay kesadi (Save Paper Mode oq joyni olib tashlaydi). Shuning uchun 22mm
+         bo'sh joy va oxirida kichik nuqta: kesim matndan ~10mm pastdan o'tadi, nuqta esa
+         keyingi chekning tepasida deyarli ko'rinmaydi. */
+      .cut-tail { width: 100%; height: 22mm; display: flex; align-items: flex-end; justify-content: center; }
+      .cut-tail::after { content: ""; width: 1.5mm; border-top: 1px solid #000; }
     </style>
   </head>
   <body>
