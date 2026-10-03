@@ -36,6 +36,31 @@ autoUpdater.autoInstallOnAppQuit = true;
 
 app.setAppUserModelId("uz.sampimedline.desktop");
 
+// Ilova bitta nusxada ishlaydi: Windows'dan avtomatik ochilgandan keyin yorliq
+// bosilsa, yangi oyna emas, mavjud oyna oldinga chiqadi.
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) {
+  app.quit();
+}
+
+app.on("second-instance", () => {
+  const [existingWindow] = BrowserWindow.getAllWindows().filter((win) => !win.getParentWindow());
+  if (!existingWindow) return;
+  if (existingWindow.isMinimized()) existingWindow.restore();
+  existingWindow.show();
+  existingWindow.focus();
+});
+
+// Windows'ga kirilganda ilova o'zi ochiladi (autozagruzka).
+const enableAutoLaunch = () => {
+  if (!app.isPackaged || process.platform !== "win32") return;
+  try {
+    app.setLoginItemSettings({ openAtLogin: true, path: process.execPath });
+  } catch (error) {
+    console.warn("Sampi Medicine auto-launch setup failed:", error.message);
+  }
+};
+
 const checkForAppUpdates = () => {
   if (!app.isPackaged) {
     return;
@@ -1143,9 +1168,14 @@ const createWindow = () => {
 
 Menu.setApplicationMenu(null);
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  if (!hasSingleInstanceLock) return;
+  enableAutoLaunch();
+  createWindow();
+});
 
 app.whenReady().then(() => {
+  if (!hasSingleInstanceLock) return;
   setTimeout(checkForAppUpdates, 15000);
   setInterval(checkForAppUpdates, UPDATE_CHECK_INTERVAL_MS);
 });

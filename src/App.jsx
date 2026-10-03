@@ -15,6 +15,7 @@ import LorServiceCreatePage from "./pages/LorServiceCreatePage.jsx";
 import RoleSpecialistsPage from "./pages/RoleSpecialistsPage.jsx";
 import DeliveryDashboard from "./pages/DeliveryDashboard.jsx";
 import CashierDashboard from "./pages/CashierDashboard.jsx";
+import CashierExpensesPage from "./pages/CashierExpensesPage.jsx";
 import ReporterDashboard from "./pages/ReporterDashboard.jsx";
 import ReporterReportsPage from "./pages/ReporterReportsPage.jsx";
 import ManagerDashboard from "./pages/ManagerDashboard.jsx";
@@ -137,6 +138,7 @@ function App() {
               path="/cashier/journal"
               element={<CashierDashboard forcedSection="journal" />}
             />
+            <Route path="/cashier/expenses" element={<CashierExpensesPage />} />
             <Route
               path="/cashier/debts"
               element={<CashierDashboard forcedSection="debts" />}
