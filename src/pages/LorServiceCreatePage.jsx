@@ -75,8 +75,11 @@ function LorServiceCreatePage() {
       if (!safeName) {
         throw new Error("Xizmat nomini kiriting.");
       }
-      if (!Number.isFinite(safePrice) || safePrice <= 0 || safePrice >= 1000000) {
-        throw new Error("Narx > 0 va < 1,000,000 bo'lishi kerak.");
+      if (!String(newServiceForm.price || "").trim()) {
+        throw new Error("Narxni kiriting (bepul xizmat uchun 0).");
+      }
+      if (!Number.isFinite(safePrice) || safePrice < 0 || safePrice >= 1000000) {
+        throw new Error("Narx 0 yoki undan katta va < 1,000,000 bo'lishi kerak.");
       }
 
       await serviceService.createService({
@@ -127,8 +130,11 @@ function LorServiceCreatePage() {
       if (!safeName) {
         throw new Error("Xizmat nomini kiriting.");
       }
-      if (!Number.isFinite(safePrice) || safePrice <= 0 || safePrice >= 1000000) {
-        throw new Error("Narx > 0 va < 1,000,000 bo'lishi kerak.");
+      if (!String(editForm.price || "").trim()) {
+        throw new Error("Narxni kiriting (bepul xizmat uchun 0).");
+      }
+      if (!Number.isFinite(safePrice) || safePrice < 0 || safePrice >= 1000000) {
+        throw new Error("Narx 0 yoki undan katta va < 1,000,000 bo'lishi kerak.");
       }
 
       await serviceService.updateService(editingServiceId, {
