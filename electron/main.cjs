@@ -23,7 +23,7 @@ const APP_ICON = path.join(__dirname, "../build/icon.ico");
 const PRELOAD_SCRIPT = path.join(__dirname, "preload.cjs");
 const RECEIPT_PRINTER_NAME = process.env.SAMPI_RECEIPT_PRINTER || "XP-80";
 const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
-const AUTO_INSTALL_DELAY_MS = 5000;
+const UPDATE_SNOOZE_MS = 2 * 60 * 60 * 1000;
 const PRINT_JOB_TIMEOUT_MS = 20000;
 const PRINT_WINDOW_CLOSE_DELAY_MS = 350;
 // XPrinter 80mm qog'oz (bosiladigan kenglik 72mm, 576 nuqta).
@@ -35,7 +35,9 @@ const RECEIPT_MAX_HEIGHT_MICRONS = 420000;
 const RECEIPT_PRINTER_CONFIG_FILE = "receipt-printer.json";
 const RAW_PRINT_TIMEOUT_MS = 20000;
 
-autoUpdater.autoDownload = true;
+// Yangi versiya foydalanuvchi ruxsati bilan yuklanadi (ilovada so'rov va foiz ko'rsatiladi).
+// Yuklangan, lekin o'rnatilmagan yangilanish ilova yopilganda o'rnatiladi.
+autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
 
 app.setAppUserModelId("uz.sampimedline.desktop");
@@ -75,20 +77,119 @@ const checkForAppUpdates = () => {
   });
 };
 
-let updateInstallTimer = null;
+// status: idle | available | downloading | downloaded | error
+const updateState = {
+  status: "idle",
+  version: "",
+  percent: 0,
+  transferred: 0,
+  total: 0,
+  bytesPerSecond: 0,
+  error: "",
+  snoozedUntil: 0,
+};
 
-autoUpdater.on("update-downloaded", () => {
-  if (updateInstallTimer) {
-    return;
+const getPublicUpdateState = () => ({
+  currentVersion: app.getVersion(),
+  status: updateState.status,
+  version: updateState.version,
+  percent: updateState.percent,
+  transferred: updateState.transferred,
+  total: updateState.total,
+  bytesPerSecond: updateState.bytesPerSecond,
+  error: updateState.error,
+  snoozed: updateState.status === "available" && Date.now() < updateState.snoozedUntil,
+});
+
+const broadcastUpdateState = () => {
+  const state = getPublicUpdateState();
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (window.isDestroyed()) continue;
+    window.webContents.send("sampi:update-state", state);
+    if (state.status === "downloading") {
+      window.setProgressBar(Math.max(0, Math.min(1, state.percent / 100)));
+    } else {
+      window.setProgressBar(-1);
+    }
   }
+};
 
-  updateInstallTimer = setTimeout(() => {
-    autoUpdater.quitAndInstall(true, true);
-  }, AUTO_INSTALL_DELAY_MS);
+const setUpdateState = (patch) => {
+  Object.assign(updateState, patch);
+  broadcastUpdateState();
+};
+
+autoUpdater.on("update-available", (info) => {
+  if (updateState.status === "downloading" || updateState.status === "downloaded") return;
+  setUpdateState({ status: "available", version: String(info?.version || ""), error: "" });
+});
+
+autoUpdater.on("download-progress", (progress) => {
+  setUpdateState({
+    status: "downloading",
+    percent: Math.round(Number(progress?.percent) || 0),
+    transferred: Number(progress?.transferred) || 0,
+    total: Number(progress?.total) || 0,
+    bytesPerSecond: Number(progress?.bytesPerSecond) || 0,
+  });
+});
+
+autoUpdater.on("update-downloaded", (info) => {
+  setUpdateState({
+    status: "downloaded",
+    version: String(info?.version || updateState.version),
+    percent: 100,
+    error: "",
+  });
 });
 
 autoUpdater.on("error", (error) => {
   console.warn("Sampi Medicine updater error:", error.message);
+  if (updateState.status === "downloading") {
+    setUpdateState({ status: "error", error: error.message || "Yangilanishni yuklab bo'lmadi." });
+  }
+});
+
+const assertTrustedSender = (event) => {
+  if (!isTrustedRendererUrl(event.senderFrame?.url || "")) {
+    throw new Error("Update request came from an untrusted page.");
+  }
+};
+
+ipcMain.handle("sampi:get-update-state", (event) => {
+  assertTrustedSender(event);
+  return getPublicUpdateState();
+});
+
+ipcMain.handle("sampi:download-update", (event) => {
+  assertTrustedSender(event);
+  if (!["available", "error"].includes(updateState.status)) {
+    return getPublicUpdateState();
+  }
+  setUpdateState({ status: "downloading", percent: 0, transferred: 0, total: 0, error: "" });
+  autoUpdater.downloadUpdate().catch((error) => {
+    setUpdateState({ status: "error", error: error.message || "Yangilanishni yuklab bo'lmadi." });
+  });
+  return getPublicUpdateState();
+});
+
+ipcMain.handle("sampi:install-update", (event) => {
+  assertTrustedSender(event);
+  if (updateState.status !== "downloaded") {
+    throw new Error("Yangilanish hali yuklanmagan.");
+  }
+  // Oynasiz o'rnatib, ilovani qayta ishga tushiradi.
+  setImmediate(() => autoUpdater.quitAndInstall(true, true));
+  return true;
+});
+
+ipcMain.handle("sampi:snooze-update", (event) => {
+  assertTrustedSender(event);
+  setUpdateState({
+    status: updateState.status === "error" ? "available" : updateState.status,
+    snoozedUntil: Date.now() + UPDATE_SNOOZE_MS,
+  });
+  return getPublicUpdateState();
 });
 
 const normalizePrinterName = (value) =>

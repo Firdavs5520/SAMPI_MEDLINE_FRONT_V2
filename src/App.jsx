@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import AppVersionFooter from "./components/AppVersionFooter.jsx";
+import DesktopUpdatePrompt from "./components/DesktopUpdatePrompt.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import RequireLorIdentity from "./components/RequireLorIdentity.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
@@ -169,6 +170,7 @@ function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       {showAppVersion ? <AppVersionFooter /> : null}
+      <DesktopUpdatePrompt unattended={!showAppVersion} />
     </>
   );
 }
