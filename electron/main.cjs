@@ -4,8 +4,17 @@ const { spawn } = require("node:child_process");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 
-const APP_URL = process.env.SAMPI_DESKTOP_URL || "https://sampi-medicine.vercel.app/";
+const APP_URL = process.env.SAMPI_DESKTOP_URL || "https://sampi-medline.vercel.app/";
 const APP_ORIGIN = new URL(APP_URL).origin;
+// Ikkala domen bitta saytga olib boradi (biri ikkinchisiga yo'naltiriladi).
+const TRUSTED_ORIGINS = new Set([
+  APP_ORIGIN,
+  "https://sampi-medline.vercel.app",
+  "https://sampi-medicine.vercel.app"
+]);
+// Chek odatda saytdagi HTML ko'rinishida (o'sha dizayn) oynasiz chop etiladi.
+// SAMPI_RAW_RECEIPT=1 bo'lsa, eski matnli ESC/POS rejimi ishlatiladi.
+const USE_RAW_RECEIPT_PRINT = process.env.SAMPI_RAW_RECEIPT === "1";
 const APP_ICON = path.join(__dirname, "../build/icon.ico");
 const PRELOAD_SCRIPT = path.join(__dirname, "preload.cjs");
 const RECEIPT_PRINTER_NAME = process.env.SAMPI_RECEIPT_PRINTER || "XP-80";
@@ -88,7 +97,7 @@ const isTrustedRendererUrl = (value) => {
   }
 
   try {
-    return new URL(value).origin === APP_ORIGIN;
+    return TRUSTED_ORIGINS.has(new URL(value).origin);
   } catch {
     return false;
   }
@@ -127,9 +136,11 @@ const resolveReceiptPrinter = async (webContents, requestedPrinterName = "") => 
   const preferredPrinter = printers.find(matchesPreferred);
   if (preferredPrinter) return preferredPrinter;
 
-  // Printer tanlanmagan bo'lsa, nomi chek printeriga o'xshaganini olamiz (XP-80C, POS-80 ...).
+  // Printer tanlanmagan bo'lsa: nomi chek printeriga o'xshagani (XP-80C, POS Printer ...),
+  // u ham bo'lmasa Windows'dagi standart printer.
   if (!requestedPrinterName && !savedConfig.printerName) {
-    const thermalPrinter = printers.find(isLikelyThermalReceiptPrinter);
+    const thermalPrinter =
+      printers.find(isLikelyThermalReceiptPrinter) || printers.find((printer) => printer.isDefault);
     if (thermalPrinter) return thermalPrinter;
   }
 
@@ -244,10 +255,11 @@ const isLikelyThermalReceiptPrinter = (printer) => {
   const haystack = normalizePrinterName(
     [printer?.name, printer?.displayName, printer?.description].filter(Boolean).join(" ")
   );
-  return ["xp80", "xp58", "pos80", "80mm", "xprinter", "thermal", "receipt"].some((token) => haystack.includes(token));
+  return ["xp80", "xp58", "pos80", "pos58", "posprinter", "80mm", "xprinter", "thermal", "receipt"].some((token) => haystack.includes(token));
 };
 
 const shouldUseRawReceiptPrint = (printer, html, options = {}) =>
+  USE_RAW_RECEIPT_PRINT &&
   process.platform === "win32" &&
   isReceiptHtml(html) &&
   !options.forceHtmlPrint &&
@@ -967,7 +979,8 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
 
     const printOptions = {
       silent: true,
-      printBackground: true,
+      // Chrome'dagi kabi fon ranglari chop etilmaydi (termoprinterda kulrang nuqta bo'lmasin).
+      printBackground: false,
       deviceName: printer.name,
       copies: Math.max(1, Number(options.copies) || 1),
       margins: {
@@ -1117,7 +1130,7 @@ const createWindow = () => {
       return { action: "deny" };
     }
 
-    if (targetOrigin === APP_ORIGIN) {
+    if (TRUSTED_ORIGINS.has(targetOrigin)) {
       return { action: "allow" };
     }
 

@@ -1,7 +1,7 @@
 {
   "name": "sampi-medicine-frontend",
   "private": true,
-  "version": "1.0.23",
+  "version": "1.0.24",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -37,7 +37,7 @@
     "publish": [
       {
         "provider": "generic",
-        "url": "https://sampi-medicine.vercel.app/desktop-updates/"
+        "url": "https://sampi-medline.vercel.app/desktop-updates/"
       }
     ],
     "files": [
