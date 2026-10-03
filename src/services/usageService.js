@@ -132,6 +132,11 @@ const usageService = {
     return data.data;
   },
 
+  async updateLorCheck(checkId, payload) {
+    const { data } = await api.patch(`/usage/lor-checks/${checkId}`, payload);
+    return data.data;
+  },
+
   async getMyChecks(search = "", lorIdentity = "", specialist = null) {
     const params = new URLSearchParams();
     if (search?.trim()) {
