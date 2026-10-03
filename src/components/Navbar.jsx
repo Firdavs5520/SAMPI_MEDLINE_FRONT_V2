@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { roleHomePath, roleLabels, sidebarMenus } from "../utils/constants.js";
 import Button from "./Button.jsx";
 import ThemeModeSwitch from "./ThemeModeSwitch.jsx";
+import WindowControls from "./WindowControls.jsx";
 
 const LEGACY_NAME_MAP = {
   "Nurse User": "Hamshira",
@@ -100,6 +101,7 @@ function Navbar({ onMenuOpen }) {
               {roleLabels[user?.role] || "-"}
             </div>
           </button>
+          <WindowControls />
           <ThemeModeSwitch compact />
           <Button
             variant="secondary"

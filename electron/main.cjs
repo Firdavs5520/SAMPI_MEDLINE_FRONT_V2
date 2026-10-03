@@ -1061,6 +1061,25 @@ ipcMain.handle("sampi:print-receipt-html", async (event, html, options = {}) => 
   return printHtmlSilently(parentWindow, html, options);
 });
 
+const getSenderWindow = (event) => {
+  if (!isTrustedRendererUrl(event.senderFrame?.url || "")) {
+    throw new Error("Window request came from an untrusted page.");
+  }
+  const window = BrowserWindow.fromWebContents(event.sender);
+  if (!window || window.isDestroyed()) {
+    throw new Error("Ilova oynasi topilmadi.");
+  }
+  return window;
+};
+
+ipcMain.handle("sampi:get-fullscreen", (event) => getSenderWindow(event).isFullScreen());
+
+ipcMain.handle("sampi:toggle-fullscreen", (event) => {
+  const window = getSenderWindow(event);
+  window.setFullScreen(!window.isFullScreen());
+  return window.isFullScreen();
+});
+
 ipcMain.handle("sampi:list-printers", async (event) => {
   if (!isTrustedRendererUrl(event.senderFrame?.url || "")) {
     throw new Error("Printer request came from an untrusted page.");
@@ -1120,6 +1139,11 @@ const createWindow = () => {
   });
 
   mainWindow.maximize();
+  ["enter-full-screen", "leave-full-screen"].forEach((eventName) => {
+    mainWindow.on(eventName, () => {
+      mainWindow.webContents.send("sampi:fullscreen-changed", mainWindow.isFullScreen());
+    });
+  });
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
   });
