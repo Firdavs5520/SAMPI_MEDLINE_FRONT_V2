@@ -352,6 +352,9 @@ export const buildLorQueueTicketPrintHtml = (ticket, options = {}) => {
           margin: 0;
           padding: 0;
           width: 80mm;
+          /* Ekrandagi kulrang fon va 100vh balandlik chekka tushmasin. */
+          min-height: 0 !important;
+          background: #fff !important;
           font-family: "Golos Text", Arial, sans-serif;
           text-align: center;
           display: flex;
