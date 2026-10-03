@@ -1,6 +1,7 @@
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { roleHomePath, roleLabels, sidebarMenus } from "../utils/constants.js";
+import { FULLSCREEN_OFF_KEY, roleHomePath, roleLabels, sidebarMenus } from "../utils/constants.js";
 import Button from "./Button.jsx";
 import ThemeModeSwitch from "./ThemeModeSwitch.jsx";
 
@@ -26,12 +27,59 @@ const getPageLabel = (role, pathname) => {
   return current?.label || roleLabels[role] || "Sampi Medicine";
 };
 
+const iconButtonClass =
+  "sampi-control inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-primary outline-none transition hover:bg-slate-50 focus:border-primary focus:ring-2 focus:ring-primary/10";
+
+const svgProps = {
+  className: "h-4 w-4",
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  "aria-hidden": "true"
+};
+
+const setAutoFullscreenOff = (off) => {
+  try {
+    if (off) window.sessionStorage.setItem(FULLSCREEN_OFF_KEY, "1");
+    else window.sessionStorage.removeItem(FULLSCREEN_OFF_KEY);
+  } catch {
+    // sessionStorage yopiq bo'lsa ham tugma ishlayveradi.
+  }
+};
+
 function Navbar({ onMenuOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const displayName = getDisplayName(user);
   const pageLabel = getPageLabel(user?.role, location.pathname);
+  const canFullscreen = typeof document !== "undefined" && Boolean(document.fullscreenEnabled);
+  const [isFullscreen, setIsFullscreen] = useState(
+    () => typeof document !== "undefined" && Boolean(document.fullscreenElement)
+  );
+
+  useEffect(() => {
+    const sync = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    if (document.fullscreenElement) {
+      setAutoFullscreenOff(true);
+      document.exitFullscreen?.().catch(() => {});
+      return;
+    }
+    setAutoFullscreenOff(false);
+    document.documentElement.requestFullscreen?.({ navigationUI: "hide" }).catch(() => {});
+  };
+
+  const handleReload = () => {
+    window.location.reload();
+  };
 
   const handleLogout = () => {
     logout();
@@ -100,6 +148,43 @@ function Navbar({ onMenuOpen }) {
               {roleLabels[user?.role] || "-"}
             </div>
           </button>
+          <button
+            type="button"
+            onClick={handleReload}
+            className={iconButtonClass}
+            title="Sahifani yangilash"
+            aria-label="Sahifani yangilash"
+          >
+            <svg {...svgProps}>
+              <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+              <path d="M21 3v6h-6" />
+            </svg>
+          </button>
+          {canFullscreen ? (
+            <button
+              type="button"
+              onClick={handleToggleFullscreen}
+              className={iconButtonClass}
+              title={isFullscreen ? "To'liq ekrandan chiqish" : "To'liq ekran"}
+              aria-label={isFullscreen ? "To'liq ekrandan chiqish" : "To'liq ekran"}
+            >
+              {isFullscreen ? (
+                <svg {...svgProps}>
+                  <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+                  <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+                  <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+                  <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+                </svg>
+              ) : (
+                <svg {...svgProps}>
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+                  <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+                  <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+                  <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+                </svg>
+              )}
+            </button>
+          ) : null}
           <ThemeModeSwitch compact />
           <Button
             variant="secondary"
