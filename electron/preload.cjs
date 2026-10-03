@@ -6,6 +6,15 @@ contextBridge.exposeInMainWorld("sampiDesktop", {
   listPrinters: () => ipcRenderer.invoke("sampi:list-printers"),
   setReceiptPrinter: (printerName) =>
     ipcRenderer.invoke("sampi:set-receipt-printer", printerName),
+  getUpdateState: () => ipcRenderer.invoke("sampi:get-update-state"),
+  downloadUpdate: () => ipcRenderer.invoke("sampi:download-update"),
+  installUpdate: () => ipcRenderer.invoke("sampi:install-update"),
+  snoozeUpdate: () => ipcRenderer.invoke("sampi:snooze-update"),
+  onUpdateState: (callback) => {
+    const listener = (_event, state) => callback(state);
+    ipcRenderer.on("sampi:update-state", listener);
+    return () => ipcRenderer.removeListener("sampi:update-state", listener);
+  },
 });
 
 const injectSilentReceiptPrint = () => {
