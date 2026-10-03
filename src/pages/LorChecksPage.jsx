@@ -5,6 +5,8 @@ import Alert from "../components/Alert.jsx";
 import Table from "../components/Table.jsx";
 import Button from "../components/Button.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
+import LorCheckEditModal from "../components/LorCheckEditModal.jsx";
+import { canEditLorCheck } from "../utils/lorCheckEdit.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { extractErrorMessage, formatCurrency, formatDateTime } from "../utils/format.js";
 import {
@@ -53,8 +55,18 @@ const renderCashierStatus = (row) => {
   return <span className={`sampi-lor-status sampi-lor-status-${statusClass}`}>{label}</span>;
 };
 
+const PencilIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+  </svg>
+);
+
 function LorChecksPage() {
-  const { lorIdentity, lorDoctor } = useAuth();
+  const { user, lorIdentity, lorDoctor } = useAuth();
+  const [editingCheck, setEditingCheck] = useState(null);
+  const [success, setSuccess] = useState("");
+  const [now, setNow] = useState(() => Date.now());
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
@@ -209,6 +221,22 @@ function LorChecksPage() {
     }, 120);
   };
 
+  // Qalamcha 12 soat o'tganda o'zi yo'qolishi uchun vaqtni har daqiqada yangilaymiz.
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60 * 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleCheckSaved = async (updated, { print }) => {
+    const previous = editingCheck;
+    setEditingCheck(null);
+    setSuccess(`Chek ${updated?.checkId || ""} yangilandi.`);
+    await loadChecks(query.trim());
+    if (print && updated) {
+      await handleReprintCheck({ ...previous, ...updated, cashierStatus: previous?.cashierStatus });
+    }
+  };
+
   const clearSearch = () => {
     setQuery("");
   };
@@ -275,6 +303,7 @@ function LorChecksPage() {
       </div>
 
       <Alert type="error" message={error} />
+      <Alert type="success" message={success} />
 
       <div className="card sampi-lor-table-card p-4 sm:p-5">
         <div onMouseLeave={() => clearHoverPreview({ delay: 180 })}>
@@ -409,18 +438,36 @@ function LorChecksPage() {
               label: "Amal",
               render: (row) => {
                 const checkKey = getCheckKey(row);
+                const editable = canEditLorCheck(row, now);
                 return (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    loading={reprintingCheckKey === checkKey}
-                    loadingText="Chiqarilmoqda..."
-                    disabled={Boolean(reprintingCheckKey) && reprintingCheckKey !== checkKey}
-                    className="px-3 py-1.5 text-xs"
-                    onClick={() => handleReprintCheck(row)}
-                  >
-                    Qayta chiqarish
-                  </Button>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      loading={reprintingCheckKey === checkKey}
+                      loadingText="Chiqarilmoqda..."
+                      disabled={Boolean(reprintingCheckKey) && reprintingCheckKey !== checkKey}
+                      className="whitespace-nowrap px-3 py-1.5 text-xs"
+                      onClick={() => handleReprintCheck(row)}
+                    >
+                      Qayta chiqarish
+                    </Button>
+                    {editable ? (
+                      <button
+                        type="button"
+                        title="Chekni tahrirlash (12 soat ichida)"
+                        aria-label="Chekni tahrirlash"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200 text-slate-700 transition hover:bg-slate-300"
+                        onClick={() => {
+                          setError("");
+                          setSuccess("");
+                          setEditingCheck(row);
+                        }}
+                      >
+                        <PencilIcon />
+                      </button>
+                    ) : null}
+                  </div>
                 );
               }
             }
@@ -501,6 +548,13 @@ function LorChecksPage() {
           </div>
         )}
       </div>
+      <LorCheckEditModal
+        open={Boolean(editingCheck)}
+        check={editingCheck}
+        currentUserId={String(user?.id || user?._id || "")}
+        onClose={() => setEditingCheck(null)}
+        onSaved={handleCheckSaved}
+      />
     </div>
   );
 }
