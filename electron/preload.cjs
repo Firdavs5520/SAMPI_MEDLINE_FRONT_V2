@@ -6,13 +6,6 @@ contextBridge.exposeInMainWorld("sampiDesktop", {
   listPrinters: () => ipcRenderer.invoke("sampi:list-printers"),
   setReceiptPrinter: (printerName) =>
     ipcRenderer.invoke("sampi:set-receipt-printer", printerName),
-  isFullscreen: () => ipcRenderer.invoke("sampi:get-fullscreen"),
-  toggleFullscreen: () => ipcRenderer.invoke("sampi:toggle-fullscreen"),
-  onFullscreenChange: (callback) => {
-    const listener = (_event, isFullscreen) => callback(Boolean(isFullscreen));
-    ipcRenderer.on("sampi:fullscreen-changed", listener);
-    return () => ipcRenderer.removeListener("sampi:fullscreen-changed", listener);
-  },
 });
 
 const injectSilentReceiptPrint = () => {
