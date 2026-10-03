@@ -814,14 +814,15 @@ function LorServicesPage() {
               </div>
 
               {waitingTickets.length ? (
-                <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                // Raqamlar ustun bo'ylab ketadi: 01, 02, 03 pastga, keyin keyingi ustun.
+                <div className="mt-3 gap-2 sm:columns-2 xl:columns-3">
                   {waitingTickets.map((ticket) => (
                     <button
                       key={ticket.id}
                       type="button"
                       onClick={() => handleCallTicket(ticket)}
                       disabled={Boolean(callingTicketId)}
-                      className="flex items-center justify-between gap-3 rounded-lg border border-sky-200 bg-white px-3 py-3 text-left shadow-sm transition-colors hover:border-sky-400 disabled:cursor-wait disabled:opacity-70"
+                      className="mb-2 flex w-full break-inside-avoid items-center justify-between gap-3 rounded-lg border border-sky-200 bg-white px-3 py-3 text-left shadow-sm transition-colors hover:border-sky-400 disabled:cursor-wait disabled:opacity-70"
                     >
                       <span className="text-3xl font-black leading-none text-slate-900">
                         {ticket.queueCode}

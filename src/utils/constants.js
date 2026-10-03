@@ -38,8 +38,9 @@ export const sidebarMenus = {
   lor: [
     { label: "Mening cheklarim", path: "/lor/checks", end: true, icon: "receipt" },
     { label: "Xizmatdan foydalanish", path: "/lor/services", end: true, icon: "stethoscope" },
-    { label: "Doktorlarni boshqarish", path: "/lor/specialists", end: true, icon: "users" },
-    { label: "Xizmat qo'shish", path: "/lor/services/add", end: true, icon: "plus" }
+    // bottom: menyuning pastidagi "Sozlamalar" bo'limida chiqadi.
+    { label: "Doktorlarni boshqarish", path: "/lor/specialists", end: true, icon: "users", bottom: true },
+    { label: "Xizmat qo'shish", path: "/lor/services/add", end: true, icon: "plus", bottom: true }
   ],
   delivery: [{ label: "Yetkazuvchi paneli", path: "/delivery", end: true, icon: "truck" }],
   cashier: [
@@ -54,6 +55,7 @@ export const sidebarMenus = {
     { label: "Nurse shifokorlar", path: "/cashier/nurse-specialists", end: true, group: "Nurse bo'limi", icon: "users" },
     { label: "Kassa jurnali", path: "/cashier/journal", end: true, group: "Umumiy", icon: "receipt" },
     { label: "Qarzdorlar ro'yxati", path: "/cashier/debts", end: true, group: "Umumiy", icon: "list" },
+    { label: "Kutilmagan xarajatlar", path: "/cashier/expenses", end: true, group: "Umumiy", icon: "wallet" },
     { label: "Sozlamalar", path: "/cashier/settings", end: true, group: "Umumiy", icon: "settings" }
   ],
   manager: [
