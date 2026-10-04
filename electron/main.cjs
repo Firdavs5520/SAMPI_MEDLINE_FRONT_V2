@@ -24,6 +24,7 @@ const PRELOAD_SCRIPT = path.join(__dirname, "preload.cjs");
 const RECEIPT_PRINTER_NAME = process.env.SAMPI_RECEIPT_PRINTER || "XP-80";
 const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
 const UPDATE_SNOOZE_MS = 2 * 60 * 60 * 1000;
+const PENDING_UPDATE_FILE = "pending-update.json";
 const PRINT_JOB_TIMEOUT_MS = 20000;
 const PRINT_WINDOW_CLOSE_DELAY_MS = 350;
 // XPrinter 80mm qog'oz (bosiladigan kenglik 72mm, 576 nuqta).
@@ -86,7 +87,35 @@ const updateState = {
   total: 0,
   bytesPerSecond: 0,
   error: "",
+  size: 0,
   snoozedUntil: 0,
+  // Oldingi ishga tushishda o'rnatilgan yangilanish: { from, to }.
+  justUpdated: null,
+};
+
+const getPendingUpdatePath = () => path.join(app.getPath("userData"), PENDING_UPDATE_FILE);
+
+// "Hozir o'rnatish" bosilganda qaysi versiyadan qaysiga o'tilayotgani yozib qo'yiladi,
+// ilova qayta ochilganda "yangilandi" xabari shundan ko'rsatiladi.
+const writePendingUpdate = async (from, to) => {
+  try {
+    await fs.writeFile(getPendingUpdatePath(), JSON.stringify({ from, to, at: Date.now() }), "utf8");
+  } catch (error) {
+    console.warn("Pending update note was not saved:", error.message);
+  }
+};
+
+const readJustUpdated = async () => {
+  try {
+    const parsed = JSON.parse(await fs.readFile(getPendingUpdatePath(), "utf8"));
+    await fs.unlink(getPendingUpdatePath()).catch(() => {});
+    if (parsed?.to && parsed.to === app.getVersion()) {
+      return { from: String(parsed.from || ""), to: String(parsed.to) };
+    }
+  } catch {
+    // Fayl yo'q: oxirgi ishga tushishda yangilanish o'rnatilmagan.
+  }
+  return null;
 };
 
 const getPublicUpdateState = () => ({
@@ -98,6 +127,8 @@ const getPublicUpdateState = () => ({
   total: updateState.total,
   bytesPerSecond: updateState.bytesPerSecond,
   error: updateState.error,
+  size: updateState.size,
+  justUpdated: updateState.justUpdated,
   snoozed: updateState.status === "available" && Date.now() < updateState.snoozedUntil,
 });
 
@@ -121,7 +152,9 @@ const setUpdateState = (patch) => {
 
 autoUpdater.on("update-available", (info) => {
   if (updateState.status === "downloading" || updateState.status === "downloaded") return;
-  setUpdateState({ status: "available", version: String(info?.version || ""), error: "" });
+  const files = Array.isArray(info?.files) ? info.files : [];
+  const size = files.reduce((max, file) => Math.max(max, Number(file?.size) || 0), 0);
+  setUpdateState({ status: "available", version: String(info?.version || ""), size, error: "" });
 });
 
 autoUpdater.on("download-progress", (progress) => {
@@ -179,8 +212,16 @@ ipcMain.handle("sampi:install-update", (event) => {
     throw new Error("Yangilanish hali yuklanmagan.");
   }
   // Oynasiz o'rnatib, ilovani qayta ishga tushiradi.
-  setImmediate(() => autoUpdater.quitAndInstall(true, true));
+  writePendingUpdate(app.getVersion(), updateState.version).finally(() => {
+    setImmediate(() => autoUpdater.quitAndInstall(true, true));
+  });
   return true;
+});
+
+ipcMain.handle("sampi:ack-update-notice", (event) => {
+  assertTrustedSender(event);
+  setUpdateState({ justUpdated: null });
+  return getPublicUpdateState();
 });
 
 ipcMain.handle("sampi:snooze-update", (event) => {
@@ -1319,8 +1360,10 @@ app.whenReady().then(() => {
   createWindow();
 });
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   if (!hasSingleInstanceLock) return;
+  const justUpdated = await readJustUpdated();
+  if (justUpdated) setUpdateState({ justUpdated });
   setTimeout(checkForAppUpdates, 15000);
   setInterval(checkForAppUpdates, UPDATE_CHECK_INTERVAL_MS);
 });
