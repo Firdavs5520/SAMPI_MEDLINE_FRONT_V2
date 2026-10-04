@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld("sampiDesktop", {
   downloadUpdate: () => ipcRenderer.invoke("sampi:download-update"),
   installUpdate: () => ipcRenderer.invoke("sampi:install-update"),
   snoozeUpdate: () => ipcRenderer.invoke("sampi:snooze-update"),
+  ackUpdateNotice: () => ipcRenderer.invoke("sampi:ack-update-notice"),
   onUpdateState: (callback) => {
     const listener = (_event, state) => callback(state);
     ipcRenderer.on("sampi:update-state", listener);
