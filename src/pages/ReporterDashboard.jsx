@@ -417,10 +417,7 @@ function ReporterDashboard() {
       <div className="reporter-hero-card card p-3 sm:p-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-xs font-semibold text-cyan-700">
-              Reporter
-            </p>
-            <h1 className="mt-1 text-lg font-bold leading-tight text-slate-900 sm:text-2xl">
+            <h1 className="text-lg font-bold leading-tight text-slate-900 sm:text-2xl">
               Kunlik kassa va xarajat hisoboti
             </h1>
           </div>

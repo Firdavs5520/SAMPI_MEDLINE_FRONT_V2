@@ -144,29 +144,10 @@ function DeliveryDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className={`card p-4 sm:p-5 ${sectionTheme.headerCard}`}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-slate-800">Yetkazuvchi paneli</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Ombordagi dorilarni tez tanlash va ko'p miqdorda qoldiq qo'shish bo'limi.
-            </p>
-          </div>
-          <span
-            className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-bold tracking-wide ${sectionTheme.badge}`}
-          >
-            YETKAZIB BERISH
-          </span>
-        </div>
-        <div className={`mt-3 rounded-xl border px-3 py-2 text-sm font-medium ${sectionTheme.alertBox}`}>
-          Bir nechta dorini tanlab, bitta bosishda omborga qo'shishingiz mumkin.
-        </div>
-      </div>
-
       <div className={`card p-4 sm:p-5 ${sectionTheme.formCard}`}>
         <h2 className="text-lg font-semibold text-slate-800">1-qadam: Dorilarni tanlang</h2>
         <p className="mb-4 text-sm text-slate-500">
-          Bir nechta dorini bosib tanlang.
+          Bir nechta dorini bosib tanlang, keyin hammasiga birdaniga miqdor qo'shing.
         </p>
 
         <div className="mb-4">

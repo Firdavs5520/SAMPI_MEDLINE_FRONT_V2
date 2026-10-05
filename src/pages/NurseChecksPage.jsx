@@ -7,7 +7,7 @@ import Button from "../components/Button.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
 import SelectMenu from "../components/SelectMenu.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
-import { extractErrorMessage, formatCurrency, formatDateTime } from "../utils/format.js";
+import { extractErrorMessage, formatCurrency, formatShortDateTime } from "../utils/format.js";
 
 const paymentMethodLabels = {
   cash: "Naqd",
@@ -120,12 +120,7 @@ function NurseChecksPage() {
   return (
     <div className="space-y-6 overflow-x-hidden">
       <div className="card p-4 sm:p-5">
-        <h1 className="text-xl font-bold text-slate-800">Mening cheklarim</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Faqat siz yaratgan cheklar chiqadi. Bemor ism-familiyasi bo'yicha qidiring.
-        </p>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-[minmax(220px,320px)_1fr_auto]">
+        <div className="grid gap-3 md:grid-cols-[minmax(220px,320px)_1fr_auto]">
           <SelectMenu
             label="Hamshira"
             value={selectedSpecialist?.id || ""}
@@ -216,7 +211,7 @@ function NurseChecksPage() {
             {
               key: "createdAt",
               label: "Sana",
-              render: (row) => formatDateTime(row.createdAt)
+              render: (row) => <span className="whitespace-nowrap">{formatShortDateTime(row.createdAt)}</span>
             }
           ]}
         />
