@@ -584,7 +584,9 @@ const printHtmlWithDesktopApp = async (html, options = {}) => {
 
   try {
     const result = await desktopPrint(html, options);
-    return Boolean(result?.ok ?? true);
+    if (result?.ok === false) return false;
+    // Natija obyekti (vaqtlar bilan) qaytariladi; u "true" kabi ishlatiladi.
+    return result && typeof result === "object" ? result : true;
   } catch (error) {
     throw new Error(cleanDesktopPrintError(error));
   }
@@ -696,6 +698,13 @@ export const writeLorQueueTicketToPrintTab = async (printSession, ticket) => {
   printSession.tab.document.write(buildLorQueueTicketPrintHtml(ticket));
   printSession.tab.document.close();
   return true;
+};
+
+// Desktop ilovada keyingi navbat chekining rasmi oldindan tayyorlanadi (chek tezroq chiqadi).
+export const prerenderLorQueueTicket = (ticket) => {
+  const prerender = typeof window !== "undefined" ? window.sampiDesktop?.prerenderReceiptHtml : null;
+  if (typeof prerender !== "function" || !ticket?.queueCode) return;
+  prerender(buildLorQueueTicketPrintHtml(ticket, { inline: true })).catch(() => {});
 };
 
 export const closePrintTab = (printSession) => {
