@@ -143,7 +143,11 @@ function DesktopUpdatePrompt({ unattended = false }) {
   const [state, setState] = useState(null);
   const [busy, setBusy] = useState(false);
   const [countdown, setCountdown] = useState(null);
+  // Katta oyna yig'ilsa, yuklash burchakdagi kichik kartada davom etadi.
+  const [minimized, setMinimized] = useState(false);
+  const [checkNotice, setCheckNotice] = useState("");
   const autoStartedRef = useRef(false);
+  const lastStatusRef = useRef("");
 
   useEffect(() => {
     if (!desktop) return undefined;
@@ -170,6 +174,38 @@ function DesktopUpdatePrompt({ unattended = false }) {
       desktop.installUpdate().catch(() => {});
     }
   }, [desktop, unattended, state]);
+
+  useEffect(() => {
+    const status = state?.status || "";
+    if (status !== lastStatusRef.current) {
+      if (status === "available" || status === "downloaded" || status === "error") setMinimized(false);
+      lastStatusRef.current = status;
+    }
+  }, [state?.status]);
+
+  // Menyudagi "Yangilanishni tekshirish" tugmasi shu hodisani yuboradi.
+  useEffect(() => {
+    if (!desktop?.checkForUpdates) return undefined;
+    let noticeTimer;
+    const onCheck = async () => {
+      setCheckNotice("Tekshirilmoqda...");
+      setMinimized(false);
+      try {
+        const next = await desktop.checkForUpdates();
+        if (next && typeof next === "object") setState((prev) => withSmoothedSpeed(prev, next));
+        setCheckNotice(next?.status === "idle" ? `Eng so'nggi versiya o'rnatilgan (v${next.currentVersion})` : "");
+      } catch {
+        setCheckNotice("Tekshirib bo'lmadi. Internetni tekshiring.");
+      }
+      window.clearTimeout(noticeTimer);
+      noticeTimer = window.setTimeout(() => setCheckNotice(""), 5000);
+    };
+    window.addEventListener("sampi:check-desktop-update", onCheck);
+    return () => {
+      window.removeEventListener("sampi:check-desktop-update", onCheck);
+      window.clearTimeout(noticeTimer);
+    };
+  }, [desktop]);
 
   useEffect(() => {
     if (!desktop || !state?.justUpdated) return undefined;
@@ -235,13 +271,42 @@ function DesktopUpdatePrompt({ unattended = false }) {
     );
   }
 
-  if (state.status === "idle" || (state.status === "available" && state.snoozed)) return null;
+  if (state.status === "idle" || (state.status === "available" && state.snoozed)) {
+    if (!checkNotice) return null;
+    return (
+      <div className="sampi-update-card sampi-update-card--mini" role="status" aria-live="polite">
+        <div className="sampi-update-head">
+          <span className="sampi-update-icon is-success">
+            <UpdateIcon type={checkNotice.startsWith("Tekshirilmoqda") ? "download" : "done"} />
+          </span>
+          <div className="sampi-update-title">{checkNotice}</div>
+        </div>
+      </div>
+    );
+  }
 
   const percent = Math.max(0, Math.min(100, Number(state.percent) || 0));
   const remainingText = formatRemaining(getRemainingSeconds(state));
 
-  return (
-    <div className="sampi-update-card" role="status" aria-live="polite">
+  const isModal = !minimized;
+  const card = (
+    <div
+      className={`sampi-update-card ${isModal ? "sampi-update-card--modal" : "sampi-update-card--mini"}`}
+      role={isModal ? "dialog" : "status"}
+      aria-modal={isModal ? "true" : undefined}
+      aria-live="polite"
+    >
+      {state.status === "downloading" ? (
+        <button
+          type="button"
+          className="sampi-update-close"
+          aria-label={isModal ? "Fonda davom etsin" : "Kattalashtirish"}
+          title={isModal ? "Fonda davom etsin" : "Kattalashtirish"}
+          onClick={() => setMinimized((value) => !value)}
+        >
+          {isModal ? "–" : "⤢"}
+        </button>
+      ) : null}
       {state.status === "available" ? (
         <>
           <div className="sampi-update-head">
@@ -289,6 +354,13 @@ function DesktopUpdatePrompt({ unattended = false }) {
             {state.bytesPerSecond ? <span>{formatMegabytes(state.bytesPerSecond)}/s</span> : null}
           </div>
           <div className="sampi-update-eta">{remainingText ? `Taxminan ${remainingText} qoldi` : "Qolgan vaqt hisoblanmoqda..."}</div>
+          {isModal ? (
+            <div className="sampi-update-actions">
+              <button type="button" className="sampi-update-btn is-ghost" onClick={() => setMinimized(true)}>
+                Fonda davom etsin
+              </button>
+            </div>
+          ) : null}
         </>
       ) : null}
 
@@ -308,6 +380,11 @@ function DesktopUpdatePrompt({ unattended = false }) {
             o'rnatiladi.
           </p>
           <div className="sampi-update-actions">
+            {isModal ? (
+              <button type="button" className="sampi-update-btn is-ghost" onClick={() => setMinimized(true)}>
+                Keyinroq
+              </button>
+            ) : null}
             <button type="button" className="sampi-update-btn is-primary" onClick={() => setCountdown(INSTALL_COUNTDOWN_SECONDS)}>
               Hozir o'rnatish
             </button>
@@ -338,6 +415,9 @@ function DesktopUpdatePrompt({ unattended = false }) {
       ) : null}
     </div>
   );
+
+  if (!isModal) return card;
+  return <div className="sampi-update-backdrop">{card}</div>;
 }
 
 export default DesktopUpdatePrompt;

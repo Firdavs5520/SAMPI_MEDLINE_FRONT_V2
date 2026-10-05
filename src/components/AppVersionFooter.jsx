@@ -24,8 +24,20 @@ function AppVersionFooter({ inline = false }) {
 
   // Menyu bor sahifalarda versiya menyuning pastida yoziladi va kontentni yopmaydi.
   if (inline) {
+    const canCheck = typeof window !== "undefined" && typeof window.sampiDesktop?.checkForUpdates === "function";
     return (
-      <p className="select-none px-4 pb-3 text-[11px] font-semibold text-slate-400 print:hidden">{label}</p>
+      <div className="flex flex-col items-start gap-0.5 px-4 pb-3 print:hidden">
+        <p className="select-none text-[11px] font-semibold text-slate-400">{label}</p>
+        {canCheck ? (
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event("sampi:check-desktop-update"))}
+            className="text-[11px] font-bold text-cyan-700 hover:underline"
+          >
+            Yangilanishni tekshirish
+          </button>
+        ) : null}
+      </div>
     );
   }
 

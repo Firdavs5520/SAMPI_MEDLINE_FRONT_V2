@@ -6005,6 +6005,85 @@ html.sampi-tv-lock .sampi-tv-standby-line {
   opacity: 0.5;
 }
 
+/* Yangilanish: ekran o'rtasidagi katta oyna (yig'ilsa o'ng tepada kichik karta). */
+.sampi-update-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: radial-gradient(circle at 50% 30%, rgba(14, 116, 144, 0.3), rgba(2, 6, 23, 0.7));
+  backdrop-filter: blur(5px);
+  animation: sampi-update-fade 240ms ease both;
+}
+
+.sampi-update-card.sampi-update-card--modal {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  width: min(30rem, 100%);
+  padding: 1.6rem 1.6rem 1.4rem;
+  border-radius: 1.4rem;
+  box-shadow: 0 30px 80px -20px rgba(2, 6, 23, 0.7);
+}
+
+.sampi-update-card--modal .sampi-update-icon {
+  height: 3.1rem;
+  width: 3.1rem;
+}
+
+.sampi-update-card--modal .sampi-update-title {
+  font-size: 1.25rem;
+}
+
+.sampi-update-card--modal .sampi-update-text {
+  font-size: 0.9rem;
+}
+
+.sampi-update-card--modal .sampi-update-percent {
+  font-size: 2rem;
+}
+
+.sampi-update-card--modal .sampi-update-bar {
+  height: 0.8rem;
+  margin-top: 1.1rem;
+}
+
+.sampi-update-card--modal .sampi-update-meta {
+  font-size: 0.85rem;
+  margin-top: 0.6rem;
+}
+
+.sampi-update-card--modal .sampi-update-eta {
+  font-size: 1rem;
+  margin-top: 0.4rem;
+}
+
+.sampi-update-card--modal .sampi-update-btn {
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+  font-size: 0.95rem;
+}
+
+.sampi-update-card.sampi-update-card--mini {
+  top: 5rem;
+  bottom: auto;
+  z-index: 10040;
+}
+
+.sampi-update-card > .sampi-update-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+}
+
+.sampi-update-card--modal > .sampi-update-close + .sampi-update-head .sampi-update-percent,
+.sampi-update-card--mini > .sampi-update-close + .sampi-update-head .sampi-update-percent {
+  margin-right: 1.6rem;
+}
+
 html.theme-dark .sampi-update-card,
 html.theme-dark .sampi-update-overlay-card {
   border-color: rgba(34, 211, 238, 0.18);
@@ -6096,6 +6175,7 @@ html.theme-dark .sampi-update-step-dot {
 
 @media print {
   .sampi-update-card,
+  .sampi-update-backdrop,
   .sampi-update-overlay {
     display: none !important;
   }
