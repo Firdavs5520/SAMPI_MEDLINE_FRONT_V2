@@ -178,22 +178,13 @@ html.theme-dark .hover\:bg-sky-100:hover {
 }
 
 /* Yon menyu: ingichka, sezilmaydigan aylantirish chizig'i (faqat menyu sig'masa). */
+/* Menyu kichik ekranda ham sichqoncha g'ildiragi bilan aylanadi, lekin scrollbar ko'rinmaydi. */
 .sampi-sidebar-nav {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+  scrollbar-width: none;
 }
 
 .sampi-sidebar-nav::-webkit-scrollbar {
-  width: 6px;
-}
-
-.sampi-sidebar-nav::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.sampi-sidebar-nav::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.35);
-  border: 0;
+  display: none;
 }
 
 input:not([type="checkbox"]):not([type="radio"]),

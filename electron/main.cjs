@@ -1021,25 +1021,12 @@ if (-not ("SampiRawPrinter" -as [type])) {
   Add-Type -TypeDefinition $source
 }
 
-function Invoke-SampiRawPrint([string]$printerName, [string]$dataPath, [string]$jobName) {
+function Invoke-SampiRawPrint([string]$printerName, [string]$dataPath, [string]$jobName, [string]$sentMarker = "") {
   $data = [IO.File]::ReadAllBytes($dataPath)
   $hPrinter = [IntPtr]::Zero
 
-  $snapshot = Get-SampiPrinterSnapshot
-  if ($null -ne $snapshot -and $snapshot.WorkOffline) {
-    try {
-      $snapshot.WorkOffline = $false
-      Set-CimInstance -InputObject $snapshot -ErrorAction Stop | Out-Null
-      Start-Sleep -Milliseconds 700
-      $snapshot = Get-SampiPrinterSnapshot
-    } catch {
-    }
-  }
-
-  if (Test-SampiBadPrinterState $snapshot) {
-    throw ("Chek printeri Windowsda tayyor emas. " + (Get-SampiPrinterStatusText $snapshot @()))
-  }
-
+  # Printer holati chek yuborilgandan KEYIN tekshiriladi: Windows'dan holat so'rash
+  # (~0.5-1 s) qog'oz chiqishini kechiktirmasin. Xato bo'lsa vazifa o'chiriladi va xato qaytadi.
   if (-not [SampiRawPrinter]::OpenPrinter($printerName, [ref]$hPrinter, [IntPtr]::Zero)) {
     ThrowLastPrinterError "Printer ochilmadi"
   }
@@ -1075,6 +1062,21 @@ function Invoke-SampiRawPrint([string]$printerName, [string]$dataPath, [string]$
   } finally {
     if ($hPrinter -ne [IntPtr]::Zero) {
       [void][SampiRawPrinter]::ClosePrinter($hPrinter)
+    }
+  }
+
+  if ($sentMarker) {
+    [Console]::Out.WriteLine($sentMarker)
+    [Console]::Out.Flush()
+  }
+
+  # Windows printerni "offline" deb belgilab qo'ygan bo'lsa, yoqiladi: navbatdagi chek chiqadi.
+  $snapshot = Get-SampiPrinterSnapshot
+  if ($null -ne $snapshot -and $snapshot.WorkOffline) {
+    try {
+      $snapshot.WorkOffline = $false
+      Set-CimInstance -InputObject $snapshot -ErrorAction Stop | Out-Null
+    } catch {
     }
   }
 
@@ -1125,7 +1127,7 @@ while ($true) {
     $workerPrinter = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($parts[1]))
     $workerData = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($parts[2]))
     $workerJob = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($parts[3]))
-    Invoke-SampiRawPrint $workerPrinter $workerData $workerJob
+    Invoke-SampiRawPrint $workerPrinter $workerData $workerJob "SAMPI-SENT $id"
     [Console]::Out.WriteLine("SAMPI-DONE $id OK")
   } catch {
     $message = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes([string]$_.Exception.Message))
@@ -1220,8 +1222,8 @@ const runRawPrinterScript = async (printerName, data) => {
     const worker = getRawPrintWorker();
     if (worker) {
       try {
-        await worker.run(printerName, dataPath, jobName);
-        return { jobName };
+        const result = await worker.run(printerName, dataPath, jobName);
+        return { jobName, sentAt: result?.sentAt || 0 };
       } catch (error) {
         // Faqat chek printerga hali yuborilmagan bo'lsa eski usul bilan qayta urinadi
         // (aks holda chek ikki marta chiqib qolishi mumkin).
@@ -1255,6 +1257,7 @@ const printReceiptAsRawRaster = async (printerName, raster) => {
     height: raster.heightDots,
     bytes: payload.length,
     jobName: job.jobName,
+    sentAt: job.sentAt || 0,
   };
 };
 
@@ -1310,7 +1313,8 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
 
     if (raster) {
       const renderedAt = Date.now();
-      const rasterReceipt = await printReceiptAsRawRaster(printer.name, raster);
+      const { sentAt, ...rasterReceipt } = await printReceiptAsRawRaster(printer.name, raster);
+      const finishedAt = Date.now();
       return {
         ok: true,
         printer: printer.name,
@@ -1318,7 +1322,9 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
         timings: {
           printerMs: printerResolvedAt - startedAt,
           renderMs: renderedAt - printerResolvedAt,
-          sendMs: Date.now() - renderedAt,
+          // Chek Windows'ga topshirilguncha; undan keyingi holat tekshiruvi qog'ozni kechiktirmaydi.
+          sendMs: (sentAt || finishedAt) - renderedAt,
+          confirmMs: sentAt ? finishedAt - sentAt : 0,
           prerendered,
         },
       };

@@ -1,6 +1,6 @@
 import AppVersionFooter from "./AppVersionFooter.jsx";
 import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { sidebarMenus } from "../utils/constants.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -138,6 +138,8 @@ function MenuIcon({ name, className = "h-5 w-5" }) {
   }
 }
 
+const SETTINGS_OPEN_KEY = "sampi_sidebar_settings_open";
+
 function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
   const { role } = useAuth();
   const [isDesktop, setIsDesktop] = useState(() => {
@@ -149,6 +151,28 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
   // bottom: true bo'lgan bandlar menyuning pastidagi "Sozlamalar" bo'limida chiqadi.
   const menus = roleMenus.filter((item) => !item.bottom);
   const bottomMenus = roleMenus.filter((item) => item.bottom);
+  const location = useLocation();
+  const isOnBottomPage = bottomMenus.some((item) => location.pathname.startsWith(item.path));
+  // Pastdagi "Sozlamalar" kam ishlatiladi: yopiq turadi, bosilganda ochiladi.
+  const [settingsOpen, setSettingsOpen] = useState(() => {
+    try {
+      return window.localStorage.getItem(SETTINGS_OPEN_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const showBottomItems = isCompact || settingsOpen || isOnBottomPage;
+  const toggleSettings = () => {
+    setSettingsOpen((value) => {
+      const next = !value;
+      try {
+        window.localStorage.setItem(SETTINGS_OPEN_KEY, next ? "1" : "0");
+      } catch {
+        // saqlanmasa ham ishlayveradi
+      }
+      return next;
+    });
+  };
   const hasGroups = menus.some((item) => item.group);
   const groupedMenus = hasGroups
     ? menus.reduce((acc, item) => {
@@ -289,14 +313,30 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
         </nav>
 
         {bottomMenus.length ? (
-          <div className={`border-t border-slate-200 p-4 ${isCompact ? "space-y-2" : "space-y-1.5"}`}>
-            <p
-              className={`flex items-center gap-1.5 px-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-slate-500 ${isCompact ? "lg:hidden" : ""}`}
+          <div className={`border-t border-slate-200 px-3 py-2 ${isCompact ? "space-y-2" : "space-y-1"}`}>
+            <button
+              type="button"
+              onClick={toggleSettings}
+              aria-expanded={showBottomItems}
+              disabled={isOnBottomPage}
+              className={`flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:cursor-default disabled:hover:bg-transparent ${isCompact ? "lg:hidden" : ""}`}
             >
               <MenuIcon name="settings" className="h-3.5 w-3.5" />
-              Sozlamalar
-            </p>
-            {bottomMenus.map((item) => (
+              <span className="flex-1 text-left">Sozlamalar</span>
+              <svg
+                className={`h-3.5 w-3.5 transition-transform duration-200 ${showBottomItems ? "rotate-180" : ""}`}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+            {showBottomItems && bottomMenus.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}

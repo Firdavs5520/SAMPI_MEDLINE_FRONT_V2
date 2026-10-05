@@ -36,13 +36,19 @@ const createRawPrintWorker = ({ powershellPath, scriptText, tempDir, jobTimeoutM
       markReady();
       return;
     }
+    // Chek Windows'ga topshirilgan payt (holat tekshiruvidan oldin): vaqtni o'lchash uchun.
+    const sent = /^SAMPI-SENT (\d+)$/.exec(line);
+    if (sent) {
+      if (pending && pending.id === sent[1]) pending.sentAt = Date.now();
+      return;
+    }
     const match = /^SAMPI-DONE (\d+) (OK|ERR)(?: (\S*))?$/.exec(line);
     if (!match || !pending || pending.id !== match[1]) return;
     const current = pending;
     pending = null;
     clearTimeout(current.timer);
     if (match[2] === "OK") {
-      current.resolve();
+      current.resolve({ sentAt: current.sentAt || 0 });
       return;
     }
     const message = Buffer.from(match[3] || "", "base64").toString("utf8");
@@ -143,7 +149,7 @@ const createRawPrintWorker = ({ powershellPath, scriptText, tempDir, jobTimeoutM
         stop();
         reject(new Error("RAW printer vazifasi vaqtida tugamadi."));
       }, jobTimeoutMs);
-      pending = { id, resolve, reject, timer, sent: false };
+      pending = { id, resolve, reject, timer, sent: false, sentAt: 0 };
       proc.stdin.write(
         `${id} ${encodeArg(printerName)} ${encodeArg(dataPath)} ${encodeArg(jobName)}\n`,
         (error) => {

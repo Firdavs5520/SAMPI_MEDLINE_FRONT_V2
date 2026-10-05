@@ -965,7 +965,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
           timings
             ? `${ticket.queueCode || "-"} raqam printerga yuborildi (server ${seconds(serverMs)}, ` +
                 `chek rasmi ${timings.prerendered ? "tayyor edi" : seconds(timings.renderMs)}, ` +
-                `printer ${seconds(timings.sendMs)}).`
+                `Windows'ga topshirish ${seconds(timings.sendMs)}).`
             : `${ticket.queueCode || "-"} raqam printerga yuborildi.`,
           "success"
         );
