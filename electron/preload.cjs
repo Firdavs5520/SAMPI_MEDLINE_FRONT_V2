@@ -5,6 +5,14 @@ contextBridge.exposeInMainWorld("sampiDesktop", {
     ipcRenderer.invoke("sampi:print-receipt-html", html, options),
   prerenderReceiptHtml: (html) => ipcRenderer.invoke("sampi:prerender-receipt-html", html),
   listPrinters: () => ipcRenderer.invoke("sampi:list-printers"),
+  getWindowSettings: () => ipcRenderer.invoke("sampi:get-window-settings"),
+  setStartFullscreen: (enabled) => ipcRenderer.invoke("sampi:set-start-fullscreen", enabled),
+  toggleFullscreen: () => ipcRenderer.invoke("sampi:toggle-fullscreen"),
+  onFullscreenChange: (callback) => {
+    const listener = (_event, value) => callback(Boolean(value));
+    ipcRenderer.on("sampi:fullscreen-changed", listener);
+    return () => ipcRenderer.removeListener("sampi:fullscreen-changed", listener);
+  },
   setReceiptPrinter: (printerName) =>
     ipcRenderer.invoke("sampi:set-receipt-printer", printerName),
   getUpdateState: () => ipcRenderer.invoke("sampi:get-update-state"),

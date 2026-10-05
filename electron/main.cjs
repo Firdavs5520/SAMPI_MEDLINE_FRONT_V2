@@ -38,6 +38,7 @@ const RECEIPT_HEIGHT_PADDING_MICRONS = 4000;
 const RECEIPT_MIN_HEIGHT_MICRONS = 45000;
 const RECEIPT_MAX_HEIGHT_MICRONS = 420000;
 const RECEIPT_PRINTER_CONFIG_FILE = "receipt-printer.json";
+const APP_SETTINGS_FILE = "app-settings.json";
 const RAW_PRINT_TIMEOUT_MS = 20000;
 // Printerlar ro'yxati har chekda Windows'dan qayta so'ralmaydi (printer topilmasa yangilanadi).
 const PRINTER_LIST_CACHE_MS = 60 * 1000;
@@ -292,6 +293,34 @@ const writeReceiptPrinterConfig = async (config) => {
   await fs.writeFile(getReceiptPrinterConfigPath(), JSON.stringify(payload, null, 2), "utf8");
   return payload;
 };
+
+// Ilova oynasi sozlamalari. Standart: ilova doim to'liq ekranda ochiladi.
+const DEFAULT_APP_SETTINGS = { startFullscreen: true };
+const getAppSettingsPath = () => path.join(app.getPath("userData"), APP_SETTINGS_FILE);
+
+const readAppSettingsSync = () => {
+  try {
+    const parsed = JSON.parse(require("node:fs").readFileSync(getAppSettingsPath(), "utf8"));
+    return {
+      startFullscreen:
+        typeof parsed?.startFullscreen === "boolean"
+          ? parsed.startFullscreen
+          : DEFAULT_APP_SETTINGS.startFullscreen,
+    };
+  } catch {
+    return { ...DEFAULT_APP_SETTINGS };
+  }
+};
+
+const writeAppSettings = async (settings) => {
+  const payload = { ...readAppSettingsSync(), ...settings };
+  await fs.mkdir(app.getPath("userData"), { recursive: true });
+  await fs.writeFile(getAppSettingsPath(), JSON.stringify(payload, null, 2), "utf8");
+  return payload;
+};
+
+const getMainWindow = () =>
+  BrowserWindow.getAllWindows().find((win) => !win.isDestroyed() && !win.getParentWindow()) || null;
 
 const isTrustedRendererUrl = (value) => {
   if (value === "about:blank") {
@@ -1434,6 +1463,35 @@ ipcMain.handle("sampi:prerender-receipt-html", async (event, html) => {
   }
 });
 
+ipcMain.handle("sampi:get-window-settings", (event) => {
+  if (!isTrustedRendererUrl(event.senderFrame?.url || "")) {
+    throw new Error("Window settings request came from an untrusted page.");
+  }
+  const win = getMainWindow();
+  return { ...readAppSettingsSync(), isFullscreen: Boolean(win?.isFullScreen()) };
+});
+
+ipcMain.handle("sampi:set-start-fullscreen", async (event, enabled) => {
+  if (!isTrustedRendererUrl(event.senderFrame?.url || "")) {
+    throw new Error("Window settings request came from an untrusted page.");
+  }
+  const settings = await writeAppSettings({ startFullscreen: Boolean(enabled) });
+  const win = getMainWindow();
+  // Sozlama darhol qo'llanadi: yoqilsa hozir ham to'liq ekranga o'tadi.
+  if (win && Boolean(enabled) !== win.isFullScreen()) win.setFullScreen(Boolean(enabled));
+  return { ...settings, isFullscreen: Boolean(win?.isFullScreen()) };
+});
+
+ipcMain.handle("sampi:toggle-fullscreen", (event) => {
+  if (!isTrustedRendererUrl(event.senderFrame?.url || "")) {
+    throw new Error("Window request came from an untrusted page.");
+  }
+  const win = getMainWindow();
+  if (!win) return false;
+  win.setFullScreen(!win.isFullScreen());
+  return win.isFullScreen();
+});
+
 ipcMain.handle("sampi:list-printers", async (event) => {
   if (!isTrustedRendererUrl(event.senderFrame?.url || "")) {
     throw new Error("Printer request came from an untrusted page.");
@@ -1494,8 +1552,19 @@ const createWindow = () => {
 
   mainWindow.maximize();
   mainWindow.once("ready-to-show", () => {
+    if (readAppSettingsSync().startFullscreen) {
+      mainWindow.setFullScreen(true);
+    }
     mainWindow.show();
   });
+
+  const sendFullscreenState = () => {
+    if (!mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("sampi:fullscreen-changed", mainWindow.isFullScreen());
+    }
+  };
+  mainWindow.on("enter-full-screen", sendFullscreenState);
+  mainWindow.on("leave-full-screen", sendFullscreenState);
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url === "about:blank") {

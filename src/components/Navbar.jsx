@@ -56,18 +56,38 @@ function Navbar({ onMenuOpen }) {
   const { user, logout } = useAuth();
   const displayName = getDisplayName(user);
   const pageLabel = getPageLabel(user?.role, location.pathname);
-  const canFullscreen = typeof document !== "undefined" && Boolean(document.fullscreenEnabled);
+  // Desktop ilovada butun oyna to'liq ekranga o'tadi (Windows oynasi darajasida).
+  const desktopWindow =
+    typeof window !== "undefined" && typeof window.sampiDesktop?.toggleFullscreen === "function"
+      ? window.sampiDesktop
+      : null;
+  const canFullscreen =
+    Boolean(desktopWindow) || (typeof document !== "undefined" && Boolean(document.fullscreenEnabled));
   const [isFullscreen, setIsFullscreen] = useState(
     () => typeof document !== "undefined" && Boolean(document.fullscreenElement)
   );
 
   useEffect(() => {
+    if (desktopWindow) {
+      desktopWindow
+        .getWindowSettings?.()
+        .then((value) => setIsFullscreen(Boolean(value?.isFullscreen)))
+        .catch(() => {});
+      return desktopWindow.onFullscreenChange?.((value) => setIsFullscreen(value));
+    }
     const sync = () => setIsFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", sync);
     return () => document.removeEventListener("fullscreenchange", sync);
-  }, []);
+  }, [desktopWindow]);
 
   const handleToggleFullscreen = () => {
+    if (desktopWindow) {
+      desktopWindow
+        .toggleFullscreen()
+        .then((value) => setIsFullscreen(Boolean(value)))
+        .catch(() => {});
+      return;
+    }
     if (document.fullscreenElement) {
       setAutoFullscreenOff(true);
       document.exitFullscreen?.().catch(() => {});
