@@ -94,7 +94,7 @@ const emptyMonitoring = () => ({
   recentStartups: []
 });
 
-function StatCard({ title, value, hint = "", tone = "default" }) {
+function StatCard({ title, value, hint = "", tone = "default", compact = false }) {
   const tones = {
     default: "manager-stat-default border-slate-200 bg-white text-slate-800",
     primary: "manager-stat-primary border-cyan-200 bg-cyan-50 text-cyan-800",
@@ -107,7 +107,11 @@ function StatCard({ title, value, hint = "", tone = "default" }) {
     <div className={`manager-stat-card rounded-lg border p-4 ${tones[tone]}`}>
       <span className="manager-stat-glow" aria-hidden="true" />
       <p className="text-xs font-semibold opacity-80">{title}</p>
-      <p className="mt-2 break-words text-xl font-bold sm:text-2xl">{value}</p>
+      <p
+        className={`mt-2 break-words font-bold ${compact ? "text-base leading-snug sm:text-lg" : "text-xl sm:text-2xl"}`}
+      >
+        {value}
+      </p>
       <p className="mt-1 min-h-5 break-words text-xs opacity-80">{hint}</p>
     </div>
   );
@@ -158,7 +162,7 @@ function RoleSummaryCard({ title, roleKey, stats = emptyRoleStats() }) {
       </div>
 
       <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-white/80 p-3">
-        <p className="text-xs text-slate-500">Eng ko'p ishlatilgan item</p>
+        <p className="text-xs text-slate-500">Eng ko'p ishlatilgan</p>
         <p className="mt-1 break-words text-sm font-semibold text-slate-900">{topItem.title}</p>
         <p className="mt-1 text-xs text-slate-600">{topItem.subtitle}</p>
       </div>
@@ -412,32 +416,33 @@ function ManagerDashboard() {
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             title="Smena summasi"
-            value={`${formatCurrency(shiftReport?.totals?.totalAmount || 0)} so'm`}
+            value={`${formatCurrency(shiftReport?.totals?.totalAmount || 0)}\u00a0so'm`}
             hint={`Yozuvlar: ${shiftReport?.totals?.entriesCount || 0}`}
             tone="primary"
           />
           <StatCard
             title="To'langan"
-            value={`${formatCurrency(shiftReport?.totals?.totalPaidAmount || 0)} so'm`}
+            value={`${formatCurrency(shiftReport?.totals?.totalPaidAmount || 0)}\u00a0so'm`}
             hint={
               Number(shiftReport?.totals?.debtRepaymentAmount || 0) > 0
-                ? `Shundan eski qarzlar: ${formatCurrency(shiftReport.totals.debtRepaymentAmount)} so'm`
+                ? `Shundan eski qarzlar: ${formatCurrency(shiftReport.totals.debtRepaymentAmount)}\u00a0so'm`
                 : "Smenada kassaga tushgan to'lov"
             }
             tone="success"
           />
           <StatCard
             title="Qoldiq qarz"
-            value={`${formatCurrency(shiftReport?.totals?.totalDebtAmount || 0)} so'm`}
+            value={`${formatCurrency(shiftReport?.totals?.totalDebtAmount || 0)}\u00a0so'm`}
             hint="Smena oxirida qolgan qarz"
             tone="accent"
           />
           <StatCard
-            title="Top mutaxassis"
+            title="Eng faol mutaxassis"
+            compact
             value={shiftReport?.topSpecialists?.[0]?.specialistName || "-"}
             hint={
               shiftReport?.topSpecialists?.[0]
-                ? `${formatCurrency(shiftReport.topSpecialists[0].totalAmount)}`
+                ? `${formatCurrency(shiftReport.topSpecialists[0].totalAmount)}\u00a0so'm`
                 : "Ma'lumot yo'q"
             }
           />
@@ -509,7 +514,7 @@ function ManagerDashboard() {
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             title="Baza holati"
-            value={String(monitoring?.health?.dbState || "-").toUpperCase()}
+            value={dbConnected ? "Ulangan" : "Uzilgan"}
             hint={dbConnected ? "Ulanish faol" : "Ulanish muammosi bo'lishi mumkin"}
             tone={dbConnected ? "success" : "danger"}
           />

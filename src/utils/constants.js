@@ -23,7 +23,7 @@ export const roleLabels = {
   delivery: "Yetkazuvchi",
   manager: "Menejer",
   cashier: "Kassir",
-  reporter: "Reporter",
+  reporter: "Hisobotchi",
   tv: "TV navbat"
 };
 
@@ -58,7 +58,7 @@ export const sidebarMenus = {
     { label: "Nurse shifokorlar", path: "/cashier/nurse-specialists", end: true, group: "Nurse bo'limi", icon: "users" },
     { label: "Kassa jurnali", path: "/cashier/journal", end: true, group: "Umumiy", icon: "receipt" },
     { label: "Qarzdorlar ro'yxati", path: "/cashier/debts", end: true, group: "Umumiy", icon: "list" },
-    { label: "Kutilmagan xarajatlar", path: "/cashier/expenses", end: true, group: "Umumiy", icon: "wallet" },
+    { label: "Xarajatlar", path: "/cashier/expenses", end: true, group: "Umumiy", icon: "wallet" },
     { label: "Sozlamalar", path: "/cashier/settings", end: true, group: "Umumiy", icon: "settings" }
   ],
   manager: [

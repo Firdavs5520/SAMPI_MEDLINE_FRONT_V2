@@ -12,7 +12,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import {
   extractErrorMessage,
   formatCurrency,
-  formatDateTime,
+  formatShortDateTime,
   formatMoneyInput,
   parseMoneyInput
 } from "../utils/format.js";
@@ -185,13 +185,13 @@ function CashierExpensesPage() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <TotalCard
           title="Jami xarajat"
-          value={`${formatCurrency(totals.total)} so'm`}
+          value={`${formatCurrency(totals.total)}\u00a0so'm`}
           hint={`Yozuvlar: ${totals.count}`}
           tone="accent"
         />
-        <TotalCard title="Naqd" value={`${formatCurrency(totals.cash)} so'm`} />
-        <TotalCard title="Karta" value={`${formatCurrency(totals.card)} so'm`} />
-        <TotalCard title="O'tkazma" value={`${formatCurrency(totals.transfer)} so'm`} />
+        <TotalCard title="Naqd" value={`${formatCurrency(totals.cash)}\u00a0so'm`} />
+        <TotalCard title="Karta" value={`${formatCurrency(totals.card)}\u00a0so'm`} />
+        <TotalCard title="O'tkazma" value={`${formatCurrency(totals.transfer)}\u00a0so'm`} />
       </div>
 
       <div className="card p-4 sm:p-5">
@@ -217,12 +217,12 @@ function CashierExpensesPage() {
               {
                 key: "createdAt",
                 label: "Vaqt",
-                render: (row) => formatDateTime(row.createdAt)
+                render: (row) => <span className="whitespace-nowrap">{formatShortDateTime(row.createdAt)}</span>
               },
               {
                 key: "amount",
                 label: "Summa",
-                render: (row) => `${formatCurrency(row.amount)} so'm`
+                render: (row) => `${formatCurrency(row.amount)}\u00a0so'm`
               },
               { key: "reason", label: "Sabab", render: (row) => row.reason },
               {
@@ -267,7 +267,7 @@ function CashierExpensesPage() {
         title="Xarajatni bekor qilish"
         description={
           confirmTarget
-            ? `${formatCurrency(confirmTarget.amount)} so'm — "${confirmTarget.reason}" xarajati bekor qilinadi.`
+            ? `${formatCurrency(confirmTarget.amount)}\u00a0so'm — "${confirmTarget.reason}" xarajati bekor qilinadi.`
             : ""
         }
         confirmText="Ha, bekor qilish"

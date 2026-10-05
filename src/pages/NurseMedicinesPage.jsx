@@ -163,9 +163,9 @@ function NurseMedicinesPage() {
   return (
     <div className="space-y-6">
       <div className="card p-4">
-        <h2 className="text-lg font-semibold text-slate-800">Dori Qoshish</h2>
+        <h2 className="text-lg font-semibold text-slate-800">Dori qo'shish</h2>
         <p className="mb-4 text-sm text-slate-500">
-          Bu bo'limda nurse yangi dori nomlarini qo'shadi.
+          Bu bo'limda hamshira yangi dori nomlarini qo'shadi.
         </p>
         <form
           onSubmit={handleAddMedicine}
@@ -187,7 +187,7 @@ function NurseMedicinesPage() {
             placeholder="Masalan: 12 000"
           />
           <Button type="submit" className="h-fit self-end" loading={saving}>
-            Qoshish
+            Qo'shish
           </Button>
         </form>
       </div>

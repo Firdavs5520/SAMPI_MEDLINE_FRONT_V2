@@ -83,47 +83,47 @@ function CashierSummaryCards({ totals, lorHalfAmount, procedurePaidAmount, autoI
       <StatCard
         title="LOR odam"
         value={totals.lor.count}
-        hint={`${formatCurrency(totals.lor.totalAmount)} so'm jami`}
+        hint={`${formatCurrency(totals.lor.totalAmount)}\u00a0so'm jami`}
       />
       <StatCard
         title="LOR summa"
-        value={`${formatCurrency(totals.lor.paidAmount)} so'm`}
+        value={`${formatCurrency(totals.lor.paidAmount)}\u00a0so'm`}
         hint="Kassadan qabul qilingan summa"
         tone="emerald"
       />
       <StatCard
         title="LOR 50%"
-        value={`${formatCurrency(totals.lor.halfPaidAmount)} so'm`}
+        value={`${formatCurrency(totals.lor.halfPaidAmount)}\u00a0so'm`}
         hint="Kelgan LOR summasi ikkiga bo'lingan"
         tone="amber"
       />
       <StatCard
         title="Protsedura soni"
         value={totals.procedure.proceduresCount}
-        hint={`${formatCurrency(totals.procedure.totalAmount)} so'm jami`}
+        hint={`${formatCurrency(totals.procedure.totalAmount)}\u00a0so'm jami`}
         tone="slate"
       />
       <StatCard
         title="Protsedura summa"
-        value={`${formatCurrency(procedurePaidAmount)} so'm`}
+        value={`${formatCurrency(procedurePaidAmount)}\u00a0so'm`}
         hint="Kassadan kelgan protsedura summasi"
         tone="emerald"
       />
       <StatCard
         title="LOR 50% + Protsedura"
-        value={`${formatCurrency(autoIncomeTotal)} so'm`}
-        hint="Reporter uchun avtomatik yakun"
+        value={`${formatCurrency(autoIncomeTotal)}\u00a0so'm`}
+        hint="Avtomatik hisoblangan yakun"
         tone="orange"
       />
       <StatCard
         title="LOR 50% qiymati"
-        value={`${formatCurrency(lorHalfAmount)} so'm`}
+        value={`${formatCurrency(lorHalfAmount)}\u00a0so'm`}
         hint="Alohida nazorat summasi"
         tone="slate"
       />
       <StatCard
         title="Kassadagi qarz"
-        value={`${formatCurrency(totals.total.debtAmount)} so'm`}
+        value={`${formatCurrency(totals.total.debtAmount)}\u00a0so'm`}
         hint="Kassa yozuvlaridagi qolgan qarz"
         tone="slate"
       />
@@ -311,7 +311,7 @@ function ReporterDashboard() {
         const data = await reporterService.saveDailyRecord(buildPayload(formValue));
         setDailyReport(data);
         if (showMessage) {
-          setSuccess("Reporter yozuvi saqlandi.");
+          setSuccess("Hisobot saqlandi.");
         }
       } catch (err) {
         setError(extractErrorMessage(err));
@@ -447,7 +447,7 @@ function ReporterDashboard() {
         <form className="reporter-entry-card card space-y-4 p-3 sm:p-5" noValidate onSubmit={handleSave}>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Reporter kiritadigan summalar</h2>
+              <h2 className="text-lg font-bold text-slate-900">Qo'lda kiritiladigan summalar</h2>
               <p className="text-xs font-semibold text-slate-500">{autoSaveLabel}</p>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">

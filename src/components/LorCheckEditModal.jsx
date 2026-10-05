@@ -146,7 +146,7 @@ function LorCheckEditModal({ open, check, currentUserId, onClose, onSaved }) {
     }
     if (belowPaid) {
       setError(
-        `Kassada ${formatCurrency(paidAmount)} so'm to'langan. Yangi summa undan kam bo'lishi mumkin emas.`
+        `Kassada ${formatCurrency(paidAmount)}\u00a0so'm to'langan. Yangi summa undan kam bo'lishi mumkin emas.`
       );
       return;
     }
@@ -224,7 +224,7 @@ function LorCheckEditModal({ open, check, currentUserId, onClose, onSaved }) {
           {accepted ? (
             <Alert
               type="info"
-              message={`Bu chek kassada qabul qilingan (to'langan: ${formatCurrency(paidAmount)} so'm). Summa oshsa, farqi bemorning qarzi bo'lib qoladi.`}
+              message={`Bu chek kassada qabul qilingan (to'langan: ${formatCurrency(paidAmount)}\u00a0so'm). Summa oshsa, farqi bemorning qarzi bo'lib qoladi.`}
             />
           ) : null}
 

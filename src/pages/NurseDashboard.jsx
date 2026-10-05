@@ -27,7 +27,7 @@ const STEP_LABELS = [
   "2. Bemor",
   "3. Dorilar",
   "4. Xizmatlar",
-  "5. Chek preview"
+  "5. Chekni ko'rish"
 ];
 const PRICE_TIER_LABELS = { first: "1-marta", second: "2-marta", third: "3-marta" };
 const PRICE_TIER_ORDER = ["first", "second", "third"];
@@ -427,7 +427,7 @@ function NurseDashboard() {
               Chek yaratish
             </h1>
             <p className="mt-2 max-w-3xl break-words text-sm font-medium text-slate-600 sm:text-base">
-              Hamshira, bemor, dori va xizmatlar bitta tartibli flow ichida yig'iladi.
+              Hamshira, bemor, dori va xizmatlar bitta tartibda, qadamma-qadam yig'iladi.
             </p>
           </div>
 
@@ -858,7 +858,7 @@ function NurseDashboard() {
             }
           }}
         >
-          <NursePanelHeader eyebrow="5-qadam" title="Chek preview" meta={formatCurrency(previewTotal)}>
+          <NursePanelHeader eyebrow="5-qadam" title="Chekni ko'rish" meta={formatCurrency(previewTotal)}>
             Yakuniy chekni ko'rib chiqing.
           </NursePanelHeader>
 

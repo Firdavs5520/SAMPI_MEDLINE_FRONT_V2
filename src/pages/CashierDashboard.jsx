@@ -18,6 +18,7 @@ import {
   formatCurrency,
   formatMoneyInput,
   formatPhoneInput,
+  formatShortDateTime,
   toTitleCaseName
 } from "../utils/format.js";
 import { getCurrentShiftYmd } from "../utils/date.js";
@@ -1506,17 +1507,17 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     {
       key: "amount",
       label: "Summa",
-      render: (row) => `${formatCurrency(row.amount)} so'm`
+      render: (row) => `${formatCurrency(row.amount)}\u00a0so'm`
     },
     {
       key: "paidAmount",
       label: "To'langan",
-      render: (row) => `${formatCurrency(row.paidAmount ?? row.amount)} so'm`
+      render: (row) => `${formatCurrency(row.paidAmount ?? row.amount)}\u00a0so'm`
     },
     {
       key: "debtAmount",
       label: "Qarz",
-      render: (row) => `${formatCurrency(row.debtAmount || 0)} so'm`
+      render: (row) => `${formatCurrency(row.debtAmount || 0)}\u00a0so'm`
     },
     {
       key: "paymentMethod",
@@ -1530,12 +1531,20 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     {
       key: "patientPhone",
       label: "Tel",
-      render: (row) => row.patientPhone || "-"
+      render: (row) => <span className="whitespace-nowrap">{row.patientPhone || "-"}</span>
     },
     {
       key: "entryDate",
       label: "Sana",
-      render: (row) => formatDateInput(row.entryDate)
+      render: (row) => {
+        const [datePart, timePart] = formatShortDateTime(row.createdAt || row.entryDate).split(" ");
+        return (
+          <span className="block whitespace-nowrap leading-5">
+            {datePart}
+            {timePart ? <span className="block text-xs text-slate-500">{timePart}</span> : null}
+          </span>
+        );
+      }
     },
     {
       key: "actions",
@@ -1544,7 +1553,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         isDebtSection && safeNumber(row.debtAmount, 0) > 0 ? (
           <Button
             type="button"
-            className="px-3 py-1.5 text-xs"
+            className="whitespace-nowrap px-3 py-1.5 text-xs"
             loading={closingDebtId === row._id}
             onClick={() => handleMarkDebtAsPaid(row)}
           >
@@ -1638,18 +1647,18 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <SummaryCard
             title="Jami summa"
-            value={`${formatCurrency(summary.totalAmount)} so'm`}
+            value={`${formatCurrency(summary.totalAmount)}\u00a0so'm`}
             hint={`Yozuvlar: ${summary.totalEntries}`}
             tone="primary"
           />
           <SummaryCard
             title="To'langan"
-            value={`${formatCurrency(summary.totalPaidAmount)} so'm`}
+            value={`${formatCurrency(summary.totalPaidAmount)}\u00a0so'm`}
             hint="Amalda olingan to'lov"
           />
           <SummaryCard
             title="Qarz"
-            value={`${formatCurrency(summary.totalDebtAmount)} so'm`}
+            value={`${formatCurrency(summary.totalDebtAmount)}\u00a0so'm`}
             hint="Qolgan qarzdorlik"
             tone="accent"
           />
@@ -1729,27 +1738,37 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                           }
                         ]
                       : []),
-                    { key: "checkId", label: "Chek ID" },
+                    {
+                      key: "checkId",
+                      label: "Chek ID",
+                      render: (row) => (
+                        <span className="text-xs text-slate-500">{row.checkId || "-"}</span>
+                      )
+                    },
                     { key: "patientName", label: "Bemor F.I.O" },
                     {
                       key: "total",
                       label: "Jami summa",
-                      render: (row) => `${formatCurrency(row.total)} so'm`
+                      render: (row) => `${formatCurrency(row.total)}\u00a0so'm`
                     },
                     {
                       key: "creatorRole",
                       label: "Kim yubordi",
-                      render: (row) =>
-                        `${formatCreatorRoleLabel(row.creatorRole)}: ${row.creatorName || "-"}${
-                          String(row.creatorRole).toLowerCase() === "lor" && row.lorIdentity
-                            ? ` (${formatLorIdentityLabel(row.lorIdentity)})`
-                            : ""
-                        }`
+                      render: (row) => (
+                        <div>
+                          <p>{row.creatorName || "-"}</p>
+                          <p className="text-xs text-slate-500">
+                            {formatCreatorRoleLabel(row.creatorRole)}
+                          </p>
+                        </div>
+                      )
                     },
                     {
                       key: "createdAt",
                       label: "Yuborilgan vaqt",
-                      render: (row) => formatDateInput(row.createdAt)
+                      render: (row) => (
+                        <span className="whitespace-nowrap">{formatShortDateTime(row.createdAt)}</span>
+                      )
                     },
                     {
                       key: "actions",
@@ -1757,7 +1776,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                       render: (row) => (
                         <Button
                           type="button"
-                          className="px-3 py-1.5 text-xs"
+                          className="whitespace-nowrap px-3 py-1.5 text-xs"
                           onClick={() => handlePickPendingCheck(row)}
                         >
                           Qabul qilish
@@ -1783,7 +1802,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 ) : null}
                 <p>Bemor: {selectedPendingCheck?.patientName || "-"}</p>
                 <p>Jami: {formatCurrency(selectedPendingCheck?.total || 0)} so'm</p>
-                <p>Sana: {formatDateInput(selectedPendingCheck?.createdAt)}</p>
+                <p>Sana: {formatShortDateTime(selectedPendingCheck?.createdAt)}</p>
                 <p>
                   {String(selectedPendingCheck?.creatorRole || "").toLowerCase() === "nurse"
                     ? "Hamshira"
