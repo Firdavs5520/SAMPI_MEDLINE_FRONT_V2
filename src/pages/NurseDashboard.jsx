@@ -22,13 +22,6 @@ import {
 } from "../utils/printReceipt.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
-const STEP_LABELS = [
-  "1. Hamshira",
-  "2. Bemor",
-  "3. Dorilar",
-  "4. Xizmatlar",
-  "5. Chekni ko'rish"
-];
 const PRICE_TIER_LABELS = { first: "1-marta", second: "2-marta", third: "3-marta" };
 const PRICE_TIER_ORDER = ["first", "second", "third"];
 const PRICE_TIER_OPTIONS = PRICE_TIER_ORDER.map((value) => ({
@@ -70,17 +63,6 @@ const getServicePrice = (service, tier) => {
   return tiers[PRICE_TIER_ORDER.includes(tier) ? tier : "first"];
 };
 
-const getInitials = (name) => {
-  const parts = String(name || "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2);
-
-  if (!parts.length) return "H";
-  return parts.map((part) => part[0]?.toLocaleUpperCase("uz-UZ")).join("");
-};
-
 function CheckIcon({ className = "h-4 w-4" }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -89,26 +71,29 @@ function CheckIcon({ className = "h-4 w-4" }) {
   );
 }
 
-function NursePanelHeader({ eyebrow, title, children, meta }) {
+function QuantityStepper({ value, onChange, max = 99 }) {
+  const quantity = Number(value) || 1;
   return (
-    <div className="nurse-panel-header">
-      <div className="min-w-0">
-        <p className="nurse-eyebrow">{eyebrow}</p>
-        <h2 className="mt-1 break-words text-lg font-black text-slate-900 sm:text-xl">{title}</h2>
-        {children ? <p className="mt-1 max-w-2xl break-words text-sm font-medium text-slate-500">{children}</p> : null}
-      </div>
-      {meta ? <div className="nurse-panel-meta">{meta}</div> : null}
-    </div>
-  );
-}
-
-function NurseStepCard({ label, index, active, done }) {
-  return (
-    <div
-      className={`nurse-step-card ${active ? "nurse-step-active" : ""} ${done ? "nurse-step-done" : ""}`}
-    >
-      <span className="nurse-step-number">{index + 1}</span>
-      <span className="min-w-0 truncate">{label.replace(/^\d+\.\s*/, "")}</span>
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        aria-label="Kamaytirish"
+        disabled={quantity <= 1}
+        onClick={() => onChange(quantity - 1)}
+        className="h-7 w-7 rounded-md bg-slate-200 text-base font-bold text-slate-700 disabled:opacity-40"
+      >
+        −
+      </button>
+      <span className="w-7 text-center text-sm font-bold">{quantity}</span>
+      <button
+        type="button"
+        aria-label="Oshirish"
+        disabled={quantity >= max}
+        onClick={() => onChange(quantity + 1)}
+        className="h-7 w-7 rounded-md bg-slate-200 text-base font-bold text-slate-700 disabled:opacity-40"
+      >
+        +
+      </button>
     </div>
   );
 }
@@ -117,11 +102,9 @@ function NurseDashboard() {
   const { nurseSpecialist, setNurseSpecialist } = useAuth();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [step, setStep] = useState(1);
 
   const [specialists, setSpecialists] = useState([]);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState(nurseSpecialist?.id || "");
-  const [specialistSearch, setSpecialistSearch] = useState("");
 
   const [medicines, setMedicines] = useState([]);
   const [services, setServices] = useState([]);
@@ -130,15 +113,12 @@ function NurseDashboard() {
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
   const [medicineInputs, setMedicineInputs] = useState({});
   const [serviceInputs, setServiceInputs] = useState({});
-  const [medicineSearch, setMedicineSearch] = useState("");
-  const [serviceSearch, setServiceSearch] = useState("");
+  const [catalogTab, setCatalogTab] = useState("medicines");
+  const [catalogSearch, setCatalogSearch] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const specialistSearchRef = useRef(null);
   const patientInputRef = useRef(null);
-  const medicineSearchRef = useRef(null);
-  const serviceSearchRef = useRef(null);
-  const previewRef = useRef(null);
+  const catalogSearchRef = useRef(null);
 
   const hasAnySelection = selectedMedicineIds.length > 0 || selectedServiceIds.length > 0;
 
@@ -147,23 +127,17 @@ function NurseDashboard() {
     [specialists, selectedSpecialistId]
   );
 
-  const filteredSpecialists = useMemo(() => {
-    const q = normalizeSearch(specialistSearch);
-    if (!q) return specialists;
-    return specialists.filter((item) => normalizeSearch(item?.name).includes(q));
-  }, [specialists, specialistSearch]);
-
   const filteredMedicines = useMemo(() => {
-    const q = normalizeSearch(medicineSearch);
+    const q = normalizeSearch(catalogSearch);
     if (!q) return medicines;
     return medicines.filter((m) => normalizeSearch(m?.name).includes(q));
-  }, [medicines, medicineSearch]);
+  }, [medicines, catalogSearch]);
 
   const filteredServices = useMemo(() => {
-    const q = normalizeSearch(serviceSearch);
+    const q = normalizeSearch(catalogSearch);
     if (!q) return services;
     return services.filter((s) => normalizeSearch(s?.name).includes(q));
-  }, [services, serviceSearch]);
+  }, [services, catalogSearch]);
 
   const previewMedicines = useMemo(
     () =>
@@ -254,24 +228,8 @@ function NurseDashboard() {
   }, [nurseSpecialist?.id, selectedSpecialist, setNurseSpecialist]);
 
   useEffect(() => {
-    const focusElement = (element) => {
-      if (!element) return;
-      setTimeout(() => {
-        try {
-          element.focus();
-          if (typeof element.select === "function") element.select();
-        } catch {
-          // no-op
-        }
-      }, 0);
-    };
-
-    if (step === 1) focusElement(specialistSearchRef.current);
-    if (step === 2) focusElement(patientInputRef.current);
-    if (step === 3) focusElement(medicineSearchRef.current);
-    if (step === 4) focusElement(serviceSearchRef.current);
-    if (step === 5) focusElement(previewRef.current);
-  }, [step]);
+    if (!loading) patientInputRef.current?.focus();
+  }, [loading]);
 
   useEffect(() => {
     setSelectedMedicineIds((prev) =>
@@ -319,34 +277,11 @@ function NurseDashboard() {
     });
   };
 
-  const goNextFromSpecialist = () => {
-    resetMessages();
-    try {
-      validateSpecialist();
-      setStep(2);
-    } catch (err) {
-      setError(extractErrorMessage(err));
-    }
-  };
-
-  const goNextFromPatient = () => {
-    resetMessages();
-    try {
-      validatePatient();
-      setStep(3);
-    } catch (err) {
-      setError(extractErrorMessage(err));
-    }
-  };
-
-  const goNextFromMedicines = () => {
-    resetMessages();
-    setStep(4);
-  };
-
-  const goNextFromServices = () => {
-    resetMessages();
-    setStep(5);
+  const clearSelection = () => {
+    setSelectedMedicineIds([]);
+    setSelectedServiceIds([]);
+    setMedicineInputs({});
+    setServiceInputs({});
   };
 
   const handleCheckout = async () => {
@@ -403,9 +338,9 @@ function NurseDashboard() {
       setSelectedServiceIds([]);
       setMedicineInputs({});
       setServiceInputs({});
-      setMedicineSearch("");
-      setServiceSearch("");
-      setStep(1);
+      setCatalogSearch("");
+      setCatalogTab("medicines");
+      patientInputRef.current?.focus();
       void loadData();
     } catch (err) {
       closePrintTab(printSession);
@@ -417,535 +352,275 @@ function NurseDashboard() {
 
   if (loading) return <Spinner text="Hamshira paneli yuklanmoqda..." />;
 
+  const catalogItems = catalogTab === "medicines" ? filteredMedicines : filteredServices;
+  const selectedCount = selectedMedicineIds.length + selectedServiceIds.length;
+
   return (
-    <div className="nurse-dashboard space-y-4 sm:space-y-5">
-      <section className="nurse-hero">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="min-w-0">
-            <p className="nurse-kicker">Hamshira paneli</p>
-            <h1 className="mt-2 break-words text-2xl font-black text-slate-950 sm:text-3xl">
-              Chek yaratish
-            </h1>
-            <p className="mt-2 max-w-3xl break-words text-sm font-medium text-slate-600 sm:text-base">
-              Hamshira, bemor, dori va xizmatlar bitta tartibda, qadamma-qadam yig'iladi.
-            </p>
-          </div>
+    <div className="nurse-dashboard space-y-4">
+      <Alert type="success" message={success} />
+      <Alert type="error" message={error} />
 
-          <div className="nurse-hero-stats">
-            <div className="nurse-hero-stat">
-              <span>Hamshira</span>
-              <strong>{selectedSpecialist?.name || "-"}</strong>
-            </div>
-            <div className="nurse-hero-stat">
-              <span>Tanlangan</span>
-              <strong>{selectedMedicineIds.length + selectedServiceIds.length}</strong>
-            </div>
-            <div className="nurse-hero-stat nurse-hero-stat-total">
-              <span>Jami</span>
-              <strong>{formatCurrency(previewTotal)}</strong>
-            </div>
-          </div>
-        </div>
-
-        <div className="nurse-progress-grid">
-          {STEP_LABELS.map((label, i) => {
-            const n = i + 1;
-            return (
-              <NurseStepCard
-                key={label}
-                label={label}
-                index={i}
-                active={n === step}
-                done={n < step}
-              />
-            );
-          })}
-        </div>
-      </section>
-
-      {step === 1 ? (
-        <div
-          className="nurse-panel"
+      <div className="card grid gap-3 p-4 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
+        <SelectMenu
+          label="Hamshira"
+          value={selectedSpecialistId}
+          options={specialists.map((item) => ({ value: item._id, label: item.name }))}
+          onChange={(value) => setSelectedSpecialistId(value)}
+          placeholder="Hamshirani tanlang"
+        />
+        <Input
+          label="Bemor F.I.O"
+          value={patient.fullName}
+          placeholder="Masalan: Ali Valiyev"
+          inputRef={patientInputRef}
+          onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
+            if (e.key === "Enter") {
               e.preventDefault();
-              goNextFromSpecialist();
+              catalogSearchRef.current?.focus();
             }
           }}
-        >
-          <NursePanelHeader
-            eyebrow="1-qadam"
-            title="Hamshira tanlash"
-            meta={`${filteredSpecialists.length} ta natija`}
-          >
-            Chek kim nomidan yaratilishini belgilang.
-          </NursePanelHeader>
+        />
+        {!specialists.length ? (
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 md:col-span-2">
+            Hozircha hamshira yo'q. Chap menyudagi "Hamshiralarni boshqarish" bo'limida qo'shing.
+          </p>
+        ) : null}
+      </div>
 
-          <div className="mt-4">
-            <QuickSearchInput
-              label="Hamshira qidirish"
-              placeholder="Masalan: Malika"
-              value={specialistSearch}
-              onChange={setSpecialistSearch}
-              inputRef={specialistSearchRef}
-              items={specialists}
-              getItemLabel={(item) => item?.name || ""}
-              onPick={(item) => {
-                setSelectedSpecialistId(item?._id || "");
-                setSpecialistSearch(item?.name || "");
-              }}
-              emptyText="Mos hamshira topilmadi"
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_23rem]">
+        <section className="card p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="inline-flex shrink-0 rounded-lg bg-slate-100 p-1" role="tablist">
+              {[
+                { key: "medicines", label: "Dorilar", count: selectedMedicineIds.length },
+                { key: "services", label: "Xizmatlar", count: selectedServiceIds.length }
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={catalogTab === tab.key}
+                  onClick={() => setCatalogTab(tab.key)}
+                  className={`rounded-md px-4 py-2 text-sm font-bold transition ${
+                    catalogTab === tab.key
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  {tab.label}
+                  {tab.count ? (
+                    <span className="ml-2 rounded-full bg-primary px-1.5 py-0.5 text-[11px] text-white">
+                      {tab.count}
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+            <input
+              ref={catalogSearchRef}
+              type="search"
+              value={catalogSearch}
+              onChange={(e) => setCatalogSearch(e.target.value)}
+              placeholder={catalogTab === "medicines" ? "Dori qidirish..." : "Xizmat qidirish..."}
+              className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
             />
           </div>
 
-          {specialists.length ? (
-            <div className="nurse-card-grid mt-4">
-              {filteredSpecialists.map((item) => {
-                const selected = selectedSpecialistId === item._id;
-                return (
+          <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
+            {catalogItems.map((item) => {
+              const isMedicine = catalogTab === "medicines";
+              const selected = isMedicine
+                ? selectedMedicineIds.includes(item._id)
+                : selectedServiceIds.includes(item._id);
+              const blocked = isMedicine
+                ? item.stock <= 0 || !isValidPrice(item.price)
+                : !getTierPrices(item);
+              const lowStock = isMedicine && item.stock > 0 && item.stock <= 10;
+              return (
+                <button
+                  key={item._id}
+                  type="button"
+                  disabled={blocked}
+                  aria-pressed={selected}
+                  onClick={() =>
+                    isMedicine ? toggleMedicine(item._id, !blocked) : toggleService(item._id, !blocked)
+                  }
+                  className={`flex w-full items-center gap-3 border-t border-slate-200 px-3 py-2.5 text-left transition first:border-t-0 ${
+                    selected ? "bg-cyan-50" : "bg-white hover:bg-slate-50"
+                  } ${blocked ? "cursor-not-allowed opacity-50" : ""}`}
+                >
+                  <span
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${
+                      selected ? "border-primary bg-primary text-white" : "border-slate-300"
+                    }`}
+                  >
+                    {selected ? <CheckIcon className="h-3.5 w-3.5" /> : null}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block break-words text-sm font-semibold text-slate-900">{item.name}</span>
+                    {isMedicine ? (
+                      <span
+                        className={`text-xs font-semibold ${
+                          item.stock <= 0 ? "text-red-600" : lowStock ? "text-amber-700" : "text-slate-500"
+                        }`}
+                      >
+                        {item.stock <= 0 ? "Omborda yo'q" : `Qoldiq: ${item.stock}`}
+                        {lowStock ? " · kam qoldi" : ""}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold text-slate-500">
+                        {getTierPrices(item)
+                          ? PRICE_TIER_ORDER.map((tier) => formatCurrency(getServicePrice(item, tier))).join(" / ")
+                          : "Narx sozlanmagan"}
+                      </span>
+                    )}
+                  </span>
+                  <span className="shrink-0 whitespace-nowrap text-sm font-bold text-slate-700">
+                    {isMedicine
+                      ? isValidPrice(item.price)
+                        ? `${formatCurrency(item.price)}\u00a0so'm`
+                        : "Narx yo'q"
+                      : getTierPrices(item)
+                        ? `${formatCurrency(getServicePrice(item, "first"))}\u00a0so'm`
+                        : ""}
+                  </span>
+                </button>
+              );
+            })}
+            {!catalogItems.length ? (
+              <p className="px-3 py-8 text-center text-sm font-semibold text-slate-500">
+                {catalogTab === "medicines" ? "Dori topilmadi" : "Xizmat topilmadi"}
+              </p>
+            ) : null}
+          </div>
+        </section>
+
+        <aside className="card p-4 lg:sticky lg:top-20">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-base font-bold text-slate-900">Chek</h2>
+            <span className="text-xs font-semibold text-slate-500">{selectedCount} ta tanlangan</span>
+          </div>
+          <p className="mt-1 truncate text-sm text-slate-600">
+            {patient.fullName ? patient.fullName : <span className="text-slate-400">Bemor kiritilmagan</span>}
+          </p>
+
+          <div className="mt-3 space-y-2">
+            {previewMedicines.map((line) => {
+              const medicine = medicines.find((m) => m._id === line.id);
+              const max = Math.max(Number(medicine?.stock || 1), 1);
+              return (
+                <div key={line.id} className="rounded-lg border border-slate-200 px-3 py-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="min-w-0 break-words text-sm font-semibold text-slate-800">{line.name}</p>
+                    <button
+                      type="button"
+                      aria-label="Olib tashlash"
+                      onClick={() => toggleMedicine(line.id, true)}
+                      className="shrink-0 text-lg leading-none text-slate-400 hover:text-red-600"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div className="mt-1.5 flex items-center justify-between gap-2">
+                    <QuantityStepper
+                      value={line.quantity}
+                      max={max}
+                      onChange={(next) =>
+                        setMedicineInputs((prev) => ({ ...prev, [line.id]: { quantity: safeQty(next, max) } }))
+                      }
+                    />
+                    <span className="whitespace-nowrap text-sm font-bold text-slate-800">
+                      {formatCurrency(line.lineTotal)}{"\u00a0"}so'm
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {previewServices.map((line) => (
+              <div key={line.id} className="rounded-lg border border-slate-200 px-3 py-2">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="min-w-0 break-words text-sm font-semibold text-slate-800">{line.name}</p>
                   <button
-                    key={item._id}
                     type="button"
-                    onClick={() => setSelectedSpecialistId(item._id)}
-                    aria-pressed={selected}
-                    className={`nurse-choice-card ${selected ? "nurse-choice-card-selected" : ""}`}
+                    aria-label="Olib tashlash"
+                    onClick={() => toggleService(line.id, true)}
+                    className="shrink-0 text-lg leading-none text-slate-400 hover:text-red-600"
                   >
-                    <span className="nurse-avatar">{getInitials(item.name)}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block break-words text-sm font-black text-slate-900">
-                        {item.name}
-                      </span>
-                      <span className="mt-1 block text-xs font-semibold text-slate-500">
-                        {selected ? "Tanlangan" : "Hamshira"}
-                      </span>
-                    </span>
-                    <span className="nurse-select-dot">{selected ? <CheckIcon /> : null}</span>
+                    ×
                   </button>
-                );
-              })}
-            </div>
-          ) : null}
-
-          {!specialists.length ? (
-            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              Hozircha hamshira yo'q. Chap menyudan "Hamshiralarni boshqarish" bo'limida
-              yangi hamshira qo'shing.
-            </div>
-          ) : null}
-
-          <div className="mt-4 flex justify-end">
-            <Button
-              className="w-full sm:w-auto"
-              onClick={goNextFromSpecialist}
-            >
-              Keyingi: Bemor
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      {step === 2 ? (
-        <div
-          className="nurse-panel"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              goNextFromPatient();
-            }
-          }}
-        >
-          <NursePanelHeader eyebrow="2-qadam" title="Bemor ma'lumoti">
-            Ism va familiyani bitta maydonda to'liq kiriting.
-          </NursePanelHeader>
-          <div className="mt-4 max-w-2xl">
-          <Input
-            label="Bemor F.I.O"
-            value={patient.fullName}
-            placeholder="Masalan: Ali Valiyev"
-            inputRef={patientInputRef}
-            onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
-          />
-          </div>
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(1)}>
-              Orqaga
-            </Button>
-            <Button
-              className="w-full sm:w-auto"
-              onClick={goNextFromPatient}
-            >
-              Keyingi: Dorilar
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      {step === 3 ? (
-        <div
-          className="nurse-panel"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              goNextFromMedicines();
-            }
-          }}
-        >
-          <NursePanelHeader
-            eyebrow="3-qadam"
-            title="Dorilar"
-            meta={`${selectedMedicineIds.length} ta tanlandi`}
-          >
-            Omborda bor va narxi sozlangan dorilarni tanlang.
-          </NursePanelHeader>
-          <div className="mt-4">
-          <QuickSearchInput
-            label="Dori qidirish"
-            placeholder="Masalan: Paracetamol"
-            value={medicineSearch}
-            onChange={setMedicineSearch}
-            inputRef={medicineSearchRef}
-            items={medicines}
-            getItemLabel={(item) => item?.name || ""}
-            onPick={(item) => setMedicineSearch(item?.name || "")}
-            emptyText="Mos dori topilmadi"
-          />
-          </div>
-          <div className="nurse-card-grid mt-4">
-            {filteredMedicines.map((medicine) => {
-              const selected = selectedMedicineIds.includes(medicine._id);
-              const blocked = medicine.stock <= 0 || !isValidPrice(medicine.price);
-              return (
-                <button
-                  key={medicine._id}
-                  type="button"
-                  disabled={blocked}
-                  onClick={() => toggleMedicine(medicine._id, !blocked)}
-                  aria-pressed={selected}
-                  className={`nurse-product-card ${selected ? "nurse-product-selected" : ""} ${blocked ? "nurse-product-blocked" : ""}`}
-                >
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="break-words text-sm font-black text-slate-900">{medicine.name}</span>
-                    <span className="mt-3 flex flex-wrap gap-2">
-                      <span className="nurse-mini-metric">Qoldiq: {medicine.stock}</span>
-                      <span className="nurse-mini-metric">
-                        {isValidPrice(medicine.price) ? formatCurrency(medicine.price) : "Narx yo'q"}
-                      </span>
-                    </span>
-                  </span>
-                  <span className="nurse-select-dot">{selected ? <CheckIcon /> : null}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {selectedMedicineIds.length > 0 ? (
-            <div className="nurse-selection-list mt-4">
-              {selectedMedicineIds.map((id) => {
-                const medicine = medicines.find((m) => m._id === id);
-                return (
-                  <div
-                    key={id}
-                    className="nurse-selection-row md:grid-cols-[minmax(0,1fr)_180px_auto]"
-                  >
-                    <div className="min-w-0">
-                      <p className="break-words font-bold text-slate-900">{medicine?.name}</p>
-                      <p className="text-xs font-semibold text-slate-500">Qoldiq: {medicine?.stock}</p>
-                    </div>
-                    <Input
-                      label="Miqdor"
-                      type="number"
-                      min="1"
-                      max={Math.max(Number(medicine?.stock || 1), 1)}
-                      value={medicineInputs[id]?.quantity || ""}
-                      onChange={(e) =>
-                        setMedicineInputs((prev) => ({
-                          ...prev,
-                          [id]: { quantity: safeQty(e.target.value, medicine?.stock || 1) }
-                        }))
-                      }
-                    />
-                    <Button variant="secondary" className="h-fit self-end" onClick={() => toggleMedicine(id, true)}>
-                      Olib tashlash
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
-
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(2)}>
-              Orqaga
-            </Button>
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-              <Button
-                variant="secondary"
-                className="w-full sm:w-auto"
-                onClick={() => {
-                  setSelectedMedicineIds([]);
-                  setMedicineInputs({});
-                  setStep(4);
-                }}
-              >
-                O'tkazib yuborish
-              </Button>
-              <Button
-                className="w-full sm:w-auto"
-                onClick={goNextFromMedicines}
-              >
-                Keyingi
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {step === 4 ? (
-        <div
-          className="nurse-panel"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              goNextFromServices();
-            }
-          }}
-        >
-          <NursePanelHeader
-            eyebrow="4-qadam"
-            title="Xizmatlar"
-            meta={`${selectedServiceIds.length} ta tanlandi`}
-          >
-            Hamshira xizmatini tanlab, kerakli narx turini belgilang.
-          </NursePanelHeader>
-          <div className="mt-4">
-          <QuickSearchInput
-            label="Xizmat qidirish"
-            placeholder="Masalan: Ukol qilish"
-            value={serviceSearch}
-            onChange={setServiceSearch}
-            inputRef={serviceSearchRef}
-            items={services}
-            getItemLabel={(item) => item?.name || ""}
-            onPick={(item) => setServiceSearch(item?.name || "")}
-            emptyText="Mos xizmat topilmadi"
-          />
-          </div>
-          <div className="nurse-card-grid mt-4">
-            {filteredServices.map((service) => {
-              const selected = selectedServiceIds.includes(service._id);
-              const blocked = !getTierPrices(service);
-              return (
-                <button
-                  key={service._id}
-                  type="button"
-                  disabled={blocked}
-                  onClick={() => toggleService(service._id, !blocked)}
-                  aria-pressed={selected}
-                  className={`nurse-product-card ${selected ? "nurse-product-selected" : ""} ${blocked ? "nurse-product-blocked" : ""}`}
-                >
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="break-words text-sm font-black text-slate-900">{service.name}</span>
-                    <span className="mt-3 flex flex-wrap gap-2">
-                      <span className="nurse-mini-metric">
-                        1: {getServicePrice(service, "first") ? formatCurrency(getServicePrice(service, "first")) : "-"}
-                      </span>
-                      <span className="nurse-mini-metric">
-                        2: {getServicePrice(service, "second") ? formatCurrency(getServicePrice(service, "second")) : "-"}
-                      </span>
-                      <span className="nurse-mini-metric">
-                        3: {getServicePrice(service, "third") ? formatCurrency(getServicePrice(service, "third")) : "-"}
-                      </span>
-                    </span>
-                  </span>
-                  <span className="nurse-select-dot">{selected ? <CheckIcon /> : null}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {selectedServiceIds.length > 0 ? (
-            <div className="nurse-selection-list mt-4">
-              {selectedServiceIds.map((id) => {
-                const service = services.find((s) => s._id === id);
-                const tier = PRICE_TIER_ORDER.includes(serviceInputs[id]?.priceTier)
-                  ? serviceInputs[id]?.priceTier
-                  : "first";
-                return (
-                  <div
-                    key={id}
-                    className="nurse-selection-row md:grid-cols-[minmax(0,1fr)_160px_180px_auto]"
-                  >
-                    <div className="min-w-0">
-                      <p className="break-words font-bold text-slate-900">{service?.name}</p>
-                      <p className="text-xs font-semibold text-slate-500">
-                        Narx: {formatCurrency(getServicePrice(service, tier) || 0)}
-                      </p>
-                    </div>
-                    <Input
-                      label="Miqdor"
-                      type="number"
-                      min="1"
-                      value={serviceInputs[id]?.quantity || ""}
-                      onChange={(e) =>
+                </div>
+                <div className="mt-1.5 inline-flex rounded-md bg-slate-100 p-0.5">
+                  {PRICE_TIER_ORDER.map((tier) => (
+                    <button
+                      key={tier}
+                      type="button"
+                      onClick={() =>
                         setServiceInputs((prev) => ({
                           ...prev,
-                          [id]: {
-                            quantity: safeQty(e.target.value),
-                            priceTier: prev[id]?.priceTier || "first"
-                          }
+                          [line.id]: { quantity: prev[line.id]?.quantity || "1", priceTier: tier }
                         }))
                       }
-                    />
-                    <SelectMenu
-                      label="Narx turi"
-                      value={tier}
-                      options={PRICE_TIER_OPTIONS}
-                      onChange={(nextTier) =>
-                        setServiceInputs((prev) => ({
-                          ...prev,
-                          [id]: {
-                            quantity: prev[id]?.quantity || "1",
-                            priceTier: nextTier
-                          }
-                        }))
-                      }
-                    />
-                    <Button variant="secondary" className="h-fit self-end" onClick={() => toggleService(id, true)}>
-                      Olib tashlash
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
-
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(3)}>
-              Orqaga
-            </Button>
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-              <Button
-                variant="secondary"
-                className="w-full sm:w-auto"
-                onClick={() => {
-                  setSelectedServiceIds([]);
-                  setServiceInputs({});
-                  setStep(5);
-                }}
-              >
-                O'tkazib yuborish
-              </Button>
-              <Button
-                className="w-full sm:w-auto"
-                onClick={goNextFromServices}
-              >
-                Keyingi
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {step === 5 ? (
-        <div
-          ref={previewRef}
-          tabIndex={0}
-          className="nurse-panel outline-none"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && hasAnySelection && !submitting) {
-              e.preventDefault();
-              handleCheckout();
-            }
-          }}
-        >
-          <NursePanelHeader eyebrow="5-qadam" title="Chekni ko'rish" meta={formatCurrency(previewTotal)}>
-            Yakuniy chekni ko'rib chiqing.
-          </NursePanelHeader>
-
-          <div className="nurse-receipt mt-4">
-            <div className="nurse-receipt-head">
-              <div>
-                <p className="text-xs font-black uppercase text-slate-500">Hamshira</p>
-                <p className="mt-1 break-words text-base font-black text-slate-900">
-                  {selectedSpecialist?.name || "-"}
-                </p>
+                      className={`rounded px-2 py-1 text-xs font-bold ${
+                        line.tier === tier ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+                      }`}
+                    >
+                      {PRICE_TIER_LABELS[tier]}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-1.5 flex items-center justify-between gap-2">
+                  <QuantityStepper
+                    value={line.quantity}
+                    onChange={(next) =>
+                      setServiceInputs((prev) => ({
+                        ...prev,
+                        [line.id]: { quantity: safeQty(next), priceTier: prev[line.id]?.priceTier || "first" }
+                      }))
+                    }
+                  />
+                  <span className="whitespace-nowrap text-sm font-bold text-slate-800">
+                    {formatCurrency(line.lineTotal)}{"\u00a0"}so'm
+                  </span>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-black uppercase text-slate-500">Bemor</p>
-                <p className="mt-1 break-words text-base font-black text-slate-900">
-                  {patient.fullName || "-"}
-                </p>
-              </div>
-            </div>
+            ))}
 
-            <div className="nurse-receipt-section">
-              <div className="nurse-receipt-title">
-                <span>Dorilar</span>
-                <strong>{previewMedicines.length}</strong>
-              </div>
-              {previewMedicines.length ? (
-                previewMedicines.map((item) => (
-                  <div key={item.id} className="nurse-receipt-line">
-                    <span className="min-w-0 break-words">
-                      {item.name} x{item.quantity}
-                    </span>
-                    <span className="font-semibold">{formatCurrency(item.lineTotal)}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-500">Tanlanmagan</p>
-              )}
-            </div>
-
-            <div className="nurse-receipt-section">
-              <div className="nurse-receipt-title">
-                <span>Xizmatlar</span>
-                <strong>{previewServices.length}</strong>
-              </div>
-              {previewServices.length ? (
-                previewServices.map((item) => (
-                  <div key={item.id} className="nurse-receipt-line">
-                    <span className="min-w-0 break-words">
-                      {item.name} ({PRICE_TIER_LABELS[item.tier]}) x{item.quantity}
-                    </span>
-                    <span className="font-semibold">{formatCurrency(item.lineTotal)}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-500">Tanlanmagan</p>
-              )}
-            </div>
-
-            <div className="nurse-receipt-total">
-              <span>Jami</span>
-              <strong>{formatCurrency(previewTotal)}</strong>
-            </div>
+            {!hasAnySelection ? (
+              <p className="rounded-lg border border-dashed border-slate-300 px-3 py-6 text-center text-sm text-slate-500">
+                Chapdan dori yoki xizmat tanlang
+              </p>
+            ) : null}
           </div>
 
-          {!hasAnySelection ? (
-            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              Chek chiqarish uchun kamida bitta dori yoki bitta xizmat tanlanishi kerak.
-            </div>
-          ) : null}
-
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(4)}>
-              Orqaga
-            </Button>
-            <Button
-              disabled={!hasAnySelection}
-              loading={submitting}
-              className="w-full sm:w-auto"
-              onClick={handleCheckout}
+          <div className="mt-4 flex items-baseline justify-between border-t border-slate-200 pt-3">
+            <span className="text-sm font-semibold text-slate-600">Jami</span>
+            <span className="whitespace-nowrap text-2xl font-black text-slate-900">
+              {formatCurrency(previewTotal)}{"\u00a0"}so'm
+            </span>
+          </div>
+          <Button
+            className="mt-3 min-h-12 w-full text-base"
+            disabled={!hasAnySelection}
+            loading={submitting}
+            loadingText="Chek yaratilmoqda..."
+            onClick={handleCheckout}
+          >
+            Chek chiqarish
+          </Button>
+          {hasAnySelection ? (
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="mt-2 w-full text-center text-xs font-semibold text-slate-500 hover:text-red-600"
             >
-              Chek chiqarish
-            </Button>
-          </div>
-        </div>
-      ) : null}
+              Hammasini tozalash
+            </button>
+          ) : null}
+        </aside>
+      </div>
 
-      <Alert type="success" message={success} />
-      <Alert type="error" message={error} />
       <BusyOverlay show={submitting} text="Chek yaratilmoqda..." />
     </div>
   );

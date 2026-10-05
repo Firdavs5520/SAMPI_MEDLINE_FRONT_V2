@@ -32,7 +32,7 @@ export const FULLSCREEN_OFF_KEY = "sampi_fullscreen_off";
 
 export const sidebarMenus = {
   nurse: [
-    { label: "Dorilar va xizmatlar tanlash", path: "/nurse", end: true, icon: "grid" },
+    { label: "Chek yaratish", path: "/nurse", end: true, icon: "grid" },
     { label: "Mening cheklarim", path: "/nurse/checks", end: true, icon: "receipt" },
     { label: "Hamshiralarni boshqarish", path: "/nurse/specialists", end: true, icon: "users" },
     { label: "Dori qo'shish", path: "/nurse/medicines", icon: "pill" },
