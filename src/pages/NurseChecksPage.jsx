@@ -122,7 +122,7 @@ function NurseChecksPage() {
       <div className="card p-4 sm:p-5">
         <h1 className="text-xl font-bold text-slate-800">Mening cheklarim</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Faqat siz yaratgan nurse cheklari chiqadi. Bemor ism-familiyasi bo'yicha qidiring.
+          Faqat siz yaratgan cheklar chiqadi. Bemor ism-familiyasi bo'yicha qidiring.
         </p>
 
         <div className="mt-4 grid gap-3 md:grid-cols-[minmax(220px,320px)_1fr_auto]">

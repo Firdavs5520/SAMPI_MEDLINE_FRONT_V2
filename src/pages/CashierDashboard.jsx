@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Alert from "../components/Alert.jsx";
@@ -25,8 +26,8 @@ import { getCurrentShiftYmd } from "../utils/date.js";
 
 const SECTION_META = {
   "nurse-patients": {
-    title: "Nurse cheklar qabuli",
-    subtitle: "Nurse yuborgan cheklar kassada qabul qilinadi.",
+    title: "Hamshira cheklari qabuli",
+    subtitle: "Hamshira yuborgan cheklar kassada qabul qilinadi.",
     lockedType: "nurse",
     specialistLabel: "Medsestra"
   },
@@ -43,14 +44,14 @@ const SECTION_META = {
     specialistLabel: "Vrach"
   },
   "nurse-entries": {
-    title: "Nurse yozuvlari",
+    title: "Hamshira yozuvlari",
     subtitle: "Joriy ro'yxat 08:00-02:00 oralig'ida ko'rsatiladi.",
     lockedType: "nurse",
     specialistLabel: "Medsestra"
   },
   "nurse-history": {
-    title: "Nurse tarixi",
-    subtitle: "Nurse bo'yicha 08:00-02:00 dan tashqari yozuvlar tarixi.",
+    title: "Hamshira tarixi",
+    subtitle: "Hamshira bo'limi bo'yicha 08:00-02:00 dan tashqari yozuvlar tarixi.",
     lockedType: "nurse",
     specialistLabel: "Medsestra"
   },
@@ -79,8 +80,8 @@ const SECTION_META = {
     specialistLabel: "Mutaxassis"
   },
   "nurse-specialists": {
-    title: "Nurse shifokorlar",
-    subtitle: "Nurse mutaxassislar ro'yxatini boshqarish.",
+    title: "Hamshiralar",
+    subtitle: "Hamshiralar ro'yxatini boshqarish.",
     lockedType: "nurse",
     specialistLabel: "Medsestra"
   },
@@ -100,8 +101,8 @@ const SECTION_META = {
 
 const departmentLabels = {
   lor: "LOR",
-  nurse: "Nurse",
-  procedure: "Nurse"
+  nurse: "Hamshira",
+  procedure: "Hamshira"
 };
 
 const paymentMethodLabels = {
@@ -133,12 +134,12 @@ const paymentMethodFormOptions = [
 const departmentOptions = [
   { value: "all", label: "Barchasi" },
   { value: "lor", label: "LOR" },
-  { value: "nurse", label: "Nurse" }
+  { value: "nurse", label: "Hamshira" }
 ];
 
 const specialistTypeOptions = [
   { value: "all", label: "Barchasi" },
-  { value: "nurse", label: "Nurse" },
+  { value: "nurse", label: "Hamshira" },
   { value: "lor", label: "LOR" }
 ];
 
@@ -197,7 +198,7 @@ const mergeRecentLorTickets = (tickets = [], ticket) => {
 };
 
 const formatCreatorRoleLabel = (value) =>
-  String(value || "").toLowerCase() === "nurse" ? "Nurse" : "LOR";
+  String(value || "").toLowerCase() === "nurse" ? "Hamshira" : "LOR";
 
 const formatLorIdentityLabel = (value) => (String(value || "").trim() ? "LOR" : "");
 
@@ -343,6 +344,10 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const isPendingCheckMode = Boolean(selectedPendingCheck?._id);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [queueSideChecks, setQueueSideChecks] = useState([]);
+  const [queueSideLoading, setQueueSideLoading] = useState(false);
 
   const specialistsByType = useMemo(
     () => ({
@@ -870,7 +875,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
 
     if (key === "amount" || key === "paidAmount") {
-      setForm((prev) => ({ ...prev, [key]: formatMoneyInput(value) }));
+      setForm((prev) => ({ ...prev, [key]: formatMoneyInput(value, 8) }));
       return;
     }
 
@@ -1020,6 +1025,29 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isLorQueueSection, handleIssueLorTicket]);
 
+  // Navbat sahifasida kassaga kelgan LOR cheklari yon tomonda ko'rinib turadi.
+  useEffect(() => {
+    if (!isLorQueueSection) return undefined;
+    let active = true;
+    const load = async () => {
+      setQueueSideLoading(true);
+      try {
+        const data = await cashierService.getPendingChecks({ role: "lor", limit: 30 });
+        if (active) setQueueSideChecks(data || []);
+      } catch {
+        // Yon ro'yxat yuklanmasa navbat chiqarish baribir ishlayveradi.
+      } finally {
+        if (active) setQueueSideLoading(false);
+      }
+    };
+    load();
+    const timer = setInterval(load, 15000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [isLorQueueSection]);
+
   const handlePickPendingCheck = (check) => {
     const roleType = String(check?.creatorRole || "").toLowerCase() === "nurse" ? "nurse" : "lor";
     const roleSpecialists = specialistsByType[roleType] || [];
@@ -1030,7 +1058,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       department: roleType,
       specialistId: foundSpecialist?._id || "",
       patientName: toTitleCaseName(String(check.patientName || "")),
-      amount: formatMoneyInput(check.total),
+      amount: formatMoneyInput(check.total, 8),
       paidAmount: "",
       paymentMethod: "cash",
       patientPhone: "",
@@ -1043,6 +1071,16 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     setSelectedPendingCheck(null);
     resetForm();
   };
+
+  // Navbat sahifasidan "Qabul qilish" bosilganda shu chek darhol tanlanadi.
+  const pickCheckId = location.state?.pickCheckId;
+  useEffect(() => {
+    if (!isFormSection || !pickCheckId || !pendingChecks.length) return;
+    const target = pendingChecks.find((item) => String(item._id) === String(pickCheckId));
+    if (target) handlePickPendingCheck(target);
+    navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFormSection, pickCheckId, pendingChecks]);
 
   const handleMarkDebtAsPaid = async (entry) => {
     if (!entry?._id) return;
@@ -1186,30 +1224,21 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     const latestPrintEvent = lorPrintEvents[0];
 
     return (
-      <div className="space-y-4 sm:space-y-6">
-        <div className="card border-sky-100 bg-white p-4 text-center shadow-sm sm:p-6 lg:p-8">
-          <div className="flex flex-col gap-3 text-left sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-sky-700">LOR navbati</p>
-              <h1 className="mt-1 text-xl font-bold text-slate-900">Navbat cheki chiqarish</h1>
-              <p className="mt-1 text-sm text-slate-500">
-                Bemor LORga yo'naltirilganda raqam shu yerdan beriladi.
-              </p>
-            </div>
-            <span className="inline-flex w-fit items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
-              Kassir
-            </span>
-          </div>
-
-          <div className="mx-auto mt-6 max-w-3xl">
-            <p className="text-sm font-semibold text-slate-500 sm:text-base">Keyingi raqam</p>
-            <div className="mt-3 flex min-h-44 items-center justify-center rounded-lg border border-sky-100 bg-sky-50 px-4 py-6 sm:min-h-60">
-              <span className="text-[6.5rem] font-black leading-none text-slate-950 sm:text-[9rem] lg:text-[11rem]">
+      <div className="space-y-4">
+        <Alert type="success" message={success} />
+        <Alert type="error" message={error} />
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="card border-sky-100 bg-white p-4 text-center shadow-sm sm:p-6">
+          <div className="mx-auto max-w-2xl">
+            <p className="text-sm font-semibold text-slate-500">Keyingi navbat raqami</p>
+            <div className="mt-2 flex min-h-36 items-center justify-center rounded-xl border border-sky-100 bg-sky-50 px-4 py-4 sm:min-h-44">
+              <span className="text-[5.5rem] font-black leading-none text-slate-950 sm:text-[7.5rem]">
                 {nextQueueCode}
               </span>
             </div>
-            <p className="mt-4 text-base font-semibold text-sky-700 sm:text-lg">
-              Enter bosilganda chek darhol chiqadi
+            <p className="mt-3 text-sm font-semibold text-sky-700 sm:text-base">
+              <kbd className="rounded border border-sky-200 bg-white px-1.5 py-0.5 text-xs font-bold">Enter</kbd>{" "}
+              bosilsa chek darhol chiqadi
             </p>
           </div>
 
@@ -1280,8 +1309,53 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
           ) : null}
         </div>
 
-        <Alert type="success" message={success} />
-        <Alert type="error" message={error} />
+        <div className="card flex min-h-0 flex-col p-4 text-left">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h2 className="text-base font-bold text-slate-800">Kassaga kelgan LOR cheklari</h2>
+              <p className="text-xs text-slate-500">To'lov kutayotgan bemorlar</p>
+            </div>
+            <span className="inline-flex min-w-8 justify-center rounded-full bg-slate-900 px-2 py-1 text-xs font-black text-white">
+              {queueSideChecks.length}
+            </span>
+          </div>
+          <div className="mt-3 space-y-2 xl:max-h-[calc(100dvh-14rem)] xl:overflow-y-auto">
+            {queueSideChecks.length ? (
+              queueSideChecks.map((check) => (
+                <div
+                  key={check._id}
+                  className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2"
+                >
+                  <span className="inline-flex min-w-10 justify-center rounded-lg bg-slate-900 px-2 py-1 text-xs font-black text-white">
+                    {check.queueCode || "-"}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-800">
+                      {toTitleCaseName(String(check.patientName || "-"))}
+                    </p>
+                    <p className="whitespace-nowrap text-xs font-semibold text-slate-500">
+                      {formatCurrency(check.total)}{"\u00a0"}so'm
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    className="shrink-0 whitespace-nowrap px-3 py-1.5 text-xs"
+                    onClick={() =>
+                      navigate("/cashier/lor-patients", { state: { pickCheckId: check._id } })
+                    }
+                  >
+                    Qabul qilish
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <p className="rounded-lg border border-dashed border-slate-300 px-3 py-6 text-center text-sm font-semibold text-slate-500">
+                {queueSideLoading ? "Yuklanmoqda..." : "Hozircha kutayotgan chek yo'q"}
+              </p>
+            )}
+          </div>
+        </div>
+        </div>
       </div>
     );
   }
@@ -1432,15 +1506,10 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
   if (isSpecialistSection) {
     const specialistsData = specialistsByType[specialistPageType] || [];
-    const specialistRoleLabel = specialistPageType === "nurse" ? "Nurse" : "LOR";
+    const specialistRoleLabel = specialistPageType === "nurse" ? "Hamshira" : "LOR";
 
     return (
       <div className="space-y-4 sm:space-y-6">
-        <div className="card p-4 sm:p-5">
-          <h1 className="text-xl font-bold text-slate-800">{sectionMeta.title}</h1>
-          <p className="mt-1 text-sm text-slate-500">{sectionMeta.subtitle}</p>
-        </div>
-
         <div className="card p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-slate-800">{specialistRoleLabel} qo'shish</h2>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -1576,7 +1645,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     ? "Qarzdorlar soni"
     : lockedType
       ? `${departmentLabels[lockedType]} yozuvlari`
-      : "Nurse / LOR";
+      : "Hamshira / LOR";
   const specialistCountHint = isDebtSection
     ? "Qarz qolgan yozuvlar"
     : lockedType
@@ -1613,35 +1682,17 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             formCard: "",
             submitButton: ""
           };
-  const sectionLabel = isDebtSection
-    ? "QARZDORLAR BO'LIMI"
-    : lockedType
-      ? `${departmentLabels[lockedType]} BO'LIMI`
-      : "KASSA JURNALI";
-  const sectionWarningText = isDebtSection
-    ? "Bu bo'limda qarzi qolgan yozuvlar chiqadi. To'liq to'langanda \"To'landi\" ni bosing."
-    : lockedType
-      ? `Diqqat: Siz hozir faqat ${departmentLabels[lockedType]} yozuvlari bilan ishlayapsiz.`
-      : "Umumiy jurnal rejimi: barcha bo'limlar ko'rinadi.";
+  const sectionWarningText =
+    "Bu bo'limda qarzi qolgan yozuvlar chiqadi. To'liq to'langanda \"To'landi\" ni bosing.";
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className={`card p-4 sm:p-5 ${sectionTheme.headerCard}`}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-slate-800">{sectionMeta.title}</h1>
-            <p className="mt-1 text-sm text-slate-500">{sectionMeta.subtitle}</p>
-          </div>
-          <span
-            className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-bold tracking-wide ${sectionTheme.badge}`}
-          >
-            {sectionLabel}
-          </span>
-        </div>
-        <div className={`mt-3 rounded-xl border px-3 py-2 text-sm font-medium ${sectionTheme.alertBox}`}>
+      {/* Sahifa nomi navbarda turadi; bu yerda faqat foydali izoh qoladi. */}
+      {isDebtSection ? (
+        <div className={`rounded-xl border px-3 py-2 text-sm font-medium ${sectionTheme.alertBox}`}>
           {sectionWarningText}
         </div>
-      </div>
+      ) : null}
 
       {shouldShowSummaryCards ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -1681,7 +1732,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
               <div>
                 <h2 className="text-lg font-semibold text-slate-800">Qabul qilinadigan cheklar</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Kassir yangi yozuv yaratmaydi, faqat nurse/LOR yuborgan chekni qabul qiladi.
+                  Kassir yangi yozuv yaratmaydi, faqat hamshira yoki LOR yuborgan chekni qabul qiladi.
                 </p>
               </div>
               {pendingChecksLoading ? (

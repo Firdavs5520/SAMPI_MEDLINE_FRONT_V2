@@ -33,9 +33,9 @@ const paymentMethodLabels = {
 };
 
 const departmentLabels = {
-  nurse: "Nurse",
+  nurse: "Hamshira",
   lor: "LOR",
-  procedure: "Nurse"
+  procedure: "Hamshira"
 };
 
 const getTodayString = () => getCurrentShiftYmd();
@@ -291,7 +291,7 @@ function ManagerDashboard() {
               Umumiy statistika
             </h1>
             <p className="mt-2 max-w-xl break-words text-sm font-medium leading-6 text-slate-600">
-              Nurse, LOR, smena va texnik holat bir joyda. Mobilda asosiy raqamlar tepada turadi.
+              Hamshira, LOR, smena va texnik holat bir joyda. Mobilda asosiy raqamlar tepada turadi.
             </p>
           </div>
 
@@ -381,7 +381,7 @@ function ManagerDashboard() {
         </p>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-3">
-          <RoleSummaryCard title="Hamshira (Nurse)" roleKey="nurse" stats={overview.roles.nurse} />
+          <RoleSummaryCard title="Hamshira" roleKey="nurse" stats={overview.roles.nurse} />
           <RoleSummaryCard title="LOR shifokor" roleKey="lor" stats={overview.roles.lor} />
           <RoleSummaryCard title="Jami" roleKey="total" stats={overview.total} />
         </div>
