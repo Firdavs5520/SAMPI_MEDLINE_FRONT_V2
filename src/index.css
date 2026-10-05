@@ -5436,7 +5436,7 @@ html.sampi-tv-lock .sampi-tv-standby-line {
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  width: min(24rem, calc(100vw - 2rem));
+  width: min(30rem, calc(100vw - 2rem));
   padding: 0.82rem 0.95rem;
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 22px;
@@ -5508,6 +5508,44 @@ html.sampi-tv-lock .sampi-tv-standby-line {
   font-weight: 700;
   letter-spacing: 0;
   line-height: 1.25;
+}
+
+.sampi-version-toast-show {
+  pointer-events: auto;
+}
+
+.sampi-version-toast-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.sampi-version-toast-actions[hidden] {
+  display: none;
+}
+
+.sampi-version-toast-actions button {
+  border-radius: 12px;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sampi-version-toast-reload {
+  border: 0;
+  background: linear-gradient(135deg, #0b7f94, #16a7c3);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(11, 127, 148, 0.28);
+}
+
+.sampi-version-toast-later {
+  border: 1px solid rgba(15, 31, 51, 0.16);
+  background: transparent;
+  color: inherit;
 }
 
 .sampi-version-toast-tv {
