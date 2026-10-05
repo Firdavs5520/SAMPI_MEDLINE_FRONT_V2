@@ -1,3 +1,4 @@
+import AppVersionFooter from "./AppVersionFooter.jsx";
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { sidebarMenus } from "../utils/constants.js";
@@ -311,6 +312,9 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
             ))}
           </div>
         ) : null}
+        <div className={isCompact ? "lg:hidden" : ""}>
+          <AppVersionFooter inline />
+        </div>
       </div>
     </aside>
   );

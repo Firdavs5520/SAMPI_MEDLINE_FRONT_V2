@@ -33,6 +33,8 @@ function App() {
   const { token, role, lorIdentity, lorDoctor } = useAuth();
   const hasLorContext = Boolean(lorIdentity && lorDoctor?.id);
   const showAppVersion = !location.pathname.startsWith("/tv");
+  // Menyusi bor sahifalarda versiya menyu ichida ko'rsatiladi.
+  const showFloatingVersion = ["/login", "/lor/select"].includes(location.pathname) || !token;
 
   const home =
     token && role
@@ -169,7 +171,7 @@ function App() {
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-      {showAppVersion ? <AppVersionFooter /> : null}
+      {showAppVersion && showFloatingVersion ? <AppVersionFooter /> : null}
       <DesktopUpdatePrompt unattended={!showAppVersion} />
     </>
   );

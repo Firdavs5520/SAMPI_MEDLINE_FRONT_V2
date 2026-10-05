@@ -144,7 +144,9 @@ function RoleSummaryCard({ title, roleKey, stats = emptyRoleStats() }) {
       <div className="mt-3 grid grid-cols-2 gap-3">
         <div>
           <p className="text-xs text-slate-500">Daromad</p>
-          <p className="text-base font-bold text-slate-900">{formatCurrency(stats.totalRevenue)}</p>
+          <p className="whitespace-nowrap text-base font-bold text-slate-900">
+            {formatCurrency(stats.totalRevenue)}{"\u00a0"}so'm
+          </p>
         </div>
         <div>
           <p className="text-xs text-slate-500">Cheklar</p>
@@ -155,10 +157,6 @@ function RoleSummaryCard({ title, roleKey, stats = emptyRoleStats() }) {
       <div className="mt-3">
         <p className="text-xs text-slate-500">Ishlatilgan dori turlari</p>
         <p className="text-sm font-semibold text-slate-900">{stats.medicineTypesCount}</p>
-      </div>
-
-      <div className="manager-role-pulse mt-3" aria-hidden="true">
-        <span />
       </div>
 
       <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-white/80 p-3">
@@ -197,6 +195,7 @@ function ManagerDashboard() {
   const [overview, setOverview] = useState(emptyOverview());
   const [shiftReport, setShiftReport] = useState(emptyShiftReport());
   const [monitoring, setMonitoring] = useState(emptyMonitoring());
+  const [stockAlerts, setStockAlerts] = useState({ low: 0, out: 0 });
 
   const loadDashboard = async ({
     nextPeriod = period,
@@ -211,11 +210,17 @@ function ManagerDashboard() {
 
     setError("");
     try {
-      const [overviewData, shiftData, monitoringData] = await Promise.all([
+      const [overviewData, shiftData, monitoringData, stockList] = await Promise.all([
         reportService.getOverview(nextPeriod),
         reportService.getShiftCloseReport(nextShiftDate),
-        reportService.getMonitoring()
+        reportService.getMonitoring(),
+        reportService.getStock().catch(() => [])
       ]);
+      const stockItems = Array.isArray(stockList) ? stockList : [];
+      setStockAlerts({
+        out: stockItems.filter((item) => Number(item.stock) <= 0).length,
+        low: stockItems.filter((item) => Number(item.stock) > 0 && Number(item.stock) <= 10).length
+      });
 
       setOverview({
         ...emptyOverview(),
@@ -275,127 +280,86 @@ function ManagerDashboard() {
   const safePeriod = overview.period || period;
   const periodHint = PERIOD_LABELS[safePeriod] || PERIOD_LABELS[period];
   const dbConnected = String(monitoring?.health?.dbState || "").toLowerCase() === "connected";
-  const primaryTopItem = formatTopItem(overview.total.topItem);
 
   if (loading) {
     return <Spinner text="Menejer statistikasi yuklanmoqda..." />;
   }
 
   return (
-    <div className="manager-dashboard space-y-6 overflow-x-hidden">
-      <div className="card manager-hero p-4 sm:p-5">
-        <div className="manager-hero-grid">
-          <div className="min-w-0">
-            <p className="manager-kicker">Boshqaruv nazorati</p>
-            <h1 className="mt-2 text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
-              Umumiy statistika
-            </h1>
-            <p className="mt-2 max-w-xl break-words text-sm font-medium leading-6 text-slate-600">
-              Hamshira, LOR, smena va texnik holat bir joyda. Mobilda asosiy raqamlar tepada turadi.
-            </p>
-          </div>
-
-          <div className="manager-hero-panel">
-            <p className="text-xs font-semibold text-slate-500">Jami daromad</p>
-            <p className="mt-2 break-words text-2xl font-bold text-slate-900">
-              {formatCurrency(overview.total.totalRevenue)}
-            </p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <span className="manager-hero-chip">{overview.total.checksCount} chek</span>
-              <span className={`manager-hero-chip ${dbConnected ? "manager-hero-chip-good" : "manager-hero-chip-bad"}`}>
-                Baza {dbConnected ? "online" : "offline"}
-              </span>
-            </div>
-            <p className="mt-3 line-clamp-2 text-xs font-semibold text-slate-500">
-              Top: {primaryTopItem.title}
-            </p>
-          </div>
+    <div className="manager-dashboard space-y-5 overflow-x-hidden">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="manager-period-tabs flex gap-2 overflow-x-auto pb-1">
+          {PERIOD_OPTIONS.map((option) => {
+            const isActive = period === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handlePeriodChange(option.value)}
+                className={`manager-period-tab rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                  isActive
+                    ? "border-primary bg-primary text-white"
+                    : "border-slate-300 bg-white text-slate-700 hover:border-primary hover:text-primary"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="manager-period-tabs flex gap-2 overflow-x-auto pb-1">
-            {PERIOD_OPTIONS.map((option) => {
-              const isActive = period === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => handlePeriodChange(option.value)}
-                  className={`manager-period-tab rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                    isActive
-                      ? "border-primary bg-primary text-white"
-                      : "border-slate-300 bg-white text-slate-700 hover:border-primary hover:text-primary"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <Button
-            variant="secondary"
-            onClick={() => loadDashboard({ nextPeriod: period, nextShiftDate: shiftDate })}
-            loading={refreshing}
-            className="w-full sm:w-auto"
-          >
-            Yangilash
-          </Button>
-        </div>
+        <Button
+          variant="secondary"
+          onClick={() => loadDashboard({ nextPeriod: period, nextShiftDate: shiftDate })}
+          loading={refreshing}
+          className="w-full sm:w-auto"
+        >
+          Yangilash
+        </Button>
       </div>
 
       <Alert type="error" message={error} />
 
-      <section className="card p-4 sm:p-5">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            title="Jami daromad"
-            value={formatCurrency(overview.total.totalRevenue)}
-            hint={`${periodHint} davr bo'yicha`}
-            tone="success"
-          />
-          <StatCard
-            title="Jami cheklar"
-            value={overview.total.checksCount}
-            hint={`${periodHint} davr bo'yicha`}
-            tone="primary"
-          />
-          <StatCard
-            title="Dori turlari"
-            value={overview.inventoryMedicineTypes}
-            hint="Tizimda mavjud dori nomenklaturasi"
-          />
-          <StatCard
-            title="Ishlatilgan dori turi"
-            value={overview.total.medicineTypesCount}
-            hint={`${periodHint} davr ichida ishlatilgan`}
-            tone="danger"
-          />
-        </div>
-      </section>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="Tushum"
+          value={`${formatCurrency(overview.total.totalRevenue)}\u00a0so'm`}
+          hint={`${periodHint} davr bo'yicha`}
+          tone="success"
+        />
+        <StatCard
+          title="Cheklar"
+          value={overview.total.checksCount}
+          hint={`${periodHint} davr bo'yicha`}
+          tone="primary"
+        />
+        <StatCard
+          title="Smena qarzi"
+          value={`${formatCurrency(shiftReport?.totals?.totalDebtAmount || 0)}\u00a0so'm`}
+          hint="Bugungi smenada to'lanmay qolgan"
+          tone={Number(shiftReport?.totals?.totalDebtAmount || 0) > 0 ? "accent" : "default"}
+        />
+        <StatCard
+          title="Ombor"
+          value={
+            stockAlerts.out || stockAlerts.low
+              ? `${stockAlerts.out + stockAlerts.low} ta dori`
+              : "Hammasi yetarli"
+          }
+          hint={
+            stockAlerts.out || stockAlerts.low
+              ? `Tugagan: ${stockAlerts.out} · kam qolgan: ${stockAlerts.low}`
+              : `${overview.inventoryMedicineTypes} xil dori bor`
+          }
+          tone={stockAlerts.out ? "danger" : stockAlerts.low ? "accent" : "default"}
+        />
+      </div>
 
       <section className="card p-4 sm:p-5">
-        <h2 className="text-lg font-bold text-slate-800">Rol bo'yicha tafsilotlar</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Har bir rolda eng ko'p ishlatilgan xizmat yoki dori ham ko'rsatiladi.
-        </p>
-
-        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <h2 className="text-lg font-bold text-slate-800">Bo'limlar</h2>
+        <div className="mt-3 grid gap-4 md:grid-cols-2">
           <RoleSummaryCard title="Hamshira" roleKey="nurse" stats={overview.roles.nurse} />
-          <RoleSummaryCard title="LOR shifokor" roleKey="lor" stats={overview.roles.lor} />
-          <RoleSummaryCard title="Jami" roleKey="total" stats={overview.total} />
-        </div>
-
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="manager-lor-mini rounded-lg border border-sky-200 bg-sky-50 p-4">
-            <p className="text-sm font-bold text-slate-800">LOR</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">
-              {formatCurrency(overview.lorIdentities?.lor1?.totalRevenue || 0)}
-            </p>
-            <p className="mt-1 text-xs text-slate-600">
-              Cheklar: {overview.lorIdentities?.lor1?.checksCount || 0}
-            </p>
-          </div>
+          <RoleSummaryCard title="LOR" roleKey="lor" stats={overview.roles.lor} />
         </div>
       </section>
 
@@ -497,19 +461,17 @@ function ManagerDashboard() {
         </div>
       </section>
 
-      <section className="card p-4 sm:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <details className="card group p-4 sm:p-5" open={!dbConnected}>
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-slate-800">Texnik monitoring</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              5xx xatolar va servis restart holati manager uchun ko'rinadi.
-            </p>
+            <h2 className="text-lg font-bold text-slate-800">Texnik holat</h2>
+            <p className="mt-1 text-sm text-slate-500">Server, baza va xatolar. Ochish uchun bosing.</p>
           </div>
           <div className="manager-monitor-chip">
             <span className={dbConnected ? "bg-emerald-500" : "bg-rose-500"} />
             {dbConnected ? "Tizim barqaror" : "Tekshirish kerak"}
           </div>
-        </div>
+        </summary>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
@@ -522,13 +484,12 @@ function ManagerDashboard() {
             title="Uptime"
             value={formatUptime(monitoring?.health?.uptimeSec || 0)}
             hint="Joriy ishga tushish vaqti"
-            tone="primary"
           />
           <StatCard
             title="5xx (24 soat)"
             value={monitoring?.metrics?.errors5xxLast24h || 0}
             hint="So'nggi 24 soat server xatolari"
-            tone="accent"
+            tone={Number(monitoring?.metrics?.errors5xxLast24h || 0) > 0 ? "danger" : "default"}
           />
           <StatCard
             title="Restart (7 kun)"
@@ -579,7 +540,7 @@ function ManagerDashboard() {
             </div>
           </div>
         </div>
-      </section>
+      </details>
     </div>
   );
 }
