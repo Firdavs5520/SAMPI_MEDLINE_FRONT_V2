@@ -4,6 +4,8 @@ const { spawn } = require("node:child_process");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { renderReceiptRaster, buildEscPosRasterPayload } = require("./receiptRaster.cjs");
+const { inlineReceiptFonts } = require("./receiptFonts.cjs");
+const { createRawPrintWorker, RawPrintWorkerUnavailableError } = require("./rawPrintWorker.cjs");
 
 const APP_URL = process.env.SAMPI_DESKTOP_URL || "https://sampi-medline.vercel.app/";
 const APP_ORIGIN = new URL(APP_URL).origin;
@@ -35,6 +37,10 @@ const RECEIPT_MIN_HEIGHT_MICRONS = 45000;
 const RECEIPT_MAX_HEIGHT_MICRONS = 420000;
 const RECEIPT_PRINTER_CONFIG_FILE = "receipt-printer.json";
 const RAW_PRINT_TIMEOUT_MS = 20000;
+// Printerlar ro'yxati har chekda Windows'dan qayta so'ralmaydi (printer topilmasa yangilanadi).
+const PRINTER_LIST_CACHE_MS = 60 * 1000;
+// SAMPI_NO_PRINT_WORKER=1 bo'lsa har chek uchun alohida PowerShell ishlatiladi (eski usul).
+const USE_RAW_PRINT_WORKER = process.env.SAMPI_NO_PRINT_WORKER !== "1";
 
 // Yangi versiya foydalanuvchi ruxsati bilan yuklanadi (ilovada so'rov va foiz ko'rsatiladi).
 // Yuklangan, lekin o'rnatilmagan yangilanish ilova yopilganda o'rnatiladi.
@@ -285,8 +291,27 @@ const listPrinters = async (webContents) => {
   }));
 };
 
-const resolveReceiptPrinter = async (webContents, requestedPrinterName = "") => {
+let printerListCache = { at: 0, printers: null };
+
+const listPrintersCached = async (webContents, { fresh = false } = {}) => {
+  if (!fresh && printerListCache.printers && Date.now() - printerListCache.at < PRINTER_LIST_CACHE_MS) {
+    return printerListCache.printers;
+  }
   const printers = await listPrinters(webContents);
+  printerListCache = { at: Date.now(), printers };
+  return printers;
+};
+
+const resolveReceiptPrinter = async (webContents, requestedPrinterName = "") => {
+  try {
+    return await findReceiptPrinter(await listPrintersCached(webContents), requestedPrinterName);
+  } catch (error) {
+    // Eski ro'yxatda topilmasa (printer yangi ulangan bo'lishi mumkin) Windows'dan qayta so'raladi.
+    return findReceiptPrinter(await listPrintersCached(webContents, { fresh: true }), requestedPrinterName);
+  }
+};
+
+const findReceiptPrinter = async (printers, requestedPrinterName = "") => {
   const savedConfig = await readReceiptPrinterConfig();
   const configuredName =
     String(requestedPrinterName || "").trim() ||
@@ -869,17 +894,10 @@ const getPowerShellPath = () =>
 
 const encodePowerShellArg = (value) => Buffer.from(String(value || ""), "utf8").toString("base64");
 
-const RAW_PRINT_POWERSHELL_SCRIPT = `
-param(
-  [Parameter(Mandatory=$true)][string]$PrinterNameBase64,
-  [Parameter(Mandatory=$true)][string]$DataPathBase64,
-  [Parameter(Mandatory=$true)][string]$JobNameBase64
-)
-
-$printerName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($PrinterNameBase64))
-$dataPath = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($DataPathBase64))
-$jobName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($JobNameBase64))
-
+// Printerga RAW (ESC/POS) yuborish. Funksiyalar bitta joyda: bir martalik skript ham,
+// doim ochiq turadigan tezkor "worker" ham shulardan foydalanadi.
+const RAW_PRINT_POWERSHELL_PRELUDE = `
+$ProgressPreference = "SilentlyContinue"
 $source = @"
 using System;
 using System.Runtime.InteropServices;
@@ -974,85 +992,127 @@ function Get-SampiPrinterStatusText($snapshot, $jobs) {
   return "Status=$status; WorkOffline=$offline; PrinterState=$state; DetectedErrorState=$detected; JobStatus=$jobStatus"
 }
 
-Add-Type -TypeDefinition $source
-$data = [IO.File]::ReadAllBytes($dataPath)
-$hPrinter = [IntPtr]::Zero
-
-$snapshot = Get-SampiPrinterSnapshot
-if ($null -ne $snapshot -and $snapshot.WorkOffline) {
-  try {
-    $snapshot.WorkOffline = $false
-    Set-CimInstance -InputObject $snapshot -ErrorAction Stop | Out-Null
-    Start-Sleep -Milliseconds 700
-    $snapshot = Get-SampiPrinterSnapshot
-  } catch {
-  }
+if (-not ("SampiRawPrinter" -as [type])) {
+  Add-Type -TypeDefinition $source
 }
 
-if (Test-SampiBadPrinterState $snapshot) {
-  throw ("Chek printeri Windowsda tayyor emas. " + (Get-SampiPrinterStatusText $snapshot @()))
-}
+function Invoke-SampiRawPrint([string]$printerName, [string]$dataPath, [string]$jobName) {
+  $data = [IO.File]::ReadAllBytes($dataPath)
+  $hPrinter = [IntPtr]::Zero
 
-if (-not [SampiRawPrinter]::OpenPrinter($printerName, [ref]$hPrinter, [IntPtr]::Zero)) {
-  ThrowLastPrinterError "Printer ochilmadi"
-}
-
-$doc = New-Object SampiRawPrinter+DOCINFOA
-$doc.pDocName = $jobName
-$doc.pDataType = "RAW"
-
-try {
-  if (-not [SampiRawPrinter]::StartDocPrinter($hPrinter, 1, $doc)) {
-    ThrowLastPrinterError "Print vazifasi boshlanmadi"
+  $snapshot = Get-SampiPrinterSnapshot
+  if ($null -ne $snapshot -and $snapshot.WorkOffline) {
+    try {
+      $snapshot.WorkOffline = $false
+      Set-CimInstance -InputObject $snapshot -ErrorAction Stop | Out-Null
+      Start-Sleep -Milliseconds 700
+      $snapshot = Get-SampiPrinterSnapshot
+    } catch {
+    }
   }
 
+  if (Test-SampiBadPrinterState $snapshot) {
+    throw ("Chek printeri Windowsda tayyor emas. " + (Get-SampiPrinterStatusText $snapshot @()))
+  }
+
+  if (-not [SampiRawPrinter]::OpenPrinter($printerName, [ref]$hPrinter, [IntPtr]::Zero)) {
+    ThrowLastPrinterError "Printer ochilmadi"
+  }
+
+  $doc = New-Object SampiRawPrinter+DOCINFOA
+  $doc.pDocName = $jobName
+  $doc.pDataType = "RAW"
+
   try {
-    if (-not [SampiRawPrinter]::StartPagePrinter($hPrinter)) {
-      ThrowLastPrinterError "Print sahifasi boshlanmadi"
+    if (-not [SampiRawPrinter]::StartDocPrinter($hPrinter, 1, $doc)) {
+      ThrowLastPrinterError "Print vazifasi boshlanmadi"
     }
 
     try {
-      [int]$written = 0
-      if (-not [SampiRawPrinter]::WritePrinter($hPrinter, $data, $data.Length, [ref]$written)) {
-        ThrowLastPrinterError "Printerga ma'lumot yozilmadi"
+      if (-not [SampiRawPrinter]::StartPagePrinter($hPrinter)) {
+        ThrowLastPrinterError "Print sahifasi boshlanmadi"
       }
-      if ($written -ne $data.Length) {
-        throw "Printerga ma'lumot to'liq yozilmadi: $written / $($data.Length)"
+
+      try {
+        [int]$written = 0
+        if (-not [SampiRawPrinter]::WritePrinter($hPrinter, $data, $data.Length, [ref]$written)) {
+          ThrowLastPrinterError "Printerga ma'lumot yozilmadi"
+        }
+        if ($written -ne $data.Length) {
+          throw "Printerga ma'lumot to'liq yozilmadi: $written / $($data.Length)"
+        }
+      } finally {
+        [void][SampiRawPrinter]::EndPagePrinter($hPrinter)
       }
     } finally {
-      [void][SampiRawPrinter]::EndPagePrinter($hPrinter)
+      [void][SampiRawPrinter]::EndDocPrinter($hPrinter)
     }
   } finally {
-    [void][SampiRawPrinter]::EndDocPrinter($hPrinter)
+    if ($hPrinter -ne [IntPtr]::Zero) {
+      [void][SampiRawPrinter]::ClosePrinter($hPrinter)
+    }
   }
-} finally {
-  if ($hPrinter -ne [IntPtr]::Zero) {
-    [void][SampiRawPrinter]::ClosePrinter($hPrinter)
-  }
-}
 
-Start-Sleep -Milliseconds 800
-$snapshot = Get-SampiPrinterSnapshot
-$jobs = Get-SampiPrintJobs
-$failedJobs = @($jobs | Where-Object { [string]$_.JobStatus -match "Error|Retained|Offline|Blocked|Paper|Paused" })
-if ((Test-SampiBadPrinterState $snapshot) -or $failedJobs.Count -gt 0) {
-  try {
-    $jobs | Remove-PrintJob -ErrorAction SilentlyContinue
-  } catch {
+  Start-Sleep -Milliseconds 800
+  $snapshot = Get-SampiPrinterSnapshot
+  $jobs = Get-SampiPrintJobs
+  $failedJobs = @($jobs | Where-Object { [string]$_.JobStatus -match "Error|Retained|Offline|Blocked|Paper|Paused" })
+  if ((Test-SampiBadPrinterState $snapshot) -or $failedJobs.Count -gt 0) {
+    try {
+      $jobs | Remove-PrintJob -ErrorAction SilentlyContinue
+    } catch {
+    }
+    throw ("Chek printeri chekni chiqara olmadi. " + (Get-SampiPrinterStatusText $snapshot $jobs))
   }
-  throw ("Chek printeri chekni chiqara olmadi. " + (Get-SampiPrinterStatusText $snapshot $jobs))
 }
 `;
 
-const runRawPrinterScript = async (printerName, data) => {
-  const tempDir = path.join(app.getPath("temp"), "sampi-medline-print");
-  const nonce = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const dataPath = path.join(tempDir, `${nonce}.bin`);
-  const scriptPath = path.join(tempDir, `${nonce}.ps1`);
-  const jobName = `Sampi Medicine receipt ${nonce}`;
+const RAW_PRINT_POWERSHELL_SCRIPT = `
+param(
+  [Parameter(Mandatory=$true)][string]$PrinterNameBase64,
+  [Parameter(Mandatory=$true)][string]$DataPathBase64,
+  [Parameter(Mandatory=$true)][string]$JobNameBase64
+)
 
-  await fs.mkdir(tempDir, { recursive: true });
-  await fs.writeFile(dataPath, data);
+$printerName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($PrinterNameBase64))
+$dataPath = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($DataPathBase64))
+$jobName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($JobNameBase64))
+
+`
+  + RAW_PRINT_POWERSHELL_PRELUDE
+  + `
+Invoke-SampiRawPrint $printerName $dataPath $jobName
+`;
+
+// Worker: PowerShell bir marta ishga tushadi va printer kodi bir marta kompilyatsiya qilinadi.
+// Har chekda yangi PowerShell ochish (~1-2 soniya) shu bilan yo'qoladi.
+const RAW_PRINT_WORKER_SCRIPT = RAW_PRINT_POWERSHELL_PRELUDE + `
+[Console]::Out.WriteLine("SAMPI-READY")
+[Console]::Out.Flush()
+while ($true) {
+  $line = [Console]::In.ReadLine()
+  if ($null -eq $line) { break }
+  $line = $line.Trim()
+  if (-not $line) { continue }
+  $parts = $line.Split(" ")
+  $id = $parts[0]
+  try {
+    $workerPrinter = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($parts[1]))
+    $workerData = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($parts[2]))
+    $workerJob = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($parts[3]))
+    Invoke-SampiRawPrint $workerPrinter $workerData $workerJob
+    [Console]::Out.WriteLine("SAMPI-DONE $id OK")
+  } catch {
+    $message = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes([string]$_.Exception.Message))
+    [Console]::Out.WriteLine("SAMPI-DONE $id ERR $message")
+  }
+  [Console]::Out.Flush()
+}
+`;
+
+const runRawPrinterScriptOnce = async (printerName, dataPath, jobName) => {
+  const tempDir = path.dirname(dataPath);
+  const scriptPath = path.join(tempDir, `${path.basename(dataPath, ".bin")}.ps1`);
   await fs.writeFile(scriptPath, RAW_PRINT_POWERSHELL_SCRIPT, "utf8");
 
   try {
@@ -1101,7 +1161,52 @@ const runRawPrinterScript = async (printerName, data) => {
 
     return { jobName };
   } finally {
-    await Promise.allSettled([fs.unlink(dataPath), fs.unlink(scriptPath)]);
+    await fs.unlink(scriptPath).catch(() => {});
+  }
+};
+
+let rawPrintWorker = null;
+
+const getRawPrintTempDir = () => path.join(app.getPath("temp"), "sampi-medline-print");
+
+const getRawPrintWorker = () => {
+  if (!USE_RAW_PRINT_WORKER || process.platform !== "win32") return null;
+  if (!rawPrintWorker) {
+    rawPrintWorker = createRawPrintWorker({
+      powershellPath: getPowerShellPath(),
+      scriptText: RAW_PRINT_WORKER_SCRIPT,
+      tempDir: getRawPrintTempDir(),
+      jobTimeoutMs: RAW_PRINT_TIMEOUT_MS,
+    });
+  }
+  return rawPrintWorker;
+};
+
+const runRawPrinterScript = async (printerName, data) => {
+  const tempDir = getRawPrintTempDir();
+  const nonce = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const dataPath = path.join(tempDir, `${nonce}.bin`);
+  const jobName = `Sampi Medicine receipt ${nonce}`;
+
+  await fs.mkdir(tempDir, { recursive: true });
+  await fs.writeFile(dataPath, data);
+
+  try {
+    const worker = getRawPrintWorker();
+    if (worker) {
+      try {
+        await worker.run(printerName, dataPath, jobName);
+        return { jobName };
+      } catch (error) {
+        // Faqat chek printerga hali yuborilmagan bo'lsa eski usul bilan qayta urinadi
+        // (aks holda chek ikki marta chiqib qolishi mumkin).
+        if (!(error instanceof RawPrintWorkerUnavailableError)) throw error;
+        console.warn("Raw print worker unavailable, using one-shot PowerShell:", error.message);
+      }
+    }
+    return await runRawPrinterScriptOnce(printerName, dataPath, jobName);
+  } finally {
+    await fs.unlink(dataPath).catch(() => {});
   }
 };
 
@@ -1128,7 +1233,44 @@ const printReceiptAsRawRaster = async (printerName, raster) => {
   };
 };
 
+// Chekni rasm (ESC/POS) qilib yuborish uchun HTML faqat bir marta, yashirin oynada chiziladi.
+// Rasm chiqmasa yoki printer chek printeri bo'lmasa, drayver orqali HTML chop etishga o'tadi.
 const printHtmlSilently = async (parentWindow, html, options = {}) => {
+  const safeHtml = inlineReceiptFonts(stripExecutableReceiptContent(html));
+  const printerSource =
+    parentWindow && !parentWindow.isDestroyed() ? parentWindow.webContents : null;
+  let printer = printerSource
+    ? await resolveReceiptPrinter(printerSource, options.printerName)
+    : null;
+
+  if (printer && shouldUseRawReceiptPrint(printer, safeHtml, options)) {
+    const rawReceipt = await printReceiptAsRawText(
+      printer.name,
+      options.thermalReceipt || buildThermalReceiptFromHtml(safeHtml)
+    );
+    return { ok: true, printer: printer.name, ...rawReceipt };
+  }
+
+  if (printer && shouldUseRasterReceiptPrint(printer, safeHtml, options)) {
+    let raster = null;
+    try {
+      raster = await renderReceiptRaster(safeHtml);
+    } catch (error) {
+      // Rasm tayyorlanmasa, drayver orqali HTML chop etishga o'tiladi. Printerga yuborishdagi
+      // xato esa qaytariladi (chek ikki marta chiqmasligi uchun).
+      console.error("Receipt raster render failed, falling back to HTML print:", error);
+    }
+
+    if (raster) {
+      const rasterReceipt = await printReceiptAsRawRaster(printer.name, raster);
+      return { ok: true, printer: printer.name, ...rasterReceipt };
+    }
+  }
+
+  return printHtmlWithDriver(parentWindow, safeHtml, options, printer);
+};
+
+const printHtmlWithDriver = async (parentWindow, safeHtml, options = {}, knownPrinter = null) => {
   const printWindow = new BrowserWindow({
     width: 340,
     height: 720,
@@ -1144,48 +1286,14 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
   });
 
   try {
-    const safeHtml = stripExecutableReceiptContent(html);
     const encodedHtml = Buffer.from(safeHtml, "utf8").toString("base64");
     await printWindow.loadURL(`data:text/html;charset=utf-8;base64,${encodedHtml}`);
     const receiptPageSize = await resolveReceiptPageSize(printWindow.webContents, safeHtml);
 
-    const printer = await resolveReceiptPrinter(printWindow.webContents, options.printerName);
+    const printer =
+      knownPrinter || (await resolveReceiptPrinter(printWindow.webContents, options.printerName));
     if (!printer) {
       throw new Error("No printer is available for silent receipt printing.");
-    }
-
-    if (shouldUseRawReceiptPrint(printer, safeHtml, options)) {
-      const rawReceipt = await printReceiptAsRawText(
-        printer.name,
-        options.thermalReceipt || buildThermalReceiptFromHtml(safeHtml)
-      );
-      return {
-        ok: true,
-        printer: printer.name,
-        pageSize: receiptPageSize,
-        ...rawReceipt,
-      };
-    }
-
-    if (shouldUseRasterReceiptPrint(printer, safeHtml, options)) {
-      let raster = null;
-      try {
-        raster = await renderReceiptRaster(safeHtml);
-      } catch (error) {
-        // Rasm tayyorlanmasa, drayver orqali HTML chop etishga o'tiladi. Printerga yuborishdagi
-        // xato esa qaytariladi (chek ikki marta chiqmasligi uchun).
-        console.error("Receipt raster render failed, falling back to HTML print:", error);
-      }
-
-      if (raster) {
-        const rasterReceipt = await printReceiptAsRawRaster(printer.name, raster);
-        return {
-          ok: true,
-          printer: printer.name,
-          pageSize: receiptPageSize,
-          ...rasterReceipt,
-        };
-      }
     }
 
     const printOptions = {
@@ -1358,6 +1466,12 @@ app.whenReady().then(() => {
   if (!hasSingleInstanceLock) return;
   enableAutoLaunch();
   createWindow();
+  // Birinchi chek ham tez chiqishi uchun printer worker ilova ochilganda tayyorlab qo'yiladi.
+  setTimeout(() => getRawPrintWorker()?.warmUp(), 3000);
+});
+
+app.on("will-quit", () => {
+  rawPrintWorker?.stop();
 });
 
 app.whenReady().then(async () => {

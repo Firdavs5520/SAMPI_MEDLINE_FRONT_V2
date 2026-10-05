@@ -1,0 +1,4 @@
+Golos Text font files (golos-text-*.woff2) are from Google Fonts
+(https://fonts.google.com/specimen/Golos+Text) and are licensed under the
+SIL Open Font License, Version 1.1: https://openfontlicense.org
+Copyright 2020 The Golos Project Authors (https://github.com/googlefonts/golos-ui)
