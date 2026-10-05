@@ -340,6 +340,8 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     normalizeSettingsForm(defaultCashierSettings)
   );
   const [printerSettings, setPrinterSettings] = useState(emptyPrinterSettings);
+  // null: bu sozlama yo'q (sayt yoki eski desktop ilova).
+  const [startFullscreen, setStartFullscreen] = useState(null);
   const [closingDebtId, setClosingDebtId] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -1046,6 +1048,29 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isLorQueueSection, handleIssueLorTicket]);
 
+  useEffect(() => {
+    const desktop = typeof window !== "undefined" ? window.sampiDesktop : null;
+    if (!isSettingsSection || typeof desktop?.getWindowSettings !== "function") return;
+    desktop
+      .getWindowSettings()
+      .then((value) => setStartFullscreen(value?.startFullscreen !== false))
+      .catch(() => {});
+  }, [isSettingsSection]);
+
+  const handleStartFullscreenChange = async (enabled) => {
+    const desktop = window.sampiDesktop;
+    if (typeof desktop?.setStartFullscreen !== "function") return;
+    setStartFullscreen(enabled);
+    try {
+      const saved = await desktop.setStartFullscreen(enabled);
+      setStartFullscreen(saved?.startFullscreen !== false);
+      setSuccess(enabled ? "Ilova endi doim to'liq ekranda ochiladi." : "To'liq ekranda ochilish o'chirildi.");
+    } catch (err) {
+      setStartFullscreen(!enabled);
+      setError(extractErrorMessage(err));
+    }
+  };
+
   const handlePickPendingCheck = (check) => {
     const roleType = String(check?.creatorRole || "").toLowerCase() === "nurse" ? "nurse" : "lor";
     const roleSpecialists = specialistsByType[roleType] || [];
@@ -1373,6 +1398,28 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             </Button>
           </div>
         </form>
+
+        {startFullscreen !== null ? (
+          <div className="card p-4 sm:p-5">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                className="mt-1 h-5 w-5 shrink-0"
+                checked={startFullscreen}
+                onChange={(event) => handleStartFullscreenChange(event.target.checked)}
+              />
+              <span>
+                <span className="block text-lg font-semibold text-slate-800">
+                  Ilova doim to'liq ekranda ochilsin
+                </span>
+                <span className="mt-1 block text-sm text-slate-500">
+                  Desktop ilova har ochilganda butun ekranni egallaydi. Vaqtincha chiqish uchun yuqoridagi to'liq
+                  ekran tugmasini bosing.
+                </span>
+              </span>
+            </label>
+          </div>
+        ) : null}
 
         {printerSettings.available ? (
           <div className="card space-y-4 p-4 sm:p-5">
