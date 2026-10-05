@@ -9,6 +9,7 @@ import Alert from "../components/Alert.jsx";
 import BusyOverlay from "../components/BusyOverlay.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
 import SelectMenu from "../components/SelectMenu.jsx";
+import QuantityStepper from "../components/QuantityStepper.jsx";
 import {
   extractErrorMessage,
   formatCurrency,
@@ -68,33 +69,6 @@ function CheckIcon({ className = "h-4 w-4" }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
       <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
-  );
-}
-
-function QuantityStepper({ value, onChange, max = 99 }) {
-  const quantity = Number(value) || 1;
-  return (
-    <div className="flex items-center gap-1">
-      <button
-        type="button"
-        aria-label="Kamaytirish"
-        disabled={quantity <= 1}
-        onClick={() => onChange(quantity - 1)}
-        className="h-7 w-7 rounded-md bg-slate-200 text-base font-bold text-slate-700 disabled:opacity-40"
-      >
-        −
-      </button>
-      <span className="w-7 text-center text-sm font-bold">{quantity}</span>
-      <button
-        type="button"
-        aria-label="Oshirish"
-        disabled={quantity >= max}
-        onClick={() => onChange(quantity + 1)}
-        className="h-7 w-7 rounded-md bg-slate-200 text-base font-bold text-slate-700 disabled:opacity-40"
-      >
-        +
-      </button>
-    </div>
   );
 }
 
@@ -383,7 +357,7 @@ function NurseDashboard() {
         />
         {!specialists.length ? (
           <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 md:col-span-2">
-            Hozircha hamshira yo'q. Chap menyudagi "Hamshiralarni boshqarish" bo'limida qo'shing.
+            Hozircha hamshira yo'q. Menyudagi "Sozlamalar → Hamshiralar" bo'limida qo'shing.
           </p>
         ) : null}
       </div>

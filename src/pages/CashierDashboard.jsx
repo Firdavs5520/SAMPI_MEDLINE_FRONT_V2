@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Alert from "../components/Alert.jsx";
@@ -344,10 +343,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const isPendingCheckMode = Boolean(selectedPendingCheck?._id);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [queueSideChecks, setQueueSideChecks] = useState([]);
-  const [queueSideLoading, setQueueSideLoading] = useState(false);
 
   const specialistsByType = useMemo(
     () => ({
@@ -875,7 +870,14 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
 
     if (key === "amount" || key === "paidAmount") {
-      setForm((prev) => ({ ...prev, [key]: formatMoneyInput(value, 8) }));
+      setForm((prev) => {
+        const next = { ...prev, [key]: formatMoneyInput(value, 8) };
+        // To'langan summa jami summadan oshmaydi (aks holda qarz 0 ko'rinib, server rad etadi).
+        const total = Number(String(next.amount || "").replace(/\D/g, "")) || 0;
+        const paid = Number(String(next.paidAmount || "").replace(/\D/g, "")) || 0;
+        if (total > 0 && paid > total) next.paidAmount = formatMoneyInput(total, 8);
+        return next;
+      });
       return;
     }
 
@@ -1025,29 +1027,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isLorQueueSection, handleIssueLorTicket]);
 
-  // Navbat sahifasida kassaga kelgan LOR cheklari yon tomonda ko'rinib turadi.
-  useEffect(() => {
-    if (!isLorQueueSection) return undefined;
-    let active = true;
-    const load = async () => {
-      setQueueSideLoading(true);
-      try {
-        const data = await cashierService.getPendingChecks({ role: "lor", limit: 30 });
-        if (active) setQueueSideChecks(data || []);
-      } catch {
-        // Yon ro'yxat yuklanmasa navbat chiqarish baribir ishlayveradi.
-      } finally {
-        if (active) setQueueSideLoading(false);
-      }
-    };
-    load();
-    const timer = setInterval(load, 15000);
-    return () => {
-      active = false;
-      clearInterval(timer);
-    };
-  }, [isLorQueueSection]);
-
   const handlePickPendingCheck = (check) => {
     const roleType = String(check?.creatorRole || "").toLowerCase() === "nurse" ? "nurse" : "lor";
     const roleSpecialists = specialistsByType[roleType] || [];
@@ -1071,16 +1050,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     setSelectedPendingCheck(null);
     resetForm();
   };
-
-  // Navbat sahifasidan "Qabul qilish" bosilganda shu chek darhol tanlanadi.
-  const pickCheckId = location.state?.pickCheckId;
-  useEffect(() => {
-    if (!isFormSection || !pickCheckId || !pendingChecks.length) return;
-    const target = pendingChecks.find((item) => String(item._id) === String(pickCheckId));
-    if (target) handlePickPendingCheck(target);
-    navigate(location.pathname, { replace: true, state: null });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFormSection, pickCheckId, pendingChecks]);
 
   const handleMarkDebtAsPaid = async (entry) => {
     if (!entry?._id) return;
@@ -1227,7 +1196,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       <div className="space-y-4">
         <Alert type="success" message={success} />
         <Alert type="error" message={error} />
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="card border-sky-100 bg-white p-4 text-center shadow-sm sm:p-6">
           <div className="mx-auto max-w-2xl">
             <p className="text-sm font-semibold text-slate-500">Keyingi navbat raqami</p>
@@ -1307,54 +1275,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
               ) : null}
             </div>
           ) : null}
-        </div>
-
-        <div className="card flex min-h-0 flex-col p-4 text-left">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <h2 className="text-base font-bold text-slate-800">Kassaga kelgan LOR cheklari</h2>
-              <p className="text-xs text-slate-500">To'lov kutayotgan bemorlar</p>
-            </div>
-            <span className="inline-flex min-w-8 justify-center rounded-full bg-slate-900 px-2 py-1 text-xs font-black text-white">
-              {queueSideChecks.length}
-            </span>
-          </div>
-          <div className="mt-3 space-y-2 xl:max-h-[calc(100dvh-14rem)] xl:overflow-y-auto">
-            {queueSideChecks.length ? (
-              queueSideChecks.map((check) => (
-                <div
-                  key={check._id}
-                  className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2"
-                >
-                  <span className="inline-flex min-w-10 justify-center rounded-lg bg-slate-900 px-2 py-1 text-xs font-black text-white">
-                    {check.queueCode || "-"}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-slate-800">
-                      {toTitleCaseName(String(check.patientName || "-"))}
-                    </p>
-                    <p className="whitespace-nowrap text-xs font-semibold text-slate-500">
-                      {formatCurrency(check.total)}{"\u00a0"}so'm
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    className="shrink-0 whitespace-nowrap px-3 py-1.5 text-xs"
-                    onClick={() =>
-                      navigate("/cashier/lor-patients", { state: { pickCheckId: check._id } })
-                    }
-                  >
-                    Qabul qilish
-                  </Button>
-                </div>
-              ))
-            ) : (
-              <p className="rounded-lg border border-dashed border-slate-300 px-3 py-6 text-center text-sm font-semibold text-slate-500">
-                {queueSideLoading ? "Yuklanmoqda..." : "Hozircha kutayotgan chek yo'q"}
-              </p>
-            )}
-          </div>
-        </div>
         </div>
       </div>
     );

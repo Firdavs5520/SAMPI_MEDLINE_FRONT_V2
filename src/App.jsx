@@ -40,7 +40,7 @@ function App() {
     token && role
       ? role === "lor"
         ? hasLorContext
-          ? "/lor/checks"
+          ? "/lor/services"
           : "/lor/select"
         : roleHomePath[role]
       : "/login";
@@ -73,7 +73,7 @@ function App() {
           <Route element={<DashboardLayout />}>
             <Route
               path="/lor"
-              element={<Navigate to={hasLorContext ? "/lor/checks" : "/lor/select"} replace />}
+              element={<Navigate to={hasLorContext ? "/lor/services" : "/lor/select"} replace />}
             />
             <Route
               path="/lor/select"
