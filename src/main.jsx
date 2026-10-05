@@ -27,7 +27,9 @@ const isDesktopApp = () => {
   }
 };
 
-const shouldAutoReloadForVersion = () => isTvScreenPath() || isDesktopApp();
+// Faqat TV ekrani o'zi yangilanadi. Sayt, PWA va desktop ilovada foydalanuvchi
+// "Yangilash" tugmasini bosmaguncha sahifa qayta yuklanmaydi.
+const shouldAutoReloadForVersion = () => isTvScreenPath();
 
 const normalizeAssetUrl = (value) => {
   if (!value) return "";
@@ -52,20 +54,6 @@ const getAssetSignatureFromHtml = (html) => {
   return getAssetSignatureFromDocument(parsedDocument);
 };
 
-const DESKTOP_IDLE_BEFORE_RELOAD_MS = 60 * 1000;
-const DESKTOP_IDLE_CHECK_MS = 5 * 1000;
-let lastUserActivityAt = Date.now();
-
-["pointerdown", "keydown", "input", "wheel", "touchstart"].forEach((eventName) => {
-  window.addEventListener(
-    eventName,
-    () => {
-      lastUserActivityAt = Date.now();
-    },
-    { capture: true, passive: true }
-  );
-});
-
 // Sayt va PWA to'liq ekranda ishlaydi. Brauzer to'liq ekranni faqat foydalanuvchi
 // harakatidan keyin ruxsat beradi, shuning uchun birinchi bosish/tugmada yoqiladi
 // (Esc bilan chiqilsa, keyingi bosishda yana yoqiladi).
@@ -89,31 +77,9 @@ const requestAutoFullscreen = (event) => {
   window.addEventListener(eventName, requestAutoFullscreen, { capture: true, passive: true });
 });
 
-const isEditingField = () => {
-  const element = document.activeElement;
-  if (!element) return false;
-  const tagName = String(element.tagName || "").toLowerCase();
-  return element.isContentEditable || ["input", "textarea", "select"].includes(tagName);
-};
-
-// Kassir yoki hamshira ishlayotgan paytda sahifa yangilanib, kiritilgan
-// ma'lumot yo'qolmasligi uchun desktopda faqat 1 daqiqa harakatsizlikdan keyin.
-const isSafeToReload = () =>
-  isTvScreenPath() ||
-  (Date.now() - lastUserActivityAt >= DESKTOP_IDLE_BEFORE_RELOAD_MS && !isEditingField());
-
 const scheduleVersionReload = () => {
   if (!shouldAutoReloadForVersion() || versionReloadTimer) return;
-
-  const tryReload = () => {
-    if (isSafeToReload()) {
-      window.location.reload();
-      return;
-    }
-    versionReloadTimer = window.setTimeout(tryReload, DESKTOP_IDLE_CHECK_MS);
-  };
-
-  versionReloadTimer = window.setTimeout(tryReload, VERSION_AUTO_RELOAD_DELAY_MS);
+  versionReloadTimer = window.setTimeout(() => window.location.reload(), VERSION_AUTO_RELOAD_DELAY_MS);
 };
 
 const showVersionNotice = ({ activated = false, autoReload = false } = {}) => {
@@ -129,9 +95,19 @@ const showVersionNotice = ({ activated = false, autoReload = false } = {}) => {
       <div class="sampi-version-toast-icon">SM</div>
       <div class="sampi-version-toast-copy">
         <strong data-version-title>Yangi versiya tayyor</strong>
-        <span data-version-text>Keyingi refreshda avtomatik yangilanadi</span>
+        <span data-version-text></span>
+      </div>
+      <div class="sampi-version-toast-actions" data-version-actions>
+        <button type="button" class="sampi-version-toast-later" data-version-later>Keyinroq</button>
+        <button type="button" class="sampi-version-toast-reload" data-version-reload>Yangilash</button>
       </div>
     `;
+    notice.querySelector("[data-version-reload]")?.addEventListener("click", () => {
+      window.location.reload();
+    });
+    notice.querySelector("[data-version-later]")?.addEventListener("click", () => {
+      notice.classList.remove("sampi-version-toast-show");
+    });
     document.body.appendChild(notice);
   }
 
@@ -141,24 +117,24 @@ const showVersionNotice = ({ activated = false, autoReload = false } = {}) => {
     title.textContent = activated ? "Yangi versiya faollashdi" : "Yangi versiya tayyor";
   }
   if (text) {
-    const autoReloadText = isTvScreenPath()
-      ? "TV ekrani o'zi yangilanmoqda"
-      : "Ilova bo'sh turganda o'zi yangilanadi";
     text.textContent = autoReload
-      ? autoReloadText
-      : activated
-        ? "Ekran tinch ishlashda davom etadi"
-        : "Keyingi refreshda avtomatik yangilanadi";
+      ? "TV ekrani o'zi yangilanmoqda"
+      : "Yangilash tugmasini bosing";
   }
 
   const isTvScreen = isTvScreenPath();
   notice.className = `sampi-version-toast${isTvScreen ? " sampi-version-toast-tv" : ""}`;
+  const actions = notice.querySelector("[data-version-actions]");
+  if (actions) actions.hidden = autoReload;
 
   window.requestAnimationFrame(() => notice.classList.add("sampi-version-toast-show"));
   window.clearTimeout(versionNoticeTimer);
-  versionNoticeTimer = window.setTimeout(() => {
-    notice.classList.remove("sampi-version-toast-show");
-  }, VERSION_NOTICE_HIDE_MS);
+  // Tugmali xabar foydalanuvchi bosmaguncha ekranda turadi.
+  if (autoReload) {
+    versionNoticeTimer = window.setTimeout(() => {
+      notice.classList.remove("sampi-version-toast-show");
+    }, VERSION_NOTICE_HIDE_MS);
+  }
 };
 
 const handleNewVersionReady = ({ activated = false } = {}) => {

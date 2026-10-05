@@ -104,7 +104,9 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response && response.ok) {
+          // .apk/.exe kabi yuklab olinadigan fayllar index.html o'rniga keshlanmasin.
+          const isHtml = (response?.headers.get("Content-Type") || "").includes("text/html");
+          if (response && response.ok && isHtml) {
             const copy = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put("/index.html", copy));
           }
