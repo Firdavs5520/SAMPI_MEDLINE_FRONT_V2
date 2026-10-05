@@ -24,7 +24,9 @@ const USE_HTML_RECEIPT_PRINT = process.env.SAMPI_HTML_RECEIPT === "1";
 const APP_ICON = path.join(__dirname, "../build/icon.ico");
 const PRELOAD_SCRIPT = path.join(__dirname, "preload.cjs");
 const RECEIPT_PRINTER_NAME = process.env.SAMPI_RECEIPT_PRINTER || "XP-80";
-const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
+const UPDATE_CHECK_INTERVAL_MS = 10 * 60 * 1000;
+// Oyna qayta faollashganda ham tekshiradi, lekin tez-tez emas.
+const UPDATE_FOCUS_CHECK_MIN_MS = 3 * 60 * 1000;
 const UPDATE_SNOOZE_MS = 2 * 60 * 60 * 1000;
 const PENDING_UPDATE_FILE = "pending-update.json";
 const PRINT_JOB_TIMEOUT_MS = 20000;
@@ -74,14 +76,25 @@ const enableAutoLaunch = () => {
   }
 };
 
-const checkForAppUpdates = () => {
-  if (!app.isPackaged) {
-    return;
+// SAMPI_DEV_UPDATES=1: o'rnatilmagan (dev) ilovada ham yangilanish oynasini sinash uchun
+// dev-app-update.yml dagi manzildan tekshiradi.
+const DEV_UPDATES = process.env.SAMPI_DEV_UPDATES === "1";
+if (DEV_UPDATES) autoUpdater.forceDevUpdateConfig = true;
+
+let lastUpdateCheckAt = 0;
+
+const checkForAppUpdates = async () => {
+  if (!app.isPackaged && !DEV_UPDATES) {
+    return null;
   }
 
-  autoUpdater.checkForUpdates().catch((error) => {
+  lastUpdateCheckAt = Date.now();
+  try {
+    return await autoUpdater.checkForUpdates();
+  } catch (error) {
     console.warn("Sampi Medicine update check failed:", error.message);
-  });
+    return null;
+  }
 };
 
 // status: idle | available | downloading | downloaded | error
@@ -227,6 +240,16 @@ ipcMain.handle("sampi:install-update", (event) => {
 ipcMain.handle("sampi:ack-update-notice", (event) => {
   assertTrustedSender(event);
   setUpdateState({ justUpdated: null });
+  return getPublicUpdateState();
+});
+
+// "Yangilanishni tekshirish" tugmasi: "Keyinroq" bosilgan bo'lsa ham qayta ko'rsatadi.
+ipcMain.handle("sampi:check-for-updates", async (event) => {
+  assertTrustedSender(event);
+  if (updateState.snoozedUntil) setUpdateState({ snoozedUntil: 0 });
+  if (!["downloading", "downloaded"].includes(updateState.status)) {
+    await checkForAppUpdates();
+  }
   return getPublicUpdateState();
 });
 
@@ -1478,8 +1501,11 @@ app.whenReady().then(async () => {
   if (!hasSingleInstanceLock) return;
   const justUpdated = await readJustUpdated();
   if (justUpdated) setUpdateState({ justUpdated });
-  setTimeout(checkForAppUpdates, 15000);
+  setTimeout(checkForAppUpdates, 5000);
   setInterval(checkForAppUpdates, UPDATE_CHECK_INTERVAL_MS);
+  app.on("browser-window-focus", () => {
+    if (Date.now() - lastUpdateCheckAt > UPDATE_FOCUS_CHECK_MIN_MS) checkForAppUpdates();
+  });
 });
 
 app.on("activate", () => {
