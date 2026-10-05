@@ -72,5 +72,16 @@ export const formatDateTime = (date) => {
   return safeDate.toLocaleString("uz-UZ");
 };
 
+// Jadvallar uchun ixcham sana: "05.10.2026 13:42".
+export const formatShortDateTime = (date) => {
+  if (!date) return "-";
+  const safeDate = new Date(date);
+  if (Number.isNaN(safeDate.getTime())) return "-";
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${pad(safeDate.getDate())}.${pad(safeDate.getMonth() + 1)}.${safeDate.getFullYear()} ${pad(
+    safeDate.getHours()
+  )}:${pad(safeDate.getMinutes())}`;
+};
+
 export const extractErrorMessage = (error) =>
   error?.message || "Noma'lum xatolik yuz berdi";

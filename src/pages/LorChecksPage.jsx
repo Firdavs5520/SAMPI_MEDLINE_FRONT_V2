@@ -8,7 +8,12 @@ import QuickSearchInput from "../components/QuickSearchInput.jsx";
 import LorCheckEditModal from "../components/LorCheckEditModal.jsx";
 import { canEditLorCheck } from "../utils/lorCheckEdit.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import { extractErrorMessage, formatCurrency, formatDateTime } from "../utils/format.js";
+import {
+  extractErrorMessage,
+  formatCurrency,
+  formatDateTime,
+  formatShortDateTime
+} from "../utils/format.js";
 import {
   closePrintTab,
   openPendingPrintTab,
@@ -322,17 +327,13 @@ function LorChecksPage() {
             }}
             columns={[
             {
-              key: "lorIdentity",
-              label: "LOR",
-              render: (row) => {
-                const value = String(row?.createdBy?.lorIdentity || "");
-                return value ? "LOR" : "-";
-              }
-            },
-            {
               key: "queueCode",
               label: "Navbat",
-              render: (row) => row?.lorQueue?.queueCode || "-"
+              render: (row) => (
+                <span className="inline-flex h-10 min-w-[2.75rem] items-center justify-center rounded-lg bg-slate-100 px-2 text-lg font-black tabular-nums text-slate-800">
+                  {row?.lorQueue?.queueCode || "-"}
+                </span>
+              )
             },
             {
               key: "patient",
@@ -342,7 +343,7 @@ function LorChecksPage() {
                 const debt = hasDebt(row);
                 return (
                   <div
-                    className="relative max-w-[280px] outline-none"
+                    className="relative min-w-[11rem] max-w-[17rem] outline-none"
                     tabIndex={0}
                     onMouseEnter={(event) => queueHoverPreview(row, event)}
                     onMouseLeave={() => clearHoverPreview({ delay: 180 })}
@@ -358,13 +359,17 @@ function LorChecksPage() {
                         {getPatientInitials(patientName)}
                       </span>
                       <div className="min-w-0">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <p className="truncate text-sm font-black text-slate-800">
-                            {patientName}
-                          </p>
-                        </div>
-                        <p className="truncate text-[11px] font-bold text-slate-500">
-                          Chek: {row.checkId || "-"}
+                        <p className="truncate text-sm font-black text-slate-800" title={patientName}>
+                          {patientName}
+                        </p>
+                        <p className="whitespace-nowrap text-[11px] font-semibold text-slate-500">
+                          {formatShortDateTime(row.createdAt)}
+                        </p>
+                        <p
+                          className="truncate text-[11px] font-medium text-slate-400"
+                          title={row.checkId || ""}
+                        >
+                          {row.checkId || "-"}
                         </p>
                       </div>
                     </div>
@@ -376,62 +381,57 @@ function LorChecksPage() {
               key: "items",
               label: "Xizmatlar",
               render: (row) => (
-                <div className="space-y-1">
+                <ul className="min-w-[13rem] max-w-[26rem] space-y-1">
                   {(row.items || []).map((item, idx) => (
-                    <div key={`${item.name}-${idx}`} className="text-xs leading-5 text-slate-700">
-                      {item.name} x{item.quantity}
-                    </div>
+                    <li
+                      key={`${item.name}-${idx}`}
+                      className="flex items-start justify-between gap-3 text-xs leading-5 text-slate-700"
+                    >
+                      <span className="min-w-0 break-words">{item.name}</span>
+                      <span className="shrink-0 font-bold tabular-nums text-slate-500">
+                        ×{item.quantity}
+                      </span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )
             },
             {
               key: "total",
               label: "Jami",
-              render: (row) => `${formatCurrency(row.total)} so'm`
+              render: (row) => (
+                <span className="whitespace-nowrap text-sm font-black tabular-nums text-slate-800">
+                  {formatCurrency(row.total)} so'm
+                </span>
+              )
             },
             {
               key: "cashierStatus",
-              label: "Kassa holati",
-              render: renderCashierStatus
-            },
-            {
-              key: "paidAmount",
-              label: "To'langan",
-              render: (row) =>
-                row?.cashierStatus?.accepted
-                  ? `${formatCurrency(row.cashierStatus.paidAmount || 0)} so'm`
-                  : "-"
-            },
-            {
-              key: "debtAmount",
-              label: "Qarz",
+              label: "Kassa",
               render: (row) => {
-                if (!row?.cashierStatus?.accepted) return "-";
+                const accepted = Boolean(row?.cashierStatus?.accepted);
                 const debt = getDebtAmount(row);
-                if (debt <= 0) {
-                  return `${formatCurrency(debt)} so'm`;
-                }
-
                 return (
-                  <span className="sampi-lor-debt-chip inline-flex items-center rounded-md px-2 py-1 text-xs font-black text-white shadow-sm">
-                    Qarz: {formatCurrency(debt)} so'm
-                  </span>
+                  <div className="min-w-[8.5rem] space-y-1.5">
+                    {renderCashierStatus(row)}
+                    {accepted ? (
+                      <p className="text-xs leading-5 text-slate-600">
+                        To'langan:{" "}
+                        <span className="font-bold tabular-nums">
+                          {formatCurrency(row.cashierStatus.paidAmount || 0)} so'm
+                        </span>
+                        {" · "}
+                        {getPaymentLabel(row.cashierStatus.paymentMethod)}
+                      </p>
+                    ) : null}
+                    {accepted && debt > 0 ? (
+                      <span className="sampi-lor-debt-chip inline-flex whitespace-nowrap rounded-md px-2 py-1 text-xs font-black text-white shadow-sm">
+                        Qarz: {formatCurrency(debt)} so'm
+                      </span>
+                    ) : null}
+                  </div>
                 );
               }
-            },
-            {
-              key: "paymentMethod",
-              label: "To'lov",
-              render: (row) =>
-                row?.cashierStatus?.accepted
-                  ? getPaymentLabel(row.cashierStatus.paymentMethod)
-                  : "-"
-            },
-            {
-              key: "createdAt",
-              label: "Sana",
-              render: (row) => formatDateTime(row.createdAt)
             },
             {
               key: "actions",
@@ -440,7 +440,7 @@ function LorChecksPage() {
                 const checkKey = getCheckKey(row);
                 const editable = canEditLorCheck(row, now);
                 return (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center justify-end gap-1.5">
                     <Button
                       type="button"
                       variant="secondary"
