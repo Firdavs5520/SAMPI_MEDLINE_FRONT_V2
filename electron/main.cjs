@@ -43,6 +43,8 @@ const RAW_PRINT_TIMEOUT_MS = 20000;
 const PRINTER_LIST_CACHE_MS = 60 * 1000;
 // SAMPI_NO_PRINT_WORKER=1 bo'lsa har chek uchun alohida PowerShell ishlatiladi (eski usul).
 const USE_RAW_PRINT_WORKER = process.env.SAMPI_NO_PRINT_WORKER !== "1";
+// Sinov uchun: Windows bo'lmagan kompyuterda ham chek rasmini oldindan tayyorlaydi.
+const DEV_PRERENDER = process.env.SAMPI_DEV_PRERENDER === "1";
 
 // Yangi versiya foydalanuvchi ruxsati bilan yuklanadi (ilovada so'rov va foiz ko'rsatiladi).
 // Yuklangan, lekin o'rnatilmagan yangilanish ilova yopilganda o'rnatiladi.
@@ -1256,15 +1258,34 @@ const printReceiptAsRawRaster = async (printerName, raster) => {
   };
 };
 
+// Chek rasmlari keshi: kassada keyingi navbat cheki Enter bosilishidan oldin tayyorlab
+// qo'yiladi, shunda server javobidan keyin rasm darhol printerga ketadi.
+const RASTER_CACHE_LIMIT = 4;
+const rasterCache = new Map();
+
+const getReceiptRaster = (safeHtml) => {
+  const cached = rasterCache.get(safeHtml);
+  if (cached) return { promise: cached, cached: true };
+  const promise = renderReceiptRaster(safeHtml);
+  rasterCache.set(safeHtml, promise);
+  promise.catch(() => rasterCache.delete(safeHtml));
+  while (rasterCache.size > RASTER_CACHE_LIMIT) {
+    rasterCache.delete(rasterCache.keys().next().value);
+  }
+  return { promise, cached: false };
+};
+
 // Chekni rasm (ESC/POS) qilib yuborish uchun HTML faqat bir marta, yashirin oynada chiziladi.
 // Rasm chiqmasa yoki printer chek printeri bo'lmasa, drayver orqali HTML chop etishga o'tadi.
 const printHtmlSilently = async (parentWindow, html, options = {}) => {
+  const startedAt = Date.now();
   const safeHtml = inlineReceiptFonts(stripExecutableReceiptContent(html));
   const printerSource =
     parentWindow && !parentWindow.isDestroyed() ? parentWindow.webContents : null;
-  let printer = printerSource
+  const printer = printerSource
     ? await resolveReceiptPrinter(printerSource, options.printerName)
     : null;
+  const printerResolvedAt = Date.now();
 
   if (printer && shouldUseRawReceiptPrint(printer, safeHtml, options)) {
     const rawReceipt = await printReceiptAsRawText(
@@ -1276,8 +1297,11 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
 
   if (printer && shouldUseRasterReceiptPrint(printer, safeHtml, options)) {
     let raster = null;
+    let prerendered = false;
     try {
-      raster = await renderReceiptRaster(safeHtml);
+      const job = getReceiptRaster(safeHtml);
+      prerendered = job.cached;
+      raster = await job.promise;
     } catch (error) {
       // Rasm tayyorlanmasa, drayver orqali HTML chop etishga o'tiladi. Printerga yuborishdagi
       // xato esa qaytariladi (chek ikki marta chiqmasligi uchun).
@@ -1285,8 +1309,19 @@ const printHtmlSilently = async (parentWindow, html, options = {}) => {
     }
 
     if (raster) {
+      const renderedAt = Date.now();
       const rasterReceipt = await printReceiptAsRawRaster(printer.name, raster);
-      return { ok: true, printer: printer.name, ...rasterReceipt };
+      return {
+        ok: true,
+        printer: printer.name,
+        ...rasterReceipt,
+        timings: {
+          printerMs: printerResolvedAt - startedAt,
+          renderMs: renderedAt - printerResolvedAt,
+          sendMs: Date.now() - renderedAt,
+          prerendered,
+        },
+      };
     }
   }
 
@@ -1376,6 +1411,21 @@ ipcMain.handle("sampi:print-receipt-html", async (event, html, options = {}) => 
 
   const parentWindow = BrowserWindow.fromWebContents(event.sender);
   return printHtmlSilently(parentWindow, html, options);
+});
+
+ipcMain.handle("sampi:prerender-receipt-html", async (event, html) => {
+  if (!isTrustedRendererUrl(event.senderFrame?.url || "")) {
+    throw new Error("Receipt prerender request came from an untrusted page.");
+  }
+  // Rasm faqat Windows'dagi chek printeri yo'lida ishlatiladi.
+  if (process.platform !== "win32" && !DEV_PRERENDER) return { ok: false };
+  if (typeof html !== "string" || !isReceiptHtml(html)) return { ok: false };
+  try {
+    await getReceiptRaster(inlineReceiptFonts(stripExecutableReceiptContent(html))).promise;
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
 });
 
 ipcMain.handle("sampi:list-printers", async (event) => {

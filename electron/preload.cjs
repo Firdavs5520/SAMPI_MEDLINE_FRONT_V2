@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("sampiDesktop", {
   printReceiptHtml: (html, options = {}) =>
     ipcRenderer.invoke("sampi:print-receipt-html", html, options),
+  prerenderReceiptHtml: (html) => ipcRenderer.invoke("sampi:prerender-receipt-html", html),
   listPrinters: () => ipcRenderer.invoke("sampi:list-printers"),
   setReceiptPrinter: (printerName) =>
     ipcRenderer.invoke("sampi:set-receipt-printer", printerName),

@@ -11,6 +11,7 @@ import cashierService from "../services/cashierService.js";
 import {
   closePrintTab,
   openPendingPrintTab,
+  prerenderLorQueueTicket,
   writeLorQueueTicketToPrintTab
 } from "../utils/printReceipt.js";
 import {
@@ -946,7 +947,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     );
 
     try {
+      const requestStartedAt = performance.now();
       const ticket = await cashierService.issueLorQueueTicket({ lorIdentity: "lor1" });
+      const serverMs = performance.now() - requestStartedAt;
       setIssuedLorTicket(ticket);
       setSuccess(`LOR navbat raqami chiqarildi: ${ticket.queueCode || "-"}.`);
       addLorPrintEvent(`${ticket.queueCode || "-"} raqam serverda yaratildi.`, "success");
@@ -956,7 +959,16 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         setError("Brauzer yangi oynani blokladi. Navbat raqamini ekrandan ham aytish mumkin.");
         addLorPrintEvent("Print yuborilmadi, popup ruxsatini tekshiring.", "warning");
       } else {
-        addLorPrintEvent(`${ticket.queueCode || "-"} raqam printerga yuborildi.`, "success");
+        const timings = printed?.timings;
+        const seconds = (ms) => `${(Math.max(0, Number(ms) || 0) / 1000).toFixed(1)}s`;
+        addLorPrintEvent(
+          timings
+            ? `${ticket.queueCode || "-"} raqam printerga yuborildi (server ${seconds(serverMs)}, ` +
+                `chek rasmi ${timings.prerendered ? "tayyor edi" : seconds(timings.renderMs)}, ` +
+                `printer ${seconds(timings.sendMs)}).`
+            : `${ticket.queueCode || "-"} raqam printerga yuborildi.`,
+          "success"
+        );
       }
 
       setLorTicketStatus((prev) => ({
@@ -976,6 +988,13 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       setIssuingLorTicket(false);
     }
   }, [addLorPrintEvent, loadLorQueueTicketStatus]);
+
+  // Keyingi raqam chekining rasmi oldindan tayyorlanadi: Enter bosilganda faqat server javobi kutiladi.
+  const predictedQueueCode = isLorQueueSection ? lorTicketStatus.nextQueueCode : "";
+  useEffect(() => {
+    if (!predictedQueueCode) return;
+    prerenderLorQueueTicket({ queueCode: predictedQueueCode, lorIdentity: "lor1" });
+  }, [predictedQueueCode]);
 
   const handleReprintIssuedLorTicket = async (ticket = issuedLorTicket) => {
     const targetTicket = ticket || issuedLorTicket;
