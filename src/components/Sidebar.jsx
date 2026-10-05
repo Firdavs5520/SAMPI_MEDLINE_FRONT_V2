@@ -165,7 +165,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
     : [];
 
   const linkClassName = ({ isActive }) =>
-    `sampi-sidebar-link flex min-h-[44px] items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 ease-out ${
+    `sampi-sidebar-link flex items-center rounded-lg px-3 text-sm font-medium ${hasGroups ? "min-h-[38px] py-2" : "min-h-[44px] py-2.5"} transition-colors duration-150 ease-out ${
       isCompact ? "lg:justify-center lg:px-2" : "gap-2"
     } ${
       isActive ? "bg-primary text-white shadow-sm" : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
@@ -200,7 +200,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
               SM
             </div>
             <h2
-              className={`sampi-brand-title text-lg font-bold leading-tight text-slate-800 ${
+              className={`sampi-brand-title whitespace-nowrap text-base font-bold leading-tight text-slate-800 ${
                 isCompact ? "lg:pointer-events-none" : ""
               }`}
             >
@@ -235,19 +235,23 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
           </button>
         </div>
 
-        <nav className={`flex-1 overflow-y-auto p-4 ${isCompact ? "space-y-2" : "space-y-3"}`}>
+        <nav
+          className={`sampi-sidebar-nav flex-1 overflow-y-auto ${hasGroups ? "p-3" : "p-4"} ${
+            isCompact ? "space-y-2" : hasGroups ? "space-y-2.5" : "space-y-3"
+          }`}
+        >
           {hasGroups
             ? groupedMenus.map((group) => (
                 <div
                   key={group.name}
-                  className={`sampi-sidebar-group rounded-lg p-2 ${isCompact ? "lg:border-0 lg:bg-transparent lg:px-0" : "border border-slate-200/80 bg-slate-50/80"}`}
+                  className={`sampi-sidebar-group rounded-lg p-1.5 ${isCompact ? "lg:border-0 lg:bg-transparent lg:px-0" : "border border-slate-200/80 bg-slate-50/80"}`}
                 >
                   <p
                     className={`px-2 pb-1 pt-0.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 ${isCompact ? "lg:hidden" : ""}`}
                   >
                     {group.name}
                   </p>
-                  <div className="space-y-1.5">
+                  <div className="space-y-0.5">
                     {group.items.map((item) => (
                       <NavLink
                         key={item.path}

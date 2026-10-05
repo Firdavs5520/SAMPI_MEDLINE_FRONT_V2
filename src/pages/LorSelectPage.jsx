@@ -185,7 +185,7 @@ function LorSelectPage() {
                       >
                         <span className="lor-doctor-avatar">{getDoctorInitials(doctor.name)}</span>
                         <span className="min-w-0">
-                          <span className="block truncate text-sm font-black text-slate-900">
+                          <span className="block break-words text-sm font-black leading-snug text-slate-900">
                             {doctor.name}
                           </span>
                           <span className="mt-1 block text-xs font-bold text-slate-500">

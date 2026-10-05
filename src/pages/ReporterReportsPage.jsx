@@ -196,93 +196,98 @@ function ReporterReportsPage() {
   };
 
   const columns = [
-    { key: "date", label: "Sana" },
+    {
+      key: "date",
+      label: "Sana",
+      // "2026-10-05" -> "05.10.2026": tor ustunda chiziqcha bo'yicha bo'linib ketmasin.
+      render: (row) => String(row.date || "").split("-").reverse().join(".")
+    },
     { key: "lorClientsCount", label: "LOR soni" },
     {
       key: "lorPaidAmount",
       label: "LOR kelgan",
-      render: (row) => `${formatCurrency(row.lorPaidAmount)} so'm`
+      render: (row) => `${formatCurrency(row.lorPaidAmount)}\u00a0so'm`
     },
     {
       key: "lorHalfPaidAmount",
       label: "LOR 50%",
-      render: (row) => `${formatCurrency(row.lorHalfPaidAmount)} so'm`
+      render: (row) => `${formatCurrency(row.lorHalfPaidAmount)}\u00a0so'm`
     },
     { key: "procedureCount", label: "Protsedura soni" },
     {
       key: "procedurePaidAmount",
       label: "Protsedura kelgan",
-      render: (row) => `${formatCurrency(row.procedurePaidAmount)} so'm`
+      render: (row) => `${formatCurrency(row.procedurePaidAmount)}\u00a0so'm`
     },
     {
       key: "autoIncomeTotal",
       label: "LOR 50% + Protsedura",
-      render: (row) => `${formatCurrency(row.autoIncomeTotal)} so'm`
+      render: (row) => `${formatCurrency(row.autoIncomeTotal)}\u00a0so'm`
     },
     {
       key: "expenseAmount",
       label: "Harajat",
-      render: (row) => `${formatCurrency(row.expenseAmount)} so'm`
+      render: (row) => `${formatCurrency(row.expenseAmount)}\u00a0so'm`
     },
     {
       key: "medicineAmount",
       label: "Dori",
-      render: (row) => `${formatCurrency(row.medicineAmount)} so'm`
+      render: (row) => `${formatCurrency(row.medicineAmount)}\u00a0so'm`
     },
     {
       key: "supplyAmount",
       label: "Ta'minot",
-      render: (row) => `${formatCurrency(row.supplyAmount)} so'm`
+      render: (row) => `${formatCurrency(row.supplyAmount)}\u00a0so'm`
     },
     {
       key: "stationeryAmount",
       label: "Kanstovar",
-      render: (row) => `${formatCurrency(row.stationeryAmount)} so'm`
+      render: (row) => `${formatCurrency(row.stationeryAmount)}\u00a0so'm`
     },
     {
       key: "communicationAmount",
       label: "Aloqa",
-      render: (row) => `${formatCurrency(row.communicationAmount)} so'm`
+      render: (row) => `${formatCurrency(row.communicationAmount)}\u00a0so'm`
     },
     {
       key: "childrenAmount",
       label: "Farzandlarga",
-      render: (row) => `${formatCurrency(row.childrenAmount)} so'm`
+      render: (row) => `${formatCurrency(row.childrenAmount)}\u00a0so'm`
     },
     {
       key: "homeAmount",
       label: "Uy uchun",
-      render: (row) => `${formatCurrency(row.homeAmount)} so'm`
+      render: (row) => `${formatCurrency(row.homeAmount)}\u00a0so'm`
     },
     {
       key: "bossAmount",
       label: "Boshliq",
-      render: (row) => `${formatCurrency(row.bossAmount)} so'm`
+      render: (row) => `${formatCurrency(row.bossAmount)}\u00a0so'm`
     },
     {
       key: "manualExpenseTotal",
       label: "Jami harajat",
-      render: (row) => `${formatCurrency(row.manualExpenseTotal)} so'm`
+      render: (row) => `${formatCurrency(row.manualExpenseTotal)}\u00a0so'm`
     },
     {
       key: "terminalAmount",
       label: "Terminal",
-      render: (row) => `${formatCurrency(row.terminalAmount)} so'm`
+      render: (row) => `${formatCurrency(row.terminalAmount)}\u00a0so'm`
     },
     {
       key: "transferAmount",
       label: "Perechisleniya",
-      render: (row) => `${formatCurrency(row.transferAmount)} so'm`
+      render: (row) => `${formatCurrency(row.transferAmount)}\u00a0so'm`
     },
     {
       key: "clickAmount",
       label: "Click",
-      render: (row) => `${formatCurrency(row.clickAmount)} so'm`
+      render: (row) => `${formatCurrency(row.clickAmount)}\u00a0so'm`
     },
     {
       key: "debtAmount",
       label: "Qarz",
-      render: (row) => `${formatCurrency(row.debtAmount)} so'm`
+      render: (row) => `${formatCurrency(row.debtAmount)}\u00a0so'm`
     }
   ];
 
@@ -351,7 +356,7 @@ function ReporterReportsPage() {
               )}
             </div>
             <div className="hidden lg:block">
-              <Table columns={columns} data={monthlyRows} />
+              <Table columns={columns} data={monthlyRows} cellClassName="whitespace-nowrap" />
             </div>
           </>
         )}

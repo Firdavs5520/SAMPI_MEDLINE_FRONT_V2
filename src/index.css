@@ -177,6 +177,25 @@ html.theme-dark .hover\:bg-sky-100:hover {
   background: linear-gradient(180deg, #0d9488, #0284c7);
 }
 
+/* Yon menyu: ingichka, sezilmaydigan aylantirish chizig'i (faqat menyu sig'masa). */
+.sampi-sidebar-nav {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+}
+
+.sampi-sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sampi-sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sampi-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border: 0;
+}
+
 input:not([type="checkbox"]):not([type="radio"]),
 textarea,
 select {
@@ -2664,10 +2683,11 @@ html.theme-dark .sampi-btn::before {
   background: rgba(248, 250, 252, 0.44);
 }
 
+/* So'z faqat ustunga umuman sig'masa bo'linadi; word-break: break-word esa
+   tor ustunda sana va summalarni harfma-harf bo'lib yuborardi. */
 .sampi-data-table td {
   border-bottom: 1px solid rgba(241, 245, 249, 0.95);
-  white-space: normal;
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 html.theme-dark .sampi-table-wrap,

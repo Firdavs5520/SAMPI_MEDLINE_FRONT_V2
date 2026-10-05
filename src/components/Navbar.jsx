@@ -11,7 +11,7 @@ const LEGACY_NAME_MAP = {
   "Delivery User": "Yetkazuvchi",
   "Manager User": "Menejer",
   "Cashier User": "Kassir",
-  "Reporter User": "Reporter"
+  "Reporter User": "Hisobotchi"
 };
 
 const getDisplayName = (user) => {
@@ -144,9 +144,11 @@ function Navbar({ onMenuOpen }) {
             className="sampi-navbar-user hidden min-w-0 rounded-xl px-2.5 py-1.5 text-left text-sm md:block"
           >
             <div className="sampi-navbar-user-name max-w-[10rem] truncate font-semibold">{displayName}</div>
-            <div className="sampi-navbar-user-role truncate text-xs">
-              {roleLabels[user?.role] || "-"}
-            </div>
+            {displayName !== (roleLabels[user?.role] || "-") ? (
+              <div className="sampi-navbar-user-role truncate text-xs">
+                {roleLabels[user?.role] || "-"}
+              </div>
+            ) : null}
           </button>
           <button
             type="button"

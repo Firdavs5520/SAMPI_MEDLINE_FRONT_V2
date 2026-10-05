@@ -169,7 +169,7 @@ function NurseChecksPage() {
             {
               key: "total",
               label: "Jami",
-              render: (row) => `${formatCurrency(row.total)} so'm`
+              render: (row) => `${formatCurrency(row.total)}\u00a0so'm`
             },
             {
               key: "cashierStatus",
@@ -194,7 +194,7 @@ function NurseChecksPage() {
               label: "To'langan",
               render: (row) =>
                 row?.cashierStatus?.accepted
-                  ? `${formatCurrency(row.cashierStatus.paidAmount || 0)} so'm`
+                  ? `${formatCurrency(row.cashierStatus.paidAmount || 0)}\u00a0so'm`
                   : "-"
             },
             {
@@ -202,7 +202,7 @@ function NurseChecksPage() {
               label: "Qarz",
               render: (row) =>
                 row?.cashierStatus?.accepted
-                  ? `${formatCurrency(row.cashierStatus.debtAmount || 0)} so'm`
+                  ? `${formatCurrency(row.cashierStatus.debtAmount || 0)}\u00a0so'm`
                   : "-"
             },
             {
