@@ -71,6 +71,7 @@ export const sidebarMenus = {
   ],
   reporter: [
     { label: "Kunlik hisobot", path: "/reporter", end: true, icon: "bar-chart" },
+    { label: "Oylik hisobot", path: "/reporter/monthly", end: true, icon: "list" },
     { label: "Yillik hisobot", path: "/reporter/reports", end: true, icon: "receipt" }
   ]
 };

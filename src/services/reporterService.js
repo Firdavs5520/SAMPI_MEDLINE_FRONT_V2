@@ -20,6 +20,26 @@ const reporterService = {
     return data.data;
   },
 
+  // Bitta oy uchun to'liq Excel: umumiy, kunlik, mutaxassislar, xizmatlar, dorilar,
+  // kassa xarajatlari, qarzdorlar va kassa yozuvlari.
+  async downloadFullMonthExcel(month) {
+    const response = await api.get("/reporter/monthly/full-export", {
+      params: { month },
+      responseType: "blob"
+    });
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `sampi-oylik-${month}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
   async downloadMonthlyExcel(month) {
     const response = await api.get("/reporter/monthly/export", {
       params: { month },
