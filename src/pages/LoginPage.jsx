@@ -14,7 +14,7 @@ function LoginPage() {
   const [error, setError] = useState("");
 
   const homePath =
-    role === "lor" ? (lorIdentity && lorDoctor?.id ? "/lor/checks" : "/lor/select") : roleHomePath[role];
+    role === "lor" ? (lorIdentity && lorDoctor?.id ? "/lor/services" : "/lor/select") : roleHomePath[role];
 
   if (token && role) {
     return <Navigate to={homePath} replace />;

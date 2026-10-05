@@ -34,28 +34,29 @@ export const sidebarMenus = {
   nurse: [
     { label: "Chek yaratish", path: "/nurse", end: true, icon: "grid" },
     { label: "Mening cheklarim", path: "/nurse/checks", end: true, icon: "receipt" },
-    { label: "Hamshiralarni boshqarish", path: "/nurse/specialists", end: true, icon: "users" },
-    { label: "Dori qo'shish", path: "/nurse/medicines", icon: "pill" },
-    { label: "Xizmat qo'shish", path: "/nurse/services", icon: "stethoscope" }
+    // Kam ishlatiladigan ro'yxatlar pastdagi "Sozlamalar" bo'limida.
+    { label: "Hamshiralar", path: "/nurse/specialists", end: true, icon: "users", bottom: true },
+    { label: "Dorilar va narxlar", path: "/nurse/medicines", icon: "pill", bottom: true },
+    { label: "Xizmatlar va narxlar", path: "/nurse/services", icon: "stethoscope", bottom: true }
   ],
   lor: [
+    { label: "Bemor qabuli", path: "/lor/services", end: true, icon: "stethoscope" },
     { label: "Mening cheklarim", path: "/lor/checks", end: true, icon: "receipt" },
-    { label: "Xizmatdan foydalanish", path: "/lor/services", end: true, icon: "stethoscope" },
     // bottom: menyuning pastidagi "Sozlamalar" bo'limida chiqadi.
-    { label: "Doktorlarni boshqarish", path: "/lor/specialists", end: true, icon: "users", bottom: true },
-    { label: "Xizmat qo'shish", path: "/lor/services/add", end: true, icon: "plus", bottom: true }
+    { label: "Doktorlar", path: "/lor/specialists", end: true, icon: "users", bottom: true },
+    { label: "Xizmatlar va narxlar", path: "/lor/services/add", end: true, icon: "plus", bottom: true }
   ],
-  delivery: [{ label: "Yetkazuvchi paneli", path: "/delivery", end: true, icon: "truck" }],
+  delivery: [{ label: "Omborga dori kirimi", path: "/delivery", end: true, icon: "truck" }],
   cashier: [
-    { label: "LOR navbat", path: "/cashier/lor-queue", end: true, group: "LOR bo'limi", icon: "receipt" },
-    { label: "LOR chek qabuli", path: "/cashier/lor-patients", end: true, group: "LOR bo'limi", icon: "user-plus" },
+    { label: "LOR navbat cheki", path: "/cashier/lor-queue", end: true, group: "LOR bo'limi", icon: "receipt" },
+    { label: "LOR to'lov qabuli", path: "/cashier/lor-patients", end: true, group: "LOR bo'limi", icon: "user-plus" },
     { label: "LOR yozuvlari", path: "/cashier/lor-entries", end: true, group: "LOR bo'limi", icon: "list" },
     { label: "LOR tarixi", path: "/cashier/lor-history", end: true, group: "LOR bo'limi", icon: "history" },
-    { label: "Hamshira chek qabuli", path: "/cashier/nurse-patients", end: true, group: "Hamshira bo'limi", icon: "user-plus" },
+    { label: "Hamshira to'lov qabuli", path: "/cashier/nurse-patients", end: true, group: "Hamshira bo'limi", icon: "user-plus" },
     { label: "Hamshira yozuvlari", path: "/cashier/nurse-entries", end: true, group: "Hamshira bo'limi", icon: "list" },
     { label: "Hamshira tarixi", path: "/cashier/nurse-history", end: true, group: "Hamshira bo'limi", icon: "history" },
     { label: "Kassa jurnali", path: "/cashier/journal", end: true, group: "Umumiy", icon: "receipt" },
-    { label: "Qarzdorlar ro'yxati", path: "/cashier/debts", end: true, group: "Umumiy", icon: "list" },
+    { label: "Qarzdorlar", path: "/cashier/debts", end: true, group: "Umumiy", icon: "list" },
     { label: "Xarajatlar", path: "/cashier/expenses", end: true, group: "Umumiy", icon: "wallet" },
     // Kam ishlatiladigan bandlar pastdagi "Sozlamalar" bo'limida.
     { label: "LOR shifokorlar", path: "/cashier/lor-specialists", end: true, icon: "users", bottom: true },
@@ -63,7 +64,7 @@ export const sidebarMenus = {
     { label: "Kassa sozlamalari", path: "/cashier/settings", end: true, icon: "settings", bottom: true }
   ],
   manager: [
-    { label: "Umumiy statistika", path: "/manager", end: true, icon: "bar-chart" },
+    { label: "Statistika", path: "/manager", end: true, icon: "bar-chart" },
     { label: "Ombor qoldiqlari", path: "/manager/stock", icon: "box" },
     { label: "Ko'p ishlatilgan dorilar", path: "/manager/most-used", icon: "trending" },
     { label: "Dori sarfi tarixi", path: "/manager/usage-history", icon: "history" }

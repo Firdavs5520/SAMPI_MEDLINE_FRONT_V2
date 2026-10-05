@@ -39,7 +39,7 @@ function LorSelectPage() {
   const [error, setError] = useState("");
   const doctorTimerRef = useRef(null);
 
-  const returnPath = location.state?.from?.pathname || "/lor/checks";
+  const returnPath = location.state?.from?.pathname || "/lor/services";
 
   const filteredSpecialists = useMemo(() => {
     const query = normalizeSearch(doctorSearch);
@@ -162,7 +162,7 @@ function LorSelectPage() {
           </div>
         ) : (
           <div className="lor-doctor-empty mt-6">
-            Hozircha doktor yo'q. Menyudagi "Sozlamalar → Doktorlarni boshqarish" bo'limida qo'shing.
+            Hozircha doktor yo'q. Menyudagi "Sozlamalar → Doktorlar" bo'limida qo'shing.
           </div>
         )}
 

@@ -8,7 +8,7 @@ import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
 import BusyOverlay from "../components/BusyOverlay.jsx";
 import Modal from "../components/Modal.jsx";
-import QuickSearchInput from "../components/QuickSearchInput.jsx";
+import QuantityStepper from "../components/QuantityStepper.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
   extractErrorMessage,
@@ -62,7 +62,7 @@ const LOR_SERVICE_TEXT = {
     serviceSearchLabel: "Xizmat qidirish",
     serviceSearchPlaceholder: "Masalan: Burun chayish",
     serviceSearchEmpty: "Mos xizmat topilmadi",
-    noServices: "Hali xizmat yo'q. Avval \"Xizmat qo'shish\" bo'limida xizmat yarating.",
+    noServices: "Hali xizmat yo'q. Avval \"Xizmatlar va narxlar\" bo'limida xizmat yarating.",
     noSearchResults: "Qidiruv bo'yicha xizmat topilmadi.",
     price: "Narx",
     quantity: "Miqdor",
@@ -307,7 +307,6 @@ function LorServicesPage() {
   const text = LOR_SERVICE_TEXT.uz;
 
   const [loading, setLoading] = useState(true);
-  const [step, setStep] = useState(1);
   const [submittingCheckout, setSubmittingCheckout] = useState(false);
   const [queueLoading, setQueueLoading] = useState(false);
   const [callingTicketId, setCallingTicketId] = useState("");
@@ -328,7 +327,6 @@ function LorServicesPage() {
 
   const patientInputRef = useRef(null);
   const serviceSearchRef = useRef(null);
-  const previewRef = useRef(null);
   const activeTicket = queueState.current;
   const waitingTickets = queueState.waiting || [];
 
@@ -453,35 +451,19 @@ function LorServicesPage() {
     setLanguage(getStoredLanguage(lorDoctor?.id));
   }, [lorDoctor?.id]);
 
+  // Navbat qabul qilinganda kursor darhol bemor F.I.O maydoniga tushadi.
+  const activeTicketId = activeTicket?.id || "";
   useEffect(() => {
-    const focusElement = (element) => {
-      if (!element) return;
-      setTimeout(() => {
-        try {
-          element.focus();
-          if (typeof element.select === "function") element.select();
-        } catch {
-          // no-op
-        }
-      }, 0);
-    };
-
-    if (step === 1) focusElement(patientInputRef.current);
-    if (step === 2) focusElement(serviceSearchRef.current);
-    if (step === 3) focusElement(previewRef.current);
-  }, [step]);
+    if (activeTicketId) {
+      setTimeout(() => patientInputRef.current?.focus?.(), 0);
+    }
+  }, [activeTicketId]);
 
   useEffect(() => {
     setSelectedServiceIds((prev) =>
       prev.filter((id) => sortedServices.some((item) => item._id === id))
     );
   }, [sortedServices]);
-
-  useEffect(() => {
-    if (!activeTicket && step !== 1) {
-      setStep(1);
-    }
-  }, [activeTicket, step]);
 
   const validateDoctor = () => {
     if (!lorDoctor?.id || !lorDoctor?.name) {
@@ -603,7 +585,6 @@ function LorServicesPage() {
       setServiceInputs({});
       setServiceSearch("");
       setQueueState({ current: null, waiting: [] });
-      setStep(1);
       await loadLorQueueTickets({ silent: true });
 
       const written = await writeCheckToPrintTab(printTab, result.check);
@@ -642,10 +623,6 @@ function LorServicesPage() {
         waiting: (prev.waiting || []).filter((item) => item.id !== ticket.id)
       }));
       setPatient({ fullName: currentTicket?.patient?.fullName || "" });
-      setStep(1);
-      setTimeout(() => {
-        patientInputRef.current?.focus?.();
-      }, 0);
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -672,7 +649,6 @@ function LorServicesPage() {
       setCancelPromptOpen(false);
       setCancelReason(CANCEL_REASON_OPTIONS[0].value);
       setCancelNote("");
-      setStep(1);
       await loadLorQueueTickets({ silent: true });
       setSuccess("LOR navbati bekor qilindi.");
     } catch (err) {
@@ -682,30 +658,14 @@ function LorServicesPage() {
     }
   };
 
-  const goNextFromPatient = () => {
-    resetMessages();
-
-    try {
-      validateDoctor();
-
-      if (!lorIdentity) {
-        throw new Error(text.errors.identityMissing);
-      }
-
-      if (!activeTicket?.id) {
-        throw new Error("Avval kassir chiqargan LOR raqamni qabul qiling.");
-      }
-
-      validatePatient();
-      setStep(2);
-    } catch (err) {
-      setError(extractErrorMessage(err));
-    }
-  };
-
-  const goNextFromServices = () => {
-    resetMessages();
-    setStep(3);
+  // Qidiruvda Enter: birinchi topilgan xizmat tanlanadi va qidiruv tozalanadi.
+  const handleServiceSearchKeyDown = (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    const first = filteredServices[0];
+    if (!serviceSearch.trim() || !first) return;
+    if (!selectedServiceIds.includes(first._id)) toggleService(first._id);
+    setServiceSearch("");
   };
 
   if (loading) {
@@ -713,375 +673,239 @@ function LorServicesPage() {
   }
 
   return (
-    <div className="space-y-4 overflow-x-hidden sm:space-y-6">
-      <div className="card sampi-lor-service-hero border-sky-200 bg-sky-50/70 p-4 sm:p-5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-slate-800">{text.heroTitle}</h1>
-            <p className="mt-1 text-sm text-slate-600">{text.heroSubtitle}</p>
-          </div>
-
-          <div className="flex w-full flex-col gap-2 lg:w-auto lg:items-end">
-            <div
-              className="inline-flex w-fit items-center gap-1 rounded-lg border border-cyan-200 bg-white/75 p-1"
-              aria-label={text.languageLabel}
-            >
-              <span className="px-2 text-[10px] font-semibold text-cyan-700">
-                {text.languageLabel}
-              </span>
-              {LANGUAGE_OPTIONS.map((option) => {
-                const active = option.id === language;
-
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    title={option.title}
-                    aria-pressed={active}
-                    onClick={() => handleLanguageChange(option.id)}
-                    className={`min-w-10 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-                      active
-                        ? "bg-cyan-700 text-white shadow-sm"
-                        : "text-slate-600 hover:bg-cyan-50 hover:text-cyan-800"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="sampi-lor-context-card">
-              <div>
-                <p className="text-[10px] font-semibold text-cyan-700">
-                  {text.contextLabel}
-                </p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">
-                  {lorIdentity ? lorIdentity.toUpperCase() : "-"} -{" "}
-                  {lorDoctor?.name || text.doctorFallback}
-                </p>
-              </div>
-              <Button variant="secondary" className="px-3 py-2 text-xs" onClick={changeLorContext}>
-                {text.switchContext}
-              </Button>
-            </div>
-          </div>
+    <div className="space-y-4 overflow-x-clip">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2 text-sm text-slate-600">
+          <span className="truncate">
+            {text.doctor}: <b className="text-slate-900">{lorDoctor?.name || text.doctorFallback}</b>
+          </span>
+          <Button variant="secondary" className="shrink-0 px-3 py-1.5 text-xs" onClick={changeLorContext}>
+            {text.switchContext}
+          </Button>
         </div>
-
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          {text.steps.map((label, index) => {
-            const n = index + 1;
-            const active = n === step;
-            const done = n < step;
-
+        <div
+          className="inline-flex w-fit items-center gap-1 rounded-lg border border-slate-200 bg-white p-1"
+          aria-label="Xizmat nomlari tili"
+        >
+          <span className="px-2 text-[11px] font-semibold text-slate-500">Xizmat nomlari</span>
+          {LANGUAGE_OPTIONS.map((option) => {
+            const active = option.id === language;
             return (
-              <div
-                key={label}
-                className={`sampi-lor-step-pill ${
-                  active ? "sampi-lor-step-active" : done ? "sampi-lor-step-done" : ""
+              <button
+                key={option.id}
+                type="button"
+                title={option.title}
+                aria-pressed={active}
+                onClick={() => handleLanguageChange(option.id)}
+                className={`min-w-10 rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
+                  active ? "bg-cyan-700 text-white shadow-sm" : "text-slate-600 hover:bg-cyan-50"
                 }`}
               >
-                {label}
-              </div>
+                {option.label}
+              </button>
             );
           })}
         </div>
       </div>
 
-      {step === 1 ? (
-        <div
-          className="card border-sky-200 p-4 sm:p-5"
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              if (!activeTicket) return;
-              event.preventDefault();
-              goNextFromPatient();
-            }
-          }}
-        >
-          <h2 className="text-lg font-semibold">{text.patientTitle}</h2>
-          <p className="mb-3 text-sm text-slate-600">{text.patientHint}</p>
+      <Alert type="success" message={success} />
+      <Alert type="error" message={error} />
 
-          {!activeTicket ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm font-semibold text-slate-800">{text.queueTitle}</p>
-                {queueLoading ? (
-                  <span className="text-xs font-semibold text-slate-500">
-                    Yuklanmoqda...
+      {!activeTicket ? (
+        <div className="card p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">{text.queueTitle}</h2>
+              <p className="text-sm text-slate-500">Bemorni qabul qilish uchun uning raqamini bosing.</p>
+            </div>
+            {queueLoading ? (
+              <span className="text-xs font-semibold text-slate-500">Yuklanmoqda...</span>
+            ) : null}
+          </div>
+
+          {waitingTickets.length ? (
+            // Raqamlar ustun bo'ylab ketadi: 01, 02, 03 pastga, keyin keyingi ustun.
+            <div className="mt-4 gap-2 sm:columns-2 xl:columns-3">
+              {waitingTickets.map((ticket) => (
+                <button
+                  key={ticket.id}
+                  type="button"
+                  onClick={() => handleCallTicket(ticket)}
+                  disabled={Boolean(callingTicketId)}
+                  className="mb-2 flex w-full break-inside-avoid items-center justify-between gap-3 rounded-lg border border-sky-200 bg-white px-3 py-3 text-left shadow-sm transition-colors hover:border-sky-400 disabled:cursor-wait disabled:opacity-70"
+                >
+                  <span className="text-3xl font-black leading-none text-slate-900">
+                    {ticket.queueCode}
                   </span>
+                  <span className="rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white">
+                    {callingTicketId === ticket.id ? "..." : text.callQueue}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-lg border border-dashed border-slate-300 px-3 py-8 text-center text-sm font-semibold text-slate-500">
+              {text.queueEmpty}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="card grid gap-3 p-4 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-end">
+            <div className="flex items-center gap-3 rounded-lg border border-sky-200 bg-sky-50 px-4 py-2">
+              <span className="text-xs font-semibold text-sky-700">Navbat</span>
+              <span className="text-4xl font-black leading-none text-slate-900">
+                {activeTicket.queueCode || "--"}
+              </span>
+            </div>
+            <Input
+              label={text.patientLabel}
+              value={patient.fullName}
+              placeholder={text.patientPlaceholder}
+              inputRef={patientInputRef}
+              onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  serviceSearchRef.current?.focus();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              loading={cancelingTicket}
+              loadingText="Bekor qilinmoqda..."
+              onClick={() => setCancelPromptOpen(true)}
+            >
+              Navbatni bekor qilish
+            </Button>
+            {waitingTickets.length ? (
+              <p className="text-xs font-semibold text-amber-700 md:col-span-3">
+                Yana {waitingTickets.length} ta bemor kutmoqda. Ularni bu bemorni yakunlagandan keyin qabul qilasiz.
+              </p>
+            ) : null}
+          </div>
+
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_24rem]">
+            <section className="card p-4">
+              <input
+                ref={serviceSearchRef}
+                type="search"
+                value={serviceSearch}
+                onChange={(e) => setServiceSearch(e.target.value)}
+                onKeyDown={handleServiceSearchKeyDown}
+                placeholder="Xizmat qidirish... (Enter — birinchisini tanlash)"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
+              />
+
+              {sortedServices.length === 0 ? (
+                <p className="mt-3 rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-600">
+                  {text.noServices}
+                </p>
+              ) : null}
+
+              <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
+                {filteredServices.map((service) => {
+                  const selected = selectedServiceIds.includes(service._id);
+                  return (
+                    <button
+                      key={service._id}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => toggleService(service._id)}
+                      className={`flex w-full items-center gap-3 border-t border-slate-200 px-3 py-2.5 text-left transition first:border-t-0 ${
+                        selected ? "bg-cyan-50" : "bg-white hover:bg-slate-50"
+                      }`}
+                    >
+                      <span
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 text-xs font-black ${
+                          selected ? "border-primary bg-primary text-white" : "border-slate-300 text-transparent"
+                        }`}
+                        aria-hidden="true"
+                      >
+                        ✓
+                      </span>
+                      <span className="min-w-0 flex-1 break-words text-sm font-semibold text-slate-900">
+                        {getDisplayServiceName(service, language)}
+                      </span>
+                      <span className="shrink-0 whitespace-nowrap text-sm font-bold text-slate-700">
+                        {service.price ? `${formatCurrency(service.price)}\u00a0so'm` : "Bepul"}
+                      </span>
+                    </button>
+                  );
+                })}
+                {sortedServices.length > 0 && filteredServices.length === 0 ? (
+                  <p className="px-3 py-8 text-center text-sm font-semibold text-slate-500">
+                    {text.noSearchResults}
+                  </p>
+                ) : null}
+              </div>
+            </section>
+
+            <aside className="card p-4 lg:sticky lg:top-20">
+              <div className="flex items-baseline justify-between gap-2">
+                <h2 className="text-base font-bold text-slate-900">Chek</h2>
+                <span className="text-xs font-semibold text-slate-500">
+                  {selectedServiceIds.length} ta xizmat
+                </span>
+              </div>
+              <p className="mt-1 truncate text-sm text-slate-600">
+                {patient.fullName ? patient.fullName : <span className="text-slate-400">Bemor kiritilmagan</span>}
+              </p>
+
+              <div className="mt-3 space-y-2 lg:max-h-[calc(100dvh-22rem)] lg:overflow-y-auto">
+                {previewServices.map((line) => (
+                  <div key={line.id} className="rounded-lg border border-slate-200 px-3 py-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="min-w-0 break-words text-sm font-semibold text-slate-800">{line.name}</p>
+                      <button
+                        type="button"
+                        aria-label={text.remove}
+                        onClick={() => toggleService(line.id)}
+                        className="shrink-0 text-lg leading-none text-slate-400 hover:text-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <div className="mt-1.5 flex items-center justify-between gap-2">
+                      <QuantityStepper
+                        value={line.quantity}
+                        onChange={(next) => updateServiceQuantity(line.id, next)}
+                      />
+                      <span className="whitespace-nowrap text-sm font-bold text-slate-800">
+                        {formatCurrency(line.lineTotal)}{"\u00a0"}so'm
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {!previewServices.length ? (
+                  <p className="rounded-lg border border-dashed border-slate-300 px-3 py-6 text-center text-sm text-slate-500">
+                    Chapdan xizmat tanlang
+                  </p>
                 ) : null}
               </div>
 
-              {waitingTickets.length ? (
-                // Raqamlar ustun bo'ylab ketadi: 01, 02, 03 pastga, keyin keyingi ustun.
-                <div className="mt-3 gap-2 sm:columns-2 xl:columns-3">
-                  {waitingTickets.map((ticket) => (
-                    <button
-                      key={ticket.id}
-                      type="button"
-                      onClick={() => handleCallTicket(ticket)}
-                      disabled={Boolean(callingTicketId)}
-                      className="mb-2 flex w-full break-inside-avoid items-center justify-between gap-3 rounded-lg border border-sky-200 bg-white px-3 py-3 text-left shadow-sm transition-colors hover:border-sky-400 disabled:cursor-wait disabled:opacity-70"
-                    >
-                      <span className="text-3xl font-black leading-none text-slate-900">
-                        {ticket.queueCode}
-                      </span>
-                      <span className="rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white">
-                        {callingTicketId === ticket.id ? "..." : text.callQueue}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-3 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-4 text-sm font-semibold text-slate-500">
-                  {text.queueEmpty}
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="mb-3 flex flex-col gap-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-sky-700">
-                    {text.currentQueue}
-                  </p>
-                  <p className="mt-1 text-4xl font-black leading-none text-slate-900">
-                    {activeTicket.queueCode || "--"}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  loading={cancelingTicket}
-                  loadingText="Bekor qilinmoqda..."
-                  onClick={() => setCancelPromptOpen(true)}
-                >
-                  {text.cancelQueue}
-                </Button>
+              <div className="mt-4 flex items-baseline justify-between border-t border-slate-200 pt-3">
+                <span className="text-sm font-semibold text-slate-600">{text.total}</span>
+                <span className="whitespace-nowrap text-2xl font-black text-slate-900">
+                  {formatCurrency(previewTotal)}{"\u00a0"}so'm
+                </span>
               </div>
-
-              {waitingTickets.length ? (
-                <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800">
-                  Avval {activeTicket.queueCode || "--"} raqamli bemorni yakunlang yoki bekor qiling.
-                  Keyingi {waitingTickets.length} ta navbat shu vaqtgacha bloklangan.
-                </div>
-              ) : null}
-
-              <Input
-                label={text.patientLabel}
-                value={patient.fullName}
-                placeholder={text.patientPlaceholder}
-                inputRef={patientInputRef}
-                onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
-              />
-
-              <div className="mt-4 flex justify-end">
-                <Button
-                  className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
-                  onClick={goNextFromPatient}
-                >
-                  {text.nextServices}
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      ) : null}
-
-      {step === 2 ? (
-        <div
-          className="card border-sky-200 p-4 sm:p-5"
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              goNextFromServices();
-            }
-          }}
-        >
-          <h2 className="text-lg font-semibold">{text.servicesTitle}</h2>
-          <QuickSearchInput
-            label={text.serviceSearchLabel}
-            placeholder={text.serviceSearchPlaceholder}
-            value={serviceSearch}
-            onChange={setServiceSearch}
-            inputRef={serviceSearchRef}
-            items={sortedServices}
-            getItemLabel={(item) => getDisplayServiceName(item, language)}
-            onPick={(service) => {
-              setServiceSearch(getDisplayServiceName(service, language));
-            }}
-            emptyText={text.serviceSearchEmpty}
-          />
-
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {sortedServices.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-600 md:col-span-2 xl:col-span-3">
-                {text.noServices}
-              </div>
-            ) : null}
-
-            {sortedServices.length > 0 && filteredServices.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-600 md:col-span-2 xl:col-span-3">
-                {text.noSearchResults}
-              </div>
-            ) : null}
-
-            {filteredServices.map((service) => {
-              const selected = selectedServiceIds.includes(service._id);
-              const displayName = getDisplayServiceName(service, language);
-
-              return (
-                <button
-                  key={service._id}
-                  type="button"
-                  onClick={() => toggleService(service._id)}
-                  className={`rounded-lg border px-3 py-3 text-left transition-colors ${
-                    selected
-                      ? "border-primary bg-cyan-50"
-                      : "border-slate-200 bg-white hover:border-primary/50"
-                  }`}
-                >
-                  <p className="font-semibold text-slate-800">{displayName}</p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {text.price}: {service.price ? formatCurrency(service.price) : "-"}
-                  </p>
-                </button>
-              );
-            })}
+              <Button
+                className="mt-3 min-h-12 w-full bg-sky-600 text-base hover:bg-sky-700 focus:ring-sky-300"
+                loading={submittingCheckout}
+                loadingText={text.loadingAction}
+                disabled={!selectedServiceIds.length}
+                onClick={handleCreateCheckout}
+              >
+                Chek chiqarish
+              </Button>
+            </aside>
           </div>
+        </>
+      )}
 
-          {selectedServiceIds.length > 0 ? (
-            <div className="mt-4 space-y-3">
-              {selectedServiceIds.map((serviceId) => {
-                const service = sortedServices.find((item) => item._id === serviceId);
-                const displayName = getDisplayServiceName(service, language);
-
-                return (
-                  <div
-                    key={serviceId}
-                    className="grid gap-3 rounded-lg border border-slate-200 p-3 md:grid-cols-[1fr_160px_auto]"
-                  >
-                    <div>
-                      <p className="font-medium text-slate-800">{displayName}</p>
-                      <p className="text-xs text-slate-500">
-                        {text.price}: {service?.price ? formatCurrency(service.price) : "-"}
-                      </p>
-                    </div>
-                    <Input
-                      label={text.quantity}
-                      type="number"
-                      min="1"
-                      value={serviceInputs[serviceId]?.quantity || ""}
-                      onChange={(e) => updateServiceQuantity(serviceId, e.target.value)}
-                    />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="h-fit self-end"
-                      onClick={() => toggleService(serviceId)}
-                    >
-                      {text.remove}
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
-
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(1)}>
-              {text.back}
-            </Button>
-            <Button
-              className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
-              onClick={goNextFromServices}
-            >
-              {text.nextPreview}
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      {step === 3 ? (
-        <div
-          ref={previewRef}
-          tabIndex={0}
-          className="card border-sky-200 p-4 outline-none sm:p-5"
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !submittingCheckout && selectedServiceIds.length > 0) {
-              event.preventDefault();
-              handleCreateCheckout();
-            }
-          }}
-        >
-          <h2 className="text-lg font-semibold">{text.previewTitle}</h2>
-          <p className="mb-3 text-sm text-slate-600">{text.previewHint}</p>
-
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm">
-              Navbat: <span className="font-semibold">{activeTicket?.queueCode || "-"}</span>
-            </p>
-            <p className="text-sm">
-              {text.doctor}: <span className="font-semibold">{lorDoctor?.name || "-"}</span>
-            </p>
-            <p className="text-sm">
-              {text.patient}: <span className="font-semibold">{patient.fullName || "-"}</span>
-            </p>
-            <p className="text-sm">
-              {text.lorChoice}:{" "}
-              <span className="font-semibold">{lorIdentity ? lorIdentity.toUpperCase() : "-"}</span>
-            </p>
-
-            <div className="mt-3 space-y-1">
-              <p className="text-sm font-semibold">{text.services}</p>
-              {previewServices.length ? (
-                previewServices.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span>
-                      {item.name} x{item.quantity}
-                    </span>
-                    <span className="font-semibold">{formatCurrency(item.lineTotal)}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-500">{text.noneSelected}</p>
-              )}
-            </div>
-
-            <div className="mt-3 border-t border-dashed border-slate-300 pt-2">
-              <div className="flex justify-between text-base font-bold">
-                <span>{text.total}</span>
-                <span>{formatCurrency(previewTotal)}</span>
-              </div>
-            </div>
-          </div>
-
-          {!selectedServiceIds.length ? (
-            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              {text.needServiceWarning}
-            </div>
-          ) : null}
-
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setStep(2)}>
-              {text.back}
-            </Button>
-            <Button
-              loading={submittingCheckout}
-              disabled={!selectedServiceIds.length}
-              className="w-full bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 sm:w-auto"
-              onClick={handleCreateCheckout}
-              loadingText={text.loadingAction}
-            >
-              {text.printCheck}
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      <Alert type="success" message={success} />
-      <Alert type="error" message={error} />
       <Modal
         open={cancelPromptOpen}
         title="Navbatni bekor qilish"

@@ -15,7 +15,7 @@ function ProtectedRoute({ allowedRoles }) {
     const homePath =
       role === "lor"
         ? lorIdentity
-          ? "/lor/checks"
+          ? "/lor/services"
           : "/lor/select"
         : roleHomePath[role] || null;
 

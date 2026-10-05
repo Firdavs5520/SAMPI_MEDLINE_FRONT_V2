@@ -15,7 +15,7 @@ const normalizeSearch = (value) =>
 function RoleSpecialistsPage({ mode = "nurse" }) {
   const isNurse = mode === "nurse";
   const roleLabel = isNurse ? "Hamshira" : "Doktor";
-  const sectionLabel = isNurse ? "Hamshiralarni boshqarish" : "Doktorlarni boshqarish";
+  const sectionLabel = isNurse ? "Hamshiralar" : "Doktorlar";
   const theme = isNurse
     ? {
         header: "border-rose-200 bg-rose-50/70",
