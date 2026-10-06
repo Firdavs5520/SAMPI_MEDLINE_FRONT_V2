@@ -875,10 +875,16 @@ function LorServicesPage() {
                 </p>
               ) : null}
 
-              <div ref={serviceListRef} className="mt-3 overflow-hidden rounded-lg border border-slate-200">
+              {/* Ro'yxat emas, plitkalar: barcha xizmatlar bir ekranda, bitta bosish bilan qo'shiladi.
+                  Tartib doim alifbo bo'yicha, shuning uchun har bir xizmat o'z joyida qoladi. */}
+              <div
+                ref={serviceListRef}
+                className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 2xl:grid-cols-4"
+              >
                 {filteredServices.map((service, index) => {
                   const selected = selectedServiceIds.includes(service._id);
                   const highlighted = Boolean(serviceSearch.trim()) && index === highlightIndex;
+                  const quantity = Number(serviceInputs[service._id]?.quantity || 1);
                   return (
                     <button
                       key={service._id}
@@ -887,36 +893,38 @@ function LorServicesPage() {
                       aria-pressed={selected}
                       onClick={() => toggleService(service._id)}
                       onMouseEnter={() => serviceSearch.trim() && setHighlightIndex(index)}
-                      className={`relative flex w-full items-center gap-3 border-t border-slate-200 border-l-4 px-3 py-3 text-left transition first:border-t-0 ${
+                      className={`relative flex min-h-[76px] flex-col justify-between rounded-xl border-2 p-3 text-left transition active:scale-[0.98] ${
                         selected
-                          ? "border-l-primary bg-cyan-50"
-                          : "border-l-transparent bg-white hover:bg-slate-50"
-                      } ${highlighted ? "z-10 outline outline-2 -outline-offset-2 outline-amber-400" : ""}`}
+                          ? "border-primary bg-cyan-50 shadow-sm"
+                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                      } ${highlighted ? "ring-4 ring-amber-300" : ""}`}
                     >
-                      <span
-                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 text-xs font-black ${
-                          selected ? "border-primary bg-primary text-white" : "border-slate-300 text-transparent"
-                        }`}
-                        aria-hidden="true"
-                      >
-                        ✓
-                      </span>
-                      <span className="min-w-0 flex-1 break-words text-sm font-semibold text-slate-900">
+                      <span className="line-clamp-2 pr-7 text-sm font-semibold leading-snug text-slate-900">
                         {getDisplayServiceName(service, language)}
                       </span>
-                      {highlighted ? (
-                        <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-800">
-                          {selected ? "Tanlangan" : "Enter"}
+                      <span className="mt-2 flex items-center justify-between gap-2">
+                        <span className="whitespace-nowrap text-sm font-bold text-slate-600">
+                          {service.price ? `${formatCurrency(service.price)} so'm` : "Bepul"}
+                        </span>
+                        {highlighted ? (
+                          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-800">
+                            {selected ? "Tanlangan" : "Enter"}
+                          </span>
+                        ) : null}
+                      </span>
+                      {selected ? (
+                        <span
+                          className="absolute right-2 top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-black text-white"
+                          aria-hidden="true"
+                        >
+                          {quantity > 1 ? `×${quantity}` : "✓"}
                         </span>
                       ) : null}
-                      <span className="shrink-0 whitespace-nowrap text-sm font-bold text-slate-700">
-                        {service.price ? `${formatCurrency(service.price)}\u00a0so'm` : "Bepul"}
-                      </span>
                     </button>
                   );
                 })}
                 {sortedServices.length > 0 && filteredServices.length === 0 ? (
-                  <p className="px-3 py-8 text-center text-sm font-semibold text-slate-500">
+                  <p className="col-span-full px-3 py-8 text-center text-sm font-semibold text-slate-500">
                     {text.noSearchResults}
                   </p>
                 ) : null}
