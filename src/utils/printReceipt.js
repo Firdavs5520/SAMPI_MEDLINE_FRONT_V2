@@ -6,33 +6,12 @@ const escapeHtml = (value) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
-const formatNumber = (value) => {
-  const safe = Number.isFinite(Number(value)) ? Number(value) : 0;
-  return safe.toLocaleString("uz-UZ");
-};
-
-const formatCheckDate = (value) => {
-  if (!value) return "-";
-  const safeDate = new Date(value);
-  if (Number.isNaN(safeDate.getTime())) return "-";
-  return safeDate.toLocaleString("uz-UZ");
-};
-
 const resolveItemType = (item, checkType) => {
   const fromItem = String(item?.itemType || "").toLowerCase();
   if (fromItem) return fromItem;
   const fromCheck = String(checkType || "").toLowerCase();
   if (fromCheck === "medicine" || fromCheck === "service") return fromCheck;
   return "";
-};
-
-const formatLorIdentity = (value) => {
-  const raw = String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (raw === "lor1" || raw === "lor") return "LOR";
-  const match = raw.match(/lor(\d+)/);
-  if (match) return `Lor-${match[1]}`;
-  if (!raw) return "-";
-  return String(value || "-");
 };
 
 const formatQueueCode = (value) => {
@@ -53,18 +32,21 @@ const buildCheckThermalReceipt = (check) => {
   const lorQueueCode = formatQueueCode(check?.lorQueue?.queueCode || check?.queueCode);
   const blocks = [
     { text: "SAMPI MEDICINE", align: "center", bold: true, size: "double" },
+    { text: creatorRole === "nurse" ? "MUOLAJA XONASI" : "LOR BO'LIMI", align: "center" },
     { kind: "divider" },
-    { text: `Bemor: ${check?.patient?.fullName || "-"}` },
-    { text: `Sana: ${formatCheckDate(check?.createdAt)}` },
   ];
 
-  if (creatorRole === "lor") {
-    blocks.push({ text: formatLorIdentity(check?.createdBy?.lorIdentity), align: "center", bold: true });
+  if (creatorRole === "lor" && lorQueueCode) {
+    blocks.push({ text: `NAVBAT ${lorQueueCode}`, align: "center", bold: true, size: "double" });
+    blocks.push({ kind: "divider" });
   }
 
-  if (creatorRole === "lor" && lorQueueCode) {
-    blocks.push({ text: `Navbat: ${lorQueueCode}`, align: "center", bold: true, size: "double" });
-  }
+  blocks.push({ text: `Bemor: ${check?.patient?.fullName || "-"}` });
+  blocks.push({
+    text: `${creatorRole === "nurse" ? "Hamshira" : "Doktor"}: ${check?.createdBy?.name || "-"}`
+  });
+  blocks.push({ text: `Sana: ${formatReceiptDate(check?.createdAt)}` });
+  blocks.push({ text: `Chek: ${shortCheckId(check?.checkId)}` });
 
   const appendItems = (title, itemType) => {
     const items = (check?.items || []).filter((item) => resolveItemType(item, check?.type) === itemType);
@@ -77,34 +59,31 @@ const buildCheckThermalReceipt = (check) => {
     items.forEach((item) => {
       const quantity = Number(item.quantity) || 0;
       const unitPrice = Number(item.price) || 0;
+      const lineTotal = unitPrice * quantity;
+      blocks.push({ text: item.name, bold: true });
       blocks.push({
         kind: "row",
-        left: `${item.name} x${quantity}`,
-        right: `${formatNumber(unitPrice * quantity)} so'm`,
+        left: unitPrice > 0 ? `${quantity} x ${formatSum(unitPrice)}` : `${quantity} ta`,
+        right: lineTotal > 0 ? formatSum(lineTotal) : "Bepul",
         font: "small",
       });
     });
   };
 
-  appendItems("Dorilar", "medicine");
-  appendItems("Xizmatlar", "service");
+  appendItems("DORILAR", "medicine");
+  appendItems("XIZMATLAR", "service");
 
   blocks.push({ kind: "divider" });
   blocks.push({
     kind: "row",
-    left: "Jami:",
-    right: `${formatNumber(check?.total)} so'm`,
+    left: "JAMI",
+    right: `${formatSum(check?.total)} so'm`,
     bold: true,
   });
   blocks.push({ kind: "divider" });
 
-  if (creatorRole === "nurse") {
-    blocks.push({ text: `Hamshira: ${check?.createdBy?.name || "-"}`, align: "center", bold: true });
-  } else if (creatorRole === "lor") {
-    blocks.push({ text: check?.createdBy?.name || "-", align: "center", bold: true });
-  }
-
-  blocks.push({ text: "Doimo sog'-salomat bo'ling", align: "center" });
+  blocks.push({ text: "Doimo sog'-salomat bo'ling!", align: "center", bold: true });
+  blocks.push({ text: "Tashrifingiz uchun rahmat", align: "center" });
   return { type: "check", blocks };
 };
 
@@ -128,6 +107,29 @@ const buildLorQueueThermalReceipt = (ticket) => {
   };
 };
 
+// Summa o'zbekcha uslubda: 330000 -> "330 000".
+const formatSum = (value) => {
+  const safe = Math.round(Number.isFinite(Number(value)) ? Number(value) : 0);
+  return String(safe).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+};
+
+// Sana: "06.10.2026 20:03" (soniyasiz).
+const formatReceiptDate = (value) => {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return "-";
+  const pad = (number) => String(number).padStart(2, "0");
+  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} ${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
+};
+
+// "CHK-1791293232443-BB3D5F" -> "BB3D5F": chekda qisqa va o'qilishi oson.
+const shortCheckId = (value) => {
+  const parts = String(value || "").split("-").filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : "-";
+};
+
+// Har bir qator: nom alohida (to'liq), ostida "2 × 50 000" va o'ngda qator summasi.
 const buildItemRows = (items, itemType, checkType) => {
   return (items || [])
     .filter((item) => resolveItemType(item, checkType) === itemType)
@@ -135,8 +137,12 @@ const buildItemRows = (items, itemType, checkType) => {
       const quantity = Number(item.quantity) || 0;
       const unitPrice = Number(item.price) || 0;
       const lineTotal = unitPrice * quantity;
-      const line = `${escapeHtml(item.name)} x${escapeHtml(quantity)}`;
-      return `<div class="row"><span class="name">${line}</span><span class="price">${escapeHtml(formatNumber(lineTotal))} so'm</span></div>`;
+      const amount = lineTotal > 0 ? escapeHtml(formatSum(lineTotal)) : "Bepul";
+      const detail =
+        unitPrice > 0
+          ? `${escapeHtml(quantity)} × ${escapeHtml(formatSum(unitPrice))}`
+          : `${escapeHtml(quantity)} ta`;
+      return `<div class="item"><div class="item-name">${escapeHtml(item.name)}</div><div class="item-line"><span class="item-detail">${detail}</span><span class="item-amount">${amount}</span></div></div>`;
     })
     .join("");
 };
@@ -145,31 +151,16 @@ export const buildCheckPrintHtml = (check, options = {}) => {
   const { inline = false } = options;
   const medicineRows = buildItemRows(check.items, "medicine", check.type);
   const serviceRows = buildItemRows(check.items, "service", check.type);
+  const section = (title, rows) =>
+    rows ? `<div class="section-title"><span>${title}</span></div>${rows}` : "";
 
-  const medicineSection =
-    medicineRows.length > 0
-      ? `<div class="section-title">Dorilar</div><div class="divider"></div>${medicineRows}<div class="divider"></div>`
-      : "";
-
-  const serviceSection =
-    serviceRows.length > 0
-      ? `<div class="section-title">Xizmatlar</div><div class="divider"></div>${serviceRows}<div class="divider"></div>`
-      : "";
   const creatorRole = String(check?.createdBy?.role || "").toLowerCase();
-  const specialistLine =
-    creatorRole === "nurse"
-      ? `<div class="nurse-line">Hamshira: ${escapeHtml(check?.createdBy?.name || "-")}</div>`
-      : creatorRole === "lor"
-        ? `<div class="nurse-line">${escapeHtml(check?.createdBy?.name || "-")}</div>`
-        : "";
-  const lorIdentityLine =
-    creatorRole === "lor"
-      ? `<div class="text">${escapeHtml(formatLorIdentity(check?.createdBy?.lorIdentity))}</div>`
-      : "";
+  const specialistLabel = creatorRole === "nurse" ? "Hamshira" : "Doktor";
+  const departmentLabel = creatorRole === "nurse" ? "Muolaja xonasi" : "LOR bo'limi";
   const lorQueueCode = formatQueueCode(check?.lorQueue?.queueCode || check?.queueCode);
-  const lorQueueLine =
+  const queueBlock =
     creatorRole === "lor" && lorQueueCode
-      ? `<div class="queue-line">Navbat: ${escapeHtml(lorQueueCode)}</div>`
+      ? `<div class="queue"><span class="queue-label">NAVBAT</span><span class="queue-code">${escapeHtml(lorQueueCode)}</span></div>`
       : "";
 
   return `<!doctype html>
@@ -186,112 +177,87 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         min-height: 0;
         overflow: visible;
         font-family: Arial, sans-serif;
-        font-size: 12px;
+        font-size: 13px;
         color: #000;
         background: #fff;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
 
-      * {
-        font-family: Arial, sans-serif;
-      }
+      * { font-family: Arial, sans-serif; box-sizing: border-box; }
 
       /* 80mm qog'ozda printer faqat 72mm (576 nuqta) kenglikni bosadi va u sahifaning
          chap chetidan boshlanadi. Kontent 80mm markazida bo'lsa o'ng tomoni kesiladi,
          shuning uchun hammasi chapdagi 72mm ichida (2mm ichki chekka bilan) turadi. */
-      .ticket { box-sizing: border-box; width: 72mm; margin: 0; padding: 0; }
-      .inner { box-sizing: border-box; width: 72mm; margin: 0; padding: 6px 2mm; }
+      .ticket { width: 72mm; margin: 0; padding: 0; }
+      .inner { width: 72mm; margin: 0; padding: 8px 2mm 4px; }
       /* Pastda 10mm joy va oxirida qisqa chiziq. Oraliq butunlay oq bo'lmasin: drayver uzun oq
          oraliqni hujjat oxiri deb o'sha joydan kesib, chiziqni alohida bo'lak qilib chiqaradi.
          Shuning uchun chap chetda ingichka nuqtali vertikal chiziq oraliqni to'ldiradi. */
-      .cut-tail { position: relative; box-sizing: border-box; width: 100%; height: 10mm; display: flex; align-items: flex-end; justify-content: center; }
+      .cut-tail { position: relative; width: 100%; height: 10mm; display: flex; align-items: flex-end; justify-content: center; }
       .cut-tail::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; border-left: 1px dotted #000; }
       .cut-tail::after { content: ""; width: 14mm; border-top: 1px solid #000; }
-      .check-title {
-        text-align: center;
-        font-size: 14px;
-        font-weight: 800;
-        letter-spacing: 0;
-        text-transform: uppercase;
-        white-space: nowrap;
-      }
-      .divider {
-        border-top: 2px dashed #000;
-        margin: 6px 0;
-      }
-      .text {
-        text-align: center;
-        font-size: 15px;
-        margin: 2px 0;
-      }
-      .queue-line {
-        margin: 4px 0 2px;
-        text-align: center;
-        font-size: 20px;
-        font-weight: 900;
-      }
-      .section-title {
-        text-align: center;
-        font-size: 16px;
-        font-weight: 800;
-      }
-      .row {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 6px;
-        font-size: 15px;
-        margin: 2px 0;
-      }
-      .name {
-        flex: 1;
-        min-width: 0;
-        word-break: break-word;
-        text-align: left;
-      }
-      .price {
-        white-space: nowrap;
-        font-weight: 700;
-      }
-      .jami {
-        display: flex;
-        justify-content: space-between;
-        font-size: 17px;
-        font-weight: 800;
-      }
-      .nurse-line { margin-top: 8px; text-align: center; font-size: 14px; font-weight: 700; }
-      .footer {
-        margin-top: 8px;
-        text-align: center;
-        font-size: 14px;
-      }
+
+      .brand { text-align: center; line-height: 1; }
+      .brand-name { font-size: 25px; font-weight: 900; letter-spacing: 1px; white-space: nowrap; }
+      .brand-sub { margin-top: 5px; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+
+      .rule { border-top: 2px solid #000; margin: 8px 0; }
+
+      /* Navbat raqami qora fonda oq: chekda birinchi ko'zga tashlanadi. */
+      .queue { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; padding: 6px 10px; border-radius: 6px; background: #000; color: #fff; }
+      .queue-label { font-size: 15px; font-weight: 800; letter-spacing: 2px; }
+      .queue-code { font-size: 34px; font-weight: 900; line-height: 1; }
+
+      .meta { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .meta td { padding: 2px 0; vertical-align: top; }
+      .meta td:first-child { width: 20mm; white-space: nowrap; }
+      .meta td:last-child { font-weight: 700; word-break: break-word; }
+
+      .section-title { display: flex; align-items: center; gap: 6px; margin: 10px 0 2px; font-size: 12px; font-weight: 900; letter-spacing: 2px; }
+      .section-title::before, .section-title::after { content: ""; flex: 1; border-top: 1.5px solid #000; }
+
+      .item { padding: 5px 0; border-bottom: 1px dotted #000; }
+      .item:last-child { border-bottom: 0; }
+      .item-name { font-size: 14px; font-weight: 700; line-height: 1.25; word-break: break-word; }
+      .item-line { display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px; font-size: 13px; }
+      .item-amount { font-weight: 800; white-space: nowrap; }
+
+      .total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px; padding: 7px 0 5px; border-top: 3px solid #000; border-bottom: 3px solid #000; }
+      .total-label { font-size: 16px; font-weight: 900; letter-spacing: 1px; }
+      .total-amount { font-size: 23px; font-weight: 900; white-space: nowrap; }
+      .total-amount small { font-size: 13px; font-weight: 800; }
+
+      .footer { margin-top: 10px; text-align: center; }
+      .footer-main { font-size: 14px; font-weight: 800; }
+      .footer-sub { margin-top: 3px; font-size: 11px; }
     </style>
   </head>
   <body>
     <div class="ticket" data-sampi-receipt="check">
       <div class="inner">
-        <div class="check-title">SAMPI MEDICINE</div>
-
-        <div class="divider"></div>
-
-        <div class="text">Bemor: ${escapeHtml(check.patient?.fullName || "-")}</div>
-        <div class="text">Sana: ${escapeHtml(formatCheckDate(check.createdAt))}</div>
-        ${lorIdentityLine}
-        ${lorQueueLine}
-
-        <div class="divider"></div>
-        ${medicineSection}
-        ${serviceSection}
-
-        <div class="jami">
-          <span>Jami:</span>
-          <span>${escapeHtml(formatNumber(check.total))} so'm</span>
+        <div class="brand">
+          <div class="brand-name">SAMPI MEDICINE</div>
+          <div class="brand-sub">${departmentLabel}</div>
         </div>
-        <div class="divider"></div>
-
-        ${specialistLine}
-        <div class="footer">Doimo sog'-salomat bo'ling</div>
+        <div class="rule"></div>
+        ${queueBlock}
+        <table class="meta">
+          <tr><td>Bemor</td><td>${escapeHtml(check.patient?.fullName || "-")}</td></tr>
+          <tr><td>${specialistLabel}</td><td>${escapeHtml(check?.createdBy?.name || "-")}</td></tr>
+          <tr><td>Sana</td><td>${escapeHtml(formatReceiptDate(check.createdAt))}</td></tr>
+          <tr><td>Chek №</td><td>${escapeHtml(shortCheckId(check.checkId))}</td></tr>
+        </table>
+        ${section("DORILAR", medicineRows)}
+        ${section("XIZMATLAR", serviceRows)}
+        <div class="total">
+          <span class="total-label">JAMI</span>
+          <span class="total-amount">${escapeHtml(formatSum(check.total))} <small>so'm</small></span>
+        </div>
+        <div class="footer">
+          <div class="footer-main">Doimo sog'-salomat bo'ling!</div>
+          <div class="footer-sub">Tashrifingiz uchun rahmat</div>
+        </div>
       </div>
       <div class="cut-tail"></div>
     </div>
