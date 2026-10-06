@@ -773,7 +773,9 @@ function LorServicesPage() {
   }
 
   return (
-    <div className="space-y-4 overflow-x-clip">
+    // Navbat qabul qilinganda pastki panel ekran tagiga yopishishi uchun main ning
+    // pastki paddingi yopiladi (aks holda sahifa oxirida panel 16-24px ko'tariladi).
+    <div className={`space-y-4 overflow-x-clip ${activeTicket ? "-mb-4 lg:-mb-6" : ""}`}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-2 text-sm text-slate-600">
           <span className="truncate">
@@ -1038,8 +1040,8 @@ function LorServicesPage() {
             </aside>
           </div>
 
-          {/* Chek chiqarish paneli ekran pastida doim ko'rinadi, xizmat soni qancha bo'lmasin. */}
-          <div className="sticky bottom-2 z-30 rounded-xl border border-slate-200 bg-white/95 p-3 shadow-[0_-6px_24px_rgba(15,23,42,0.12)] backdrop-blur sm:p-4">
+          {/* Ekran tagiga yopishgan: sahifa qayerda bo'lmasin bir xil joyda turadi. */}
+          <div className="sticky bottom-0 z-30 rounded-t-xl border border-b-0 border-slate-200 bg-white p-3 shadow-[0_-6px_24px_rgba(15,23,42,0.12)] sm:p-4">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <span className="shrink-0 rounded-lg bg-sky-50 px-3 py-1 text-2xl font-black leading-none text-slate-900">
