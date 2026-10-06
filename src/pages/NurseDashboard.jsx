@@ -335,7 +335,8 @@ function NurseDashboard() {
   const selectedCount = selectedMedicineIds.length + selectedServiceIds.length;
 
   return (
-    <div className="nurse-dashboard space-y-4">
+    // Pastki panel sahifa oxirida ham ekran tagiga yopishishi uchun main ning pastki paddingi yopiladi.
+    <div className="nurse-dashboard -mb-4 flex min-h-[calc(100dvh-5rem)] flex-col gap-4 sm:min-h-[calc(100dvh-5.3rem)] lg:-mb-6 lg:min-h-[calc(100dvh-5.8rem)]">
       <Alert type="success" message={success} />
       <Alert type="error" message={error} />
 
@@ -585,21 +586,6 @@ function NurseDashboard() {
             ) : null}
           </div>
 
-          <div className="mt-4 flex items-baseline justify-between border-t border-slate-200 pt-3">
-            <span className="text-sm font-semibold text-slate-600">Jami</span>
-            <span className="whitespace-nowrap text-2xl font-black text-slate-900">
-              {formatCurrency(previewTotal)}{"\u00a0"}so'm
-            </span>
-          </div>
-          <Button
-            className="mt-3 min-h-12 w-full text-base"
-            disabled={!hasAnySelection}
-            loading={submitting}
-            loadingText="Chek yaratilmoqda..."
-            onClick={handleCheckout}
-          >
-            Chek chiqarish
-          </Button>
           {hasAnySelection ? (
             <button
               type="button"
@@ -610,6 +596,35 @@ function NurseDashboard() {
             </button>
           ) : null}
         </aside>
+      </div>
+
+      {/* LOR qabulidagi kabi: chek tugmasi ekran tagiga yopishgan, tanlov qancha bo'lmasin ko'rinadi. */}
+      <div className="sticky bottom-0 z-30 mt-auto rounded-t-xl border border-b-0 border-slate-200 bg-white p-3 shadow-[0_-6px_24px_rgba(15,23,42,0.12)] sm:p-4">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="min-w-0 flex-1">
+            {patient.fullName.trim() ? (
+              <p className="truncate text-sm font-bold text-slate-900">{patient.fullName}</p>
+            ) : (
+              <p className="truncate text-sm font-bold text-amber-700">Bemor F.I.O kiritilmagan</p>
+            )}
+            <p className="text-xs font-semibold text-slate-500">{selectedCount} ta tanlangan</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs font-semibold text-slate-500">Jami</p>
+            <p className="whitespace-nowrap text-2xl font-black leading-tight text-slate-900">
+              {formatCurrency(previewTotal)} so'm
+            </p>
+          </div>
+          <Button
+            className="min-h-12 w-full text-base sm:w-auto sm:min-w-60"
+            disabled={!hasAnySelection}
+            loading={submitting}
+            loadingText="Chek yaratilmoqda..."
+            onClick={handleCheckout}
+          >
+            Chek chiqarish
+          </Button>
+        </div>
       </div>
 
       <BusyOverlay show={submitting} text="Chek yaratilmoqda..." />

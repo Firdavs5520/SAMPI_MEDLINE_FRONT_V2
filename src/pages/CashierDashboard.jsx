@@ -1920,16 +1920,26 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                     placeholder="Masalan: 120 000"
                     readOnly
                   />
-                  <Input
-                    field="cashier-paid"
-                    label="To'langan summa"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={7}
-                    value={form.paidAmount}
-                    onChange={(e) => handleFormChange("paidAmount", e.target.value)}
-                    placeholder="Masalan: 100 000"
-                  />
+                  <div>
+                    <Input
+                      field="cashier-paid"
+                      label="To'langan summa"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={7}
+                      value={form.paidAmount}
+                      onChange={(e) => handleFormChange("paidAmount", e.target.value)}
+                      placeholder="Masalan: 100 000"
+                    />
+                    {/* Ko'p bemor to'liq to'laydi: summani qo'lda yozmasdan bitta bosish. */}
+                    <button
+                      type="button"
+                      onClick={() => handleFormChange("paidAmount", form.amount)}
+                      className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
+                    >
+                      ✓ To'liq to'landi ({form.amount} so'm)
+                    </button>
+                  </div>
                   <Input
                     field="cashier-phone"
                     label="Telefon"
@@ -1950,12 +1960,24 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                     onChange={(nextValue) => handleFormChange("paymentMethod", nextValue)}
                   />
 
-                  <div className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2.5">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-orange-700">Qarz</p>
-                    <p className="mt-1 text-lg font-bold text-orange-800">
-                      {formatCurrency(calculatedDebt)} so'm
-                    </p>
-                  </div>
+                  {String(form.paidAmount || "").trim() === "" ? (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Qarz</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-500">To'langan summani kiriting</p>
+                    </div>
+                  ) : calculatedDebt > 0 ? (
+                    <div className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2.5">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-orange-700">Qarz qoladi</p>
+                      <p className="mt-1 text-lg font-bold text-orange-800">
+                        {formatCurrency(calculatedDebt)} so'm
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Qarz</p>
+                      <p className="mt-1 text-lg font-bold text-emerald-800">Yo'q — to'liq to'landi</p>
+                    </div>
+                  )}
                 </div>
 
                 <label className="block">
