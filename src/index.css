@@ -6695,3 +6695,40 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-lang-swap {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ---- Klaviatura fokusi (Tab) ----
+   Brauzer standart fokus ramkasini Windows tizim rangida (masalan, to'q sariq)
+   chizadi - sayt dizayniga mos emas. Hamma joyda bir xil firuza halqa;
+   sichqoncha bilan bosilganda ramka chiqmaydi (faqat :focus-visible). */
+:where(a, button, [role="button"], [tabindex], summary, label):focus {
+  outline: none;
+}
+
+:where(a, button, [role="button"], [tabindex], summary):focus-visible {
+  outline: 2px solid #0e7490;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(14, 116, 144, 0.16);
+}
+
+html.theme-dark :where(a, button, [role="button"], [tabindex], summary):focus-visible {
+  outline-color: #22d3ee;
+  box-shadow: 0 0 0 5px rgba(34, 211, 238, 0.18);
+}
+
+/* Yon menyu: fokusda xuddi hover kabi yumshoq fon, ramka ichkarida. */
+.sampi-sidebar-link:focus-visible {
+  outline: 2px solid #0e7490;
+  outline-offset: -2px;
+  box-shadow: none;
+  background-color: rgba(14, 116, 144, 0.08);
+}
+
+html.theme-dark .sampi-sidebar-link:focus-visible {
+  outline-color: #22d3ee;
+  background-color: rgba(34, 211, 238, 0.1);
+}
+
+.sampi-sidebar-link[aria-current="page"]:focus-visible {
+  outline-color: #ffffff;
+  background-color: revert-layer;
+}
