@@ -8,6 +8,7 @@ import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
 import BusyOverlay from "../components/BusyOverlay.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
+import { fieldError, showFieldErrorFrom } from "../utils/fieldError.js";
 import SelectMenu from "../components/SelectMenu.jsx";
 import QuantityStepper from "../components/QuantityStepper.jsx";
 import {
@@ -219,14 +220,14 @@ function NurseDashboard() {
 
   const validateSpecialist = () => {
     if (!selectedSpecialistId) {
-      throw new Error("Avval hamshirani tanlang.");
+      throw fieldError("nurse-specialist", "Avval hamshirani tanlang.");
     }
   };
 
   const validatePatient = () => {
     const { firstName, lastName } = splitFullName(patient.fullName);
     if (!firstName.trim() || !lastName.trim()) {
-      throw new Error("Bemor F.I.O ni to'liq kiriting (ismi va familiyasi).");
+      throw fieldError("nurse-patient", "Bemor F.I.O ni to'liq kiriting (ismi va familiyasi).");
     }
   };
 
@@ -267,15 +268,17 @@ function NurseDashboard() {
     try {
       validateSpecialist();
       validatePatient();
-      if (!hasAnySelection) throw new Error("Kamida bitta dori yoki xizmat tanlang.");
+      if (!hasAnySelection) throw fieldError("nurse-catalog", "Kamida bitta dori yoki xizmat tanlang.");
 
       const parsedPatient = splitFullName(patient.fullName);
       const medicinesPayload = selectedMedicineIds.map((id) => {
         const medicine = medicines.find((m) => m._id === id);
         if (!medicine) throw new Error("Tanlangan dori topilmadi.");
         const quantity = Number(medicineInputs[id]?.quantity || 1);
-        if (quantity <= 0) throw new Error("Miqdor noto'g'ri.");
-        if (medicine.stock < quantity) throw new Error(`${medicine.name} uchun qoldiq yetarli emas.`);
+        if (quantity <= 0) throw fieldError(`nurse-line-${id}`, "Miqdor noto'g'ri.");
+        if (medicine.stock < quantity) {
+          throw fieldError(`nurse-line-${id}`, `Qoldiq yetarli emas: omborda ${medicine.stock} ta bor.`);
+        }
         return { medicineId: id, quantity };
       });
 
@@ -287,7 +290,7 @@ function NurseDashboard() {
           ? serviceInputs[id]?.priceTier
           : "first";
         if (!isValidPrice(getServicePrice(service, priceTier))) {
-          throw new Error(`${service.name} uchun narx sozlanmagan.`);
+          throw fieldError(`nurse-line-${id}`, `${service.name} uchun narx sozlanmagan.`);
         }
         return { serviceId: id, quantity, priceTier };
       });
@@ -318,7 +321,9 @@ function NurseDashboard() {
       void loadData();
     } catch (err) {
       closePrintTab(printSession);
-      setError(extractErrorMessage(err));
+      if (!showFieldErrorFrom(err)) {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -336,6 +341,7 @@ function NurseDashboard() {
 
       <div className="card grid gap-3 p-4 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
         <SelectMenu
+          field="nurse-specialist"
           label="Hamshira"
           value={selectedSpecialistId}
           options={specialists.map((item) => ({ value: item._id, label: item.name }))}
@@ -343,6 +349,7 @@ function NurseDashboard() {
           placeholder="Hamshirani tanlang"
         />
         <Input
+          field="nurse-patient"
           label="Bemor F.I.O"
           value={patient.fullName}
           placeholder="Masalan: Ali Valiyev"
@@ -391,14 +398,16 @@ function NurseDashboard() {
                 </button>
               ))}
             </div>
-            <input
-              ref={catalogSearchRef}
-              type="search"
-              value={catalogSearch}
-              onChange={(e) => setCatalogSearch(e.target.value)}
-              placeholder={catalogTab === "medicines" ? "Dori qidirish..." : "Xizmat qidirish..."}
-              className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
-            />
+            <div data-field="nurse-catalog" className="min-w-0 flex-1">
+              <input
+                ref={catalogSearchRef}
+                type="search"
+                value={catalogSearch}
+                onChange={(e) => setCatalogSearch(e.target.value)}
+                placeholder={catalogTab === "medicines" ? "Dori qidirish..." : "Xizmat qidirish..."}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
+              />
+            </div>
           </div>
 
           <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
@@ -484,7 +493,11 @@ function NurseDashboard() {
               const medicine = medicines.find((m) => m._id === line.id);
               const max = Math.max(Number(medicine?.stock || 1), 1);
               return (
-                <div key={line.id} className="rounded-lg border border-slate-200 px-3 py-2">
+                <div
+                  key={line.id}
+                  data-field={`nurse-line-${line.id}`}
+                  className="sampi-field-box rounded-lg border border-slate-200 px-3 py-2"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <p className="min-w-0 break-words text-sm font-semibold text-slate-800">{line.name}</p>
                     <button
@@ -513,7 +526,11 @@ function NurseDashboard() {
             })}
 
             {previewServices.map((line) => (
-              <div key={line.id} className="rounded-lg border border-slate-200 px-3 py-2">
+              <div
+                key={line.id}
+                data-field={`nurse-line-${line.id}`}
+                className="sampi-field-box rounded-lg border border-slate-200 px-3 py-2"
+              >
                 <div className="flex items-start justify-between gap-2">
                   <p className="min-w-0 break-words text-sm font-semibold text-slate-800">{line.name}</p>
                   <button

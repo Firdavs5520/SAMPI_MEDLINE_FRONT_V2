@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import medicineService from "../services/medicineService.js";
 import Input from "../components/Input.jsx";
+import { fieldError, showFieldErrorFrom } from "../utils/fieldError.js";
 import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
@@ -37,7 +38,9 @@ function NurseMedicinesPage() {
       const data = await medicineService.getAllMedicines();
       setMedicines(data);
     } catch (err) {
-      setError(extractErrorMessage(err));
+      if (!showFieldErrorFrom(err)) {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setLoading(false);
     }
@@ -61,10 +64,10 @@ function NurseMedicinesPage() {
       const safeName = toTitleCaseName(newMedicineName).trim();
       const safePrice = parseMoneyInput(newMedicinePrice);
       if (!safeName) {
-        throw new Error("Dori nomini kiriting.");
+        throw fieldError("medicine-new-name", "Dori nomini kiriting.");
       }
       if (!Number.isFinite(safePrice) || safePrice <= 0 || safePrice >= 1000000) {
-        throw new Error("Narx > 0 va < 1,000,000 bo'lishi kerak.");
+        throw fieldError("medicine-new-price", "Narx > 0 va < 1,000,000 bo'lishi kerak.");
       }
 
       await medicineService.addMedicine({ name: safeName, price: safePrice });
@@ -73,7 +76,9 @@ function NurseMedicinesPage() {
       setNewMedicinePrice("");
       await loadMedicines();
     } catch (err) {
-      setError(extractErrorMessage(err));
+      if (!showFieldErrorFrom(err)) {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setSaving(false);
     }
@@ -104,10 +109,10 @@ function NurseMedicinesPage() {
       const safePrice = parseMoneyInput(editForm.price);
 
       if (!safeName) {
-        throw new Error("Dori nomini kiriting.");
+        throw fieldError("medicine-edit-name", "Dori nomini kiriting.");
       }
       if (!Number.isFinite(safePrice) || safePrice <= 0 || safePrice >= 1000000) {
-        throw new Error("Narx > 0 va < 1,000,000 bo'lishi kerak.");
+        throw fieldError("medicine-edit-price", "Narx > 0 va < 1,000,000 bo'lishi kerak.");
       }
 
       await medicineService.updateMedicine(editingMedicineId, {
@@ -172,12 +177,14 @@ function NurseMedicinesPage() {
           className="grid gap-3 md:grid-cols-[1fr_180px_auto]"
         >
           <Input
+            field="medicine-new-name"
             label="Dori nomi"
             value={newMedicineName}
             onChange={(e) => setNewMedicineName(toTitleCaseName(e.target.value))}
             placeholder="Masalan: Paracetamol"
           />
           <Input
+            field="medicine-new-price"
             label="Narxi"
             type="text"
             inputMode="numeric"
@@ -200,6 +207,7 @@ function NurseMedicinesPage() {
             className="mt-3 grid gap-3 md:grid-cols-[1fr_180px_auto_auto]"
           >
             <Input
+              field="medicine-edit-name"
               label="Dori nomi"
               value={editForm.name}
               onChange={(e) =>
@@ -210,6 +218,7 @@ function NurseMedicinesPage() {
               }
             />
             <Input
+              field="medicine-edit-price"
               label="Narxi"
               type="text"
               inputMode="numeric"

@@ -6171,3 +6171,56 @@ html.theme-dark .sampi-update-step-dot {
     display: none !important;
   }
 }
+
+/* ---- Maydondagi xato: qizil ramka, silkinish va maydon ostida matn ---- */
+[data-field-error] .sampi-input,
+[data-field-error] input,
+[data-field-error] textarea,
+[data-field-error] select,
+input[data-field-error],
+[data-field-error].sampi-field-box {
+  border-color: #f43f5e !important;
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.18) !important;
+}
+
+[data-field-error]:not(input)::after {
+  content: "⚠ " attr(data-field-error);
+  display: block;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #be123c;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  animation: sampi-field-error-in 0.22s ease-out;
+}
+
+html.theme-dark [data-field-error]:not(input)::after {
+  background: rgba(244, 63, 94, 0.14);
+  color: #fda4af;
+}
+
+[data-field-shake] {
+  animation: sampi-field-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes sampi-field-shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-7px); }
+  40%, 60% { transform: translateX(7px); }
+}
+
+@keyframes sampi-field-error-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-field-shake],
+  [data-field-error]:not(input)::after {
+    animation: none;
+  }
+}

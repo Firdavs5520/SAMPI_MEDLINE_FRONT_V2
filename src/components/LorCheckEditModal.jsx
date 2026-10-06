@@ -7,6 +7,7 @@ import serviceService from "../services/serviceService.js";
 import usageService from "../services/usageService.js";
 import { extractErrorMessage, formatCurrency, formatDateTime } from "../utils/format.js";
 import { getLorCheckEditDeadline } from "../utils/lorCheckEdit.js";
+import { showFieldError } from "../utils/fieldError.js";
 
 // Eski cheklarda serviceId yo'q: xizmatni nomi bo'yicha topamiz.
 const buildInitialSelection = (check, services) => {
@@ -141,7 +142,7 @@ function LorCheckEditModal({ open, check, currentUserId, onClose, onSaved }) {
     setError("");
 
     if (!selectedCount) {
-      setError("Kamida bitta xizmat tanlang.");
+      showFieldError("lor-edit-services", "Kamida bitta xizmat tanlang.");
       return;
     }
     if (belowPaid) {
@@ -239,13 +240,15 @@ function LorCheckEditModal({ open, check, currentUserId, onClose, onSaved }) {
 
           <Alert type="error" message={error} />
 
-          <input
-            type="text"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Xizmat qidirish..."
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:outline-none"
-          />
+          <div data-field="lor-edit-services">
+            <input
+              type="text"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Xizmat qidirish..."
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            />
+          </div>
 
           {loading ? (
             <Spinner text="Xizmatlar yuklanmoqda..." />

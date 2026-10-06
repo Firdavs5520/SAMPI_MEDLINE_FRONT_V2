@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-function SelectMenu({ label, value, options, onChange, disabled = false }) {
+function SelectMenu({ label, value, options, onChange, disabled = false, field }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -34,7 +34,7 @@ function SelectMenu({ label, value, options, onChange, disabled = false }) {
   }, [open]);
 
   return (
-    <label className="relative block" ref={ref}>
+    <label className="relative block" ref={ref} data-field={field}>
       {label ? <span className="sampi-field-label mb-1.5 block text-sm font-semibold text-slate-600">{label}</span> : null}
       <button
         type="button"

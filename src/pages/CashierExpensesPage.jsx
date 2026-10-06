@@ -17,6 +17,7 @@ import {
   parseMoneyInput
 } from "../utils/format.js";
 import { getCurrentShiftYmd } from "../utils/date.js";
+import { showFieldError } from "../utils/fieldError.js";
 
 const paymentMethodOptions = [
   { value: "cash", label: "Naqd" },
@@ -87,11 +88,11 @@ function CashierExpensesPage() {
 
     const amount = parseMoneyInput(form.amount);
     if (!amount) {
-      setError("Xarajat summasini kiriting.");
+      showFieldError("expense-amount", "Xarajat summasini kiriting.");
       return;
     }
     if (!form.reason.trim()) {
-      setError("Xarajat sababini yozing.");
+      showFieldError("expense-reason", "Xarajat sababini yozing.");
       return;
     }
 
@@ -149,6 +150,7 @@ function CashierExpensesPage() {
             className="mt-4 grid gap-3 md:grid-cols-[180px_1fr_170px_auto] md:items-end"
           >
             <Input
+              field="expense-amount"
               label="Summa (so'm)"
               type="text"
               inputMode="numeric"
@@ -159,6 +161,7 @@ function CashierExpensesPage() {
               }
             />
             <Input
+              field="expense-reason"
               label="Sabab"
               type="text"
               maxLength={300}

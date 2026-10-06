@@ -6,6 +6,7 @@ import { roleHomePath } from "../utils/constants.js";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Alert from "../components/Alert.jsx";
+import { showFieldError } from "../utils/fieldError.js";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -24,8 +25,13 @@ function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (!form.email || !form.password) {
-      setError("Email va parol kiritilishi shart.");
+    if (!form.email) {
+      showFieldError("login-email", "Emailni kiriting.");
+      return;
+    }
+
+    if (!form.password) {
+      showFieldError("login-password", "Parolni kiriting.");
       return;
     }
 
@@ -83,6 +89,7 @@ function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
+                field="login-email"
                 label="Email"
                 type="email"
                 placeholder="email@example.com"
@@ -91,6 +98,7 @@ function LoginPage() {
                 onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
               />
               <Input
+                field="login-password"
                 label="Parol"
                 type="password"
                 placeholder="********"

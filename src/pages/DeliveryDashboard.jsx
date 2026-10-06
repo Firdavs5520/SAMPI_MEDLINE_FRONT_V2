@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import medicineService from "../services/medicineService.js";
 import Input from "../components/Input.jsx";
+import { fieldError, showFieldErrorFrom } from "../utils/fieldError.js";
 import Button from "../components/Button.jsx";
 import Alert from "../components/Alert.jsx";
 import Table from "../components/Table.jsx";
@@ -108,13 +109,13 @@ function DeliveryDashboard() {
 
     try {
       if (selectedMedicineIds.length === 0) {
-        throw new Error("Kamida bitta dori tanlang.");
+        throw fieldError("delivery-search", "Kamida bitta dori tanlang.");
       }
 
       const items = selectedMedicineIds.map((medicineId) => {
         const quantity = parseMoneyInput(selectedInputs[medicineId]?.quantity);
         if (!Number.isFinite(quantity) || quantity <= 0) {
-          throw new Error("Har bir dorida miqdor 0 dan katta bo'lishi kerak.");
+          throw fieldError(`delivery-qty-${medicineId}`, "Miqdor 0 dan katta bo'lishi kerak.");
         }
 
         return {
@@ -132,7 +133,9 @@ function DeliveryDashboard() {
       setSelectedInputs({});
       await loadMedicines();
     } catch (err) {
-      setError(extractErrorMessage(err));
+      if (!showFieldErrorFrom(err)) {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setSavingStock(false);
     }
@@ -150,7 +153,7 @@ function DeliveryDashboard() {
           Bir nechta dorini bosib tanlang, keyin hammasiga birdaniga miqdor qo'shing.
         </p>
 
-        <div className="mb-4">
+        <div className="mb-4" data-field="delivery-search">
           <QuickSearchInput
             label="Dori qidirish"
             placeholder="Masalan: Ceftriaxone"
@@ -225,6 +228,7 @@ function DeliveryDashboard() {
                   </div>
 
                   <Input
+                    field={`delivery-qty-${medicineId}`}
                     label="Keltirilgan miqdor"
                     type="text"
                     inputMode="numeric"

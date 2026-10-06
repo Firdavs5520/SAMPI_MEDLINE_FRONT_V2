@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import serviceService from "../services/serviceService.js";
 import Input from "../components/Input.jsx";
+import { fieldError, showFieldErrorFrom } from "../utils/fieldError.js";
 import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
@@ -48,7 +49,9 @@ function LorServiceCreatePage() {
       const allServices = await serviceService.getAllServices();
       setServices(allServices);
     } catch (err) {
-      setError(extractErrorMessage(err));
+      if (!showFieldErrorFrom(err)) {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setLoading(false);
     }
@@ -73,13 +76,13 @@ function LorServiceCreatePage() {
       const safePrice = parseMoneyInput(newServiceForm.price);
 
       if (!safeName) {
-        throw new Error("Xizmat nomini kiriting.");
+        throw fieldError("lor-service-new-name", "Xizmat nomini kiriting.");
       }
       if (!String(newServiceForm.price || "").trim()) {
-        throw new Error("Narxni kiriting (bepul xizmat uchun 0).");
+        throw fieldError("lor-service-new-price", "Narxni kiriting (bepul xizmat uchun 0).");
       }
       if (!Number.isFinite(safePrice) || safePrice < 0 || safePrice >= 1000000) {
-        throw new Error("Narx 0 yoki undan katta va < 1,000,000 bo'lishi kerak.");
+        throw fieldError("lor-service-new-price", "Narx 0 yoki undan katta va < 1,000,000 bo'lishi kerak.");
       }
 
       await serviceService.createService({
@@ -92,7 +95,9 @@ function LorServiceCreatePage() {
       setNewServiceForm({ name: "", price: "" });
       await loadServices();
     } catch (err) {
-      setError(extractErrorMessage(err));
+      if (!showFieldErrorFrom(err)) {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setSavingService(false);
     }
@@ -128,13 +133,13 @@ function LorServiceCreatePage() {
       const safePrice = parseMoneyInput(editForm.price);
 
       if (!safeName) {
-        throw new Error("Xizmat nomini kiriting.");
+        throw fieldError("lor-service-edit-name", "Xizmat nomini kiriting.");
       }
       if (!String(editForm.price || "").trim()) {
-        throw new Error("Narxni kiriting (bepul xizmat uchun 0).");
+        throw fieldError("lor-service-edit-price", "Narxni kiriting (bepul xizmat uchun 0).");
       }
       if (!Number.isFinite(safePrice) || safePrice < 0 || safePrice >= 1000000) {
-        throw new Error("Narx 0 yoki undan katta va < 1,000,000 bo'lishi kerak.");
+        throw fieldError("lor-service-edit-price", "Narx 0 yoki undan katta va < 1,000,000 bo'lishi kerak.");
       }
 
       await serviceService.updateService(editingServiceId, {
@@ -146,7 +151,9 @@ function LorServiceCreatePage() {
       handleCancelEdit();
       await loadServices();
     } catch (err) {
-      setError(extractErrorMessage(err));
+      if (!showFieldErrorFrom(err)) {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setUpdating(false);
     }
@@ -199,6 +206,7 @@ function LorServiceCreatePage() {
           className="grid gap-3 md:grid-cols-[1fr_180px_auto]"
         >
           <Input
+            field="lor-service-new-name"
             label="Xizmat nomi"
             value={newServiceForm.name}
             onChange={(e) =>
@@ -209,6 +217,7 @@ function LorServiceCreatePage() {
             }
           />
           <Input
+            field="lor-service-new-price"
             label="Narxi"
             type="text"
             inputMode="numeric"
@@ -235,6 +244,7 @@ function LorServiceCreatePage() {
             className="mt-3 grid gap-3 md:grid-cols-[1fr_180px_auto_auto]"
           >
             <Input
+              field="lor-service-edit-name"
               label="Xizmat nomi"
               value={editForm.name}
               onChange={(e) =>
@@ -245,6 +255,7 @@ function LorServiceCreatePage() {
               }
             />
             <Input
+              field="lor-service-edit-price"
               label="Narxi"
               type="text"
               inputMode="numeric"

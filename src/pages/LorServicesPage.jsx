@@ -10,6 +10,7 @@ import BusyOverlay from "../components/BusyOverlay.jsx";
 import Modal from "../components/Modal.jsx";
 import QuantityStepper from "../components/QuantityStepper.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { fieldError, showFieldErrorFrom } from "../utils/fieldError.js";
 import {
   extractErrorMessage,
   formatCurrency,
@@ -485,7 +486,7 @@ function LorServicesPage() {
     const lastName = normalizedPatient.lastName.trim();
 
     if (!firstName || !lastName) {
-      throw new Error(text.errors.patientRequired);
+      throw fieldError("lor-patient", text.errors.patientRequired);
     }
   };
 
@@ -550,14 +551,7 @@ function LorServicesPage() {
     try {
       validateDoctor();
 
-      try {
-        validatePatient();
-      } catch (patientError) {
-        // Pastki paneldan bosilganda ism maydoni ekrandan tashqarida bo'lishi mumkin.
-        patientInputRef.current?.focus();
-        patientInputRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-        throw patientError;
-      }
+      validatePatient();
 
       if (!lorIdentity) {
         throw new Error(text.errors.identityMissing);
@@ -568,7 +562,7 @@ function LorServicesPage() {
       }
 
       if (selectedServiceIds.length === 0) {
-        throw new Error(text.errors.serviceRequired);
+        throw fieldError("lor-services", text.errors.serviceRequired);
       }
 
       const normalizedPatient = splitFullName(patient.fullName);
@@ -619,7 +613,9 @@ function LorServicesPage() {
       }
     } catch (err) {
       closePrintTab(printTab);
-      setError(extractErrorMessage(err));
+      if (!showFieldErrorFrom(err)) {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setSubmittingCheckout(false);
     }
@@ -827,6 +823,7 @@ function LorServicesPage() {
               </span>
             </div>
             <Input
+              field="lor-patient"
               label={text.patientLabel}
               value={patient.fullName}
               placeholder={text.patientPlaceholder}
@@ -857,18 +854,20 @@ function LorServicesPage() {
 
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_24rem]">
             <section className="card p-4">
-              <input
-                ref={serviceSearchRef}
-                type="search"
-                value={serviceSearch}
-                onChange={(e) => {
-                  setServiceSearch(e.target.value);
-                  setHighlightIndex(0);
-                }}
-                onKeyDown={handleServiceSearchKeyDown}
-                placeholder="Xizmat qidirish... (↑ ↓ tanlash, Enter — qo'shish, Esc — tozalash)"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
-              />
+              <div data-field="lor-services">
+                <input
+                  ref={serviceSearchRef}
+                  type="search"
+                  value={serviceSearch}
+                  onChange={(e) => {
+                    setServiceSearch(e.target.value);
+                    setHighlightIndex(0);
+                  }}
+                  onKeyDown={handleServiceSearchKeyDown}
+                  placeholder="Xizmat qidirish... (↑ ↓ tanlash, Enter — qo'shish, Esc — tozalash)"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
+                />
+              </div>
 
               {sortedServices.length === 0 ? (
                 <p className="mt-3 rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-600">

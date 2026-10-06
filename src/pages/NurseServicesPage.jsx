@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import serviceService from "../services/serviceService.js";
 import Input from "../components/Input.jsx";
+import { fieldError, showFieldErrorFrom } from "../utils/fieldError.js";
 import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
@@ -21,18 +22,18 @@ const emptyPriceForm = {
   third: ""
 };
 
-const parsePrice = (value) => {
+const parsePrice = (value, field) => {
   const parsed = parseMoneyInput(value);
   if (!Number.isFinite(parsed) || parsed <= 0 || parsed >= 1000000) {
-    throw new Error("Narx > 0 va < 1,000,000 bo'lishi kerak.");
+    throw fieldError(field, "Narx > 0 va < 1,000,000 bo'lishi kerak.");
   }
   return parsed;
 };
 
-const normalizePriceOptions = (form) => ({
-  first: parsePrice(form.first),
-  second: parsePrice(form.second),
-  third: parsePrice(form.third)
+const normalizePriceOptions = (form, fieldPrefix) => ({
+  first: parsePrice(form.first, `${fieldPrefix}-first`),
+  second: parsePrice(form.second, `${fieldPrefix}-second`),
+  third: parsePrice(form.third, `${fieldPrefix}-third`)
 });
 
 const getServicePriceOptions = (service) => {
@@ -77,7 +78,9 @@ function NurseServicesPage() {
       const allServices = await serviceService.getAllServices();
       setServices(allServices);
     } catch (err) {
-      setError(extractErrorMessage(err));
+      if (!showFieldErrorFrom(err)) {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setLoading(false);
     }
@@ -100,10 +103,10 @@ function NurseServicesPage() {
     try {
       const safeName = toTitleCaseName(form.name).trim();
       if (!safeName) {
-        throw new Error("Xizmat nomini kiriting.");
+        throw fieldError("nurse-service-new-name", "Xizmat nomini kiriting.");
       }
 
-      const priceOptions = normalizePriceOptions(form);
+      const priceOptions = normalizePriceOptions(form, "nurse-service-new");
 
       await serviceService.createService({
         name: safeName,
@@ -115,7 +118,9 @@ function NurseServicesPage() {
       setForm(emptyPriceForm);
       await loadServices();
     } catch (err) {
-      setError(extractErrorMessage(err));
+      if (!showFieldErrorFrom(err)) {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setSaving(false);
     }
@@ -148,10 +153,10 @@ function NurseServicesPage() {
     try {
       const safeName = toTitleCaseName(editForm.name).trim();
       if (!safeName) {
-        throw new Error("Xizmat nomini kiriting.");
+        throw fieldError("nurse-service-edit-name", "Xizmat nomini kiriting.");
       }
 
-      const priceOptions = normalizePriceOptions(editForm);
+      const priceOptions = normalizePriceOptions(editForm, "nurse-service-edit");
 
       await serviceService.updateService(editingServiceId, {
         name: safeName,
@@ -208,6 +213,7 @@ function NurseServicesPage() {
         </p>
         <form onSubmit={handleAddService} className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           <Input
+            field="nurse-service-new-name"
             label="Xizmat nomi"
             value={form.name}
             onChange={(e) =>
@@ -215,6 +221,7 @@ function NurseServicesPage() {
             }
           />
           <Input
+            field="nurse-service-new-first"
             label="1-marta narxi"
             type="text"
             inputMode="numeric"
@@ -225,6 +232,7 @@ function NurseServicesPage() {
             }
           />
           <Input
+            field="nurse-service-new-second"
             label="2-marta narxi"
             type="text"
             inputMode="numeric"
@@ -235,6 +243,7 @@ function NurseServicesPage() {
             }
           />
           <Input
+            field="nurse-service-new-third"
             label="3-marta narxi"
             type="text"
             inputMode="numeric"
@@ -258,6 +267,7 @@ function NurseServicesPage() {
             className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-6"
           >
             <Input
+              field="nurse-service-edit-name"
               label="Xizmat nomi"
               value={editForm.name}
               onChange={(e) =>
@@ -268,6 +278,7 @@ function NurseServicesPage() {
               }
             />
             <Input
+              field="nurse-service-edit-first"
               label="1-marta narxi"
               type="text"
               inputMode="numeric"
@@ -281,6 +292,7 @@ function NurseServicesPage() {
               }
             />
             <Input
+              field="nurse-service-edit-second"
               label="2-marta narxi"
               type="text"
               inputMode="numeric"
@@ -294,6 +306,7 @@ function NurseServicesPage() {
               }
             />
             <Input
+              field="nurse-service-edit-third"
               label="3-marta narxi"
               type="text"
               inputMode="numeric"

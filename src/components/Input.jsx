@@ -1,6 +1,6 @@
-function Input({ label, error, className = "", inputRef = null, ...props }) {
+function Input({ label, error, field, className = "", inputRef = null, ...props }) {
   return (
-    <label className="block">
+    <label className="block" data-field={field}>
       {label && (
         <span className="sampi-field-label mb-1.5 block text-sm font-semibold text-slate-600">
           {label}

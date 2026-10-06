@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import Input from "../components/Input.jsx";
+import { showFieldError } from "../utils/fieldError.js";
 import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
@@ -79,7 +80,7 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
     resetMessages();
     const safeName = toTitleCaseName(newName).trim();
     if (!safeName) {
-      setError(`${roleLabel} nomini kiriting.`);
+      showFieldError("specialist-new-name", `${roleLabel} nomini kiriting.`);
       return;
     }
 
@@ -113,7 +114,7 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
     resetMessages();
     const safeName = toTitleCaseName(editingName).trim();
     if (!safeName) {
-      setError(`${roleLabel} nomini kiriting.`);
+      showFieldError("specialist-edit-name", `${roleLabel} nomini kiriting.`);
       return;
     }
 
@@ -167,6 +168,7 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
         <h2 className="text-lg font-semibold text-slate-800">Yangi {roleLabel.toLowerCase()} qo'shish</h2>
         <form className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={handleAdd}>
           <Input
+            field="specialist-new-name"
             label={`${roleLabel} nomi`}
             value={newName}
             placeholder={`Masalan: ${roleLabel} Aziz`}
@@ -207,6 +209,7 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
                   {isEditing ? (
                     <div className="space-y-3">
                       <Input
+                        field="specialist-edit-name"
                         label={`${roleLabel} nomi`}
                         value={editingName}
                         onChange={(e) => setEditingName(toTitleCaseName(e.target.value))}

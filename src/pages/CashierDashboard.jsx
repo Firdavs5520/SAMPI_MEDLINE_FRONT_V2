@@ -23,6 +23,7 @@ import {
   toTitleCaseName
 } from "../utils/format.js";
 import { getCurrentShiftYmd } from "../utils/date.js";
+import { fieldError, showFieldError, showFieldErrorFrom } from "../utils/fieldError.js";
 
 const SECTION_META = {
   "nurse-patients": {
@@ -895,22 +896,22 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     try {
       const isPendingCheckMode = Boolean(selectedPendingCheck?._id);
       if (!isPendingCheckMode) {
-        throw new Error("Avval qabul qilinadigan chekni tanlang.");
+        throw fieldError("cashier-pending", "Avval qabul qilinadigan chekni tanlang.");
       }
 
       if (String(form.paidAmount || "").trim() === "") {
-        throw new Error("To'langan summani kiriting.");
+        throw fieldError("cashier-paid", "To'langan summani kiriting.");
       }
 
       const paidAmount = safeNumber(form.paidAmount);
       const checkTotal = safeNumber(selectedPendingCheck.total);
       if (paidAmount > checkTotal) {
-        throw new Error("To'langan summa chek summasidan oshmasligi kerak.");
+        throw fieldError("cashier-paid", "To'langan summa chek summasidan oshmasligi kerak.");
       }
       const debtAmount = Math.max(0, checkTotal - paidAmount);
       const shouldRequireDebtPhone = shiftWindow?.settings?.requireDebtPhone !== false;
       if (shouldRequireDebtPhone && debtAmount > 0 && !form.patientPhone.trim()) {
-        throw new Error("Qarz qolsa bemor telefoni majburiy.");
+        throw fieldError("cashier-phone", "Qarz qolsa bemor telefoni majburiy.");
       }
 
       const payload = {
@@ -930,7 +931,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         await loadPendingChecks({ searchValue: pendingSearch.trim() });
       }
     } catch (err) {
-      setError(extractErrorMessage(err));
+      if (!showFieldErrorFrom(err)) {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setSavingEntry(false);
     }
@@ -1131,7 +1134,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     try {
       const name = specialistNameInput.trim();
       if (!name) {
-        throw new Error("Mutaxassis nomini kiriting.");
+        throw fieldError("cashier-specialist-name", "Mutaxassis nomini kiriting.");
       }
 
       await cashierService.createSpecialist({ type: specialistPageType, name });
@@ -1139,7 +1142,9 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       setSuccess("Mutaxassis qo'shildi.");
       await loadSpecialists();
     } catch (err) {
-      setError(extractErrorMessage(err));
+      if (!showFieldErrorFrom(err)) {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setSavingSpecialist(false);
     }
@@ -1184,12 +1189,12 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     resetMessages();
 
     if (!timeInputPattern.test(settingsForm.shiftStartTime)) {
-      setError("Smena boshlanishi HH:mm formatida bo'lishi kerak.");
+      showFieldError("cashier-shift-start", "Smena boshlanishi HH:mm formatida bo'lishi kerak.");
       return;
     }
 
     if (!timeInputPattern.test(settingsForm.shiftEndTime)) {
-      setError("Smena tugashi HH:mm formatida bo'lishi kerak.");
+      showFieldError("cashier-shift-end", "Smena tugashi HH:mm formatida bo'lishi kerak.");
       return;
     }
 
@@ -1199,7 +1204,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       lateEntryWarningMinutes < 0 ||
       lateEntryWarningMinutes > 720
     ) {
-      setError("Ogohlantirish daqiqasi 0 dan 720 gacha bo'lishi kerak.");
+      showFieldError("cashier-late-minutes", "Ogohlantirish daqiqasi 0 dan 720 gacha bo'lishi kerak.");
       return;
     }
 
@@ -1345,18 +1350,21 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         <form className="card space-y-4 p-4 sm:p-5" onSubmit={handleSaveSettings}>
           <div className="grid gap-3 sm:grid-cols-2">
             <Input
+              field="cashier-shift-start"
               label="Smena boshlanishi"
               type="time"
               value={settingsForm.shiftStartTime}
               onChange={(event) => handleSettingsChange("shiftStartTime", event.target.value)}
             />
             <Input
+              field="cashier-shift-end"
               label="Smena tugashi"
               type="time"
               value={settingsForm.shiftEndTime}
               onChange={(event) => handleSettingsChange("shiftEndTime", event.target.value)}
             />
             <Input
+              field="cashier-late-minutes"
               label="Kechikkan yozuv ogohlantirishi (daqiqa)"
               type="number"
               min="0"
@@ -1499,12 +1507,14 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
         <div className="card p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-slate-800">{specialistRoleLabel} qo'shish</h2>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <input
-              value={specialistNameInput}
-              onChange={(e) => setSpecialistNameInput(e.target.value)}
-              placeholder={`Masalan: ${specialistRoleLabel} 1`}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/10"
-            />
+            <div data-field="cashier-specialist-name" className="w-full">
+              <input
+                value={specialistNameInput}
+                onChange={(e) => setSpecialistNameInput(e.target.value)}
+                placeholder={`Masalan: ${specialistRoleLabel} 1`}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/10"
+              />
+            </div>
             <Button className="w-full sm:w-auto" onClick={handleAddSpecialist} loading={savingSpecialist}>
               Qo'shish
             </Button>
@@ -1735,7 +1745,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                   : "mt-3 max-h-[1200px] opacity-100"
               }`}
             >
-              <div className="mt-2">
+              <div className="mt-2" data-field="cashier-pending">
                 <QuickSearchInput
                   label={isLorFormSection ? "Chek yoki navbat raqami" : "Chek qidirish"}
                   placeholder={
@@ -1911,6 +1921,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                     readOnly
                   />
                   <Input
+                    field="cashier-paid"
                     label="To'langan summa"
                     type="text"
                     inputMode="numeric"
@@ -1920,6 +1931,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                     placeholder="Masalan: 100 000"
                   />
                   <Input
+                    field="cashier-phone"
                     label="Telefon"
                     type="text"
                     inputMode="numeric"
