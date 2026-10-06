@@ -10,6 +10,12 @@ const WAITING_TICKET_LIMIT = 80;
 const ADMIN_EXIT_PRESS_COUNT = 5;
 const ADMIN_EXIT_WINDOW_MS = 4500;
 const QUEUE_CHIME_PATH = "/audio/premium_queue_chime_close_match.wav";
+// O'zbekcha ovozli chaqiruv: public/audio/queue/15.mp3 -> "O'n beshinchi raqam, navbatingiz keldi."
+// Fayllar scripts/generate-queue-voice.mjs bilan yaratiladi.
+const QUEUE_VOICE_PATH = (number) => `/audio/queue/${number}.mp3`;
+const QUEUE_VOICE_MAX = 150;
+const QUEUE_VOICE_REPEAT_GAP_MS = 1600;
+const CHIME_MAX_WAIT_MS = 4000;
 // Chaqirilgan raqam katta ekranda 30 soniya turadi (pastdagi chiziq qolgan vaqtni ko'rsatadi).
 const CALL_ANNOUNCEMENT_MS = 30000;
 
@@ -42,6 +48,7 @@ function TvLorQueuePage() {
   const [connectionState, setConnectionState] = useState("connecting");
   const audioContextRef = useRef(null);
   const queueChimeRef = useRef(null);
+  const queueVoiceRef = useRef(null);
   const audioUnlockedRef = useRef(false);
   const abortRef = useRef(null);
   const eventSourceRef = useRef(null);
@@ -136,6 +143,14 @@ function TvLorQueuePage() {
         await audio.play();
         audioUnlockedRef.current = true;
         setAudioStatus("ready");
+        // Ovozli e'lon "ding" tugagandan keyin boshlanishi uchun.
+        await new Promise((resolve) => {
+          const timer = window.setTimeout(resolve, CHIME_MAX_WAIT_MS);
+          audio.onended = () => {
+            window.clearTimeout(timer);
+            resolve();
+          };
+        });
         return;
       } catch {
         // Browser autoplay rules may block the file; keep the TV cue alive with Web Audio.
@@ -155,6 +170,31 @@ function TvLorQueuePage() {
 
     setAudioStatus("blocked");
   }, [ensureQueueChime, playSyntheticQueueTone]);
+
+  // Raqamni o'zbekcha ovoz bilan ikki marta aytadi; yangi chaqiruv kelsa eskisi to'xtaydi.
+  const speakQueueNumber = useCallback(async (code) => {
+    const number = Number(String(code ?? "").replace(/D/g, ""));
+    if (!number || number > QUEUE_VOICE_MAX) return;
+
+    queueVoiceRef.current?.pause();
+    const voice = new Audio(QUEUE_VOICE_PATH(number));
+    voice.volume = 1;
+    queueVoiceRef.current = voice;
+
+    const playOnce = () =>
+      new Promise((resolve) => {
+        voice.currentTime = 0;
+        voice.onended = resolve;
+        voice.onerror = resolve;
+        voice.play().catch(resolve);
+      });
+
+    await playOnce();
+    if (queueVoiceRef.current !== voice) return;
+    await new Promise((resolve) => window.setTimeout(resolve, QUEUE_VOICE_REPEAT_GAP_MS));
+    if (queueVoiceRef.current !== voice || !mountedRef.current) return;
+    await playOnce();
+  }, []);
 
   const unlockQueueAudio = useCallback(() => {
     if (audioUnlockedRef.current) return;
@@ -185,7 +225,9 @@ function TvLorQueuePage() {
             key: nextAnnouncementKey,
             code: nextAnnouncementCode
           });
-          playQueueTone().catch(() => {});
+          playQueueTone()
+            .then(() => speakQueueNumber(nextAnnouncementCode))
+            .catch(() => {});
           window.setTimeout(() => {
             if (mountedRef.current) setPulseKey("");
           }, 1900);
@@ -197,7 +239,7 @@ function TvLorQueuePage() {
       }
       firstAnnouncementRef.current = false;
     },
-    [playQueueTone]
+    [playQueueTone, speakQueueNumber]
   );
 
   const loadQueue = useCallback(
@@ -390,6 +432,8 @@ function TvLorQueuePage() {
         queueChimeRef.current.pause();
         queueChimeRef.current = null;
       }
+      queueVoiceRef.current?.pause();
+      queueVoiceRef.current = null;
       if (abortRef.current) abortRef.current.abort();
       if (manifestLink && previousManifest) {
         manifestLink.setAttribute("href", previousManifest);

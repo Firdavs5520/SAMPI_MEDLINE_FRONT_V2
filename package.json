@@ -19,7 +19,8 @@
     "smoke:multi-role": "electron scripts/smoke-multi-role-routes.cjs",
     "smoke:tv-layout": "electron scripts/smoke-tv-layout.cjs",
     "smoke:receipt-print": "electron scripts/smoke-receipt-print.cjs",
-    "test": "node --test \"tests/**/*.test.js\""
+    "test": "node --test \"tests/**/*.test.js\"",
+    "voice:queue": "node scripts/generate-queue-voice.mjs"
   },
   "build": {
     "appId": "uz.sampimedline.desktop",
@@ -86,6 +87,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.4.27",
+    "edge-tts-universal": "^1.4.0",
     "electron": "^44.0.0",
     "electron-builder": "^26.15.3",
     "eslint": "^9.39.4",
