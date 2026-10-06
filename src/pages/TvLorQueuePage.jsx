@@ -12,9 +12,10 @@ const ADMIN_EXIT_WINDOW_MS = 4500;
 const QUEUE_CHIME_PATH = "/audio/premium_queue_chime_close_match.wav";
 // O'zbekcha ovozli chaqiruv: public/audio/queue/15.mp3 -> "O'n beshinchi raqam, navbatingiz keldi."
 // Fayllar scripts/generate-queue-voice.mjs bilan yaratiladi.
-const QUEUE_VOICE_PATH = (number) => `/audio/queue/${number}.mp3`;
+// ?v= ovoz qayta yaratilganda oshiriladi: service worker keshidagi eski fayl chalinmasin.
+const QUEUE_VOICE_VERSION = 2;
+const QUEUE_VOICE_PATH = (number) => `/audio/queue/${number}.mp3?v=${QUEUE_VOICE_VERSION}`;
 const QUEUE_VOICE_MAX = 150;
-const QUEUE_VOICE_REPEAT_GAP_MS = 1600;
 const CHIME_MAX_WAIT_MS = 4000;
 // Chaqirilgan raqam katta ekranda 30 soniya turadi (pastdagi chiziq qolgan vaqtni ko'rsatadi).
 const CALL_ANNOUNCEMENT_MS = 30000;
@@ -171,7 +172,7 @@ function TvLorQueuePage() {
     setAudioStatus("blocked");
   }, [ensureQueueChime, playSyntheticQueueTone]);
 
-  // Raqamni o'zbekcha ovoz bilan ikki marta aytadi; yangi chaqiruv kelsa eskisi to'xtaydi.
+  // Raqamni o'zbekcha ovoz bilan bir marta aytadi; yangi chaqiruv kelsa eskisi to'xtaydi.
   const speakQueueNumber = useCallback(async (code) => {
     const number = Number(String(code ?? "").replace(/D/g, ""));
     if (!number || number > QUEUE_VOICE_MAX) return;
@@ -181,19 +182,7 @@ function TvLorQueuePage() {
     voice.volume = 1;
     queueVoiceRef.current = voice;
 
-    const playOnce = () =>
-      new Promise((resolve) => {
-        voice.currentTime = 0;
-        voice.onended = resolve;
-        voice.onerror = resolve;
-        voice.play().catch(resolve);
-      });
-
-    await playOnce();
-    if (queueVoiceRef.current !== voice) return;
-    await new Promise((resolve) => window.setTimeout(resolve, QUEUE_VOICE_REPEAT_GAP_MS));
-    if (queueVoiceRef.current !== voice || !mountedRef.current) return;
-    await playOnce();
+    await voice.play().catch(() => {});
   }, []);
 
   const unlockQueueAudio = useCallback(() => {
