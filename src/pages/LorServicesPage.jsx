@@ -322,6 +322,8 @@ function LorServicesPage() {
   const [serviceInputs, setServiceInputs] = useState({});
   const [serviceSearch, setServiceSearch] = useState("");
   const [patient, setPatient] = useState({ fullName: "" });
+  // "Mening cheklarim" dan "Qayta qabul qilish" bosilganda kelgan bemor ma'lumoti.
+  const [pendingReadmit, setPendingReadmit] = useState(() => location.state?.readmit || null);
 
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -462,6 +464,40 @@ function LorServicesPage() {
 
   // Navbat qabul qilinganda kursor darhol bemor F.I.O maydoniga tushadi.
   const activeTicketId = activeTicket?.id || "";
+
+  // Sahifa yangilanganda qayta qabul ikkinchi marta qo'llanmasligi uchun.
+  useEffect(() => {
+    if (location.state?.readmit) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, location.state, navigate]);
+
+  // Navbat raqami qabul qilingach (va hali hech narsa kiritilmagan bo'lsa)
+  // bemor ismi va o'tgan safargi xizmatlar o'zi to'ladi.
+  useEffect(() => {
+    if (!pendingReadmit || !activeTicketId || !sortedServices.length) return;
+    if (patient.fullName.trim() || selectedServiceIds.length) return;
+
+    const byName = new Map(sortedServices.map((service) => [service.name, service]));
+    const matched = pendingReadmit.items
+      .map((item) => ({ service: byName.get(item.name), quantity: item.quantity }))
+      .filter((item) => item.service);
+
+    setPatient({ fullName: pendingReadmit.patientName });
+    setSelectedServiceIds(matched.map((item) => item.service._id));
+    setServiceInputs(
+      Object.fromEntries(
+        matched.map((item) => [item.service._id, { quantity: String(Math.max(1, item.quantity || 1)) }])
+      )
+    );
+    const missing = pendingReadmit.items.length - matched.length;
+    setSuccess(
+      missing > 0
+        ? `Qayta qabul: ma'lumotlar to'ldirildi. ${missing} ta xizmat endi ro'yxatda yo'q.`
+        : "Qayta qabul: bemor va o'tgan safargi xizmatlar to'ldirildi. Kerak bo'lsa o'zgartiring."
+    );
+    setPendingReadmit(null);
+  }, [pendingReadmit, activeTicketId, sortedServices, patient.fullName, selectedServiceIds.length]);
   useEffect(() => {
     if (activeTicketId) {
       setTimeout(() => patientInputRef.current?.focus?.(), 0);
@@ -774,6 +810,22 @@ function LorServicesPage() {
 
       <Alert type="success" message={success} />
       <Alert type="error" message={error} />
+
+      {pendingReadmit ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sky-300 bg-sky-50 px-4 py-3">
+          <div className="min-w-0 text-sm text-sky-900">
+            <p className="font-bold">Qayta qabul: {pendingReadmit.patientName || "bemor"}</p>
+            <p className="text-sky-800">
+              {activeTicket
+                ? "Avval hozirgi bemorni yakunlang. Keyingi navbat raqami qabul qilinganda ma'lumotlar o'zi to'ladi."
+                : "Navbat raqamini qabul qiling: bemor ismi va o'tgan safargi xizmatlar o'zi to'ladi."}
+            </p>
+          </div>
+          <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => setPendingReadmit(null)}>
+            Bekor qilish
+          </Button>
+        </div>
+      ) : null}
 
       {!activeTicket ? (
         <div className="card p-4 sm:p-5">

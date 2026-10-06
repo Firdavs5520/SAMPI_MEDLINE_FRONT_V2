@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import usageService from "../services/usageService.js";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
@@ -68,6 +69,7 @@ const PencilIcon = () => (
 );
 
 function LorChecksPage() {
+  const navigate = useNavigate();
   const { user, lorIdentity, lorDoctor } = useAuth();
   const [editingCheck, setEditingCheck] = useState(null);
   const [success, setSuccess] = useState("");
@@ -244,6 +246,22 @@ function LorChecksPage() {
 
   const clearSearch = () => {
     setQuery("");
+  };
+
+  // Shu bemorni yana qabul qilish: qabul sahifasi bemor ismi va o'tgan safargi
+  // xizmatlar bilan ochiladi, navbat raqami qabul qilinganda ular o'zi to'ladi.
+  const handleReadmit = (row) => {
+    navigate("/lor/services", {
+      state: {
+        readmit: {
+          patientName: String(row.patient?.fullName || "").trim(),
+          items: (row.items || []).map((item) => ({
+            name: String(item?.name || "").trim(),
+            quantity: Number(item?.quantity || 1)
+          }))
+        }
+      }
+    });
   };
 
   const handleReprintCheck = async (row) => {
@@ -441,6 +459,13 @@ function LorChecksPage() {
                 const editable = canEditLorCheck(row, now);
                 return (
                   <div className="flex flex-wrap items-center justify-end gap-1.5">
+                    <Button
+                      type="button"
+                      className="whitespace-nowrap bg-sky-600 px-3 py-1.5 text-xs hover:bg-sky-700"
+                      onClick={() => handleReadmit(row)}
+                    >
+                      Qayta qabul qilish
+                    </Button>
                     <Button
                       type="button"
                       variant="secondary"
