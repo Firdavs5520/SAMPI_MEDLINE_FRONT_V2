@@ -6257,3 +6257,213 @@ html.theme-dark [data-field-error]:not(input)::after {
     animation: none;
   }
 }
+
+/* =====================================================================
+   TV: yuqori kontrastli tema + tez animatsiyalar
+   Eski och tema TV ekranlarida "yuvilgan" (xira) ko'rinardi: oq fon ustida
+   yarim shaffof oq kartalar, 13-18% li chegaralar. Bu yerda hammasi to'q fon,
+   qattiq ranglar va katta oq raqamlar. Selektor html.sampi-tv-lock ... bilan
+   boshlanadi, chunki eski TV qoidalari ham shu darajada !important ishlatadi.
+   Animatsiyalar faqat transform/opacity (GPU) va qisqa: kuchsiz TV da qotmaydi.
+   ===================================================================== */
+html.sampi-tv-lock,
+html.sampi-tv-lock body {
+  background: #06131f !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell.sampi-tv-shell {
+  background: radial-gradient(ellipse at 50% -10%, #0d3b52 0%, #06131f 60%) !important;
+  color: #ffffff !important;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-clinic-brand span {
+  color: #22d3ee !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-clinic-brand strong {
+  color: #f87171 !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-card {
+  background: #0c2536 !important;
+  border: 3px solid #1e7a99 !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45) !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-muted {
+  opacity: 1 !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-code {
+  color: #ffffff !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-note {
+  color: #a5f3fc !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-standby-kicker {
+  color: #22d3ee !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-standby-title {
+  color: #ffffff !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-standby-line {
+  background: #22d3ee !important;
+  opacity: 1 !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-menu {
+  background: #0a1f2e !important;
+  border: 3px solid #1e7a99 !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45) !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-head span {
+  color: #ffffff !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-head strong {
+  color: #a5f3fc !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-head b {
+  background: #22d3ee !important;
+  color: #06131f !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row {
+  background: #12374d !important;
+  border: 2px solid #2a6a88 !important;
+  box-shadow: none !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row span {
+  color: #ffffff !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row.sampi-tv-waiting-row-next {
+  background: #facc15 !important;
+  border-color: #fde047 !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row-next span {
+  color: #111827 !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row-next small {
+  background: #111827 !important;
+  color: #facc15 !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-empty {
+  color: #cbd5e1 !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-layer {
+  background: rgba(2, 8, 15, 0.9) !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-card {
+  background: #ffffff !important;
+  border: 6px solid #facc15 !important;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6) !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-kicker {
+  color: #0e7490 !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-number {
+  color: #0b1220 !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-note {
+  color: #b91c1c !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-reconnect-note {
+  background: #1e293b !important;
+  border-color: #f59e0b !important;
+  color: #fde68a !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-audio-button {
+  background: #f59e0b !important;
+  color: #111827 !important;
+}
+
+/* --- Animatsiyalar (eski "animation: none !important" qoidasidan kuchliroq) --- */
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-layer {
+  animation: sampi-tv-fade-in 160ms ease-out both !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-card {
+  animation: sampi-tv-pop-in 280ms cubic-bezier(0.2, 1.4, 0.4, 1) both !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-number {
+  animation: sampi-tv-beat 650ms ease-in-out 300ms 3 both !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-pulse .sampi-tv-current-code {
+  animation: sampi-tv-beat 600ms ease-in-out 2 both !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-content,
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-standby {
+  animation: sampi-tv-rise-in 260ms ease-out both !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row {
+  animation: sampi-tv-rise-in 220ms ease-out var(--row-delay, 0ms) both !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row-next {
+  animation:
+    sampi-tv-rise-in 220ms ease-out var(--row-delay, 0ms) both,
+    sampi-tv-next-glow 1.6s ease-in-out 600ms infinite !important;
+}
+
+@keyframes sampi-tv-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sampi-tv-pop-in {
+  from { opacity: 0; transform: scale(0.82); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes sampi-tv-beat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes sampi-tv-rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sampi-tv-next-glow {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+/* Eski "shisha" yaltiroq qatlamlari (oq gradiyentlar) to'q tema ustida tuman
+   bo'lib ko'rinardi - TV dagi xiralikning asosiy sababi. Hammasi o'chiriladi. */
+html.sampi-tv-lock .sampi-tv-minimal-shell.sampi-tv-shell::before,
+html.sampi-tv-lock .sampi-tv-minimal-shell.sampi-tv-shell::after,
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-card::before,
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-card::after,
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-menu::before,
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-menu::after,
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row::before,
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row::after {
+  content: none !important;
+  display: none !important;
+}

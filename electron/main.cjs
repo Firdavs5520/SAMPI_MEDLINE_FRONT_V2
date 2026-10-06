@@ -1547,6 +1547,8 @@ const createWindow = () => {
       preload: PRELOAD_SCRIPT,
       sandbox: true,
       webSecurity: true,
+      // TV navbat ekrani chaqiruv ovozini bosishsiz chalishi uchun.
+      autoplayPolicy: "no-user-gesture-required",
     },
   });
 

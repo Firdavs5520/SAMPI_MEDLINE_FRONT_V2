@@ -396,6 +396,22 @@ function TvLorQueuePage() {
     };
   }, [closeEventSource, connectStream, ensureQueueChime]);
 
+  // TV ilovasi (Android WebView) yoki kiosk brauzer avtomatik ovozga ruxsat bersa,
+  // AudioContext darhol "running" bo'ladi: tugma ko'rsatilmaydi, ovoz o'zi chalinadi.
+  useEffect(() => {
+    let cancelled = false;
+    ensureAudioContext()
+      .then((context) => {
+        if (cancelled || !context || context.state !== "running") return;
+        audioUnlockedRef.current = true;
+        setAudioStatus("ready");
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [ensureAudioContext]);
+
   useEffect(() => {
     const onAudioKeyDown = (event) => {
       if (audioUnlockedRef.current) return;
@@ -538,7 +554,7 @@ function TvLorQueuePage() {
             <div className="sampi-tv-waiting-head">
               <div>
                 <span>Navbatdagilar</span>
-                <strong>Kassa bergan LOR raqamlari</strong>
+                <strong>Raqamingiz chaqirilishini kuting</strong>
               </div>
               <b>{loading && !queue ? "..." : waitingTicketCount}</b>
             </div>
@@ -551,7 +567,7 @@ function TvLorQueuePage() {
                     className={`sampi-tv-waiting-row ${
                       index === 0 ? "sampi-tv-waiting-row-next" : ""
                     }`}
-                    style={{ "--row-delay": `${260 + index * 70}ms` }}
+                    style={{ "--row-delay": `${Math.min(index, 12) * 35}ms` }}
                     key={ticket.id || ticket._id || ticket.queueCode}
                   >
                     <span>{formatTvQueueCode(ticket.queueCode)}</span>
@@ -569,7 +585,7 @@ function TvLorQueuePage() {
 
         {isConnectionSoft ? (
           <div className="sampi-tv-reconnect-note">
-            {error || "Aloqa tiklanmoqda. Oxirgi raqam ekranda saqlanadi."}
+            Aloqa tiklanmoqda. Oxirgi raqam ekranda saqlanadi.
           </div>
         ) : null}
       </div>
