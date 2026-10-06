@@ -6218,9 +6218,42 @@ html.theme-dark [data-field-error]:not(input)::after {
   to { opacity: 1; transform: translateY(0); }
 }
 
+
+
+/* ---- LOR qabul: xizmatlar oynasi o'ngdan chiqadi / o'ngga qaytadi ---- */
+/* Ikki marta yozilgan klass: .route-enter > div > * (sahifa kirish animatsiyasi) dan kuchliroq bo'lishi uchun. */
+.sampi-slide-in-right.sampi-slide-in-right {
+  animation: sampi-slide-in-right 0.32s cubic-bezier(0.22, 1, 0.36, 1) backwards !important;
+}
+
+.sampi-slide-out-right.sampi-slide-out-right {
+  animation: sampi-slide-out-right 0.32s cubic-bezier(0.64, 0, 0.78, 0) forwards !important;
+  pointer-events: none;
+}
+
+@keyframes sampi-slide-in-right {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes sampi-slide-out-right {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(100%); }
+}
+
+.sampi-enter-hint kbd {
+  animation: sampi-enter-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes sampi-enter-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(14, 116, 144, 0.28); }
+  50% { box-shadow: 0 0 0 6px rgba(14, 116, 144, 0); }
+}
+
+/* Oyna animatsiyasi atayin doim ishlaydi: Windows da "animatsiya effektlari"
+   o'chirilgan kompyuterlarda ham doktor oynaning qayerdan kelganini ko'rsin. */
 @media (prefers-reduced-motion: reduce) {
-  [data-field-shake],
-  [data-field-error]:not(input)::after {
+  .sampi-enter-hint kbd {
     animation: none;
   }
 }

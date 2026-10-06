@@ -300,6 +300,8 @@ const safeQty = (value) => {
   return String(Math.max(1, Math.floor(n)));
 };
 
+const SERVICES_SLIDE_MS = 320;
+
 function LorServicesPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -465,6 +467,47 @@ function LorServicesPage() {
   // Navbat qabul qilinganda kursor darhol bemor F.I.O maydoniga tushadi.
   const activeTicketId = activeTicket?.id || "";
 
+  // Qabul ikki qadamli: avval bemor ismi, Enter bosilgach xizmatlar oynasi
+  // o'ngdan animatsiya bilan chiqadi; bekor qilinganda teskari animatsiya bilan ketadi.
+  const [servicesOpen, setServicesOpen] = useState(false);
+  const [servicesClosing, setServicesClosing] = useState(false);
+  const servicesOpenRef = useRef(false);
+  servicesOpenRef.current = servicesOpen && !servicesClosing;
+
+
+  const openServices = () => {
+    try {
+      validatePatient();
+    } catch (err) {
+      showFieldErrorFrom(err);
+      return;
+    }
+    resetMessages();
+    setServicesClosing(false);
+    setServicesOpen(true);
+    setTimeout(() => serviceSearchRef.current?.focus({ preventScroll: true }), SERVICES_SLIDE_MS);
+  };
+
+  const closeServices = () =>
+    new Promise((resolve) => {
+      if (!servicesOpenRef.current) {
+        resolve();
+        return;
+      }
+      setServicesClosing(true);
+      setTimeout(() => {
+        setServicesOpen(false);
+        setServicesClosing(false);
+        resolve();
+      }, SERVICES_SLIDE_MS);
+    });
+
+  // Yangi navbat raqami qabul qilinganda yana ism bosqichidan boshlanadi.
+  useEffect(() => {
+    setServicesOpen(false);
+    setServicesClosing(false);
+  }, [activeTicketId]);
+
   // Sahifa yangilanganda qayta qabul ikkinchi marta qo'llanmasligi uchun.
   useEffect(() => {
     if (location.state?.readmit) {
@@ -497,6 +540,7 @@ function LorServicesPage() {
         : "Qayta qabul: bemor va o'tgan safargi xizmatlar to'ldirildi. Kerak bo'lsa o'zgartiring."
     );
     setPendingReadmit(null);
+    setServicesOpen(true);
   }, [pendingReadmit, activeTicketId, sortedServices, patient.fullName, selectedServiceIds.length]);
   useEffect(() => {
     if (activeTicketId) {
@@ -635,6 +679,7 @@ function LorServicesPage() {
       });
 
       setSuccess(text.successCheck);
+      await closeServices();
       setPatient({ fullName: "" });
       setSelectedServiceIds([]);
       setServiceInputs({});
@@ -700,11 +745,12 @@ function LorServicesPage() {
         reason: cancelReason,
         note: cancelNote
       });
+      setCancelPromptOpen(false);
+      await closeServices();
       setPatient({ fullName: "" });
       setSelectedServiceIds([]);
       setServiceInputs({});
       setServiceSearch("");
-      setCancelPromptOpen(false);
       setCancelReason(CANCEL_REASON_OPTIONS[0].value);
       setCancelNote("");
       await loadLorQueueTickets({ silent: true });
@@ -760,7 +806,7 @@ function LorServicesPage() {
     const onKeyDown = (event) => {
       if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !event.repeat) {
         event.preventDefault();
-        checkoutShortcutRef.current?.();
+        if (servicesOpenRef.current) checkoutShortcutRef.current?.();
       }
     };
 
@@ -882,11 +928,19 @@ function LorServicesPage() {
               value={patient.fullName}
               placeholder={text.patientPlaceholder}
               inputRef={patientInputRef}
-              onChange={(e) => setPatient({ fullName: toTitleCaseName(e.target.value) })}
+              onChange={(e) => {
+                const fullName = toTitleCaseName(e.target.value);
+                setPatient({ fullName });
+                if (!fullName.trim()) closeServices();
+              }}
               onKeyDown={(event) => {
-                if (event.key === "Enter") {
+                if (event.key === "Enter" && !event.ctrlKey && !event.metaKey) {
                   event.preventDefault();
-                  serviceSearchRef.current?.focus();
+                  if (servicesOpen) {
+                    serviceSearchRef.current?.focus();
+                  } else {
+                    openServices();
+                  }
                 }
               }}
             />
@@ -899,6 +953,14 @@ function LorServicesPage() {
             >
               Navbatni bekor qilish
             </Button>
+            {!servicesOpen ? (
+              <p className="sampi-enter-hint flex items-center gap-2 text-sm font-semibold text-sky-700 md:col-span-3">
+                <kbd className="rounded-md border border-sky-300 bg-white px-2 py-0.5 font-sans text-xs font-bold text-sky-800 shadow-sm">
+                  Enter ↵
+                </kbd>
+                Bemor ismini yozib Enter bosing — xizmatlar oynasi ochiladi.
+              </p>
+            ) : null}
             {waitingTickets.length ? (
               <p className="text-xs font-semibold text-amber-700 md:col-span-3">
                 Yana {waitingTickets.length} ta bemor kutmoqda. Ularni bu bemorni yakunlagandan keyin qabul qilasiz.
@@ -906,180 +968,186 @@ function LorServicesPage() {
             ) : null}
           </div>
 
-          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_24rem]">
-            <section className="card p-4">
-              <div data-field="lor-services">
-                <input
-                  ref={serviceSearchRef}
-                  type="search"
-                  value={serviceSearch}
-                  onChange={(e) => {
-                    setServiceSearch(e.target.value);
-                    setHighlightIndex(0);
-                  }}
-                  onKeyDown={handleServiceSearchKeyDown}
-                  placeholder="Xizmat qidirish... (↑ ↓ tanlash, Enter — qo'shish, Esc — tozalash)"
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
-                />
-              </div>
+          {servicesOpen ? (
+            <div
+              className={`space-y-4 ${servicesClosing ? "sampi-slide-out-right" : "sampi-slide-in-right"}`}
+            >
+              <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_24rem]">
+                <section className="card p-4">
+                  <div data-field="lor-services">
+                    <input
+                      ref={serviceSearchRef}
+                      type="search"
+                      value={serviceSearch}
+                      onChange={(e) => {
+                        setServiceSearch(e.target.value);
+                        setHighlightIndex(0);
+                      }}
+                      onKeyDown={handleServiceSearchKeyDown}
+                      placeholder="Xizmat qidirish... (↑ ↓ tanlash, Enter — qo'shish, Esc — tozalash)"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
+                    />
+                  </div>
 
-              {sortedServices.length === 0 ? (
-                <p className="mt-3 rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-600">
-                  {text.noServices}
-                </p>
-              ) : null}
+                  {sortedServices.length === 0 ? (
+                    <p className="mt-3 rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-600">
+                      {text.noServices}
+                    </p>
+                  ) : null}
 
-              {/* Ro'yxat emas, plitkalar: barcha xizmatlar bir ekranda, bitta bosish bilan qo'shiladi.
-                  Tartib doim alifbo bo'yicha, shuning uchun har bir xizmat o'z joyida qoladi. */}
-              <div
-                ref={serviceListRef}
-                className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2"
-              >
-                {filteredServices.map((service, index) => {
-                  const selected = selectedServiceIds.includes(service._id);
-                  const highlighted = Boolean(serviceSearch.trim()) && index === highlightIndex;
-                  const quantity = Number(serviceInputs[service._id]?.quantity || 1);
-                  return (
-                    <button
-                      key={service._id}
-                      type="button"
-                      data-service-index={index}
-                      aria-pressed={selected}
-                      onClick={() => toggleService(service._id)}
-                      onMouseEnter={() => serviceSearch.trim() && setHighlightIndex(index)}
-                      className={`relative flex min-h-[84px] flex-col justify-between rounded-xl border-2 px-4 py-3 text-left transition active:scale-[0.98] ${
-                        selected
-                          ? "border-primary bg-cyan-50 shadow-sm"
-                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-                      } ${highlighted ? "ring-4 ring-amber-300" : ""}`}
-                    >
-                      <span className="break-words pr-8 text-base font-semibold leading-snug text-slate-900">
-                        {getDisplayServiceName(service, language)}
-                      </span>
-                      <span className="mt-2 flex items-center justify-between gap-2">
-                        <span className="whitespace-nowrap text-sm font-bold text-slate-600">
-                          {service.price ? `${formatCurrency(service.price)} so'm` : "Bepul"}
-                        </span>
-                        {highlighted ? (
-                          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-800">
-                            {selected ? "Tanlangan" : "Enter"}
-                          </span>
-                        ) : null}
-                      </span>
-                      {selected ? (
-                        <span
-                          className="absolute right-2 top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-black text-white"
-                          aria-hidden="true"
-                        >
-                          {quantity > 1 ? `×${quantity}` : "✓"}
-                        </span>
-                      ) : null}
-                    </button>
-                  );
-                })}
-                {sortedServices.length > 0 && filteredServices.length === 0 ? (
-                  <p className="col-span-full px-3 py-8 text-center text-sm font-semibold text-slate-500">
-                    {text.noSearchResults}
-                  </p>
-                ) : null}
-              </div>
-            </section>
-
-            <aside className="card p-4 lg:sticky lg:top-24">
-              <div className="flex items-baseline justify-between gap-2">
-                <h2 className="text-base font-bold text-slate-900">Tanlangan xizmatlar</h2>
-                <span className="text-xs font-semibold text-slate-500">
-                  {selectedServiceIds.length} ta
-                </span>
-              </div>
-              <p className="mt-0.5 text-xs text-slate-500">Oxirgi qo'shilgani tepada</p>
-
-              {/* Ro'yxat o'zi aylanadi; chek tugmasi pastki panelda doim ko'rinadi. */}
-              <div
-                ref={previewListRef}
-                className="mt-3 space-y-2 lg:max-h-[calc(100dvh-22rem)] lg:overflow-y-auto lg:pr-1"
-              >
-                {[...previewServices].reverse().map((line) => (
+                  {/* Ro'yxat emas, plitkalar: barcha xizmatlar bir ekranda, bitta bosish bilan qo'shiladi.
+                      Tartib doim alifbo bo'yicha, shuning uchun har bir xizmat o'z joyida qoladi. */}
                   <div
-                    key={line.id}
-                    data-preview-id={line.id}
-                    className={`rounded-lg border px-3 py-2 transition-colors duration-500 ${
-                      line.id === recentlyAddedId
-                        ? "border-emerald-400 bg-emerald-50"
-                        : "border-slate-200 bg-white"
-                    }`}
+                    ref={serviceListRef}
+                    className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="min-w-0 break-words text-sm font-semibold text-slate-800">{line.name}</p>
-                      <button
-                        type="button"
-                        aria-label={text.remove}
-                        onClick={() => toggleService(line.id)}
-                        className="shrink-0 text-lg leading-none text-slate-400 hover:text-red-600"
+                    {filteredServices.map((service, index) => {
+                      const selected = selectedServiceIds.includes(service._id);
+                      const highlighted = Boolean(serviceSearch.trim()) && index === highlightIndex;
+                      const quantity = Number(serviceInputs[service._id]?.quantity || 1);
+                      return (
+                        <button
+                          key={service._id}
+                          type="button"
+                          data-service-index={index}
+                          aria-pressed={selected}
+                          onClick={() => toggleService(service._id)}
+                          onMouseEnter={() => serviceSearch.trim() && setHighlightIndex(index)}
+                          className={`relative flex min-h-[84px] flex-col justify-between rounded-xl border-2 px-4 py-3 text-left transition active:scale-[0.98] ${
+                            selected
+                              ? "border-primary bg-cyan-50 shadow-sm"
+                              : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                          } ${highlighted ? "ring-4 ring-amber-300" : ""}`}
+                        >
+                          <span className="break-words pr-8 text-base font-semibold leading-snug text-slate-900">
+                            {getDisplayServiceName(service, language)}
+                          </span>
+                          <span className="mt-2 flex items-center justify-between gap-2">
+                            <span className="whitespace-nowrap text-sm font-bold text-slate-600">
+                              {service.price ? `${formatCurrency(service.price)} so'm` : "Bepul"}
+                            </span>
+                            {highlighted ? (
+                              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-800">
+                                {selected ? "Tanlangan" : "Enter"}
+                              </span>
+                            ) : null}
+                          </span>
+                          {selected ? (
+                            <span
+                              className="absolute right-2 top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-black text-white"
+                              aria-hidden="true"
+                            >
+                              {quantity > 1 ? `×${quantity}` : "✓"}
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                    {sortedServices.length > 0 && filteredServices.length === 0 ? (
+                      <p className="col-span-full px-3 py-8 text-center text-sm font-semibold text-slate-500">
+                        {text.noSearchResults}
+                      </p>
+                    ) : null}
+                  </div>
+                </section>
+
+                <aside className="card p-4 lg:sticky lg:top-24">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <h2 className="text-base font-bold text-slate-900">Tanlangan xizmatlar</h2>
+                    <span className="text-xs font-semibold text-slate-500">
+                      {selectedServiceIds.length} ta
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-slate-500">Oxirgi qo'shilgani tepada</p>
+
+                  {/* Ro'yxat o'zi aylanadi; chek tugmasi pastki panelda doim ko'rinadi. */}
+                  <div
+                    ref={previewListRef}
+                    className="mt-3 space-y-2 lg:max-h-[calc(100dvh-22rem)] lg:overflow-y-auto lg:pr-1"
+                  >
+                    {[...previewServices].reverse().map((line) => (
+                      <div
+                        key={line.id}
+                        data-preview-id={line.id}
+                        className={`rounded-lg border px-3 py-2 transition-colors duration-500 ${
+                          line.id === recentlyAddedId
+                            ? "border-emerald-400 bg-emerald-50"
+                            : "border-slate-200 bg-white"
+                        }`}
                       >
-                        ×
-                      </button>
-                    </div>
-                    <div className="mt-1.5 flex items-center justify-between gap-2">
-                      <QuantityStepper
-                        value={line.quantity}
-                        onChange={(next) => updateServiceQuantity(line.id, next)}
-                      />
-                      <span className="whitespace-nowrap text-sm font-bold text-slate-800">
-                        {formatCurrency(line.lineTotal)}{"\u00a0"}so'm
-                      </span>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="min-w-0 break-words text-sm font-semibold text-slate-800">{line.name}</p>
+                          <button
+                            type="button"
+                            aria-label={text.remove}
+                            onClick={() => toggleService(line.id)}
+                            className="shrink-0 text-lg leading-none text-slate-400 hover:text-red-600"
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <div className="mt-1.5 flex items-center justify-between gap-2">
+                          <QuantityStepper
+                            value={line.quantity}
+                            onChange={(next) => updateServiceQuantity(line.id, next)}
+                          />
+                          <span className="whitespace-nowrap text-sm font-bold text-slate-800">
+                            {formatCurrency(line.lineTotal)}{"\u00a0"}so'm
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {!previewServices.length ? (
+                      <p className="rounded-lg border border-dashed border-slate-300 px-3 py-6 text-center text-sm text-slate-500">
+                        Chapdan xizmat tanlang
+                      </p>
+                    ) : null}
+                  </div>
+                </aside>
+              </div>
+
+              {/* Ekran tagiga yopishgan: sahifa qayerda bo'lmasin bir xil joyda turadi. */}
+              <div className="sticky bottom-0 z-30 rounded-t-xl border border-b-0 border-slate-200 bg-white p-3 shadow-[0_-6px_24px_rgba(15,23,42,0.12)] sm:p-4">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <span className="shrink-0 rounded-lg bg-sky-50 px-3 py-1 text-2xl font-black leading-none text-slate-900">
+                      {activeTicket.queueCode || "--"}
+                    </span>
+                    <div className="min-w-0">
+                      {patient.fullName.trim() ? (
+                        <p className="truncate text-sm font-bold text-slate-900">{patient.fullName}</p>
+                      ) : (
+                        <p className="truncate text-sm font-bold text-amber-700">Bemor F.I.O kiritilmagan</p>
+                      )}
+                      <p className="text-xs font-semibold text-slate-500">
+                        {selectedServiceIds.length} ta xizmat tanlangan
+                      </p>
                     </div>
                   </div>
-                ))}
-                {!previewServices.length ? (
-                  <p className="rounded-lg border border-dashed border-slate-300 px-3 py-6 text-center text-sm text-slate-500">
-                    Chapdan xizmat tanlang
-                  </p>
-                ) : null}
-              </div>
-            </aside>
-          </div>
-
-          {/* Ekran tagiga yopishgan: sahifa qayerda bo'lmasin bir xil joyda turadi. */}
-          <div className="sticky bottom-0 z-30 rounded-t-xl border border-b-0 border-slate-200 bg-white p-3 shadow-[0_-6px_24px_rgba(15,23,42,0.12)] sm:p-4">
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-              <div className="flex min-w-0 flex-1 items-center gap-3">
-                <span className="shrink-0 rounded-lg bg-sky-50 px-3 py-1 text-2xl font-black leading-none text-slate-900">
-                  {activeTicket.queueCode || "--"}
-                </span>
-                <div className="min-w-0">
-                  {patient.fullName.trim() ? (
-                    <p className="truncate text-sm font-bold text-slate-900">{patient.fullName}</p>
-                  ) : (
-                    <p className="truncate text-sm font-bold text-amber-700">Bemor F.I.O kiritilmagan</p>
-                  )}
-                  <p className="text-xs font-semibold text-slate-500">
-                    {selectedServiceIds.length} ta xizmat tanlangan
-                  </p>
+                  <div className="text-right">
+                    <p className="text-xs font-semibold text-slate-500">{text.total}</p>
+                    <p className="whitespace-nowrap text-2xl font-black leading-tight text-slate-900">
+                      {formatCurrency(previewTotal)}{"\u00a0"}so'm
+                    </p>
+                  </div>
+                  <Button
+                    className="min-h-12 w-full bg-sky-600 text-base hover:bg-sky-700 focus:ring-sky-300 sm:w-auto sm:min-w-60"
+                    loading={submittingCheckout}
+                    loadingText={text.loadingAction}
+                    disabled={!selectedServiceIds.length}
+                    onClick={handleCreateCheckout}
+                    title="Ctrl + Enter"
+                  >
+                    Chek chiqarish
+                    <span className="ml-2 hidden rounded bg-white/20 px-1.5 py-0.5 text-[11px] font-semibold lg:inline">
+                      Ctrl+Enter
+                    </span>
+                  </Button>
                 </div>
+                {error ? <p className="mt-2 text-sm font-semibold text-rose-600">{error}</p> : null}
               </div>
-              <div className="text-right">
-                <p className="text-xs font-semibold text-slate-500">{text.total}</p>
-                <p className="whitespace-nowrap text-2xl font-black leading-tight text-slate-900">
-                  {formatCurrency(previewTotal)}{"\u00a0"}so'm
-                </p>
-              </div>
-              <Button
-                className="min-h-12 w-full bg-sky-600 text-base hover:bg-sky-700 focus:ring-sky-300 sm:w-auto sm:min-w-60"
-                loading={submittingCheckout}
-                loadingText={text.loadingAction}
-                disabled={!selectedServiceIds.length}
-                onClick={handleCreateCheckout}
-                title="Ctrl + Enter"
-              >
-                Chek chiqarish
-                <span className="ml-2 hidden rounded bg-white/20 px-1.5 py-0.5 text-[11px] font-semibold lg:inline">
-                  Ctrl+Enter
-                </span>
-              </Button>
             </div>
-            {error ? <p className="mt-2 text-sm font-semibold text-rose-600">{error}</p> : null}
-          </div>
+          ) : null}
         </>
       )}
 
