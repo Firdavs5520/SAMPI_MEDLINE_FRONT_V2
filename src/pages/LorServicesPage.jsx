@@ -931,7 +931,7 @@ function LorServicesPage() {
                   Tartib doim alifbo bo'yicha, shuning uchun har bir xizmat o'z joyida qoladi. */}
               <div
                 ref={serviceListRef}
-                className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 2xl:grid-cols-4"
+                className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2"
               >
                 {filteredServices.map((service, index) => {
                   const selected = selectedServiceIds.includes(service._id);
@@ -945,13 +945,13 @@ function LorServicesPage() {
                       aria-pressed={selected}
                       onClick={() => toggleService(service._id)}
                       onMouseEnter={() => serviceSearch.trim() && setHighlightIndex(index)}
-                      className={`relative flex min-h-[76px] flex-col justify-between rounded-xl border-2 p-3 text-left transition active:scale-[0.98] ${
+                      className={`relative flex min-h-[84px] flex-col justify-between rounded-xl border-2 px-4 py-3 text-left transition active:scale-[0.98] ${
                         selected
                           ? "border-primary bg-cyan-50 shadow-sm"
                           : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
                       } ${highlighted ? "ring-4 ring-amber-300" : ""}`}
                     >
-                      <span className="line-clamp-2 pr-7 text-sm font-semibold leading-snug text-slate-900">
+                      <span className="break-words pr-8 text-base font-semibold leading-snug text-slate-900">
                         {getDisplayServiceName(service, language)}
                       </span>
                       <span className="mt-2 flex items-center justify-between gap-2">
