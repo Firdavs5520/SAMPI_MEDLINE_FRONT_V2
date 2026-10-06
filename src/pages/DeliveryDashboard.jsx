@@ -142,7 +142,7 @@ function DeliveryDashboard() {
   };
 
   if (loading) {
-    return <Spinner text="Delivery panel yuklanmoqda..." />;
+    return <Spinner page text="Delivery panel yuklanmoqda..." />;
   }
 
   return (

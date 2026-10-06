@@ -282,7 +282,7 @@ function ManagerDashboard() {
   const dbConnected = String(monitoring?.health?.dbState || "").toLowerCase() === "connected";
 
   if (loading) {
-    return <Spinner text="Menejer statistikasi yuklanmoqda..." />;
+    return <Spinner page text="Menejer statistikasi yuklanmoqda..." />;
   }
 
   return (

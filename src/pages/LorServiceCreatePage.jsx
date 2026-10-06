@@ -191,7 +191,7 @@ function LorServiceCreatePage() {
   };
 
   if (loading) {
-    return <Spinner text="LOR xizmatlari yuklanmoqda..." />;
+    return <Spinner page text="LOR xizmatlari yuklanmoqda..." />;
   }
 
   return (

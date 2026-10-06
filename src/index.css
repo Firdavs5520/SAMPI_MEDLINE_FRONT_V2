@@ -6531,3 +6531,167 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row::after {
   content: none !important;
   display: none !important;
 }
+
+/* ---- Yuklanish animatsiyasi ---- */
+.sampi-page-loader {
+  display: flex;
+  min-height: 62vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  animation: sampi-loader-in 0.35s ease-out both;
+}
+
+.sampi-page-loader-mark {
+  position: relative;
+  display: grid;
+  width: 88px;
+  height: 88px;
+  place-items: center;
+}
+
+.sampi-page-loader-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg, #0e7490 220deg, #22b8cf 300deg, transparent 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+  animation: sampi-loader-spin 0.9s linear infinite;
+}
+
+.sampi-page-loader-logo {
+  display: grid;
+  width: 60px;
+  height: 60px;
+  place-items: center;
+  border-radius: 18px;
+  background: #0e7490;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 900;
+  box-shadow: 0 10px 24px -8px rgba(14, 116, 144, 0.55);
+  animation: sampi-loader-breathe 1.6s ease-in-out infinite;
+}
+
+.sampi-page-loader-text {
+  margin: 0;
+  color: #334155;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+html.theme-dark .sampi-page-loader-text {
+  color: #cbd5e1;
+}
+
+.sampi-loader-dots {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.sampi-loader-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0e7490;
+  animation: sampi-loader-dot 1s ease-in-out infinite;
+}
+
+.sampi-loader-dots span:nth-child(2) { animation-delay: 0.15s; }
+.sampi-loader-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes sampi-loader-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sampi-loader-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.94); }
+}
+
+@keyframes sampi-loader-dot {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-6px); }
+}
+
+@keyframes sampi-loader-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---- "Tanlangan xizmatlar" va boshqa ichki ro'yxatlar uchun ingichka scroll bar ---- */
+.sampi-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(14, 116, 144, 0.45) transparent;
+}
+
+.sampi-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sampi-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sampi-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(14, 116, 144, 0.35);
+  background-clip: padding-box;
+}
+
+.sampi-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(14, 116, 144, 0.6);
+}
+
+.sampi-scroll::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+}
+
+/* ---- Matn belgilanishi: faqat yozish maydonlarida ----
+   Tugmalar, plitkalar va yozuvlar ustida matn kursori chiqmaydi va bosib
+   turganda matn belgilanib ketmaydi. Kerakli joylarga .sampi-selectable qo'yiladi. */
+.app-shell,
+.app-shell * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.app-shell input,
+.app-shell textarea,
+.app-shell [contenteditable="true"],
+.app-shell .sampi-selectable,
+.app-shell .sampi-selectable * {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.app-shell {
+  cursor: default;
+}
+
+.app-shell a,
+.app-shell button,
+.app-shell [role="button"],
+.app-shell label[for],
+.app-shell summary {
+  cursor: pointer;
+}
+
+.app-shell button:disabled {
+  cursor: not-allowed;
+}
+
+/* TV: til almashganda matn yumshoq paydo bo'ladi (eski "animation: none" dan kuchliroq). */
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-lang-swap {
+  display: inline-block;
+  animation: sampi-tv-lang-in 420ms ease-out both !important;
+}
+
+@keyframes sampi-tv-lang-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}

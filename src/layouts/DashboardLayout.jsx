@@ -44,7 +44,7 @@ function DashboardLayout() {
 
   if (isLorSelectPage) {
     return (
-      <div className="min-h-screen bg-slate-100">
+      <div className="app-shell min-h-screen bg-slate-100">
         <main className="min-w-0 p-2.5 pb-4 sm:p-4 lg:p-6">
           <div key={location.pathname} className={routeClassName}>
             <Outlet />

@@ -201,7 +201,7 @@ function NurseServicesPage() {
   };
 
   if (loading) {
-    return <Spinner text="Hamshira xizmatlari yuklanmoqda..." />;
+    return <Spinner page text="Hamshira xizmatlari yuklanmoqda..." />;
   }
 
   return (

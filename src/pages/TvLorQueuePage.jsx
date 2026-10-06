@@ -20,6 +20,44 @@ const CHIME_MAX_WAIT_MS = 4000;
 // Chaqirilgan raqam katta ekranda 30 soniya turadi (pastdagi chiziq qolgan vaqtni ko'rsatadi).
 const CALL_ANNOUNCEMENT_MS = 30000;
 
+// TV yozuvlari har 10 soniyada o'zbekcha va ruscha almashadi.
+const TV_LANGUAGE_SWITCH_MS = 10000;
+const TV_TEXT = {
+  uz: {
+    callKicker: "Navbatingiz keldi",
+    callNote: "LOR xonasiga kiring",
+    waitTitle: "Navbatingizni kuting",
+    currentKicker: "Hozir qabulda",
+    currentNote: "LOR xonasida",
+    waitingTitle: "Navbatdagilar",
+    waitingSubtitle: "Raqamingiz chaqirilishini kuting",
+    loading: "Yuklanmoqda",
+    next: "Keyingi",
+    empty: "Hozirda navbat yo'q",
+    reconnect: "Aloqa tiklanmoqda. Oxirgi raqam ekranda saqlanadi."
+  },
+  ru: {
+    callKicker: "Ваша очередь",
+    callNote: "Пройдите в кабинет ЛОР",
+    waitTitle: "Ожидайте своей очереди",
+    currentKicker: "Сейчас на приёме",
+    currentNote: "В кабинете ЛОР",
+    waitingTitle: "Очередь",
+    waitingSubtitle: "Ожидайте вызова вашего номера",
+    loading: "Загрузка",
+    next: "Следующий",
+    empty: "Сейчас очереди нет",
+    reconnect: "Восстанавливаем связь. Последний номер остаётся на экране."
+  }
+};
+
+// Til almashganda matn silliq paydo bo'ladi (key o'zgarishi animatsiyani qayta boshlaydi).
+const TvText = ({ lang, children }) => (
+  <span key={lang} className="sampi-tv-lang-swap">
+    {children}
+  </span>
+);
+
 const formatTvQueueCode = (value) => {
   const digits = String(value ?? "").match(/\d+/g)?.join("") || "";
   if (!digits) return "--";
@@ -47,6 +85,8 @@ function TvLorQueuePage() {
   const [callAnnouncement, setCallAnnouncement] = useState(null);
   const [audioStatus, setAudioStatus] = useState("needs-interaction");
   const [connectionState, setConnectionState] = useState("connecting");
+  const [tvLang, setTvLang] = useState("uz");
+  const t = TV_TEXT[tvLang];
   const audioContextRef = useRef(null);
   const queueChimeRef = useRef(null);
   const queueVoiceRef = useRef(null);
@@ -349,6 +389,14 @@ function TvLorQueuePage() {
   }, [connectionState]);
 
   useEffect(() => {
+    const timer = window.setInterval(
+      () => setTvLang((current) => (current === "uz" ? "ru" : "uz")),
+      TV_LANGUAGE_SWITCH_MS
+    );
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const shouldLogout =
       params.get("logout") === "1" || params.get("exit") === "1";
@@ -527,9 +575,9 @@ function TvLorQueuePage() {
             key={callAnnouncement.key}
           >
             <div className="sampi-tv-call-card">
-              <div className="sampi-tv-call-kicker">Navbatingiz keldi</div>
+              <div className="sampi-tv-call-kicker"><TvText lang={tvLang}>{t.callKicker}</TvText></div>
               <div className="sampi-tv-call-number">{callAnnouncement.code}</div>
-              <div className="sampi-tv-call-note">LOR xonasiga kiring</div>
+              <div className="sampi-tv-call-note"><TvText lang={tvLang}>{t.callNote}</TvText></div>
               <div
                 className="sampi-tv-call-progress"
                 style={{ "--call-ms": `${CALL_ANNOUNCEMENT_MS}ms` }}
@@ -559,23 +607,23 @@ function TvLorQueuePage() {
             {loading && !current ? (
               <div className="sampi-tv-standby" aria-live="polite">
                 <div className="sampi-tv-standby-kicker">LOR</div>
-                <div className="sampi-tv-standby-title">Navbatingizni kuting</div>
+                <div className="sampi-tv-standby-title"><TvText lang={tvLang}>{t.waitTitle}</TvText></div>
                 <div className="sampi-tv-standby-line" aria-hidden="true" />
               </div>
             ) : current ? (
               <div className="sampi-tv-current-content" aria-live="polite">
-                <div className="sampi-tv-current-kicker">Hozir qabulda</div>
+                <div className="sampi-tv-current-kicker"><TvText lang={tvLang}>{t.currentKicker}</TvText></div>
                 <div className="sampi-tv-number-shell">
                   <div className="sampi-tv-current-code">{displayQueueCode}</div>
                 </div>
                 <div className="sampi-tv-current-note">
-                  LOR xonasida
+                  <TvText lang={tvLang}>{t.currentNote}</TvText>
                 </div>
               </div>
             ) : (
               <div className="sampi-tv-standby" aria-live="polite">
                 <div className="sampi-tv-standby-kicker">LOR</div>
-                <div className="sampi-tv-standby-title">Navbatingizni kuting</div>
+                <div className="sampi-tv-standby-title"><TvText lang={tvLang}>{t.waitTitle}</TvText></div>
                 <div className="sampi-tv-standby-line" aria-hidden="true" />
               </div>
             )}
@@ -593,14 +641,14 @@ function TvLorQueuePage() {
           >
             <div className="sampi-tv-waiting-head">
               <div>
-                <span>Navbatdagilar</span>
-                <strong>Raqamingiz chaqirilishini kuting</strong>
+                <span><TvText lang={tvLang}>{t.waitingTitle}</TvText></span>
+                <strong><TvText lang={tvLang}>{t.waitingSubtitle}</TvText></strong>
               </div>
               <b>{loading && !queue ? "..." : waitingTicketCount}</b>
             </div>
             <div className="sampi-tv-waiting-list" style={waitingListStyle}>
               {loading && !queue ? (
-                <div className="sampi-tv-waiting-empty">Yuklanmoqda</div>
+                <div className="sampi-tv-waiting-empty">{t.loading}</div>
               ) : waitingTicketCount ? (
                 waitingTickets.map((ticket, index) => (
                   <div
@@ -611,12 +659,12 @@ function TvLorQueuePage() {
                     key={ticket.id || ticket._id || ticket.queueCode}
                   >
                     <span>{formatTvQueueCode(ticket.queueCode)}</span>
-                    {index === 0 ? <small>Keyingi</small> : null}
+                    {index === 0 ? <small>{t.next}</small> : null}
                   </div>
                 ))
               ) : (
                 <div className="sampi-tv-waiting-empty">
-                  Hozirda navbat yo'q
+                  <TvText lang={tvLang}>{t.empty}</TvText>
                 </div>
               )}
             </div>
@@ -625,7 +673,7 @@ function TvLorQueuePage() {
 
         {isConnectionSoft ? (
           <div className="sampi-tv-reconnect-note">
-            Aloqa tiklanmoqda. Oxirgi raqam ekranda saqlanadi.
+            {t.reconnect}
           </div>
         ) : null}
       </div>

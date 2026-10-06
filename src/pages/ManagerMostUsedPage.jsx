@@ -29,7 +29,7 @@ function ManagerMostUsedPage() {
   }, []);
 
   if (loading) {
-    return <Spinner text="Ko'p ishlatilgan dorilar yuklanmoqda..." />;
+    return <Spinner page text="Ko'p ishlatilgan dorilar yuklanmoqda..." />;
   }
 
   return (

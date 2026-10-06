@@ -288,7 +288,7 @@ function LorChecksPage() {
   };
 
   if (loading) {
-    return <Spinner text="Mening cheklarim yuklanmoqda..." />;
+    return <Spinner page text="Mening cheklarim yuklanmoqda..." />;
   }
 
   return (

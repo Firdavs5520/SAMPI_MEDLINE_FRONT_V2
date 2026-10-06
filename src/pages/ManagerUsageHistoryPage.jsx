@@ -30,7 +30,7 @@ function ManagerUsageHistoryPage() {
   }, []);
 
   if (loading) {
-    return <Spinner text="Dori sarfi tarixi yuklanmoqda..." />;
+    return <Spinner page text="Dori sarfi tarixi yuklanmoqda..." />;
   }
 
   return (

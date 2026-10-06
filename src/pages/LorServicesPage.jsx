@@ -12,6 +12,11 @@ import QuantityStepper from "../components/QuantityStepper.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { fieldError, showFieldErrorFrom } from "../utils/fieldError.js";
 import {
+  LOR_SERVICE_NAME_TRANSLATION_MAP,
+  normalizeServiceNameKey,
+  translateServiceName
+} from "../utils/lorServiceNames.js";
+import {
   extractErrorMessage,
   formatCurrency,
   splitFullName,
@@ -141,107 +146,7 @@ const LOR_SERVICE_TEXT = {
   }
 };
 
-const LOR_SERVICE_NAME_TRANSLATIONS = [
-  {
-    ru: "Промывание И Удаление Серных Пробок Из Ушей",
-    uz: "Quloq kiri tiqinlarini yuvish va olib tashlash"
-  },
-  {
-    ru: "Промывание Лакун. Миндалины",
-    uz: "Murtak lakunalarini yuvish"
-  },
-  {
-    ru: "Промывание Лакун Миндалины",
-    uz: "Murtak lakunalarini yuvish"
-  },
-  {
-    ru: "Промывание Онп По Проецу",
-    uz: "Burun yondosh bo'shliqlarini Proets usulida yuvish"
-  },
-  {
-    ru: "Промывание ОНП По Проецу",
-    uz: "Burun yondosh bo'shliqlarini Proets usulida yuvish"
-  },
-  {
-    ru: "Промывание ОНП По Проетцу",
-    uz: "Burun yondosh bo'shliqlarini Proets usulida yuvish"
-  },
-  {
-    ru: "Пункция Верхнечелюстной Пазухи С Одной Стороны",
-    uz: "Bir tomondan yuqori jag' bo'shlig'ini punksiya qilish"
-  },
-  {
-    ru: "Смена Трахеостомической Трубки",
-    uz: "Traxeostomik naychani almashtirish"
-  },
-  {
-    ru: "Удаление Инородного Тела Из Лор Органов",
-    uz: "LOR organlaridan yot jismni olib tashlash"
-  },
-  {
-    ru: "Уход За Больным В Послеоперационном Периоде",
-    uz: "Operatsiyadan keyingi davrda bemorni parvarish qilish"
-  },
-  {
-    ru: "Введение Лекарственных Средств В Ухо",
-    uz: "Quloqqa dori vositalarini kiritish"
-  },
-  {
-    ru: "Зондирование Лобной Пазухи С Одной Стороны",
-    uz: "Bir tomondan peshona bo'shlig'ini zondlash"
-  },
-  {
-    ru: "Ингаляция",
-    uz: "Ingalyatsiya"
-  },
-  {
-    ru: "Компресс В Ухо",
-    uz: "Quloqqa kompress"
-  },
-  {
-    ru: "Консультация",
-    uz: "Konsultatsiya"
-  },
-  {
-    ru: "Лимфотропное Введение Лекарственных Средств",
-    uz: "Limfotrop dori vositalarini kiritish"
-  },
-  {
-    ru: "Обработка Полости Рта",
-    uz: "Og'iz bo'shlig'iga ishlov berish"
-  },
-  {
-    ru: "Осмотр Пациента В Динамике (2 Недель)",
-    uz: "Bemorni dinamik kuzatish (2 hafta)"
-  },
-  {
-    ru: "Продувание По Политцеру",
-    uz: "Politser bo'yicha puflash"
-  }
-];
-
-const normalizeServiceNameKey = (value) =>
-  String(value || "")
-    .replace(/ё/g, "е")
-    .replace(/Ё/g, "Е")
-    .toLocaleLowerCase("ru-RU")
-    .replace(/\s+/g, " ")
-    .trim();
-
-const LOR_SERVICE_NAME_TRANSLATION_MAP = LOR_SERVICE_NAME_TRANSLATIONS.reduce(
-  (map, translation) => {
-    map.set(normalizeServiceNameKey(translation.ru), translation);
-    map.set(normalizeServiceNameKey(translation.uz), translation);
-    return map;
-  },
-  new Map()
-);
-
-const getDisplayServiceName = (service, language) => {
-  const originalName = String(service?.name || "");
-  const translation = LOR_SERVICE_NAME_TRANSLATION_MAP.get(normalizeServiceNameKey(originalName));
-  return translation?.[language] || originalName;
-};
+const getDisplayServiceName = (service, language) => translateServiceName(service?.name, language);
 
 const getServiceNameSearchValues = (service, language) => {
   const originalName = String(service?.name || "");
@@ -787,7 +692,8 @@ function LorServicesPage() {
       return;
     }
 
-    if (event.key !== "Enter" || event.ctrlKey || event.metaKey) return;
+    if (event.key !== "Enter") return;
+    // Qidiruvda matn bor: Enter xizmatni qo'shadi (chek chiqmaydi).
     event.preventDefault();
     const target = filteredServices[highlightIndex];
     if (!target) return;
@@ -798,16 +704,21 @@ function LorServicesPage() {
 
   checkoutShortcutRef.current = handleCreateCheckout;
   const hasActiveTicket = Boolean(activeTicket?.id);
+  const cancelPromptOpenRef = useRef(false);
+  cancelPromptOpenRef.current = cancelPromptOpen;
 
-  // Ctrl+Enter — istalgan joydan chek chiqarish.
+  // Enter — xizmatlar oynasi ochiq bo'lsa chek chiqaradi. Qidiruvda matn bo'lsa
+  // u Enter ni o'zi ishlatadi (preventDefault), tugma va oynalardagi Enter tegilmaydi.
   useEffect(() => {
     if (!hasActiveTicket) return undefined;
 
     const onKeyDown = (event) => {
-      if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !event.repeat) {
-        event.preventDefault();
-        if (servicesOpenRef.current) checkoutShortcutRef.current?.();
-      }
+      if (event.key !== "Enter" || event.repeat || event.defaultPrevented) return;
+      if (!servicesOpenRef.current || cancelPromptOpenRef.current) return;
+      const tagName = String(event.target?.tagName || "").toLowerCase();
+      if (["button", "textarea", "select", "a"].includes(tagName)) return;
+      event.preventDefault();
+      checkoutShortcutRef.current?.();
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -815,7 +726,7 @@ function LorServicesPage() {
   }, [hasActiveTicket]);
 
   if (loading) {
-    return <Spinner text={text.loading} />;
+    return <Spinner page text={text.loading} />;
   }
 
   return (
@@ -934,13 +845,10 @@ function LorServicesPage() {
                 if (!fullName.trim()) closeServices();
               }}
               onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.ctrlKey && !event.metaKey) {
+                // Oyna yopiq: Enter oynani ochadi. Ochiq: Enter chek chiqaradi (umumiy tinglovchi).
+                if (event.key === "Enter" && !servicesOpen) {
                   event.preventDefault();
-                  if (servicesOpen) {
-                    serviceSearchRef.current?.focus();
-                  } else {
-                    openServices();
-                  }
+                  openServices();
                 }
               }}
             />
@@ -1066,7 +974,7 @@ function LorServicesPage() {
                     {/* Ro'yxat o'zi aylanadi; chek tugmasi pastki panelda doim ko'rinadi. */}
                     <div
                       ref={previewListRef}
-                      className="mt-3 space-y-2 lg:max-h-[calc(100dvh-22rem)] lg:overflow-y-auto lg:pr-1"
+                      className="mt-3 space-y-2 sampi-scroll lg:max-h-[calc(100dvh-22rem)] lg:overflow-y-auto lg:pr-1.5"
                     >
                       {[...previewServices].reverse().map((line) => (
                         <div
@@ -1139,11 +1047,11 @@ function LorServicesPage() {
                       loadingText={text.loadingAction}
                       disabled={!selectedServiceIds.length}
                       onClick={handleCreateCheckout}
-                      title="Ctrl + Enter"
+                      title="Enter"
                     >
                       Chek chiqarish
                       <span className="ml-2 hidden rounded bg-white/20 px-1.5 py-0.5 text-[11px] font-semibold lg:inline">
-                        Ctrl+Enter
+                        Enter
                       </span>
                     </Button>
                   </div>

@@ -97,7 +97,7 @@ function LorSelectPage() {
   };
 
   if (loading) {
-    return <Spinner text="LOR doktorlari yuklanmoqda..." />;
+    return <Spinner page text="LOR doktorlari yuklanmoqda..." />;
   }
 
   return (

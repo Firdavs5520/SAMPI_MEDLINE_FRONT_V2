@@ -1,3 +1,5 @@
+import { translateServiceName } from "./lorServiceNames.js";
+
 const escapeHtml = (value) =>
   String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -32,7 +34,7 @@ const buildCheckThermalReceipt = (check) => {
   const lorQueueCode = formatQueueCode(check?.lorQueue?.queueCode || check?.queueCode);
   const blocks = [
     { text: "SAMPI MEDICINE", align: "center", bold: true, size: "double" },
-    { text: creatorRole === "nurse" ? "MUOLAJA XONASI" : "LOR BO'LIMI", align: "center" },
+    ...(creatorRole === "nurse" ? [{ text: "MUOLAJA XONASI", align: "center" }] : []),
     { kind: "divider" },
   ];
 
@@ -60,7 +62,7 @@ const buildCheckThermalReceipt = (check) => {
       const quantity = Number(item.quantity) || 0;
       const unitPrice = Number(item.price) || 0;
       const lineTotal = unitPrice * quantity;
-      blocks.push({ text: item.name, bold: true });
+      blocks.push({ text: translateServiceName(item.name, "uz"), bold: true });
       blocks.push({
         kind: "row",
         left: unitPrice > 0 ? `${quantity} x ${formatSum(unitPrice)}` : `${quantity} ta`,
@@ -142,7 +144,7 @@ const buildItemRows = (items, itemType, checkType) => {
         unitPrice > 0
           ? `${escapeHtml(quantity)} × ${escapeHtml(formatSum(unitPrice))}`
           : `${escapeHtml(quantity)} ta`;
-      return `<div class="item"><div class="item-name">${escapeHtml(item.name)}</div><div class="item-line"><span class="item-detail">${detail}</span><span class="item-amount">${amount}</span></div></div>`;
+      return `<div class="item"><div class="item-name">${escapeHtml(translateServiceName(item.name, "uz"))}</div><div class="item-line"><span class="item-detail">${detail}</span><span class="item-amount">${amount}</span></div></div>`;
     })
     .join("");
 };
@@ -156,7 +158,7 @@ export const buildCheckPrintHtml = (check, options = {}) => {
 
   const creatorRole = String(check?.createdBy?.role || "").toLowerCase();
   const specialistLabel = creatorRole === "nurse" ? "Hamshira" : "Doktor";
-  const departmentLabel = creatorRole === "nurse" ? "Muolaja xonasi" : "LOR bo'limi";
+  const departmentLabel = creatorRole === "nurse" ? "Muolaja xonasi" : "";
   const lorQueueCode = formatQueueCode(check?.lorQueue?.queueCode || check?.queueCode);
   const queueBlock =
     creatorRole === "lor" && lorQueueCode
@@ -238,7 +240,7 @@ export const buildCheckPrintHtml = (check, options = {}) => {
       <div class="inner">
         <div class="brand">
           <div class="brand-name">SAMPI MEDICINE</div>
-          <div class="brand-sub">${departmentLabel}</div>
+          ${departmentLabel ? `<div class="brand-sub">${departmentLabel}</div>` : ""}
         </div>
         <div class="rule"></div>
         ${queueBlock}

@@ -63,7 +63,7 @@ function LorDashboard() {
   }, [services]);
 
   if (loading) {
-    return <Spinner text="LOR paneli yuklanmoqda..." />;
+    return <Spinner page text="LOR paneli yuklanmoqda..." />;
   }
 
   return (

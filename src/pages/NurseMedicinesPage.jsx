@@ -162,7 +162,7 @@ function NurseMedicinesPage() {
   };
 
   if (loading) {
-    return <Spinner text="Nurse dorilari yuklanmoqda..." />;
+    return <Spinner page text="Nurse dorilari yuklanmoqda..." />;
   }
 
   return (

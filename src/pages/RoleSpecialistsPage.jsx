@@ -152,7 +152,7 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
   };
 
   if (loading) {
-    return <Spinner text={`${sectionLabel} yuklanmoqda...`} />;
+    return <Spinner page text={`${sectionLabel} yuklanmoqda...`} />;
   }
 
   return (

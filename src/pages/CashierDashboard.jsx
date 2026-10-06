@@ -144,6 +144,13 @@ const specialistTypeOptions = [
   { value: "lor", label: "LOR" }
 ];
 
+// Chekda "Chek №" sifatida chiqadigan qisqa kod: "CHK-1791299509794-B40CFC" -> "B40CFC".
+const getShortCheckId = (checkId) => {
+  const parts = String(checkId || "").split("-").filter(Boolean);
+  return parts.length ? parts[parts.length - 1].toUpperCase() : "";
+};
+const SHORT_CHECK_ID_LENGTH = 6;
+
 const getTodayString = (settings = defaultCashierSettings) => getCurrentShiftYmd(settings);
 const SHIFT_DATE_REFRESH_MS = 60000;
 
@@ -426,16 +433,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const historyTableData = useMemo(
     () => historyEntries.map((entry, index) => ({ ...entry, rowNumber: index + 1 })),
     [historyEntries]
-  );
-  const pendingSuggestionItems = useMemo(
-    () =>
-      pendingChecks.map((item) => ({
-        ...item,
-        _searchLabel: `${item.queueCode ? `${item.queueCode} - ` : ""}${
-          item.checkId || ""
-        } - ${item.patientName || "-"}`
-      })),
-    [pendingChecks]
   );
   const entrySuggestionItems = useMemo(() => {
     const source = isHistorySection ? historyEntries : entries;
@@ -1074,6 +1071,16 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
   };
 
+  // Terilgan raqam aynan bitta chekka to'liq mos kelsa, uni o'zi ochadi.
+  useEffect(() => {
+    if (pendingSearch.length !== SHORT_CHECK_ID_LENGTH) return;
+    const match = pendingChecks.find((item) => getShortCheckId(item.checkId) === pendingSearch);
+    if (match && selectedPendingCheck?._id !== match._id) {
+      handlePickPendingCheck(match);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingChecks, pendingSearch]);
+
   const handlePickPendingCheck = (check) => {
     const roleType = String(check?.creatorRole || "").toLowerCase() === "nurse" ? "nurse" : "lor";
     const roleSpecialists = specialistsByType[roleType] || [];
@@ -1232,7 +1239,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   };
 
   if (loading) {
-    return <Spinner text="Kassa paneli yuklanmoqda..." />;
+    return <Spinner page text="Kassa paneli yuklanmoqda..." />;
   }
 
   if (isLorQueueSection) {
@@ -1745,24 +1752,39 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                   : "mt-3 max-h-[1200px] opacity-100"
               }`}
             >
+              {/* Kassir faqat chekdagi "Chek №" ni teradi; to'liq mos chek o'zi ochiladi. */}
               <div className="mt-2" data-field="cashier-pending">
-                <QuickSearchInput
-                  label={isLorFormSection ? "Chek yoki navbat raqami" : "Chek qidirish"}
-                  placeholder={
-                    isLorFormSection
-                      ? "Navbat raqami, chek ID yoki bemor F.I.O bo'yicha qidirish..."
-                      : "Chek ID yoki bemor F.I.O bo'yicha qidirish..."
-                  }
-                  value={pendingSearch}
-                  onChange={setPendingSearch}
-                  items={pendingSuggestionItems}
-                  getItemLabel={(item) => item?._searchLabel || ""}
-                  onPick={(item) => {
-                    setPendingSearch(item?.queueCode || item?.checkId || item?.patientName || "");
-                    handlePickPendingCheck(item);
-                  }}
-                  emptyText="Mos chek topilmadi"
-                />
+                <label className="block">
+                  <span className="sampi-field-label mb-1.5 block text-sm font-semibold text-slate-600">
+                    Chek raqami
+                  </span>
+                  <input
+                    value={pendingSearch}
+                    onChange={(event) =>
+                      setPendingSearch(
+                        event.target.value
+                          .toUpperCase()
+                          .replace(/[^0-9A-Z]/g, "")
+                          .slice(0, SHORT_CHECK_ID_LENGTH)
+                      )
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return;
+                      event.preventDefault();
+                      const match =
+                        pendingChecks.find((item) => getShortCheckId(item.checkId) === pendingSearch) ||
+                        (pendingSearch && pendingChecks.length === 1 ? pendingChecks[0] : null);
+                      if (match) handlePickPendingCheck(match);
+                    }}
+                    placeholder="Masalan: B40CFC"
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="sampi-input sampi-control w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-center text-2xl font-black uppercase tracking-[0.35em] text-slate-900 outline-none transition placeholder:text-base placeholder:font-semibold placeholder:normal-case placeholder:tracking-normal placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                  />
+                </label>
+                <p className="mt-1.5 text-xs font-semibold text-slate-500">
+                  Chek pastidagi <b>Chek №</b> ni tering — chek topilishi bilan qabul formasi ochiladi.
+                </p>
               </div>
 
               <div className="mt-3">
@@ -1787,9 +1809,11 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                       : []),
                     {
                       key: "checkId",
-                      label: "Chek ID",
+                      label: "Chek №",
                       render: (row) => (
-                        <span className="text-xs text-slate-500">{row.checkId || "-"}</span>
+                        <span className="sampi-selectable font-mono text-sm font-black tracking-wider text-slate-800">
+                          {getShortCheckId(row.checkId) || "-"}
+                        </span>
                       )
                     },
                     { key: "patientName", label: "Bemor F.I.O" },

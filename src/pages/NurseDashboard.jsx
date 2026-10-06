@@ -329,7 +329,7 @@ function NurseDashboard() {
     }
   };
 
-  if (loading) return <Spinner text="Hamshira paneli yuklanmoqda..." />;
+  if (loading) return <Spinner page text="Hamshira paneli yuklanmoqda..." />;
 
   const catalogItems = catalogTab === "medicines" ? filteredMedicines : filteredServices;
   const selectedCount = selectedMedicineIds.length + selectedServiceIds.length;

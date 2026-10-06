@@ -50,7 +50,7 @@ function ManagerStockPage() {
   );
 
   if (loading) {
-    return <Spinner text="Ombor qoldiqlari yuklanmoqda..." />;
+    return <Spinner page text="Ombor qoldiqlari yuklanmoqda..." />;
   }
 
   return (
