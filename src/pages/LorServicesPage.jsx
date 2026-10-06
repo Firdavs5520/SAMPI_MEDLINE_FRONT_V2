@@ -6,7 +6,7 @@ import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
-import BusyOverlay from "../components/BusyOverlay.jsx";
+import PrintingOverlay from "../components/PrintingOverlay.jsx";
 import Modal from "../components/Modal.jsx";
 import QuantityStepper from "../components/QuantityStepper.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -47,7 +47,7 @@ const LOR_SERVICE_TEXT = {
     steps: ["1. Navbat", "2. Xizmatlar", "3. Ko'rib chiqish"],
     loading: "LOR xizmatlari yuklanmoqda...",
     loadingAction: "Yuklanmoqda...",
-    creatingCheck: "Chek yaratilmoqda...",
+    creatingCheck: "Chek tayyorlanmoqda",
     heroTitle: "LOR paneli",
     heroSubtitle: "Chek yaratish kassir chiqargan navbat raqamidan boshlanadi.",
     languageLabel: "Til",
@@ -100,7 +100,7 @@ const LOR_SERVICE_TEXT = {
     steps: ["1. Пациент", "2. Услуги", "3. Предпросмотр"],
     loading: "Услуги ЛОР загружаются...",
     loadingAction: "Загрузка...",
-    creatingCheck: "Чек создается...",
+    creatingCheck: "Чек готовится",
     heroTitle: "Панель ЛОР",
     heroSubtitle: "Создание чека начинается с данных пациента.",
     languageLabel: "Язык",
@@ -716,7 +716,8 @@ function LorServicesPage() {
       if (event.key !== "Enter" || event.repeat || event.defaultPrevented) return;
       if (!servicesOpenRef.current || cancelPromptOpenRef.current) return;
       const tagName = String(event.target?.tagName || "").toLowerCase();
-      if (["button", "textarea", "select", "a"].includes(tagName)) return;
+      const insideServices = Boolean(event.target?.closest?.("[data-lor-services-panel]"));
+      if (["button", "textarea", "select", "a"].includes(tagName) && !insideServices) return;
       event.preventDefault();
       checkoutShortcutRef.current?.();
     };
@@ -880,7 +881,13 @@ function LorServicesPage() {
             // Tashqi o'ram: .route-enter > div > * qoidasi (transform/opacity: none !important)
             // shu o'ramga tushadi, ichidagi animatsiyali blok esa erkin siljiy oladi.
             <div>
+              {/* Sichqoncha bosilganda tugmalar fokus olmaydi: keyin Enter xizmatni qayta
+                  tanlab/o'chirmaydi, faqat chek chiqaradi. Fokus qidiruv maydonida qoladi. */}
               <div
+                data-lor-services-panel
+                onMouseDown={(event) => {
+                  if (event.target.closest("button")) event.preventDefault();
+                }}
                 className={`space-y-4 ${servicesClosing ? "sampi-slide-out-right" : "sampi-slide-in-right"}`}
               >
                 <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_24rem]">
@@ -920,6 +927,7 @@ function LorServicesPage() {
                           <button
                             key={service._id}
                             type="button"
+                            tabIndex={-1}
                             data-service-index={index}
                             aria-pressed={selected}
                             onClick={() => toggleService(service._id)}
@@ -1133,7 +1141,7 @@ function LorServicesPage() {
           </label>
         </div>
       </Modal>
-      <BusyOverlay show={submittingCheckout} text={text.creatingCheck} />
+      <PrintingOverlay show={submittingCheckout} text={text.creatingCheck} />
     </div>
   );
 }

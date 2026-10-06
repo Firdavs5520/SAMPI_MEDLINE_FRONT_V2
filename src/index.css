@@ -6732,3 +6732,245 @@ html.theme-dark .sampi-sidebar-link:focus-visible {
   outline-color: #ffffff;
   background-color: revert-layer;
 }
+
+/* Chek chiqayotgandagi printer animatsiyasi (PrintingOverlay, body ga portal). */
+.sampi-print-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(2px);
+  animation: fade-in 160ms ease both;
+}
+
+.sampi-print-card {
+  display: flex;
+  width: 17rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  border-radius: 1.25rem;
+  background: #fff;
+  padding: 1.6rem 1.25rem 1.25rem;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+  animation: sampi-print-card-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+html.theme-dark .sampi-print-card {
+  background: #0f172a;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+}
+
+.sampi-printer {
+  position: relative;
+  display: flex;
+  width: 10rem;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sampi-printer-body {
+  position: relative;
+  z-index: 2;
+  width: 10rem;
+  height: 3.6rem;
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, #334155, #0f172a);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.25);
+}
+
+.sampi-printer-slot {
+  position: absolute;
+  left: 50%;
+  bottom: 0.55rem;
+  width: 7.4rem;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: #020617;
+  transform: translateX(-50%);
+}
+
+.sampi-printer-led {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.8rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #22d3ee;
+  box-shadow: 0 0 8px #22d3ee;
+  animation: sampi-printer-led 700ms ease-in-out infinite alternate;
+}
+
+/* Qog'oz tirqish ostidan chiqadi: oyna kesib turadi, qog'oz yuqoridan pastga suriladi. */
+.sampi-printer-window {
+  position: relative;
+  z-index: 1;
+  width: 6.8rem;
+  height: 7.6rem;
+  margin-top: -0.95rem;
+  overflow: hidden;
+}
+
+.sampi-printer-paper {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: 0.42rem;
+  padding: 1.25rem 0.7rem 0.9rem;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px #e2e8f0, 0 6px 14px rgba(15, 23, 42, 0.12);
+  /* Pastki qirrasi tishli: chek yirtib olingandek. */
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 6px) no-repeat,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 10px 6px repeat-x;
+  mask: linear-gradient(#000 0 0) top / 100% calc(100% - 6px) no-repeat,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 10px 6px repeat-x;
+  transform: translateY(-100%);
+  animation: sampi-paper-feed 1.7s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+
+.sampi-printer-paper-head {
+  align-self: center;
+  width: 60%;
+  height: 0.5rem;
+  border-radius: 2px;
+  background: #0f172a;
+}
+
+.sampi-printer-paper-line {
+  height: 0.26rem;
+  border-radius: 2px;
+  background: #cbd5e1;
+  opacity: 0;
+  animation: sampi-paper-line 1.7s ease infinite;
+  animation-delay: var(--line-delay, 0ms);
+}
+
+.sampi-printer-paper-total {
+  margin-top: auto;
+  height: 0.45rem;
+  border-radius: 2px;
+  background: #0f766e;
+}
+
+.sampi-printer-check {
+  position: absolute;
+  bottom: -0.6rem;
+  right: 0.4rem;
+  z-index: 3;
+  display: flex;
+  width: 2.1rem;
+  height: 2.1rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #10b981;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 900;
+  box-shadow: 0 8px 18px rgba(16, 185, 129, 0.4);
+  opacity: 0;
+  transform: scale(0.4);
+}
+
+.sampi-print-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+html.theme-dark .sampi-print-text {
+  color: #e2e8f0;
+}
+
+/* Tayyor: qog'oz to'liq chiqib to'xtaydi, yashil belgi chiqadi. */
+.sampi-print-overlay.is-done .sampi-printer-paper {
+  transform: translateY(0);
+  animation: sampi-paper-out 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sampi-print-overlay.is-done .sampi-printer-paper-line {
+  opacity: 1;
+  animation: none;
+}
+
+.sampi-print-overlay.is-done .sampi-printer-led {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: none;
+}
+
+.sampi-print-overlay.is-done .sampi-printer-check {
+  animation: sampi-print-check 360ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both;
+}
+
+.sampi-print-overlay.is-done .sampi-print-text {
+  color: #059669;
+}
+
+@keyframes sampi-print-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sampi-printer-led {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sampi-paper-feed {
+  0% {
+    transform: translateY(-100%);
+  }
+  75%,
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes sampi-paper-line {
+  0%,
+  20% {
+    opacity: 0;
+  }
+  45%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes sampi-paper-out {
+  from {
+    transform: translateY(-35%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes sampi-print-check {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

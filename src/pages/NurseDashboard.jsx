@@ -6,7 +6,7 @@ import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
-import BusyOverlay from "../components/BusyOverlay.jsx";
+import PrintingOverlay from "../components/PrintingOverlay.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
 import { fieldError, showFieldErrorFrom } from "../utils/fieldError.js";
 import SelectMenu from "../components/SelectMenu.jsx";
@@ -627,7 +627,7 @@ function NurseDashboard() {
         </div>
       </div>
 
-      <BusyOverlay show={submitting} text="Chek yaratilmoqda..." />
+      <PrintingOverlay show={submitting} text="Chek tayyorlanmoqda" />
     </div>
   );
 }

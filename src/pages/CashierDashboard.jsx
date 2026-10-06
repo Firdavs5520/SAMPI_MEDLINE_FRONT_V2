@@ -3,6 +3,7 @@ import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Alert from "../components/Alert.jsx";
 import Spinner from "../components/Spinner.jsx";
+import PrintingOverlay from "../components/PrintingOverlay.jsx";
 import Table from "../components/Table.jsx";
 import SelectMenu from "../components/SelectMenu.jsx";
 import DatePickerField from "../components/DatePickerField.jsx";
@@ -1250,6 +1251,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
     return (
       <div className="space-y-4">
+        <PrintingOverlay show={issuingLorTicket} text="Navbat cheki tayyorlanmoqda" />
         <Alert type="success" message={success} />
         <Alert type="error" message={error} />
         <div className="card border-sky-100 bg-white p-4 text-center shadow-sm sm:p-6">
@@ -1276,18 +1278,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
             >
               Chek chiqarish
             </Button>
-            {issuedLorTicket ? (
-              <Button
-                type="button"
-                variant="secondary"
-                className="min-h-12 w-full px-8 text-base sm:w-auto"
-                loading={reprintingLorTicket}
-                loadingText="Chiqarilmoqda..."
-                onClick={handleReprintIssuedLorTicket}
-              >
-                Qayta chiqarish
-              </Button>
-            ) : null}
           </div>
 
           {(lastIssuedCode || latestPrintEvent || recentIssuedTickets.length || refreshing) ? (
