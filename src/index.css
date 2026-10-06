@@ -6289,8 +6289,9 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-clinic-brand strong {
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-card {
   background: #ffffff !important;
-  border: 4px solid #0e7490 !important;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12) !important;
+  border: 2px solid #c9dfe7 !important;
+  border-radius: 36px !important;
+  box-shadow: 0 24px 60px -24px rgba(14, 116, 144, 0.35) !important;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-muted {
@@ -6320,8 +6321,9 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-standby-line {
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-menu {
   background: #ffffff !important;
-  border: 4px solid #0e7490 !important;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12) !important;
+  border: 2px solid #c9dfe7 !important;
+  border-radius: 36px !important;
+  box-shadow: 0 24px 60px -24px rgba(14, 116, 144, 0.35) !important;
 }
 
 /* 50" TV, 3-4 metrdan o'qilishi uchun sarlavhalar kattaroq. */
@@ -6343,45 +6345,83 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-head b {
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row {
-  background: #0e7490 !important;
-  border: 2px solid #0b5f76 !important;
-  box-shadow: none !important;
+  background: #ffffff !important;
+  border: 2px solid #c9dfe7 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06) !important;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row span {
-  color: #ffffff !important;
+  color: #0e7490 !important;
 }
 
+/* Keyingi navbat: sariq emas, brend rangida to'liq to'ldirilgan plitka. */
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row.sampi-tv-waiting-row-next {
-  background: #facc15 !important;
-  border-color: #ca8a04 !important;
+  background: #0e7490 !important;
+  border-color: #0e7490 !important;
+  box-shadow: 0 8px 20px rgba(14, 116, 144, 0.28) !important;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row-next span {
-  color: #111827 !important;
+  color: #ffffff !important;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row-next small {
-  background: #111827 !important;
-  color: #facc15 !important;
+  background: #ffffff !important;
+  color: #0e7490 !important;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-empty {
   color: #334155 !important;
 }
 
+/* "Hozir qabulda" yorlig'i */
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-kicker {
+  display: inline-block;
+  margin-bottom: clamp(0.6rem, 1.6vh, 1.2rem);
+  padding: 0.45em 1.1em;
+  border-radius: 999px;
+  background: #e0f2f7;
+  color: #0e7490;
+  font-size: clamp(1.3rem, 2.6vh, 2rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* --- Chaqiruv oynasi: toza, zamonaviy, 30 soniya --- */
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-layer {
-  background: rgba(15, 23, 42, 0.72) !important;
+  background: rgba(226, 236, 242, 0.94) !important;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-card {
   background: #ffffff !important;
-  border: 8px solid #facc15 !important;
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45) !important;
+  border: none !important;
+  border-radius: 44px !important;
+  box-shadow: 0 40px 100px -30px rgba(14, 116, 144, 0.45), 0 0 0 1px rgba(14, 116, 144, 0.12) !important;
+  overflow: hidden !important;
+}
+
+/* Ichki ramka va eski chiziq o'rniga yuqoridagi rangli tasma va pastdagi vaqt chizig'i. */
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-card::after {
+  content: none !important;
+  display: none !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-card::before {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 0 auto 0 !important;
+  height: 14px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: linear-gradient(90deg, #0e7490, #22b8cf 55%, #dc2626) !important;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-kicker {
   color: #0e7490 !important;
+  letter-spacing: 0.08em;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-number {
@@ -6389,7 +6429,18 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-number {
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-note {
-  color: #b91c1c !important;
+  color: #0e7490 !important;
+  margin-top: clamp(1.2rem, 3.2vh, 2.4rem) !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-progress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 12px;
+  background: linear-gradient(90deg, #0e7490, #22b8cf);
+  transform-origin: left center;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-reconnect-note {
@@ -6403,36 +6454,48 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-audio-button {
   color: #111827 !important;
 }
 
-/* --- Animatsiyalar (eski "animation: none !important" qoidasidan kuchliroq) --- */
+/* --- Animatsiyalar (eski "animation: none !important" qoidasidan kuchliroq) ---
+   Katta harflar masshtablanmaydi (titrash va xiralik bo'lmasin): faqat bir
+   martalik silliq paydo bo'lish (opacity + kichik siljish). */
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-layer {
-  animation: sampi-tv-fade-in 160ms ease-out both !important;
+  animation: sampi-tv-fade-in 260ms ease-out both !important;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-card {
-  animation: sampi-tv-pop-in 280ms cubic-bezier(0.2, 1.4, 0.4, 1) both !important;
+  animation: sampi-tv-card-in 520ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-kicker {
+  animation: sampi-tv-rise-in 420ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both !important;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-number {
-  animation: sampi-tv-beat 650ms ease-in-out 300ms 3 both !important;
+  animation: sampi-tv-rise-in 520ms cubic-bezier(0.16, 1, 0.3, 1) 200ms both !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-note {
+  animation: sampi-tv-rise-in 420ms cubic-bezier(0.16, 1, 0.3, 1) 320ms both !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-call-progress {
+  animation-name: sampi-tv-progress !important;
+  /* Davomiylik o'zgaruvchidan: eski "animation: none !important" uni 0 ga tushirmasin. */
+  animation-duration: var(--call-ms, 30s) !important;
+  animation-timing-function: linear !important;
+  animation-fill-mode: both !important;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-pulse .sampi-tv-current-code {
-  animation: sampi-tv-beat 600ms ease-in-out 2 both !important;
+  animation: sampi-tv-rise-in 520ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-content,
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-standby {
-  animation: sampi-tv-rise-in 260ms ease-out both !important;
+  animation: sampi-tv-rise-in 360ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
 }
 
 html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row {
-  animation: sampi-tv-rise-in 220ms ease-out var(--row-delay, 0ms) both !important;
-}
-
-html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row-next {
-  animation:
-    sampi-tv-rise-in 220ms ease-out var(--row-delay, 0ms) both,
-    sampi-tv-next-glow 1.6s ease-in-out 600ms infinite !important;
+  animation: sampi-tv-rise-in 300ms cubic-bezier(0.16, 1, 0.3, 1) var(--row-delay, 0ms) both !important;
 }
 
 @keyframes sampi-tv-fade-in {
@@ -6440,24 +6503,19 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row-next {
   to { opacity: 1; }
 }
 
-@keyframes sampi-tv-pop-in {
-  from { opacity: 0; transform: scale(0.82); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes sampi-tv-beat {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-}
-
-@keyframes sampi-tv-rise-in {
-  from { opacity: 0; transform: translateY(14px); }
+@keyframes sampi-tv-card-in {
+  from { opacity: 0; transform: translateY(40px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes sampi-tv-next-glow {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.04); }
+@keyframes sampi-tv-rise-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sampi-tv-progress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
 }
 
 /* Eski "shisha" yaltiroq qatlamlari (oq gradiyentlar) to'q tema ustida tuman

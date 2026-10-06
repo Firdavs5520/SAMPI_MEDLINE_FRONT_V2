@@ -10,7 +10,8 @@ const WAITING_TICKET_LIMIT = 80;
 const ADMIN_EXIT_PRESS_COUNT = 5;
 const ADMIN_EXIT_WINDOW_MS = 4500;
 const QUEUE_CHIME_PATH = "/audio/premium_queue_chime_close_match.wav";
-const CALL_ANNOUNCEMENT_MS = 15000;
+// Chaqirilgan raqam katta ekranda 30 soniya turadi (pastdagi chiziq qolgan vaqtni ko'rsatadi).
+const CALL_ANNOUNCEMENT_MS = 30000;
 
 const formatTvQueueCode = (value) => {
   const digits = String(value ?? "").match(/\d+/g)?.join("") || "";
@@ -496,6 +497,11 @@ function TvLorQueuePage() {
               <div className="sampi-tv-call-kicker">Navbatingiz keldi</div>
               <div className="sampi-tv-call-number">{callAnnouncement.code}</div>
               <div className="sampi-tv-call-note">LOR xonasiga kiring</div>
+              <div
+                className="sampi-tv-call-progress"
+                style={{ "--call-ms": `${CALL_ANNOUNCEMENT_MS}ms` }}
+                aria-hidden="true"
+              />
             </div>
           </div>
         ) : null}
@@ -525,11 +531,12 @@ function TvLorQueuePage() {
               </div>
             ) : current ? (
               <div className="sampi-tv-current-content" aria-live="polite">
+                <div className="sampi-tv-current-kicker">Hozir qabulda</div>
                 <div className="sampi-tv-number-shell">
                   <div className="sampi-tv-current-code">{displayQueueCode}</div>
                 </div>
                 <div className="sampi-tv-current-note">
-                  Bu raqam LOR xonasida davolanmoqda
+                  LOR xonasida
                 </div>
               </div>
             ) : (
