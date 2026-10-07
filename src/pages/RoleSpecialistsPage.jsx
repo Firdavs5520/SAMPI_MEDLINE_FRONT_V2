@@ -33,6 +33,7 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
   const [saving, setSaving] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [deletingId, setDeletingId] = useState("");
+  const [togglingProId, setTogglingProId] = useState("");
 
   const [specialists, setSpecialists] = useState([]);
   const [search, setSearch] = useState("");
@@ -128,6 +129,22 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
       setError(extractErrorMessage(err));
     } finally {
       setUpdating(false);
+    }
+  };
+
+  // Pro doktor: LOR doktor tanlash sahifasida o'rtada, oltin rangda turadi.
+  const togglePro = async (item) => {
+    if (!item?._id || togglingProId) return;
+    resetMessages();
+    setTogglingProId(item._id);
+    try {
+      await usageService.updateRoleSpecialist(item._id, { pro: !item.pro });
+      setSpecialists((prev) => prev.map((row) => (row._id === item._id ? { ...row, pro: !item.pro } : row)));
+      setSuccess(item.pro ? `${item.name} pro'dan olindi.` : `${item.name} pro doktor qilindi.`);
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    } finally {
+      setTogglingProId("");
     }
   };
 
@@ -238,9 +255,15 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
                     <>
                       <div className="flex items-center justify-between gap-2">
                         <p className="font-semibold text-slate-800">{item.name}</p>
-                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase ${theme.badge}`}>
-                          {mode}
-                        </span>
+                        {item.pro ? (
+                          <span className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-black uppercase text-amber-800">
+                            ★ Pro
+                          </span>
+                        ) : (
+                          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase ${theme.badge}`}>
+                            {mode}
+                          </span>
+                        )}
                       </div>
                       <p className="mt-1 text-xs text-slate-500">Yaratilgan: {new Date(item.createdAt).toLocaleString("uz-UZ")}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -253,6 +276,18 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
                         >
                           Tahrirlash
                         </Button>
+                        {!isNurse ? (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className={`px-3 py-1.5 text-xs ${item.pro ? "text-amber-700" : ""}`}
+                            onClick={() => togglePro(item)}
+                            loading={togglingProId === item._id}
+                            disabled={Boolean(togglingProId) && togglingProId !== item._id}
+                          >
+                            {item.pro ? "Pro'dan olish" : "★ Pro qilish"}
+                          </Button>
+                        ) : null}
                         <Button
                           type="button"
                           variant="danger"

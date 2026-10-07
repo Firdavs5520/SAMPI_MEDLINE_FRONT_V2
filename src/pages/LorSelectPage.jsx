@@ -31,6 +31,15 @@ const getAvatarTone = (value) => {
   return AVATAR_TONES[hash % AVATAR_TONES.length];
 };
 
+// Pro doktorlar o'rtada: oddiylarning yarmi chapda, pro'lar markazda, qolgani o'ngda.
+const arrangeProInMiddle = (list) => {
+  const pro = list.filter((item) => item?.pro);
+  if (!pro.length) return list;
+  const regular = list.filter((item) => !item?.pro);
+  const leftCount = Math.ceil(regular.length / 2);
+  return [...regular.slice(0, leftCount), ...pro, ...regular.slice(leftCount)];
+};
+
 const TASHKENT_OFFSET_MS = 5 * 60 * 60 * 1000;
 const getTashkentTime = (now) => {
   const local = new Date(now.getTime() + TASHKENT_OFFSET_MS);
@@ -67,8 +76,10 @@ function LorSelectPage() {
 
   const filteredSpecialists = useMemo(() => {
     const query = normalizeSearch(doctorSearch);
-    if (!query) return specialists;
-    return specialists.filter((item) => normalizeSearch(item?.name).includes(query));
+    const list = query
+      ? specialists.filter((item) => normalizeSearch(item?.name).includes(query))
+      : specialists;
+    return arrangeProInMiddle(list);
   }, [doctorSearch, specialists]);
 
   useEffect(() => {
@@ -186,23 +197,24 @@ function LorSelectPage() {
                 <button
                   key={doctor._id}
                   type="button"
-                  className={`ldr-badge-wrap ${picked ? "is-picked" : ""}`}
+                  className={`ldr-badge-wrap ${picked ? "is-picked" : ""} ${doctor.pro ? "is-pro" : ""}`}
                   style={{ "--i": index }}
                   disabled={Boolean(confirmingDoctorId)}
                   onClick={() => chooseDoctor(doctor)}
                   aria-label={`${doctor.name} nomidan ishlash`}
                 >
+                  <span className="ldr-swing">
                   <span className="ldr-lanyard" aria-hidden="true" />
                   <span className="ldr-clip" aria-hidden="true" />
-                  <span className={`ldr-badge ldr-tone-${getAvatarTone(doctor.name)}`}>
+                  <span className={`ldr-badge ${doctor.pro ? "ldr-tone-gold" : `ldr-tone-${getAvatarTone(doctor.name)}`}`}>
                     <span className="ldr-badge-band">
                       <span>SAMPI MEDICINE</span>
-                      <span>LOR</span>
+                      <span>{doctor.pro ? "★ PRO" : "LOR"}</span>
                     </span>
                     {lastUsed ? <span className="ldr-badge-ribbon">Oxirgi marta</span> : null}
                     <span className="ldr-avatar">{getDoctorInitials(doctor.name)}</span>
                     <span className="ldr-name">{doctor.name}</span>
-                    <span className="ldr-role">LOR shifokor</span>
+                    <span className="ldr-role">{doctor.pro ? "Tajribali LOR shifokor" : "LOR shifokor"}</span>
                     <span className="ldr-badge-foot">
                       {shortcut ? <kbd>{shortcut}</kbd> : <span />}
                       <span className="ldr-barcode" aria-hidden="true" />
@@ -212,6 +224,7 @@ function LorSelectPage() {
                       <br />
                       BOSHLANDI
                     </span>
+                  </span>
                   </span>
                 </button>
               );
