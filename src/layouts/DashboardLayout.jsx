@@ -67,7 +67,8 @@ function DashboardLayout() {
       {sidebarOpen ? (
         <button
           type="button"
-          className="fixed inset-0 z-30 bg-slate-900/30 lg:hidden"
+          aria-label="Menyuni yopish"
+          className="sx-backdrop fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-[2px] lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       ) : null}

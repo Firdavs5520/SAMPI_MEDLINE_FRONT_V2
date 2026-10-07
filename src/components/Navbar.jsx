@@ -148,7 +148,7 @@ function Navbar({ onMenuOpen }) {
           >
             SM
           </button>
-          <div className="min-w-0">
+          <div className="sx-title min-w-0" key={pageLabel}>
             <div className="truncate text-sm font-black text-slate-900 sm:text-base">
               {pageLabel}
             </div>

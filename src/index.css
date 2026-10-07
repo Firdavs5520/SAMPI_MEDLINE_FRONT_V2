@@ -2872,9 +2872,8 @@ html.theme-dark .sampi-table-row:hover td {
   display: none !important;
 }
 
-.route-enter,
-.route-enter > div > *,
-.route-enter .card,
+/* Eslatma: .route-enter, .route-enter > div > * va .route-enter .card bu ro'yxatdan olindi —
+   ular barcha sahifalardagi animatsiyalarni o'chirib qo'yardi (sahifalar "demo"dek qotib qolardi). */
 .lor-ios-card,
 .lor-stage-in,
 .lor-choice-card-selecting,
@@ -5587,10 +5586,7 @@ html.sampi-tv-lock .sampi-tv-standby-line {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .route-enter,
-  .route-enter > div > *,
   .page-motion,
-  .route-enter .card,
   .card::after,
   .lor-select-glow,
   .lor-select-shell-switching .lor-select-glow,
@@ -5644,11 +5640,6 @@ html.sampi-tv-lock .sampi-tv-standby-line {
   .sampi-version-toast {
     animation: none !important;
     transition: none !important;
-  }
-
-  .route-enter > div > * {
-    opacity: 1 !important;
-    transform: none !important;
   }
 
   .sampi-btn-spinner,
@@ -8426,4 +8417,173 @@ html.theme-dark .lgn-eye:hover { background: #13243a; }
 @keyframes lgn-dot {
   0%, 100% { opacity: 0.35; transform: translateY(0); }
   50% { opacity: 1; transform: translateY(-3px); }
+}
+
+/* =====================================================================
+   Umumiy harakat va sayqal qatlami (barcha rollar: LOR, kassa, hamshira,
+   yetkazib berish, hisobotchi, menejer; kompyuter va telefon).
+   - Kirish animatsiyalari faqat "backwards": tugagach element o'z holatiga
+     qaytadi, transform qolmaydi (fixed oynalar, sticky panellar buzilmaydi).
+   - Faqat opacity/transform: kuchsiz kompyuterda ham silliq.
+   ===================================================================== */
+:root {
+  --sx-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --sx-ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Sahifa almashganda: kontent yengil ko'tarilib paydo bo'ladi. */
+.route-enter > * {
+  animation: sx-page-in 420ms var(--sx-ease) backwards;
+}
+
+/* Kartalar birin-ketin chiqadi (bir xil qavatdagi birinchi 8 tasi). */
+.route-enter .card {
+  animation: sx-rise 520ms var(--sx-ease) backwards;
+}
+
+.route-enter .card:nth-child(2) { animation-delay: 60ms; }
+.route-enter .card:nth-child(3) { animation-delay: 120ms; }
+.route-enter .card:nth-child(4) { animation-delay: 170ms; }
+.route-enter .card:nth-child(5) { animation-delay: 220ms; }
+.route-enter .card:nth-child(6) { animation-delay: 260ms; }
+.route-enter .card:nth-child(7) { animation-delay: 300ms; }
+.route-enter .card:nth-child(n + 8) { animation-delay: 330ms; }
+
+/* Kartalar: yumshoq soya, ustiga borganda chuqurroq. */
+.card {
+  border-radius: 0.9rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -20px rgba(15, 23, 42, 0.35);
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease,
+    box-shadow 260ms var(--sx-ease-soft);
+}
+
+.card:hover {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 18px 36px -22px rgba(14, 116, 144, 0.4);
+}
+
+html.theme-dark .card:hover {
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.08), 0 18px 36px -22px rgba(0, 0, 0, 0.9);
+}
+
+/* Statistika plitkalari (menejer, hisobotchi, kassa): birin-ketin chiqadi, ustida ko'tariladi. */
+.manager-stat-card,
+.reporter-stat-card,
+.sx-stat {
+  animation: sx-rise 480ms var(--sx-ease) backwards;
+  transition: transform 240ms var(--sx-ease-soft), box-shadow 240ms ease;
+}
+
+.manager-stat-card:hover,
+.reporter-stat-card:hover,
+.sx-stat:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 30px -22px rgba(14, 116, 144, 0.55);
+}
+
+:is(.manager-stat-card, .reporter-stat-card, .sx-stat):nth-child(2) { animation-delay: 50ms; }
+:is(.manager-stat-card, .reporter-stat-card, .sx-stat):nth-child(3) { animation-delay: 100ms; }
+:is(.manager-stat-card, .reporter-stat-card, .sx-stat):nth-child(4) { animation-delay: 150ms; }
+:is(.manager-stat-card, .reporter-stat-card, .sx-stat):nth-child(5) { animation-delay: 190ms; }
+:is(.manager-stat-card, .reporter-stat-card, .sx-stat):nth-child(n + 6) { animation-delay: 230ms; }
+
+/* Jadval: qatorlar ketma-ket paydo bo'ladi, ustiga borganda chap chetda rangli chiziq. */
+.sampi-table-row {
+  animation: sx-row-in 360ms var(--sx-ease) backwards;
+  transition: background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.sampi-table-row:nth-child(2) { animation-delay: 25ms; }
+.sampi-table-row:nth-child(3) { animation-delay: 50ms; }
+.sampi-table-row:nth-child(4) { animation-delay: 75ms; }
+.sampi-table-row:nth-child(5) { animation-delay: 100ms; }
+.sampi-table-row:nth-child(6) { animation-delay: 125ms; }
+.sampi-table-row:nth-child(7) { animation-delay: 150ms; }
+.sampi-table-row:nth-child(8) { animation-delay: 170ms; }
+.sampi-table-row:nth-child(n + 9) { animation-delay: 190ms; }
+
+.sampi-table-row:hover { box-shadow: inset 3px 0 0 #0e7490; }
+html.theme-dark .sampi-table-row:hover { box-shadow: inset 3px 0 0 #22d3ee; }
+
+/* Tugmalar: bosilganda "bosilish" hissi. */
+.sampi-btn {
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 200ms ease,
+    transform 120ms var(--sx-ease-soft);
+}
+
+.sampi-btn:not(:disabled):active { transform: scale(0.97); }
+
+/* Maydonlar: fokusda yumshoq halqa. */
+.sampi-input,
+.sampi-control {
+  transition: border-color 160ms ease, box-shadow 200ms ease, background-color 160ms ease;
+}
+
+/* Menyu: ustida belgi biroz suriladi, faol band chap chetda ko'rsatkich bilan. */
+.sampi-sidebar-link svg { transition: transform 220ms var(--sx-ease-soft); }
+.sampi-sidebar-link:hover svg { transform: translateX(2px); }
+
+.sampi-sidebar-link[aria-current="page"] {
+  box-shadow: 0 8px 18px -12px rgba(14, 116, 144, 0.9);
+}
+
+.sampi-sidebar-link[aria-current="page"] svg { animation: sx-pop 380ms var(--sx-ease) backwards; }
+
+/* Telefonda menyu yumshoq chiqadi, fon xiralashadi. */
+.sampi-sidebar { transition: transform 320ms var(--sx-ease), width 280ms ease-out; }
+.sx-backdrop { animation: sx-fade 240ms ease backwards; }
+
+/* Sarlavha: sahifa almashganda nomi yengil almashadi. */
+.sx-title { animation: sx-title-in 360ms var(--sx-ease) backwards; }
+
+/* Sahifa foni: yuqorida yengil firuza nur (yorug' rejim). */
+.app-shell > div > main {
+  background:
+    radial-gradient(60rem 22rem at 70% -8rem, rgba(14, 116, 144, 0.07), transparent 70%);
+}
+
+html.theme-dark .app-shell > div > main {
+  background:
+    radial-gradient(60rem 22rem at 70% -8rem, rgba(34, 211, 238, 0.06), transparent 70%);
+}
+
+/* Telefon: kartalar ichi ixchamroq, sarlavhalar sig'adi. */
+@media (max-width: 640px) {
+  .card { border-radius: 0.8rem; }
+  .route-enter > * { animation-duration: 320ms; }
+}
+
+@keyframes sx-page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sx-rise {
+  from { opacity: 0; transform: translateY(14px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sx-row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sx-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sx-pop {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes sx-title-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: none; }
 }
