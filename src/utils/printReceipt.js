@@ -65,7 +65,8 @@ const buildCheckThermalReceipt = (check) => {
       blocks.push({ text: translateServiceName(item.name, "uz"), bold: true });
       blocks.push({
         kind: "row",
-        left: unitPrice > 0 ? `${quantity} x ${formatSum(unitPrice)}` : `${quantity} ta`,
+        // Bitta bo'lsa "1 x narx" yozilmaydi: narx o'ngda bir marta turadi.
+        left: quantity > 1 ? (unitPrice > 0 ? `${quantity} x ${formatSum(unitPrice)}` : `${quantity} ta`) : "",
         right: lineTotal > 0 ? formatSum(lineTotal) : "Bepul",
         font: "small",
       });
@@ -131,7 +132,8 @@ const shortCheckId = (value) => {
   return parts.length ? parts[parts.length - 1] : "-";
 };
 
-// Har bir qator: nom alohida (to'liq), ostida "2 × 50 000" va o'ngda qator summasi.
+// Har bir qator: nom alohida (to'liq), o'ngda qator summasi. "2 × 50 000" faqat bir
+// xizmat/dori bir necha marta olinganda yoziladi; bitta bo'lsa narx bir marta turadi.
 const buildItemRows = (items, itemType, checkType) => {
   return (items || [])
     .filter((item) => resolveItemType(item, checkType) === itemType)
@@ -140,11 +142,15 @@ const buildItemRows = (items, itemType, checkType) => {
       const unitPrice = Number(item.price) || 0;
       const lineTotal = unitPrice * quantity;
       const amount = lineTotal > 0 ? escapeHtml(formatSum(lineTotal)) : "Bepul";
+      const name = escapeHtml(translateServiceName(item.name, "uz"));
+      if (quantity <= 1) {
+        return `<div class="item"><div class="item-line item-line-single"><span class="item-name">${name}</span><span class="item-amount">${amount}</span></div></div>`;
+      }
       const detail =
         unitPrice > 0
           ? `${escapeHtml(quantity)} × ${escapeHtml(formatSum(unitPrice))}`
           : `${escapeHtml(quantity)} ta`;
-      return `<div class="item"><div class="item-name">${escapeHtml(translateServiceName(item.name, "uz"))}</div><div class="item-line"><span class="item-detail">${detail}</span><span class="item-amount">${amount}</span></div></div>`;
+      return `<div class="item"><div class="item-name">${name}</div><div class="item-line"><span class="item-detail">${detail}</span><span class="item-amount">${amount}</span></div></div>`;
     })
     .join("");
 };
@@ -224,6 +230,8 @@ export const buildCheckPrintHtml = (check, options = {}) => {
       .item-name { font-size: 14px; font-weight: 700; line-height: 1.25; word-break: break-word; }
       .item-line { display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px; font-size: 13px; }
       .item-amount { font-weight: 800; white-space: nowrap; }
+      .item-line-single { gap: 8px; margin-top: 0; }
+      .item-line-single .item-name { flex: 1; min-width: 0; }
 
       .total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px; padding: 7px 0 5px; border-top: 3px solid #000; border-bottom: 3px solid #000; }
       .total-label { font-size: 16px; font-weight: 900; letter-spacing: 1px; }
