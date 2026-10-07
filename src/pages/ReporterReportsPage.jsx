@@ -223,6 +223,11 @@ function ReporterReportsPage() {
       render: (row) => `${formatCurrency(row.autoIncomeTotal)}\u00a0so'm`
     },
     {
+      key: "dailyExpenseAmount",
+      label: "Kunlik harajat",
+      render: (row) => `${formatCurrency(row.dailyExpenseAmount)}\u00a0so'm`
+    },
+    {
       key: "medicineAmount",
       label: "Dori",
       render: (row) => `${formatCurrency(row.medicineAmount)}\u00a0so'm`

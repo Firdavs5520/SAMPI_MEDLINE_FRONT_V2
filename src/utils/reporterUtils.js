@@ -3,13 +3,14 @@ import { toTashkentYmd } from "./date.js";
 // Hisobotchi kiritadigan summalar guruhlari. Ta'minot va Hamma harajat qo'lda
 // kiritilmaydi, o'zi hisoblanadi:
 //   Ta'minot = svet + gaz + suv
-//   Hamma harajat = dori + ta'minot + kanstovar + aloqa + farzandlarga + uy uchun + qarz
+//   Hamma harajat = kunlik harajat + dori + ta'minot + kanstovar + aloqa + farzandlarga + uy uchun + qarz
 export const reporterFieldGroups = [
   {
     key: "expenses",
     title: "Xarajatlar",
     hint: "Hammasi \"Hamma harajat\"ga qo'shiladi",
     fields: [
+      { key: "dailyExpenseAmount", label: "Kunlik harajat", hint: "farrosh, kassir" },
       { key: "medicineAmount", label: "Dori" },
       { key: "stationeryAmount", label: "Kanstovar" },
       { key: "communicationAmount", label: "Aloqa" },
@@ -46,6 +47,7 @@ export const reporterInputFields = reporterFieldGroups.flatMap((group) => group.
 
 const SUPPLY_PART_KEYS = ["electricityAmount", "gasAmount", "waterAmount"];
 const EXPENSE_PART_KEYS = [
+  "dailyExpenseAmount",
   "medicineAmount",
   "supplyAmount",
   "stationeryAmount",
@@ -57,6 +59,7 @@ const EXPENSE_PART_KEYS = [
 
 // Jadval va xulosalarda ko'rsatish tartibi (hisoblanadiganlari bilan).
 export const reporterAmountFields = [
+  { key: "dailyExpenseAmount", label: "Kunlik harajat" },
   { key: "medicineAmount", label: "Dori" },
   { key: "electricityAmount", label: "Svet" },
   { key: "gasAmount", label: "Gaz" },

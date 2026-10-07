@@ -131,7 +131,7 @@ function ReporterMonthlyPage() {
             <SummaryCard
               title="Hamma harajat"
               value={money(manualExpenses)}
-              hint="Dori, ta'minot, kanstovar, aloqa, farzandlarga, uy uchun, qarz"
+              hint="Kunlik harajat, dori, ta'minot, kanstovar, aloqa, farzandlarga, uy uchun, qarz"
               tone="accent"
             />
           </div>

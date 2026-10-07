@@ -115,6 +115,9 @@ function AmountInput({ field, index, value, onChange, onEnter, showLabel = true 
       {showLabel ? (
         <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
           {field.label}
+          {field.hint ? (
+            <span className="ml-1 font-semibold normal-case tracking-normal text-slate-400">({field.hint})</span>
+          ) : null}
         </span>
       ) : null}
       <span
@@ -619,11 +622,11 @@ function ReporterDashboard() {
             <aside className="card p-4 sm:p-5 lg:sticky lg:top-24">
               <h2 className="text-base font-black text-slate-900">Hisob</h2>
               <div className="mt-2 divide-y divide-slate-100 text-sm">
-                {expenseGroup.fields.slice(0, 1).map((field) => (
+                {expenseGroup.fields.slice(0, 2).map((field) => (
                   <SummaryLine key={field.key} label={field.label} value={form[field.key]} />
                 ))}
                 <SummaryLine label="Ta'minot" value={supplyAmount} />
-                {expenseGroup.fields.slice(1).map((field) => (
+                {expenseGroup.fields.slice(2).map((field) => (
                   <SummaryLine key={field.key} label={field.label} value={form[field.key]} />
                 ))}
               </div>
