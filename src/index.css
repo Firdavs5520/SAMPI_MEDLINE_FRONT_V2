@@ -6974,3 +6974,391 @@ html.theme-dark .sampi-print-text {
     transform: scale(1);
   }
 }
+
+/* =====================================================================
+   Yangi versiya: butun ekranli premium animatsiya (utils/versionSplash.js).
+   body ga to'g'ridan-to'g'ri qo'shiladi, sahifa qoidalari ta'sir qilmaydi.
+   ===================================================================== */
+.sampi-vsplash {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 1.5rem;
+  background:
+    radial-gradient(120% 90% at 50% 110%, rgba(13, 148, 136, 0.35), transparent 60%),
+    radial-gradient(80% 60% at 50% -10%, rgba(14, 116, 144, 0.45), transparent 65%),
+    #03111a;
+  color: #f8fafc;
+  font-family: inherit;
+  text-align: center;
+  user-select: none;
+  animation: sampi-vsplash-in 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sampi-vsplash.is-leaving {
+  animation: sampi-vsplash-out 420ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.sampi-vsplash-aurora span {
+  position: absolute;
+  width: 58vmax;
+  height: 58vmax;
+  border-radius: 999px;
+  filter: blur(70px);
+  opacity: 0.5;
+  will-change: transform;
+  animation: sampi-vsplash-drift 16s ease-in-out infinite alternate;
+}
+
+.sampi-vsplash-aurora span:nth-child(1) {
+  top: -24vmax;
+  left: -16vmax;
+  background: #14b8a6;
+}
+
+.sampi-vsplash-aurora span:nth-child(2) {
+  right: -20vmax;
+  bottom: -26vmax;
+  background: #0ea5e9;
+  animation-duration: 19s;
+  animation-direction: alternate-reverse;
+}
+
+.sampi-vsplash-aurora span:nth-child(3) {
+  top: 30%;
+  left: 55%;
+  width: 34vmax;
+  height: 34vmax;
+  background: #6366f1;
+  opacity: 0.28;
+  animation-duration: 22s;
+}
+
+.sampi-vsplash-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0%, transparent 62%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 0%, transparent 62%);
+}
+
+.sampi-vsplash-content {
+  position: relative;
+  display: flex;
+  max-width: 36rem;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sampi-vsplash-content > * {
+  animation: sampi-vsplash-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sampi-vsplash-content > :nth-child(2) { animation-delay: 140ms; }
+.sampi-vsplash-content > :nth-child(4) { animation-delay: 300ms; }
+.sampi-vsplash-content > :nth-child(5) { animation-delay: 380ms; }
+.sampi-vsplash-content > :nth-child(6) { animation-delay: 460ms; }
+
+.sampi-vsplash-mark {
+  position: relative;
+  display: grid;
+  width: 9.5rem;
+  height: 9.5rem;
+  place-items: center;
+  margin-bottom: 1.6rem;
+}
+
+.sampi-vsplash-logo {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 5.6rem;
+  height: 5.6rem;
+  place-items: center;
+  border-radius: 1.7rem;
+  background: linear-gradient(135deg, #0f766e, #0891b2);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.18) inset,
+    0 18px 50px rgba(8, 145, 178, 0.55),
+    0 0 90px rgba(45, 212, 191, 0.35);
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  animation: sampi-vsplash-float 3.2s ease-in-out infinite;
+}
+
+.sampi-vsplash-logo svg {
+  width: 3rem;
+  height: 3rem;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sampi-vsplash-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: conic-gradient(from 0deg, transparent 0 35%, #5eead4 60%, #38bdf8 80%, transparent 100%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  animation: sampi-vsplash-spin 2.4s linear infinite;
+}
+
+.sampi-vsplash-halo {
+  position: absolute;
+  inset: 1.2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(94, 234, 212, 0.55);
+  animation: sampi-vsplash-halo 2.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.sampi-vsplash-halo-2 {
+  animation-delay: 1.3s;
+}
+
+.sampi-vsplash-orbit {
+  position: absolute;
+  inset: -0.7rem;
+  animation: sampi-vsplash-spin 7s linear infinite reverse;
+}
+
+.sampi-vsplash-orbit i {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-left: -0.275rem;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 14px 4px rgba(125, 211, 252, 0.8);
+}
+
+.sampi-vsplash-kicker {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.42em;
+  color: #5eead4;
+}
+
+.sampi-vsplash-title {
+  margin-top: 0.7rem;
+  font-size: clamp(2.1rem, 4.6vw, 3.6rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  background: linear-gradient(100deg, #ffffff 20%, #99f6e4 45%, #ffffff 70%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation:
+    sampi-vsplash-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) 220ms both,
+    sampi-vsplash-shine 3.6s ease-in-out 900ms infinite;
+}
+
+.sampi-vsplash-text {
+  margin-top: 0.85rem;
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.78);
+}
+
+.sampi-vsplash-progress {
+  position: relative;
+  width: min(18rem, 70vw);
+  height: 4px;
+  margin-top: 1.8rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.sampi-vsplash-progress span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 38%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2dd4bf, #38bdf8);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.8);
+  animation: sampi-vsplash-indeterminate 1.4s ease-in-out infinite;
+}
+
+/* Taklif holatida progress ko'rinmaydi: o'rnida tugmalar turadi. */
+.sampi-vsplash-prompt:not(.sampi-vsplash-tv):not(.is-updating) .sampi-vsplash-progress {
+  display: none;
+}
+
+.sampi-vsplash.is-updating .sampi-vsplash-progress span {
+  width: 100%;
+  transform-origin: left center;
+  animation: sampi-vsplash-fill var(--vsplash-reload-ms, 1100ms) cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.sampi-vsplash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.sampi-vsplash.is-updating .sampi-vsplash-actions {
+  display: none;
+}
+
+.sampi-vsplash-primary,
+.sampi-vsplash-ghost {
+  position: relative;
+  overflow: hidden;
+  min-height: 3.1rem;
+  border-radius: 999px;
+  padding: 0 1.8rem;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+
+.sampi-vsplash-primary {
+  border: 0;
+  background: #fff;
+  color: #0b2530;
+  box-shadow: 0 14px 40px rgba(45, 212, 191, 0.35);
+}
+
+.sampi-vsplash-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(94, 234, 212, 0.55) 50%, transparent 70%);
+  transform: translateX(-120%);
+  animation: sampi-vsplash-sweep 2.8s ease-in-out 1.2s infinite;
+}
+
+.sampi-vsplash-primary span {
+  position: relative;
+  z-index: 1;
+}
+
+.sampi-vsplash-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 50px rgba(45, 212, 191, 0.5);
+}
+
+.sampi-vsplash-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(241, 245, 249, 0.88);
+}
+
+.sampi-vsplash-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Yangilandi: yashil belgi chiziladi, progress kerak emas. */
+.sampi-vsplash-updated {
+  cursor: pointer;
+}
+
+.sampi-vsplash-updated .sampi-vsplash-logo {
+  background: linear-gradient(135deg, #059669, #14b8a6);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+    0 18px 50px rgba(16, 185, 129, 0.55),
+    0 0 90px rgba(52, 211, 153, 0.4);
+}
+
+.sampi-vsplash-updated .sampi-vsplash-progress {
+  display: none;
+}
+
+.sampi-vsplash-check {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: sampi-vsplash-draw 620ms cubic-bezier(0.65, 0, 0.35, 1) 380ms forwards;
+}
+
+/* TV: kuchsiz protsessorda qotmasin, fon harakatsiz, matn kattaroq. */
+.sampi-vsplash-tv .sampi-vsplash-aurora span {
+  animation: none;
+  filter: blur(50px);
+}
+
+.sampi-vsplash-tv .sampi-vsplash-title {
+  font-size: clamp(3rem, 5vw, 5rem);
+}
+
+.sampi-vsplash-tv .sampi-vsplash-text {
+  font-size: clamp(1.4rem, 2vw, 2rem);
+}
+
+@keyframes sampi-vsplash-in {
+  from { opacity: 0; transform: scale(1.04); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sampi-vsplash-out {
+  from { opacity: 1; transform: none; filter: blur(0); }
+  to { opacity: 0; transform: scale(1.03); filter: blur(6px); }
+}
+
+@keyframes sampi-vsplash-rise {
+  from { opacity: 0; transform: translateY(18px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+
+@keyframes sampi-vsplash-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(8vmax, 6vmax, 0) scale(1.15); }
+}
+
+@keyframes sampi-vsplash-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sampi-vsplash-halo {
+  from { opacity: 0.8; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.75); }
+}
+
+@keyframes sampi-vsplash-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes sampi-vsplash-shine {
+  0%, 100% { background-position: 100% 0; }
+  50% { background-position: 0 0; }
+}
+
+@keyframes sampi-vsplash-indeterminate {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(280%); }
+}
+
+@keyframes sampi-vsplash-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes sampi-vsplash-sweep {
+  0% { transform: translateX(-120%); }
+  60%, 100% { transform: translateX(120%); }
+}
+
+@keyframes sampi-vsplash-draw {
+  to { stroke-dashoffset: 0; }
+}

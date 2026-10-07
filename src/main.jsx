@@ -6,14 +6,15 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import "./index.css";
 import { FULLSCREEN_OFF_KEY } from "./utils/constants.js";
+import { showUpdatedSplashIfNeeded, showVersionSplash } from "./utils/versionSplash.js";
 
 const VERSION_NOTICE_ID = "sampi-version-toast";
 const VERSION_NOTICE_HIDE_MS = 6200;
 const VERSION_UPDATE_CHECK_MS = 60 * 1000;
 const INDEX_VERSION_CHECK_MS = 60 * 1000;
-const VERSION_AUTO_RELOAD_DELAY_MS = 1800;
 let versionNoticeTimer;
-let versionReloadTimer;
+// "Keyinroq" bosilgach, keyingi signallarda butun ekran emas, faqat kichik eslatma chiqadi.
+let versionSplashDismissed = false;
 let currentAssetSignature = "";
 let indexVersionWatcherStarted = false;
 
@@ -88,11 +89,6 @@ const requestAutoFullscreen = (event) => {
   window.addEventListener(eventName, requestAutoFullscreen, { capture: true, passive: true });
 });
 
-const scheduleVersionReload = () => {
-  if (!shouldAutoReloadForVersion() || versionReloadTimer) return;
-  versionReloadTimer = window.setTimeout(() => window.location.reload(), VERSION_AUTO_RELOAD_DELAY_MS);
-};
-
 const showVersionNotice = ({ activated = false, autoReload = false } = {}) => {
   if (typeof document === "undefined") return;
 
@@ -150,11 +146,18 @@ const showVersionNotice = ({ activated = false, autoReload = false } = {}) => {
 
 const handleNewVersionReady = ({ activated = false } = {}) => {
   const autoReload = shouldAutoReloadForVersion();
-  showVersionNotice({ activated, autoReload });
-
-  if (autoReload) {
-    scheduleVersionReload();
+  if (versionSplashDismissed) {
+    showVersionNotice({ activated, autoReload: false });
+    return;
   }
+  // Butun ekranli animatsiya; TV da o'zi yangilanadi.
+  showVersionSplash({
+    tv: autoReload,
+    onLater: () => {
+      versionSplashDismissed = true;
+      showVersionNotice({ activated, autoReload: false });
+    }
+  });
 };
 
 const checkIndexVersion = async () => {
@@ -255,6 +258,8 @@ if ("serviceWorker" in navigator) {
     }
   });
 }
+
+showUpdatedSplashIfNeeded({ tv: isTvScreenPath(), version: __APP_VERSION__ });
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
