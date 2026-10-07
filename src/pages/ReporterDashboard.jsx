@@ -4,6 +4,7 @@ import Alert from "../components/Alert.jsx";
 import Button from "../components/Button.jsx";
 import DatePickerField from "../components/DatePickerField.jsx";
 import Modal from "../components/Modal.jsx";
+import SelectMenu from "../components/SelectMenu.jsx";
 import Spinner from "../components/Spinner.jsx";
 import reporterService from "../services/reporterService.js";
 import { extractErrorMessage, formatCurrency } from "../utils/format.js";
@@ -45,6 +46,12 @@ const normalizeManualForm = (manual = {}) =>
 const getLegacySupply = (manual = {}) => {
   const parts = SUPPLY_KEYS.reduce((sum, key) => sum + safeNumber(manual[key]), 0);
   return parts > 0 ? 0 : safeNumber(manual.supplyAmount);
+};
+
+// Ta'minot qatorlari: summasi bor turlar; hech biri bo'lmasa bitta bo'sh "Svet" qatori.
+const pickSupplyKeys = (values = {}) => {
+  const used = SUPPLY_KEYS.filter((key) => safeNumber(values[key]) > 0);
+  return used.length ? used : [SUPPLY_KEYS[0]];
 };
 
 const getSuspiciousFields = (formValue) =>
@@ -101,13 +108,15 @@ function Kpi({ label, value, hint, accent = false }) {
   );
 }
 
-function AmountInput({ field, index, value, onChange, onEnter }) {
+function AmountInput({ field, index, value, onChange, onEnter, showLabel = true }) {
   const filled = safeNumber(value) > 0;
   return (
-    <label className="group block">
-      <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
-        {field.label}
-      </span>
+    <label className="group block min-w-0">
+      {showLabel ? (
+        <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+          {field.label}
+        </span>
+      ) : null}
       <span
         className={`flex items-center rounded-xl border bg-white transition focus-within:border-cyan-500 focus-within:ring-4 focus-within:ring-cyan-500/15 ${
           filled ? "border-slate-300" : "border-slate-200"
@@ -138,7 +147,90 @@ function AmountInput({ field, index, value, onChange, onEnter }) {
   );
 }
 
-function GroupCard({ group, startIndex, form, onFieldChange, onEnter, footer }) {
+// Ta'minot: har qatorda menyudan nima uchun to'langani (svet, gaz yoki suv) va summasi.
+// "+" yangi qator qo'shadi; tanlanganlari boshqa qatorda takror chiqmaydi.
+function SupplyCard({
+  group,
+  rows,
+  startIndex,
+  form,
+  total,
+  legacy,
+  onAmountChange,
+  onTypeChange,
+  onAdd,
+  onRemove,
+  onEnter
+}) {
+  const fieldByKey = Object.fromEntries(group.fields.map((field) => [field.key, field]));
+  const canAdd = rows.length < group.fields.length;
+
+  return (
+    <section className="card p-4 sm:p-5">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-base font-black text-slate-900">{group.title}</h2>
+        <span className="text-xs font-semibold text-slate-500">Nima uchun to'langanini tanlang</span>
+      </div>
+
+      <div className="space-y-2">
+        {rows.map((key, offset) => {
+          const options = group.fields
+            .filter((field) => field.key === key || !rows.includes(field.key))
+            .map((field) => ({ value: field.key, label: field.label }));
+          return (
+            <div key={key} className="reporter-row-enter flex items-center gap-2">
+              <div className="w-32 shrink-0 sm:w-40">
+                <SelectMenu value={key} options={options} onChange={(next) => onTypeChange(key, next)} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <AmountInput
+                  field={fieldByKey[key]}
+                  index={startIndex + offset}
+                  value={form[key]}
+                  onChange={(next) => onAmountChange(key, next)}
+                  onEnter={onEnter}
+                  showLabel={false}
+                />
+              </div>
+              <button
+                type="button"
+                aria-label={`${fieldByKey[key].label}ni olib tashlash`}
+                onClick={() => onRemove(key)}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl leading-none text-slate-400 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+              >
+                ×
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={onAdd}
+        disabled={!canAdd}
+        className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 text-sm font-bold text-slate-500 transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700 disabled:cursor-default disabled:hover:border-slate-200 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+      >
+        {canAdd ? (
+          <>
+            <span className="text-lg leading-none">+</span> Yana to'lov qo'shish
+          </>
+        ) : (
+          "Svet, gaz va suv hammasi qo'shilgan"
+        )}
+      </button>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-cyan-50 px-3 py-2">
+        <span className="text-sm font-bold text-cyan-800">
+          Ta'minot jami{legacy ? " (eski yozuv, bo'linmagan)" : ""}
+        </span>
+        <span className="text-lg font-black text-cyan-900">{money(total)}</span>
+      </div>
+    </section>
+  );
+}
+
+function GroupCard({ group, startIndex, form, onFieldChange, onEnter }) {
   return (
     <section className="card p-4 sm:p-5">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
@@ -157,7 +249,6 @@ function GroupCard({ group, startIndex, form, onFieldChange, onEnter, footer }) 
           />
         ))}
       </div>
-      {footer}
     </section>
   );
 }
@@ -184,6 +275,7 @@ function ReporterDashboard() {
   const [dailyReport, setDailyReport] = useState(null);
   const [form, setForm] = useState(emptyManual);
   const [legacySupply, setLegacySupply] = useState(0);
+  const [supplyKeys, setSupplyKeys] = useState(() => [SUPPLY_KEYS[0]]);
   const [loadingDaily, setLoadingDaily] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copyingYesterday, setCopyingYesterday] = useState(false);
@@ -204,6 +296,7 @@ function ReporterDashboard() {
       const loadedForm = normalizeManualForm(data?.manual);
       savedSnapshotRef.current = formSnapshot(loadedForm);
       setForm(loadedForm);
+      setSupplyKeys(pickSupplyKeys(data?.manual));
       setLegacySupply(getLegacySupply(data?.manual));
     } catch (err) {
       setError(extractErrorMessage(err));
@@ -309,6 +402,29 @@ function ReporterDashboard() {
 
   const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
+  // Qator turi almashsa summa yangi turga o'tadi.
+  const changeSupplyType = (oldKey, newKey) => {
+    if (oldKey === newKey || supplyKeys.includes(newKey)) return;
+    setForm((prev) => ({ ...prev, [newKey]: prev[oldKey], [oldKey]: "" }));
+    setSupplyKeys((keys) => keys.map((key) => (key === oldKey ? newKey : key)));
+  };
+
+  const addSupplyRow = () => {
+    const nextKey = SUPPLY_KEYS.find((key) => !supplyKeys.includes(key));
+    if (!nextKey) return;
+    const newIndex = groupStartIndex(supplyGroupIndex) + supplyKeys.length;
+    setSupplyKeys((keys) => [...keys, nextKey]);
+    window.setTimeout(() => document.querySelector(`[data-amount-index="${newIndex}"]`)?.focus(), 60);
+  };
+
+  const removeSupplyRow = (key) => {
+    setForm((prev) => ({ ...prev, [key]: "" }));
+    setSupplyKeys((keys) => {
+      const rest = keys.filter((item) => item !== key);
+      return rest.length ? rest : [key];
+    });
+  };
+
   // Tab o'chirilgan: Enter keyingi summaga o'tadi, oxirgisida saqlaydi.
   const focusNextAmount = (index) => {
     const next = document.querySelector(`[data-amount-index="${index + 1}"]`);
@@ -328,6 +444,7 @@ function ReporterDashboard() {
       const previousDate = getPreviousDateKey(date);
       const data = await reporterService.getDailyReport(previousDate);
       setForm((prev) => ({ ...normalizeManualForm(data?.manual), note: prev.note || "" }));
+      setSupplyKeys(pickSupplyKeys(data?.manual));
       setSuccess(`${previousDate.split("-").reverse().join(".")} kungi summalar qo'yildi.`);
     } catch (err) {
       setError(extractErrorMessage(err));
@@ -339,6 +456,7 @@ function ReporterDashboard() {
   const handleClear = () => {
     if (!window.confirm("Kiritilgan summalarni tozalaysizmi?")) return;
     setForm(emptyManual());
+    setSupplyKeys([SUPPLY_KEYS[0]]);
     approvedSuspiciousSignatureRef.current = "";
     setSuccess("Summalar tozalandi.");
   };
@@ -356,8 +474,13 @@ function ReporterDashboard() {
     }).catch(() => {});
   };
 
-  const groupStartIndex = (groupIndex) =>
-    reporterFieldGroups.slice(0, groupIndex).reduce((sum, group) => sum + group.fields.length, 0);
+  // Enter tartibi: Ta'minotda nechta qator bo'lsa, shuncha maydon.
+  function groupStartIndex(groupIndex) {
+    return reporterFieldGroups
+      .slice(0, groupIndex)
+      .reduce((sum, group) => sum + (group.key === "supply" ? supplyKeys.length : group.fields.length), 0);
+  }
+  const supplyGroupIndex = reporterFieldGroups.findIndex((group) => group.key === "supply");
   const expenseGroup = reporterFieldGroups.find((group) => group.key === "expenses");
   const cancelReasonText = queue.cancelReasons?.length
     ? queue.cancelReasons.map((item) => `${cancelReasonLabels[item.reason] || item.reason}: ${item.count}`).join(" · ")
@@ -451,29 +574,33 @@ function ReporterDashboard() {
 
           <form className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]" noValidate onSubmit={handleSave}>
             <div className="space-y-4">
-              {reporterFieldGroups.map((group, groupIndex) => (
-                <GroupCard
-                  key={group.key}
-                  group={group}
-                  startIndex={groupStartIndex(groupIndex)}
-                  form={form}
-                  onFieldChange={setField}
-                  onEnter={focusNextAmount}
-                  footer={
-                    group.key === "supply" ? (
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-cyan-50 px-3 py-2">
-                        <span className="text-sm font-bold text-cyan-800">
-                          Ta'minot = svet + gaz + suv
-                          {legacySupply > 0 && SUPPLY_KEYS.every((key) => !safeNumber(form[key]))
-                            ? " (eski yozuv, bo'linmagan)"
-                            : ""}
-                        </span>
-                        <span className="text-lg font-black text-cyan-900">{money(supplyAmount)}</span>
-                      </div>
-                    ) : null
-                  }
-                />
-              ))}
+              {reporterFieldGroups.map((group, groupIndex) =>
+                group.key === "supply" ? (
+                  <SupplyCard
+                    key={group.key}
+                    group={group}
+                    rows={supplyKeys}
+                    startIndex={groupStartIndex(groupIndex)}
+                    form={form}
+                    total={supplyAmount}
+                    legacy={legacySupply > 0 && SUPPLY_KEYS.every((key) => !safeNumber(form[key]))}
+                    onAmountChange={setField}
+                    onTypeChange={changeSupplyType}
+                    onAdd={addSupplyRow}
+                    onRemove={removeSupplyRow}
+                    onEnter={focusNextAmount}
+                  />
+                ) : (
+                  <GroupCard
+                    key={group.key}
+                    group={group}
+                    startIndex={groupStartIndex(groupIndex)}
+                    form={form}
+                    onFieldChange={setField}
+                    onEnter={focusNextAmount}
+                  />
+                )
+              )}
 
               <section className="card p-4 sm:p-5">
                 <label className="block">
