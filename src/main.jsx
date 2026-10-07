@@ -17,6 +17,17 @@ let versionReloadTimer;
 let currentAssetSignature = "";
 let indexVersionWatcherStarted = false;
 
+// Tab tugmasi butun ilovada o'chirilgan (login, kassa, LOR, TV — hammasida): xodimlar
+// sichqoncha va Enter bilan ishlaydi, Tab fokusni tasodifan tugmaga o'tkazib keyingi
+// Enter ni noto'g'ri amalga yuborardi.
+window.addEventListener(
+  "keydown",
+  (event) => {
+    if (event.key === "Tab") event.preventDefault();
+  },
+  true
+);
+
 const isTvScreenPath = () => window.location.pathname.startsWith("/tv");
 
 const isDesktopApp = () => {

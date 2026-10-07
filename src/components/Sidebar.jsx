@@ -161,18 +161,23 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
       return false;
     }
   });
-  const showBottomItems = isCompact || settingsOpen || isOnBottomPage;
-  const toggleSettings = () => {
-    setSettingsOpen((value) => {
-      const next = !value;
-      try {
-        window.localStorage.setItem(SETTINGS_OPEN_KEY, next ? "1" : "0");
-      } catch {
-        // saqlanmasa ham ishlayveradi
-      }
-      return next;
-    });
+  const saveSettingsOpen = (next) => {
+    setSettingsOpen(next);
+    try {
+      window.localStorage.setItem(SETTINGS_OPEN_KEY, next ? "1" : "0");
+    } catch {
+      // saqlanmasa ham ishlayveradi
+    }
   };
+  // Sozlamalar ichidagi sahifaga o'tilganda bo'lim ochiladi, lekin baribir yopib bo'ladi
+  // (avval bunday sahifada tugma o'chirilib, bo'limni yopib bo'lmasdi).
+  const [openedForPath, setOpenedForPath] = useState("");
+  if (isOnBottomPage && openedForPath !== location.pathname) {
+    setOpenedForPath(location.pathname);
+    if (!settingsOpen) setSettingsOpen(true);
+  }
+  const showBottomItems = isCompact || settingsOpen;
+  const toggleSettings = () => saveSettingsOpen(!settingsOpen);
   const hasGroups = menus.some((item) => item.group);
   const groupedMenus = hasGroups
     ? menus.reduce((acc, item) => {
@@ -318,8 +323,7 @@ function Sidebar({ open, onClose, compact = false, onToggleCompact }) {
               type="button"
               onClick={toggleSettings}
               aria-expanded={showBottomItems}
-              disabled={isOnBottomPage}
-              className={`flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:cursor-default disabled:hover:bg-transparent ${isCompact ? "lg:hidden" : ""}`}
+              className={`flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 ${isCompact ? "lg:hidden" : ""}`}
             >
               <MenuIcon name="settings" className="h-3.5 w-3.5" />
               <span className="flex-1 text-left">Sozlamalar</span>

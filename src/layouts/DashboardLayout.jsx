@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar.jsx";
 import Navbar from "../components/Navbar.jsx";
@@ -36,16 +36,6 @@ function DashboardLayout() {
       return next;
     });
   };
-
-  // Tab bilan elementlar orasida yurish o'chirilgan: xodimlar sichqoncha va Enter bilan
-  // ishlaydi, Tab tasodifan tugmaga o'tib keyingi Enter ni noto'g'ri amalga yuborardi.
-  useEffect(() => {
-    const blockTab = (event) => {
-      if (event.key === "Tab") event.preventDefault();
-    };
-    window.addEventListener("keydown", blockTab, true);
-    return () => window.removeEventListener("keydown", blockTab, true);
-  }, []);
 
   useLayoutEffect(() => {
     setRouteMotion(getRouteMotion(previousPathRef.current, location.pathname));

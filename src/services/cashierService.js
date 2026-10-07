@@ -53,6 +53,12 @@ const cashierService = {
     return data.data;
   },
 
+  async getAccountantReport(date) {
+    const query = date ? `?date=${encodeURIComponent(date)}` : "";
+    const { data } = await api.get(`/cashier/accountant-report${query}`);
+    return data.data;
+  },
+
   async getExpenses(date) {
     const query = date ? `?date=${encodeURIComponent(date)}` : "";
     const { data } = await api.get(`/cashier/expenses${query}`);

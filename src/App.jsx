@@ -17,6 +17,7 @@ import RoleSpecialistsPage from "./pages/RoleSpecialistsPage.jsx";
 import DeliveryDashboard from "./pages/DeliveryDashboard.jsx";
 import CashierDashboard from "./pages/CashierDashboard.jsx";
 import CashierExpensesPage from "./pages/CashierExpensesPage.jsx";
+import CashierAccountantPage from "./pages/CashierAccountantPage.jsx";
 import ReporterDashboard from "./pages/ReporterDashboard.jsx";
 import ReporterReportsPage from "./pages/ReporterReportsPage.jsx";
 import ReporterMonthlyPage from "./pages/ReporterMonthlyPage.jsx";
@@ -143,6 +144,7 @@ function App() {
               element={<CashierDashboard forcedSection="journal" />}
             />
             <Route path="/cashier/expenses" element={<CashierExpensesPage />} />
+            <Route path="/cashier/accountant" element={<CashierAccountantPage />} />
             <Route
               path="/cashier/debts"
               element={<CashierDashboard forcedSection="debts" />}

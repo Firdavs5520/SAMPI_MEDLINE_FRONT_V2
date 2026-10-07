@@ -58,6 +58,7 @@ export const sidebarMenus = {
     { label: "Kassa jurnali", path: "/cashier/journal", end: true, group: "Umumiy", icon: "receipt" },
     { label: "Qarzdorlar", path: "/cashier/debts", end: true, group: "Umumiy", icon: "list" },
     { label: "Xarajatlar", path: "/cashier/expenses", end: true, group: "Umumiy", icon: "wallet" },
+    { label: "Hisobchi uchun", path: "/cashier/accountant", end: true, group: "Umumiy", icon: "bar-chart" },
     // Kam ishlatiladigan bandlar pastdagi "Sozlamalar" bo'limida.
     { label: "LOR shifokorlar", path: "/cashier/lor-specialists", end: true, icon: "users", bottom: true },
     { label: "Hamshiralar", path: "/cashier/nurse-specialists", end: true, icon: "users", bottom: true },

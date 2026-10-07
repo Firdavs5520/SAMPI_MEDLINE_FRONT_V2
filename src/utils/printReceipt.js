@@ -681,3 +681,100 @@ export const closePrintTab = (printSession) => {
     printSession.tab.close();
   }
 };
+
+// Hisobchi uchun kunlik hisobot: 80mm chek printeriga chiqadi.
+export const buildAccountantReportPrintHtml = (report) => {
+  const row = (label, value, strong = false) =>
+    `<tr class="${strong ? "strong" : ""}"><td>${escapeHtml(label)}</td><td>${escapeHtml(formatSum(value))}</td></tr>`;
+  const doctors = (report.doctors || [])
+    .map(
+      (doctor) => `<div class="doc"><div class="doc-name">${escapeHtml(doctor.name)}</div><table>
+        ${row(`Bemorlar: ${doctor.patients} ta, tushum`, doctor.collected)}
+        ${row(`Doktorga ${report.doctorSharePercent}%`, doctor.doctorShare, true)}
+        ${row("Klinikaga", doctor.clinicShare)}
+        ${doctor.debtLeft > 0 ? row("Qarz qoldi", doctor.debtLeft) : ""}
+      </table></div>`
+    )
+    .join("");
+  const expenses = (report.expenses?.items || [])
+    .map((item) => row(item.reason, item.amount))
+    .join("");
+  const [year, month, day] = String(report.date || "").split("-");
+
+  return `<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hisobchi hisoboti</title>
+    <style>
+      @page { size: 80mm auto; margin: 0; }
+      html, body { margin: 0; padding: 0; width: 80mm; font-family: Arial, sans-serif; font-size: 13px; color: #000; background: #fff; }
+      * { font-family: Arial, sans-serif; box-sizing: border-box; }
+      .ticket { width: 72mm; }
+      .inner { width: 72mm; padding: 8px 2mm 4px; }
+      .cut-tail { position: relative; width: 100%; height: 10mm; display: flex; align-items: flex-end; justify-content: center; }
+      .cut-tail::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; border-left: 1px dotted #000; }
+      .cut-tail::after { content: ""; width: 14mm; border-top: 1px solid #000; }
+      .brand { text-align: center; font-size: 22px; font-weight: 900; letter-spacing: 1px; }
+      .sub { text-align: center; margin-top: 4px; font-size: 13px; font-weight: 800; letter-spacing: 1px; }
+      .date { text-align: center; margin-top: 2px; font-size: 12px; }
+      .rule { border-top: 2px solid #000; margin: 8px 0; }
+      .title { display: flex; align-items: center; gap: 6px; margin: 10px 0 4px; font-size: 12px; font-weight: 900; letter-spacing: 2px; }
+      .title::before, .title::after { content: ""; flex: 1; border-top: 1.5px solid #000; }
+      table { width: 100%; border-collapse: collapse; }
+      td { padding: 2px 0; vertical-align: top; }
+      td:last-child { text-align: right; white-space: nowrap; font-weight: 700; padding-left: 6px; }
+      tr.strong td { font-weight: 900; font-size: 14px; }
+      .doc { padding: 4px 0; border-bottom: 1px dotted #000; }
+      .doc:last-child { border-bottom: 0; }
+      .doc-name { font-size: 14px; font-weight: 900; }
+      .total { margin-top: 6px; padding: 6px 0; border-top: 3px solid #000; border-bottom: 3px solid #000; }
+      .total td { font-size: 15px; font-weight: 900; }
+    </style>
+  </head>
+  <body>
+    <div class="ticket" data-sampi-receipt="report">
+      <div class="inner">
+        <div class="brand">SAMPI MEDICINE</div>
+        <div class="sub">HISOBCHI HISOBOTI</div>
+        <div class="date">${escapeHtml(`${day}.${month}.${year}`)} smena</div>
+        <div class="rule"></div>
+        ${doctors ? `<div class="title"><span>LOR DOKTORLAR</span></div>${doctors}` : ""}
+        <div class="title"><span>PROTSEDURA</span></div>
+        <table>
+          ${row(`Bemorlar: ${report.procedures?.patients || 0} ta, tushum`, report.procedures?.collected)}
+          ${report.procedures?.debtLeft > 0 ? row("Qarz qoldi", report.procedures.debtLeft) : ""}
+        </table>
+        <div class="title"><span>TO'LOV TURLARI</span></div>
+        <table>
+          ${row("Naqd", report.byPaymentMethod?.cash)}
+          ${row("Karta", report.byPaymentMethod?.card)}
+          ${row("O'tkazma", report.byPaymentMethod?.transfer)}
+        </table>
+        ${expenses ? `<div class="title"><span>XARAJATLAR</span></div><table>${expenses}</table>` : ""}
+        <div class="title"><span>QARZLAR</span></div>
+        <table>
+          ${row("Bugun qarz qoldi", report.debts?.newDebt)}
+          ${row("Eski qarz to'landi", report.debts?.repaid)}
+          ${row(`Jami qarz (${report.debts?.outstandingCount || 0} ta)`, report.debts?.outstandingTotal)}
+        </table>
+        <table class="total">
+          ${row("Jami tushum", report.summary?.totalCollected)}
+          ${row("Doktorlarga", report.summary?.doctorsShare)}
+          ${row("Xarajatlar", report.summary?.expenses)}
+          ${row("Klinikaga sof", report.summary?.clinicNet, true)}
+        </table>
+        <table>${row("Kassada naqd", report.summary?.cashInHand, true)}</table>
+      </div>
+      <div class="cut-tail"></div>
+    </div>
+  </body>
+</html>`;
+};
+
+export const printAccountantReport = async (report) => {
+  const html = buildAccountantReportPrintHtml(report);
+  const desktopResult = await printHtmlWithDesktopApp(html);
+  if (desktopResult !== null) return desktopResult;
+  return printHtmlInsideCurrentApp(html);
+};
