@@ -108,6 +108,18 @@ const usageService = {
     return data.data;
   },
 
+  // Bemor xonaga kirdi: TV "Hozir qabulda" ko'rsatadi.
+  async markLorTicketArrived(ticketId, payload = {}) {
+    const { data } = await api.post(`/usage/lor-queue-tickets/${ticketId}/arrived`, payload);
+    return data.data;
+  },
+
+  // Bemor kelmadi: TV raqamni yana ovoz bilan chaqiradi.
+  async recallLorQueueTicket(ticketId, payload = {}) {
+    const { data } = await api.post(`/usage/lor-queue-tickets/${ticketId}/recall`, payload);
+    return data.data;
+  },
+
   async cancelLorQueueTicket(ticketId, payload = {}) {
     const { data } = await api.post(`/usage/lor-queue-tickets/${ticketId}/cancel`, payload);
     return data.data;

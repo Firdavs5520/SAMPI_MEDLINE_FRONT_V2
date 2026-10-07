@@ -7382,3 +7382,16 @@ html.theme-dark .reporter-total-box {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: none; }
 }
+
+/* Chaqirilgan, lekin hali kirmagan bemor: "Chaqirilmoqda" sariq va miltillaydi. */
+.sampi-tv-current-calling .sampi-tv-current-kicker,
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-calling .sampi-tv-current-kicker {
+  background: #fef3c7 !important;
+  color: #b45309 !important;
+  animation: sampi-tv-calling-blink 1.2s ease-in-out infinite !important;
+}
+
+@keyframes sampi-tv-calling-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}

@@ -219,6 +219,7 @@ function LorServicesPage() {
   const [queueLoading, setQueueLoading] = useState(false);
   const [callingTicketId, setCallingTicketId] = useState("");
   const [admittingWalkIn, setAdmittingWalkIn] = useState(false);
+  const [recallingTicket, setRecallingTicket] = useState(false);
   const [cancelingTicket, setCancelingTicket] = useState(false);
   const [cancelPromptOpen, setCancelPromptOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState(CANCEL_REASON_OPTIONS[0].value);
@@ -392,6 +393,7 @@ function LorServicesPage() {
     setServicesClosing(false);
     setServicesOpen(true);
     setTimeout(() => serviceSearchRef.current?.focus({ preventScroll: true }), SERVICES_SLIDE_MS);
+    markArrived();
   };
 
   const closeServices = () =>
@@ -482,6 +484,8 @@ function LorServicesPage() {
       return;
     }
 
+    // Xizmat tanlanyapti = bemor xonada (masalan, qayta qabulda oyna o'zi ochilgan bo'lsa).
+    markArrived();
     setServiceInputs((prevInputs) => ({
       ...prevInputs,
       [serviceId]: {
@@ -663,7 +667,35 @@ function LorServicesPage() {
     }
   };
 
-  const handleCancelActiveTicket = async () => {
+  // Bemor xonaga kirgani TV'ga bildiriladi ("Chaqirilmoqda" -> "Hozir qabulda").
+  // Xato bo'lsa ish to'xtamaydi: chek baribir chiqadi.
+  const markArrived = async () => {
+    if (!activeTicket?.id || activeTicket.arrived) return;
+    try {
+      const updated = await usageService.markLorTicketArrived(activeTicket.id, { lorIdentity });
+      setQueueState((prev) =>
+        prev.current?.id === updated?.id ? { ...prev, current: { ...prev.current, arrived: true } } : prev
+      );
+    } catch {
+      // TV holati keyingi yangilanishda tuzaladi
+    }
+  };
+
+  const handleRecallTicket = async () => {
+    if (!activeTicket?.id || recallingTicket) return;
+    resetMessages();
+    setRecallingTicket(true);
+    try {
+      await usageService.recallLorQueueTicket(activeTicket.id, { lorIdentity });
+      setSuccess(`${activeTicket.queueCode} raqami TV'da qayta chaqirildi.`);
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    } finally {
+      setRecallingTicket(false);
+    }
+  };
+
+  const handleCancelActiveTicket = async (overrideReason) => {
     if (!activeTicket?.id || cancelingTicket) return;
 
     resetMessages();
@@ -672,8 +704,8 @@ function LorServicesPage() {
     try {
       await usageService.cancelLorQueueTicket(activeTicket.id, {
         lorIdentity,
-        reason: cancelReason,
-        note: cancelNote
+        reason: typeof overrideReason === "string" ? overrideReason : cancelReason,
+        note: typeof overrideReason === "string" ? "" : cancelNote
       });
       setCancelPromptOpen(false);
       await closeServices();
@@ -684,7 +716,11 @@ function LorServicesPage() {
       setCancelReason(CANCEL_REASON_OPTIONS[0].value);
       setCancelNote("");
       await loadLorQueueTickets({ silent: true });
-      setSuccess("LOR navbati bekor qilindi.");
+      setSuccess(
+        overrideReason === "patient_absent"
+          ? "Bemor kelmadi: navbat bekor qilindi, TV'dan olib tashlandi."
+          : "LOR navbati bekor qilindi."
+      );
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -899,6 +935,36 @@ function LorServicesPage() {
             >
               Navbatni bekor qilish
             </Button>
+            {!activeTicket.arrived ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 md:col-span-3">
+                <p className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-amber-500" aria-hidden="true" />
+                  {activeTicket.queueCode} chaqirildi, bemor hali kirmadi. TV'da "Chaqirilmoqda" turibdi.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="min-h-9 px-3 text-xs"
+                    loading={recallingTicket}
+                    loadingText="Chaqirilmoqda..."
+                    onClick={handleRecallTicket}
+                  >
+                    Qayta chaqirish
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    className="min-h-9 px-3 text-xs"
+                    loading={cancelingTicket}
+                    loadingText="..."
+                    onClick={() => handleCancelActiveTicket("patient_absent")}
+                  >
+                    Kelmadi
+                  </Button>
+                </div>
+              </div>
+            ) : null}
             {!servicesOpen ? (
               <p className="sampi-enter-hint flex items-center gap-2 text-sm font-semibold text-sky-700 md:col-span-3">
                 <kbd className="rounded-md border border-sky-300 bg-white px-2 py-0.5 font-sans text-xs font-bold text-sky-800 shadow-sm">

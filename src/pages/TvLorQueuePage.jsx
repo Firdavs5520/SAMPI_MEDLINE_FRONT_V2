@@ -29,6 +29,8 @@ const TV_TEXT = {
     waitTitle: "Navbatingizni kuting",
     currentKicker: "Hozir qabulda",
     currentNote: "LOR xonasida",
+    callingKicker: "Chaqirilmoqda",
+    callingNote: "LOR xonasiga kiring",
     waitingTitle: "Navbatdagilar",
     waitingSubtitle: "Raqamingiz chaqirilishini kuting",
     loading: "Yuklanmoqda",
@@ -42,6 +44,8 @@ const TV_TEXT = {
     waitTitle: "Ожидайте своей очереди",
     currentKicker: "Сейчас на приёме",
     currentNote: "В кабинете ЛОР",
+    callingKicker: "Вызывается",
+    callingNote: "Пройдите в кабинет ЛОР",
     waitingTitle: "Очередь",
     waitingSubtitle: "Ожидайте вызова вашего номера",
     loading: "Загрузка",
@@ -611,13 +615,19 @@ function TvLorQueuePage() {
                 <div className="sampi-tv-standby-line" aria-hidden="true" />
               </div>
             ) : current ? (
-              <div className="sampi-tv-current-content" aria-live="polite">
-                <div className="sampi-tv-current-kicker"><TvText lang={tvLang}>{t.currentKicker}</TvText></div>
+              <div
+                className={`sampi-tv-current-content ${current.arrived === false ? "sampi-tv-current-calling" : ""}`}
+                aria-live="polite"
+              >
+                {/* Chaqirilgan, lekin hali kirmagan bemor "qabulda" deb ko'rsatilmaydi. */}
+                <div className="sampi-tv-current-kicker">
+                  <TvText lang={tvLang}>{current.arrived === false ? t.callingKicker : t.currentKicker}</TvText>
+                </div>
                 <div className="sampi-tv-number-shell">
                   <div className="sampi-tv-current-code">{displayQueueCode}</div>
                 </div>
                 <div className="sampi-tv-current-note">
-                  <TvText lang={tvLang}>{t.currentNote}</TvText>
+                  <TvText lang={tvLang}>{current.arrived === false ? t.callingNote : t.currentNote}</TvText>
                 </div>
               </div>
             ) : (
