@@ -966,12 +966,22 @@ function LorServicesPage() {
               </div>
             ) : null}
             {!servicesOpen ? (
-              <p className="sampi-enter-hint flex items-center gap-2 text-sm font-semibold text-sky-700 md:col-span-3">
-                <kbd className="rounded-md border border-sky-300 bg-white px-2 py-0.5 font-sans text-xs font-bold text-sky-800 shadow-sm">
-                  Enter ↵
-                </kbd>
-                Bemor ismini yozib Enter bosing — xizmatlar oynasi ochiladi.
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-3 md:col-span-3">
+                <p className="sampi-enter-hint flex items-center gap-2 text-sm font-semibold text-sky-700">
+                  <kbd className="rounded-md border border-sky-300 bg-white px-2 py-0.5 font-sans text-xs font-bold text-sky-800 shadow-sm">
+                    Enter ↵
+                  </kbd>
+                  Bemor ismini yozib Enter bosing yoki tugmani bosing — xizmatlar oynasi ochiladi.
+                </p>
+                {/* Sichqoncha bilan ishlaydiganlar uchun: Enter bilan bir xil ish qiladi. */}
+                <Button
+                  type="button"
+                  className="min-h-11 bg-sky-600 px-5 text-sm hover:bg-sky-700 focus:ring-sky-300"
+                  onClick={openServices}
+                >
+                  Xizmatlarni tanlash →
+                </Button>
+              </div>
             ) : null}
             {waitingTickets.length ? (
               <p className="text-xs font-semibold text-amber-700 md:col-span-3">
