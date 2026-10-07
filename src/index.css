@@ -7395,3 +7395,34 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-current-calling .sampi-tv-c
   0%, 100% { opacity: 1; }
   50% { opacity: 0.45; }
 }
+
+/* Yangi versiya oynasi ochiqligida sahifa aylanmaydi (scroll bar ko'rinmaydi). */
+html.sampi-vsplash-open,
+html.sampi-vsplash-open body {
+  overflow: hidden !important;
+  scrollbar-width: none;
+}
+
+html.sampi-vsplash-open::-webkit-scrollbar,
+html.sampi-vsplash-open body::-webkit-scrollbar {
+  display: none;
+}
+
+/* TV navbatdagilar: sarlavha bitta qatorda, hamma raqam o'rtada; "Keyingi" belgisi
+   raqamni surmasdan o'ng chetda turadi. */
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-head {
+  align-items: center !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row {
+  position: relative !important;
+  justify-content: center !important;
+}
+
+html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row small {
+  position: absolute !important;
+  top: 50% !important;
+  right: clamp(0.8rem, 1.4vw, 1.4rem) !important;
+  margin: 0 !important;
+  transform: translateY(-50%) !important;
+}

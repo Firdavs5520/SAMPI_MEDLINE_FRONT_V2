@@ -55,18 +55,25 @@ const markup = ({ tv, mode, version }) => `
 
 let keyGuard = null;
 
+// Ochiq turganda sahifa aylanmaydi: ostidagi sahifaning scroll bar'i animatsiya ustida ko'rinmaydi.
+const OPEN_CLASS = "sampi-vsplash-open";
+
 const removeSplash = (splash, { immediate = false } = {}) => {
   if (!splash) return;
   if (keyGuard) {
     window.removeEventListener("keydown", keyGuard, true);
     keyGuard = null;
   }
-  if (immediate) {
+  const finish = () => {
     splash.remove();
+    if (!document.getElementById(SPLASH_ID)) document.documentElement.classList.remove(OPEN_CLASS);
+  };
+  if (immediate) {
+    finish();
     return;
   }
   splash.classList.add("is-leaving");
-  window.setTimeout(() => splash.remove(), EXIT_MS);
+  window.setTimeout(finish, EXIT_MS);
 };
 
 const mountSplash = ({ tv, mode, version }) => {
@@ -78,6 +85,7 @@ const mountSplash = ({ tv, mode, version }) => {
   splash.setAttribute("aria-live", "assertive");
   splash.innerHTML = markup({ tv, mode, version });
   document.body.appendChild(splash);
+  document.documentElement.classList.add(OPEN_CLASS);
   return splash;
 };
 

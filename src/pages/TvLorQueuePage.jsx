@@ -32,7 +32,6 @@ const TV_TEXT = {
     callingKicker: "Chaqirilmoqda",
     callingNote: "LOR xonasiga kiring",
     waitingTitle: "Navbatdagilar",
-    waitingSubtitle: "Raqamingiz chaqirilishini kuting",
     loading: "Yuklanmoqda",
     next: "Keyingi",
     empty: "Hozirda navbat yo'q",
@@ -47,7 +46,6 @@ const TV_TEXT = {
     callingKicker: "Вызывается",
     callingNote: "Пройдите в кабинет ЛОР",
     waitingTitle: "Очередь",
-    waitingSubtitle: "Ожидайте вызова вашего номера",
     loading: "Загрузка",
     next: "Следующий",
     empty: "Сейчас очереди нет",
@@ -650,10 +648,7 @@ function TvLorQueuePage() {
             aria-label="Kassadan chiqarilgan LOR cheklari"
           >
             <div className="sampi-tv-waiting-head">
-              <div>
-                <span><TvText lang={tvLang}>{t.waitingTitle}</TvText></span>
-                <strong><TvText lang={tvLang}>{t.waitingSubtitle}</TvText></strong>
-              </div>
+              <span><TvText lang={tvLang}>{t.waitingTitle}</TvText></span>
               <b>{loading && !queue ? "..." : waitingTicketCount}</b>
             </div>
             <div className="sampi-tv-waiting-list" style={waitingListStyle}>

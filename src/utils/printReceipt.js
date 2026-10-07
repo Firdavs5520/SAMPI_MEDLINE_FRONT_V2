@@ -163,6 +163,8 @@ export const buildCheckPrintHtml = (check, options = {}) => {
     rows ? `<div class="section-title"><span>${title}</span></div>${rows}` : "";
 
   const creatorRole = String(check?.createdBy?.role || "").toLowerCase();
+  // "07.10.2026 14:33" -> sana va vaqt alohida qatorda (yarim kenglikka sig'adi).
+  const [receiptDay, receiptTime = ""] = formatReceiptDate(check.createdAt).split(" ");
   const specialistLabel = creatorRole === "nurse" ? "Hamshira" : "Doktor";
   const departmentLabel = creatorRole === "nurse" ? "Muolaja xonasi" : "";
   const lorQueueCode = formatQueueCode(check?.lorQueue?.queueCode || check?.queueCode);
@@ -217,10 +219,17 @@ export const buildCheckPrintHtml = (check, options = {}) => {
       .queue-label { font-size: 15px; font-weight: 800; letter-spacing: 2px; }
       .queue-code { font-size: 34px; font-weight: 900; line-height: 1; }
 
-      .meta { width: 100%; border-collapse: collapse; font-size: 13px; }
-      .meta td { padding: 2px 0; vertical-align: top; }
-      .meta td:first-child { width: 20mm; white-space: nowrap; }
-      .meta td:last-child { font-weight: 700; word-break: break-word; }
+      /* Sarlavha: bemor ismi katta, ostida chegarali blok (chek raqami, sana, mutaxassis). */
+      .cap { font-size: 9.5px; font-weight: 800; letter-spacing: 1.6px; line-height: 1; }
+      .patient { margin: 2px 0 6px; }
+      .patient-name { margin-top: 3px; font-size: 18px; font-weight: 900; line-height: 1.15; word-break: break-word; }
+      .meta-grid { display: grid; grid-template-columns: 1fr 1fr; border: 1.5px solid #000; border-radius: 6px; overflow: hidden; }
+      .cell { padding: 5px 6px 6px; min-width: 0; }
+      .cell + .cell { border-left: 1px solid #000; }
+      .cell-wide { grid-column: 1 / -1; border-left: 0 !important; border-top: 1px solid #000; }
+      .val { margin-top: 3px; font-size: 13px; font-weight: 800; line-height: 1.2; word-break: break-word; }
+      .val-code { font-size: 18px; font-weight: 900; letter-spacing: 1.5px; line-height: 1.05; }
+      .val-time { font-size: 11px; font-weight: 700; }
 
       .section-title { display: flex; align-items: center; gap: 6px; margin: 10px 0 2px; font-size: 12px; font-weight: 900; letter-spacing: 2px; }
       .section-title::before, .section-title::after { content: ""; flex: 1; border-top: 1.5px solid #000; }
@@ -252,12 +261,25 @@ export const buildCheckPrintHtml = (check, options = {}) => {
         </div>
         <div class="rule"></div>
         ${queueBlock}
-        <table class="meta">
-          <tr><td>Bemor</td><td>${escapeHtml(check.patient?.fullName || "-")}</td></tr>
-          <tr><td>${specialistLabel}</td><td>${escapeHtml(check?.createdBy?.name || "-")}</td></tr>
-          <tr><td>Sana</td><td>${escapeHtml(formatReceiptDate(check.createdAt))}</td></tr>
-          <tr><td>Chek №</td><td>${escapeHtml(shortCheckId(check.checkId))}</td></tr>
-        </table>
+        <div class="patient">
+          <div class="cap">BEMOR</div>
+          <div class="patient-name">${escapeHtml(check.patient?.fullName || "-")}</div>
+        </div>
+        <div class="meta-grid">
+          <div class="cell">
+            <div class="cap">CHEK №</div>
+            <div class="val val-code">${escapeHtml(shortCheckId(check.checkId))}</div>
+          </div>
+          <div class="cell">
+            <div class="cap">SANA</div>
+            <div class="val">${escapeHtml(receiptDay)}</div>
+            <div class="val-time">${escapeHtml(receiptTime)}</div>
+          </div>
+          <div class="cell cell-wide">
+            <div class="cap">${specialistLabel.toUpperCase()}</div>
+            <div class="val">${escapeHtml(check?.createdBy?.name || "-")}</div>
+          </div>
+        </div>
         ${section("DORILAR", medicineRows)}
         ${section("XIZMATLAR", serviceRows)}
         <div class="total">
