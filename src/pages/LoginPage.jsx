@@ -8,6 +8,11 @@ import Button from "../components/Button.jsx";
 import Alert from "../components/Alert.jsx";
 import { showFieldError } from "../utils/fieldError.js";
 
+// Brauzer parolni saqlashni taklif qilmasligi uchun parol oddiy matn maydonida, belgilar
+// CSS (-webkit-text-security) bilan yashiriladi. Qo'llanmasa oddiy password maydoni.
+const MASKED_TEXT_SUPPORTED =
+  typeof CSS !== "undefined" && typeof CSS.supports === "function" && CSS.supports("-webkit-text-security", "disc");
+
 function LoginPage() {
   const navigate = useNavigate();
   const { login, token, role, lorIdentity, lorDoctor, loading } = useAuth();
@@ -91,19 +96,22 @@ function LoginPage() {
               <Input
                 field="login-email"
                 label="Email"
-                type="email"
+                type="text"
+                inputMode="email"
+                autoCapitalize="none"
                 placeholder="email@example.com"
                 value={form.email}
-                autoComplete="email"
                 onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
               />
               <Input
                 field="login-password"
                 label="Parol"
-                type="password"
+                type={MASKED_TEXT_SUPPORTED ? "text" : "password"}
+                className={MASKED_TEXT_SUPPORTED ? "sampi-masked" : ""}
+                autoCapitalize="none"
                 placeholder="********"
                 value={form.password}
-                autoComplete="current-password"
+                autoComplete={MASKED_TEXT_SUPPORTED ? "off" : "current-password"}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, password: e.target.value }))
                 }

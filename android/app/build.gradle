@@ -7,8 +7,8 @@ android {
         applicationId "uz.sampimedline.tv"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 11
-        versionName "1.0.11"
+        versionCode 12
+        versionName "1.0.12"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +16,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:<dir>desktop-updates:<dir>downloads'
         }
     }
+    // Doimiy imzo: GitHub'da yig'ilgan har bir yangi APK eski ilova ustidan o'rnatiladi
+    // (har safar o'chirib qayta o'rnatish shart emas).
+    signingConfigs {
+        sampiTv {
+            storeFile file("sampi-tv.p12")
+            storeType "pkcs12"
+            storePassword "sampi-tv-2026"
+            keyAlias "sampi-tv"
+            keyPassword "sampi-tv-2026"
+        }
+    }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.sampiTv
+        }
         release {
+            signingConfig signingConfigs.sampiTv
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

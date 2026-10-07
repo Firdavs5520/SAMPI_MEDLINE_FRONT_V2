@@ -1,5 +1,6 @@
 package uz.sampimedline.tv;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
@@ -13,6 +14,11 @@ public class MainActivity extends BridgeActivity {
         // Navbat chaqiruvi ovozi hech kim ekranni bosmasa ham chalinishi uchun.
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);
+            // "Parolni saqlaysizmi?" kabi avtomatik to'ldirish oynalari TV'da chiqmasin.
+            getBridge().getWebView().getSettings().setSaveFormData(false);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                getBridge().getWebView().setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
+            }
         }
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         hideSystemUi();

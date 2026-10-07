@@ -8,6 +8,9 @@ function Input({ label, error, field, className = "", inputRef = null, ...props 
       )}
       <input
         ref={inputRef}
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
         className={`sampi-input sampi-control w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/10 sm:text-sm ${className}`}
         {...props}
       />

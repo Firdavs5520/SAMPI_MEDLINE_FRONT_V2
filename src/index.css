@@ -71,6 +71,12 @@ html.theme-switching-to-dark body::before {
     linear-gradient(135deg, rgba(2, 6, 23, 0.26), rgba(14, 116, 144, 0.14));
 }
 
+/* Login paroli: belgilar nuqta bo'lib ko'rinadi (brauzer parol saqlashni so'ramaydi). */
+.sampi-masked {
+  -webkit-text-security: disc;
+  text-security: disc;
+}
+
 body {
   @apply bg-slate-100 text-slate-800;
   margin: 0;

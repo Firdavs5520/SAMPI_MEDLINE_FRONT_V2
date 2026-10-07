@@ -29,6 +29,10 @@ window.addEventListener(
   true
 );
 
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+});
+
 const isTvScreenPath = () => window.location.pathname.startsWith("/tv");
 
 const isDesktopApp = () => {
