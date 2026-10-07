@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Alert from "../components/Alert.jsx";
 import QuickSearchInput from "../components/QuickSearchInput.jsx";
@@ -23,23 +23,47 @@ const getDoctorInitials = (value) => {
   return `${words[0][0] || ""}${words[1][0] || ""}`.toUpperCase();
 };
 
-const DOCTOR_CONFIRM_DELAY_MS = 460;
+// Har bir doktorga ismidan kelib chiqqan doimiy rang (har safar bir xil).
+const AVATAR_TONES = ["teal", "sky", "violet", "amber", "rose", "emerald"];
+const getAvatarTone = (value) => {
+  let hash = 0;
+  for (const char of String(value || "")) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return AVATAR_TONES[hash % AVATAR_TONES.length];
+};
+
+const TASHKENT_OFFSET_MS = 5 * 60 * 60 * 1000;
+const getTashkentTime = (now) => {
+  const local = new Date(now.getTime() + TASHKENT_OFFSET_MS);
+  return { hours: local.getUTCHours(), minutes: local.getUTCMinutes() };
+};
+
+const getGreeting = (hours) => {
+  if (hours >= 5 && hours < 12) return "Xayrli tong";
+  if (hours >= 12 && hours < 18) return "Xayrli kun";
+  return "Xayrli kech";
+};
+
+// Tanlangan guvohnoma "Smena boshlandi" muhri bilan ko'rinib turadi, keyin sahifa ochiladi.
+const DOCTOR_CONFIRM_DELAY_MS = 1100;
 const ACTIVE_LOR_IDENTITY = "lor1";
+const MAX_SHORTCUT = 9;
 
 function LorSelectPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { lorIdentity, lorDoctor, setLorIdentity, setLorDoctor } = useAuth();
 
-  const [selectedLor, setSelectedLor] = useState(ACTIVE_LOR_IDENTITY);
   const [specialists, setSpecialists] = useState([]);
   const [doctorSearch, setDoctorSearch] = useState("");
   const [confirmingDoctorId, setConfirmingDoctorId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [now, setNow] = useState(() => new Date());
   const doctorTimerRef = useRef(null);
 
   const returnPath = location.state?.from?.pathname || "/lor/services";
+  const time = getTashkentTime(now);
+  const clock = `${String(time.hours).padStart(2, "0")}:${String(time.minutes).padStart(2, "0")}`;
 
   const filteredSpecialists = useMemo(() => {
     const query = normalizeSearch(doctorSearch);
@@ -68,10 +92,12 @@ function LorSelectPage() {
     if (lorIdentity !== ACTIVE_LOR_IDENTITY) {
       setLorIdentity(ACTIVE_LOR_IDENTITY);
     }
-    if (selectedLor !== ACTIVE_LOR_IDENTITY) {
-      setSelectedLor(ACTIVE_LOR_IDENTITY);
-    }
-  }, [lorIdentity, selectedLor, setLorIdentity]);
+  }, [lorIdentity, setLorIdentity]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 15000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(
     () => () => {
@@ -82,41 +108,61 @@ function LorSelectPage() {
     []
   );
 
-  const chooseDoctor = (doctor) => {
-    if (!selectedLor || confirmingDoctorId) return;
-    const doctorId = doctor?._id;
-    if (!doctorId) return;
+  const chooseDoctor = useCallback(
+    (doctor) => {
+      if (confirmingDoctorId) return;
+      const doctorId = doctor?._id;
+      if (!doctorId) return;
 
-    setConfirmingDoctorId(doctorId);
-    doctorTimerRef.current = window.setTimeout(() => {
-      setLorDoctor({ id: doctorId, name: doctor?.name });
-      setConfirmingDoctorId("");
-      doctorTimerRef.current = null;
-      navigate(returnPath, { replace: true });
-    }, DOCTOR_CONFIRM_DELAY_MS);
-  };
+      setConfirmingDoctorId(doctorId);
+      doctorTimerRef.current = window.setTimeout(() => {
+        setLorDoctor({ id: doctorId, name: doctor?.name });
+        setConfirmingDoctorId("");
+        doctorTimerRef.current = null;
+        navigate(returnPath, { replace: true });
+      }, DOCTOR_CONFIRM_DELAY_MS);
+    },
+    [confirmingDoctorId, navigate, returnPath, setLorDoctor]
+  );
+
+  // Tab o'chirilgan: guvohnoma ustidagi raqam tugmasi (1-9) bilan ham tanlanadi.
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      const tag = String(event.target?.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || event.ctrlKey || event.altKey || event.metaKey) return;
+      const number = Number(event.key);
+      if (!Number.isInteger(number) || number < 1 || number > MAX_SHORTCUT) return;
+      const doctor = filteredSpecialists[number - 1];
+      if (!doctor) return;
+      event.preventDefault();
+      chooseDoctor(doctor);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [chooseDoctor, filteredSpecialists]);
 
   if (loading) {
     return <Spinner page text="LOR doktorlari yuklanmoqda..." />;
   }
 
   return (
-    <div className={`lor-select-shell ${confirmingDoctorId ? "lor-select-shell-switching" : ""}`}>
-      <div className="lor-select-glow" />
-      <div className="lor-select-card lor-ios-card route-enter">
-        <div className="lor-select-header">
-          <h1 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-[2rem]">
-            Qaysi doktor nomidan ishlaysiz?
-          </h1>
-          <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
-            Chek shu doktor nomidan chiqadi.
+    <div className="ldr-page">
+      <div className={`ldr-inner ${confirmingDoctorId ? "ldr-picking" : ""}`}>
+        <header className="ldr-hero">
+          <div className="ldr-hero-time" aria-hidden="true">
+            {clock}
+          </div>
+          <p className="ldr-hero-kicker">
+            {getGreeting(time.hours)} · LOR bo'limi
           </p>
-        </div>
+          <h1 className="ldr-hero-title">Bugun kim qabul qiladi?</h1>
+          <p className="ldr-hero-sub">Guvohnomangizni tanlang — cheklar shu nomdan chiqadi.</p>
+        </header>
 
         <Alert type="error" message={error} />
 
         {specialists.length > 6 ? (
-          <div className="mx-auto mt-6 max-w-xl">
+          <div className="ldr-search">
             <QuickSearchInput
               label="Doktor qidirish"
               placeholder="Masalan: Aziz"
@@ -131,29 +177,40 @@ function LorSelectPage() {
         ) : null}
 
         {specialists.length ? (
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="ldr-badges">
             {filteredSpecialists.map((doctor, index) => {
-              const selected = lorDoctor?.id === doctor._id;
-              const confirming = confirmingDoctorId === doctor._id;
+              const lastUsed = lorDoctor?.id === doctor._id;
+              const picked = confirmingDoctorId === doctor._id;
+              const shortcut = index < MAX_SHORTCUT ? index + 1 : null;
               return (
                 <button
                   key={doctor._id}
                   type="button"
-                  data-doctor-card
-                  className={`lor-doctor-card min-h-24 ${
-                    selected ? "lor-doctor-card-selected" : ""
-                  } ${confirming ? "lor-doctor-card-confirming" : ""}`}
+                  className={`ldr-badge-wrap ${picked ? "is-picked" : ""}`}
+                  style={{ "--i": index }}
                   disabled={Boolean(confirmingDoctorId)}
-                  style={{ "--item-index": index }}
                   onClick={() => chooseDoctor(doctor)}
+                  aria-label={`${doctor.name} nomidan ishlash`}
                 >
-                  <span className="lor-doctor-avatar">{getDoctorInitials(doctor.name)}</span>
-                  <span className="min-w-0">
-                    <span className="block break-words text-base font-black leading-snug text-slate-900">
-                      {doctor.name}
+                  <span className="ldr-lanyard" aria-hidden="true" />
+                  <span className="ldr-clip" aria-hidden="true" />
+                  <span className={`ldr-badge ldr-tone-${getAvatarTone(doctor.name)}`}>
+                    <span className="ldr-badge-band">
+                      <span>SAMPI MEDICINE</span>
+                      <span>LOR</span>
                     </span>
-                    <span className="mt-1 block text-xs font-bold text-slate-500">
-                      {confirming ? "Ochilmoqda..." : selected ? "Oxirgi marta tanlangan" : "Tanlash"}
+                    {lastUsed ? <span className="ldr-badge-ribbon">Oxirgi marta</span> : null}
+                    <span className="ldr-avatar">{getDoctorInitials(doctor.name)}</span>
+                    <span className="ldr-name">{doctor.name}</span>
+                    <span className="ldr-role">LOR shifokor</span>
+                    <span className="ldr-badge-foot">
+                      {shortcut ? <kbd>{shortcut}</kbd> : <span />}
+                      <span className="ldr-barcode" aria-hidden="true" />
+                    </span>
+                    <span className="ldr-stamp" aria-hidden="true">
+                      SMENA
+                      <br />
+                      BOSHLANDI
                     </span>
                   </span>
                 </button>
@@ -161,13 +218,20 @@ function LorSelectPage() {
             })}
           </div>
         ) : (
-          <div className="lor-doctor-empty mt-6">
+          <div className="ldr-empty">
             Hozircha doktor yo'q. Menyudagi "Sozlamalar → Doktorlar" bo'limida qo'shing.
           </div>
         )}
 
         {specialists.length > 0 && filteredSpecialists.length === 0 ? (
-          <div className="lor-doctor-empty mt-4">Qidiruv bo'yicha doktor topilmadi.</div>
+          <div className="ldr-empty">Qidiruv bo'yicha doktor topilmadi.</div>
+        ) : null}
+
+        {filteredSpecialists.length > 1 ? (
+          <p className="ldr-hint">
+            Klaviaturada <kbd>1</kbd>–<kbd>{Math.min(filteredSpecialists.length, MAX_SHORTCUT)}</kbd> tugmasini
+            bossangiz ham bo'ladi
+          </p>
         ) : null}
       </div>
     </div>
