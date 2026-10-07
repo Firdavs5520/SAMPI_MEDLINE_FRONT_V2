@@ -7789,9 +7789,11 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row small {
 }
 
 /* =====================================================================
-   LOR: doktor tanlash — shnurga osilgan xodim guvohnomalari (LorSelectPage).
-   Animatsiyalar .ldr-inner ichida: .route-enter > div > * qoidasi faqat
-   .ldr-inner ga tegadi, ichkaridagi elementlar erkin harakatlanadi.
+   LOR: doktor tanlash — xodim guvohnomalari (LorSelectPage).
+   Harakatlar yumshoq va jiddiy: paydo bo'lish (ko'tarilib), ustiga borganda
+   yengil ko'tarilish + nur, tanlanganda yashil hoshiya va ✓.
+   Kirish animatsiyasi faqat "backwards" to'ldiriladi: tugagach hover/tanlash
+   o'tishlari (transition) erkin ishlaydi, hech narsa qaytadan boshlanmaydi.
    ===================================================================== */
 .ldr-page {
   min-height: calc(100dvh - 3rem);
@@ -7807,7 +7809,7 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row small {
   padding: 0.5rem 0 1rem;
 }
 
-.ldr-hero { text-align: center; animation: ldr-rise 600ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.ldr-hero { text-align: center; animation: ldr-enter 600ms cubic-bezier(0.16, 1, 0.3, 1) backwards; }
 
 .ldr-hero-time {
   font-size: clamp(2.2rem, 4.6vw, 3.4rem);
@@ -7843,12 +7845,12 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row small {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: flex-start;
   gap: 1.4rem 1.2rem;
   margin-top: 1.6rem;
 }
 
 .ldr-badge-wrap {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -7857,32 +7859,27 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row small {
   border: 0;
   background: none;
   cursor: pointer;
-  transform-origin: 50% 0;
-  animation: ldr-drop 700ms cubic-bezier(0.34, 1.4, 0.64, 1) calc(var(--i, 0) * 90ms + 150ms) both;
+  animation: ldr-enter 560ms cubic-bezier(0.16, 1, 0.3, 1) calc(var(--i, 0) * 70ms + 120ms) backwards;
+  transition: opacity 320ms ease, filter 320ms ease;
 }
 
-/* Tebranish ichki qatlamda: tashqi tushish animatsiyasi qayta boshlanmaydi. */
-.ldr-swing {
+.ldr-badge-wrap:disabled { cursor: default; }
+
+/* Ko'tarilish va tanlash shu qatlamda, faqat transition bilan. */
+.ldr-lift {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  transform-origin: 50% 0;
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.ldr-badge-wrap:hover:not(:disabled) .ldr-swing { animation: ldr-swing 1.6s ease-in-out infinite; }
-
-/* Pro doktor: biroz kattaroq, oltin lenta. */
-.ldr-badge-wrap.is-pro { width: clamp(13.5rem, 15.5vw, 18.5rem); }
-.ldr-badge-wrap.is-pro .ldr-badge { box-shadow: 0 0 0 2px #f59e0b, 0 22px 44px -18px rgba(180, 83, 9, 0.45); }
-.ldr-badge-wrap.is-pro .ldr-lanyard { background: repeating-linear-gradient(135deg, #b45309 0 6px, #d97706 6px 12px); }
-.ldr-tone-gold { --ldr-tone: #b45309; --ldr-tone-soft: #fef3c7; }
-.ldr-tone-gold .ldr-badge-band { background: linear-gradient(90deg, #b45309, #d97706 55%, #b45309); }
-.ldr-badge-wrap:disabled { cursor: default; }
+.ldr-badge-wrap:hover:not(:disabled) .ldr-lift { transform: translateY(-8px); }
+.ldr-badge-wrap:active:not(:disabled) .ldr-lift { transform: translateY(-4px) scale(0.98); transition-duration: 90ms; }
 
 .ldr-lanyard {
   width: 1.1rem;
-  height: 2.6rem;
+  height: 2.4rem;
   border-radius: 3px 3px 0 0;
   background: repeating-linear-gradient(135deg, #0e7490 0 6px, #0f8aa8 6px 12px);
 }
@@ -7903,24 +7900,26 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row small {
   align-items: center;
   width: 100%;
   margin-top: -3px;
-  padding: 0 1rem 0.9rem;
+  padding: 0 1rem 0.8rem;
   overflow: hidden;
   border-radius: 1.1rem;
   background: #ffffff;
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.05), 0 18px 36px -18px rgba(15, 23, 42, 0.35);
-  transition: transform 220ms ease, box-shadow 220ms ease;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.05), 0 14px 30px -18px rgba(15, 23, 42, 0.35);
+  transition: box-shadow 280ms ease;
 }
 
 .ldr-badge-wrap:hover:not(:disabled) .ldr-badge {
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.05), 0 26px 48px -20px rgba(14, 116, 144, 0.55);
+  box-shadow: 0 0 0 1px rgba(14, 116, 144, 0.18), 0 26px 46px -20px rgba(14, 116, 144, 0.5);
 }
 
 .ldr-badge-band {
+  position: relative;
   display: flex;
   justify-content: space-between;
   width: calc(100% + 2rem);
   margin: 0 -1rem;
   padding: 0.55rem 1rem;
+  overflow: hidden;
   background: var(--ldr-tone, #0e7490);
   color: #ffffff;
   font-size: 0.66rem;
@@ -7928,22 +7927,22 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row small {
   letter-spacing: 0.14em;
 }
 
-.ldr-badge-ribbon {
+/* Ustiga borganda lenta bo'ylab bir marta nur o'tadi. */
+.ldr-badge-band::after {
+  content: "";
   position: absolute;
-  top: 2.4rem;
-  right: -2.1rem;
-  width: 8rem;
-  padding: 0.18rem 0;
-  transform: rotate(35deg);
-  background: #f59e0b;
-  color: #ffffff;
-  font-size: 0.62rem;
-  font-weight: 900;
-  text-align: center;
-  letter-spacing: 0.04em;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 65%);
+  transform: translateX(-120%);
+}
+
+.ldr-badge-wrap:hover:not(:disabled) .ldr-badge-band::after {
+  transform: translateX(120%);
+  transition: transform 700ms ease;
 }
 
 .ldr-avatar {
+  position: relative;
   display: grid;
   width: 4.6rem;
   height: 4.6rem;
@@ -7952,9 +7951,37 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row small {
   border-radius: 1.4rem;
   background: var(--ldr-tone-soft, #e0f2f7);
   color: var(--ldr-tone, #0e7490);
-  font-size: 1.9rem;
+  font-size: 1.75rem;
   font-weight: 900;
   box-shadow: inset 0 0 0 3px #ffffff, 0 0 0 2px var(--ldr-tone-soft, #e0f2f7);
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ldr-badge-wrap:hover:not(:disabled) .ldr-avatar { transform: scale(1.05); }
+
+.ldr-check {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  background: #059669;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 240ms ease, transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ldr-check svg {
+  width: 2.2rem;
+  height: 2.2rem;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  transition: stroke-dashoffset 420ms ease 160ms;
 }
 
 .ldr-name {
@@ -7968,16 +7995,33 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row small {
   word-break: break-word;
 }
 
-.ldr-role { margin-top: 0.15rem; font-size: 0.78rem; font-weight: 700; color: #64748b; }
+.ldr-role {
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  transition: color 240ms ease;
+}
 
 .ldr-badge-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
   width: 100%;
   margin-top: 0.7rem;
   padding-top: 0.6rem;
   border-top: 1px dashed #e2e8f0;
+}
+
+.ldr-last {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.66rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .ldr-badge-foot kbd,
@@ -7998,40 +8042,26 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row small {
 }
 
 .ldr-barcode {
-  width: 5.5rem;
-  height: 1.4rem;
-  opacity: 0.55;
+  width: 4.5rem;
+  height: 1.3rem;
+  opacity: 0.5;
   background: repeating-linear-gradient(90deg, #0f172a 0 2px, transparent 2px 4px, #0f172a 4px 5px, transparent 5px 8px, #0f172a 8px 11px, transparent 11px 13px);
 }
 
-.ldr-stamp {
-  position: absolute;
-  top: 42%;
-  left: 50%;
-  padding: 0.35rem 0.8rem;
-  border: 3px solid #059669;
-  border-radius: 0.6rem;
-  color: #059669;
-  background: rgba(255, 255, 255, 0.86);
-  font-size: 1rem;
-  font-weight: 900;
-  line-height: 1.05;
-  letter-spacing: 0.08em;
-  text-align: center;
-  opacity: 0;
-  transform: translate(-50%, -50%) rotate(-14deg) scale(2.2);
-  pointer-events: none;
-}
+/* Tanlash: tanlangani oldinga chiqadi, yashil hoshiya va ✓; qolganlari xiralashadi. */
+.ldr-picking .ldr-badge-wrap:not(.is-picked) { opacity: 0.3; filter: grayscale(0.7); }
+.ldr-badge-wrap.is-picked .ldr-lift { transform: translateY(-12px) scale(1.04); }
+.ldr-badge-wrap.is-picked .ldr-badge { box-shadow: 0 0 0 3px #059669, 0 30px 56px -22px rgba(5, 150, 105, 0.55); }
+.ldr-badge-wrap.is-picked .ldr-check { opacity: 1; transform: scale(1); }
+.ldr-badge-wrap.is-picked .ldr-check svg { stroke-dashoffset: 0; }
+.ldr-badge-wrap.is-picked .ldr-role { color: #059669; }
 
-/* Tanlash: tanlangan guvohnoma oldinga chiqadi va muhr bosiladi, qolganlari so'nadi. */
-/* Alohida animatsiya: tushish animatsiyasining yakuniy opacity:1 holati buni bosib qolmasin. */
-.ldr-picking .ldr-badge-wrap:not(.is-picked) {
-  animation: ldr-fade-out 360ms ease forwards;
-}
-
-.ldr-badge-wrap.is-picked { animation: ldr-pick 700ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-.ldr-badge-wrap.is-picked .ldr-badge { box-shadow: 0 1px 0 rgba(15, 23, 42, 0.05), 0 30px 60px -22px rgba(5, 150, 105, 0.55); }
-.ldr-badge-wrap.is-picked .ldr-stamp { animation: ldr-stamp 420ms cubic-bezier(0.2, 1.4, 0.4, 1) 260ms both; }
+/* Pro doktor: biroz kattaroq, oltin lenta va hoshiya. */
+.ldr-badge-wrap.is-pro { width: clamp(13.5rem, 15.5vw, 18.5rem); }
+.ldr-badge-wrap.is-pro .ldr-badge { box-shadow: 0 0 0 2px #f59e0b, 0 18px 38px -18px rgba(180, 83, 9, 0.45); }
+.ldr-badge-wrap.is-pro:hover:not(:disabled) .ldr-badge { box-shadow: 0 0 0 2px #f59e0b, 0 28px 50px -20px rgba(180, 83, 9, 0.55); }
+.ldr-badge-wrap.is-pro .ldr-lanyard { background: repeating-linear-gradient(135deg, #b45309 0 6px, #d97706 6px 12px); }
+.ldr-badge-wrap.is-pro.is-picked .ldr-badge { box-shadow: 0 0 0 3px #059669, 0 30px 56px -22px rgba(5, 150, 105, 0.55); }
 
 .ldr-tone-teal { --ldr-tone: #0e7490; --ldr-tone-soft: #e0f2f7; }
 .ldr-tone-sky { --ldr-tone: #0369a1; --ldr-tone-soft: #e0f2fe; }
@@ -8039,13 +8069,15 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row small {
 .ldr-tone-amber { --ldr-tone: #b45309; --ldr-tone-soft: #fef3c7; }
 .ldr-tone-rose { --ldr-tone: #be123c; --ldr-tone-soft: #ffe4e6; }
 .ldr-tone-emerald { --ldr-tone: #047857; --ldr-tone-soft: #d1fae5; }
+.ldr-tone-gold { --ldr-tone: #b45309; --ldr-tone-soft: #fef3c7; }
+.ldr-tone-gold .ldr-badge-band { background: linear-gradient(90deg, #b45309, #d97706 55%, #b45309); }
 
 .ldr-hint {
   margin-top: 1.4rem;
   font-size: 0.85rem;
   color: #64748b;
   text-align: center;
-  animation: ldr-rise 600ms ease 700ms both;
+  animation: ldr-enter 600ms ease 600ms backwards;
 }
 
 .ldr-empty {
@@ -8062,46 +8094,16 @@ html.sampi-tv-lock .sampi-tv-minimal-shell .sampi-tv-waiting-row small {
 html.theme-dark .ldr-hero-title,
 html.theme-dark .ldr-name { color: #f1f5f9; }
 html.theme-dark .ldr-hero-time { color: #22d3ee; }
-html.theme-dark .ldr-badge { background: #0f1b2b; box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.16), 0 18px 36px -18px rgba(0, 0, 0, 0.7); }
+html.theme-dark .ldr-badge { background: #0f1b2b; box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.16), 0 14px 30px -18px rgba(0, 0, 0, 0.7); }
 html.theme-dark .ldr-avatar { box-shadow: inset 0 0 0 3px #0f1b2b, 0 0 0 2px var(--ldr-tone-soft); }
 html.theme-dark .ldr-badge-foot { border-top-color: rgba(148, 163, 184, 0.25); }
 html.theme-dark .ldr-barcode { background: repeating-linear-gradient(90deg, #cbd5e1 0 2px, transparent 2px 4px, #cbd5e1 4px 5px, transparent 5px 8px, #cbd5e1 8px 11px, transparent 11px 13px); }
-html.theme-dark .ldr-stamp { background: rgba(15, 27, 43, 0.9); color: #34d399; border-color: #34d399; }
 html.theme-dark .ldr-badge-foot kbd,
 html.theme-dark .ldr-hint kbd { background: #0f1b2b; border-color: #334155; color: #e2e8f0; }
 
-@keyframes ldr-rise {
-  from { opacity: 0; transform: translateY(14px); }
+@keyframes ldr-enter {
+  from { opacity: 0; transform: translateY(18px); }
   to { opacity: 1; transform: none; }
-}
-
-@keyframes ldr-drop {
-  0% { opacity: 0; transform: translateY(-60px) rotate(-6deg); }
-  60% { opacity: 1; transform: translateY(6px) rotate(3deg); }
-  80% { transform: translateY(-2px) rotate(-1.5deg); }
-  100% { opacity: 1; transform: none; }
-}
-
-@keyframes ldr-swing {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(2.4deg); }
-  75% { transform: rotate(-2.4deg); }
-}
-
-@keyframes ldr-fade-out {
-  to { opacity: 0.25; filter: grayscale(0.6); transform: scale(0.96); }
-}
-
-@keyframes ldr-pick {
-  0% { transform: none; }
-  40% { transform: translateY(-14px) scale(1.08) rotate(-2deg); }
-  100% { transform: translateY(-10px) scale(1.06); }
-}
-
-@keyframes ldr-stamp {
-  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-14deg) scale(2.2); }
-  70% { opacity: 1; transform: translate(-50%, -50%) rotate(-14deg) scale(0.92); }
-  100% { opacity: 1; transform: translate(-50%, -50%) rotate(-14deg) scale(1); }
 }
 
 /* =====================================================================

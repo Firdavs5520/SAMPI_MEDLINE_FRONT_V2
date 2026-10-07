@@ -53,7 +53,7 @@ const getGreeting = (hours) => {
 };
 
 // Tanlangan guvohnoma "Smena boshlandi" muhri bilan ko'rinib turadi, keyin sahifa ochiladi.
-const DOCTOR_CONFIRM_DELAY_MS = 1100;
+const DOCTOR_CONFIRM_DELAY_MS = 950;
 const ACTIVE_LOR_IDENTITY = "lor1";
 const MAX_SHORTCUT = 9;
 
@@ -203,28 +203,32 @@ function LorSelectPage() {
                   onClick={() => chooseDoctor(doctor)}
                   aria-label={`${doctor.name} nomidan ishlash`}
                 >
-                  <span className="ldr-swing">
-                  <span className="ldr-lanyard" aria-hidden="true" />
-                  <span className="ldr-clip" aria-hidden="true" />
-                  <span className={`ldr-badge ${doctor.pro ? "ldr-tone-gold" : `ldr-tone-${getAvatarTone(doctor.name)}`}`}>
-                    <span className="ldr-badge-band">
-                      <span>SAMPI MEDICINE</span>
-                      <span>{doctor.pro ? "★ PRO" : "LOR"}</span>
+                  <span className="ldr-lift">
+                    <span className="ldr-lanyard" aria-hidden="true" />
+                    <span className="ldr-clip" aria-hidden="true" />
+                    <span className={`ldr-badge ${doctor.pro ? "ldr-tone-gold" : `ldr-tone-${getAvatarTone(doctor.name)}`}`}>
+                      <span className="ldr-badge-band">
+                        <span>SAMPI MEDICINE</span>
+                        <span>{doctor.pro ? "★ PRO" : "LOR"}</span>
+                      </span>
+                      <span className="ldr-avatar">
+                        {getDoctorInitials(doctor.name)}
+                        <span className="ldr-check" aria-hidden="true">
+                          <svg viewBox="0 0 24 24">
+                            <path d="M5 12.5l4.5 4.5L19 7.5" />
+                          </svg>
+                        </span>
+                      </span>
+                      <span className="ldr-name">{doctor.name}</span>
+                      <span className="ldr-role">
+                        {picked ? "Smena boshlandi" : doctor.pro ? "Tajribali LOR shifokor" : "LOR shifokor"}
+                      </span>
+                      <span className="ldr-badge-foot">
+                        {shortcut ? <kbd>{shortcut}</kbd> : <span />}
+                        {lastUsed ? <span className="ldr-last">Oxirgi marta</span> : null}
+                        <span className="ldr-barcode" aria-hidden="true" />
+                      </span>
                     </span>
-                    {lastUsed ? <span className="ldr-badge-ribbon">Oxirgi marta</span> : null}
-                    <span className="ldr-avatar">{getDoctorInitials(doctor.name)}</span>
-                    <span className="ldr-name">{doctor.name}</span>
-                    <span className="ldr-role">{doctor.pro ? "Tajribali LOR shifokor" : "LOR shifokor"}</span>
-                    <span className="ldr-badge-foot">
-                      {shortcut ? <kbd>{shortcut}</kbd> : <span />}
-                      <span className="ldr-barcode" aria-hidden="true" />
-                    </span>
-                    <span className="ldr-stamp" aria-hidden="true">
-                      SMENA
-                      <br />
-                      BOSHLANDI
-                    </span>
-                  </span>
                   </span>
                 </button>
               );
