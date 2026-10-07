@@ -204,7 +204,7 @@ function CashierAccountantPage() {
             <SummaryCard
               title="Klinikaga sof"
               value={report.summary.clinicNet}
-              hint="Doktor ulushi va xarajatlardan keyin"
+              hint="Doktor ulushi, xarajatlar va svet/gaz/suvdan keyin"
               tone="clinic"
             />
             <SummaryCard
@@ -307,6 +307,31 @@ function CashierAccountantPage() {
                   <p className="py-3 text-slate-500">Bu smenada xarajat yo'q</p>
                 )}
                 <Line label="Jami xarajat" value={report.expenses.total} strong />
+              </div>
+            </div>
+
+            <div className="card p-4 sm:p-5 lg:col-span-2">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-base font-bold text-slate-900">Svet, gaz, suv</h2>
+                <span className="text-xs font-semibold text-slate-500">
+                  {report.utilities?.entered
+                    ? `Hisobotchi kiritgan${report.utilities.enteredBy ? `: ${report.utilities.enteredBy}` : ""}`
+                    : "Hisobotchi bu kun uchun hali kiritmagan"}
+                </span>
+              </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-4">
+                {(report.utilities?.items || []).map((item) => (
+                  <div key={item.key} className="rounded-lg border border-slate-200 px-3 py-2">
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{item.label}</p>
+                    <p className="mt-1 whitespace-nowrap text-lg font-black text-slate-900">{sum(item.amount)}</p>
+                  </div>
+                ))}
+                <div className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2">
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Jami</p>
+                  <p className="mt-1 whitespace-nowrap text-lg font-black text-slate-900">
+                    {sum(report.utilities?.total)}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

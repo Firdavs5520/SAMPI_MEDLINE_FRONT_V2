@@ -12,7 +12,10 @@ export const reporterAmountFields = [
   { key: "terminalAmount", label: "Terminal" },
   { key: "transferAmount", label: "Perechisleniya" },
   { key: "clickAmount", label: "Click" },
-  { key: "debtAmount", label: "Qarz" }
+  { key: "debtAmount", label: "Qarz" },
+  { key: "electricityAmount", label: "Svet" },
+  { key: "gasAmount", label: "Gaz" },
+  { key: "waterAmount", label: "Suv" }
 ];
 
 export const reporterMonthLabels = [
@@ -92,4 +95,7 @@ export const getManualExpenseTotal = (manualAmounts = {}) =>
   safeNumber(manualAmounts.childrenAmount) +
   safeNumber(manualAmounts.homeAmount) +
   safeNumber(manualAmounts.bossAmount) +
-  safeNumber(manualAmounts.debtAmount);
+  safeNumber(manualAmounts.debtAmount) +
+  safeNumber(manualAmounts.electricityAmount) +
+  safeNumber(manualAmounts.gasAmount) +
+  safeNumber(manualAmounts.waterAmount);

@@ -696,6 +696,9 @@ export const buildAccountantReportPrintHtml = (report) => {
       </table></div>`
     )
     .join("");
+  const utilities = report.utilities?.entered
+    ? (report.utilities.items || []).map((item) => row(item.label, item.amount)).join("")
+    : `<tr><td colspan="2">Hisobotchi hali kiritmagan</td></tr>`;
   const expenses = (report.expenses?.items || [])
     .map((item) => row(item.reason, item.amount))
     .join("");
@@ -733,7 +736,7 @@ export const buildAccountantReportPrintHtml = (report) => {
     </style>
   </head>
   <body>
-    <div class="ticket" data-sampi-receipt="report">
+    <div class="ticket" data-sampi-receipt="check">
       <div class="inner">
         <div class="brand">SAMPI MEDICINE</div>
         <div class="sub">HISOBCHI HISOBOTI</div>
@@ -752,6 +755,8 @@ export const buildAccountantReportPrintHtml = (report) => {
           ${row("O'tkazma", report.byPaymentMethod?.transfer)}
         </table>
         ${expenses ? `<div class="title"><span>XARAJATLAR</span></div><table>${expenses}</table>` : ""}
+        <div class="title"><span>SVET, GAZ, SUV</span></div>
+        <table>${utilities}</table>
         <div class="title"><span>QARZLAR</span></div>
         <table>
           ${row("Bugun qarz qoldi", report.debts?.newDebt)}
@@ -761,7 +766,8 @@ export const buildAccountantReportPrintHtml = (report) => {
         <table class="total">
           ${row("Jami tushum", report.summary?.totalCollected)}
           ${row("Doktorlarga", report.summary?.doctorsShare)}
-          ${row("Xarajatlar", report.summary?.expenses)}
+          ${row("Kassa xarajatlari", report.summary?.expenses)}
+          ${row("Svet, gaz, suv", report.summary?.utilities)}
           ${row("Klinikaga sof", report.summary?.clinicNet, true)}
         </table>
         <table>${row("Kassada naqd", report.summary?.cashInHand, true)}</table>
