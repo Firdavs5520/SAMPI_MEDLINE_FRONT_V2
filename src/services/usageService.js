@@ -102,6 +102,12 @@ const usageService = {
     return data.data;
   },
 
+  // Qayta kelgan bemor: shifokor kassasiz raqam ochib, darhol qabul qiladi.
+  async admitLorWalkIn(payload = {}) {
+    const { data } = await api.post("/usage/lor-queue-tickets/walk-in", payload);
+    return data.data;
+  },
+
   async cancelLorQueueTicket(ticketId, payload = {}) {
     const { data } = await api.post(`/usage/lor-queue-tickets/${ticketId}/cancel`, payload);
     return data.data;

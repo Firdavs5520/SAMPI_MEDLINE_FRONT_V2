@@ -218,6 +218,7 @@ function LorServicesPage() {
   const [submittingCheckout, setSubmittingCheckout] = useState(false);
   const [queueLoading, setQueueLoading] = useState(false);
   const [callingTicketId, setCallingTicketId] = useState("");
+  const [admittingWalkIn, setAdmittingWalkIn] = useState(false);
   const [cancelingTicket, setCancelingTicket] = useState(false);
   const [cancelPromptOpen, setCancelPromptOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState(CANCEL_REASON_OPTIONS[0].value);
@@ -638,6 +639,30 @@ function LorServicesPage() {
     }
   };
 
+  // Qayta qabul: bemor xonada, kassadan raqam kutilmaydi.
+  const handleAdmitWalkIn = async () => {
+    if (admittingWalkIn || activeTicket?.id) return;
+
+    resetMessages();
+    setAdmittingWalkIn(true);
+    try {
+      validateDoctor();
+      if (!lorIdentity) {
+        throw new Error(text.errors.identityMissing);
+      }
+      const currentTicket = await usageService.admitLorWalkIn({
+        lorIdentity,
+        specialistId: lorDoctor.id,
+        specialistName: lorDoctor.name
+      });
+      setQueueState((prev) => ({ ...prev, current: currentTicket }));
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    } finally {
+      setAdmittingWalkIn(false);
+    }
+  };
+
   const handleCancelActiveTicket = async () => {
     if (!activeTicket?.id || cancelingTicket) return;
 
@@ -777,13 +802,25 @@ function LorServicesPage() {
             <p className="font-bold">Qayta qabul: {pendingReadmit.patientName || "bemor"}</p>
             <p className="text-sky-800">
               {activeTicket
-                ? "Avval hozirgi bemorni yakunlang. Keyingi navbat raqami qabul qilinganda ma'lumotlar o'zi to'ladi."
-                : "Navbat raqamini qabul qiling: bemor ismi va o'tgan safargi xizmatlar o'zi to'ladi."}
+                ? "Avval hozirgi bemorni yakunlang, keyin qayta qabul qilasiz."
+                : "Bemor xonada bo'lsa \"Hozir qabul qilish\"ni bosing: kassadan navbat kutilmaydi, ismi va o'tgan safargi xizmatlar o'zi to'ladi."}
             </p>
           </div>
-          <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => setPendingReadmit(null)}>
-            Bekor qilish
-          </Button>
+          <div className="flex shrink-0 gap-2">
+            {!activeTicket ? (
+              <Button
+                className="min-h-10 bg-sky-600 px-4 text-sm hover:bg-sky-700 focus:ring-sky-300"
+                loading={admittingWalkIn}
+                loadingText="Ochilmoqda..."
+                onClick={handleAdmitWalkIn}
+              >
+                Hozir qabul qilish
+              </Button>
+            ) : null}
+            <Button variant="secondary" className="min-h-10 px-3 text-xs" onClick={() => setPendingReadmit(null)}>
+              Bekor qilish
+            </Button>
+          </div>
         </div>
       ) : null}
 
