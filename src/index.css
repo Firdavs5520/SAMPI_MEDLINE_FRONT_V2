@@ -7362,3 +7362,13 @@ html.theme-dark .sampi-print-text {
 @keyframes sampi-vsplash-draw {
   to { stroke-dashoffset: 0; }
 }
+
+/* Hisobotchi: qorong'i rejimda bo'sh summa "0" kiritilgan summadek yorug' ko'rinmasin. */
+html.theme-dark .reporter-amount-field::placeholder {
+  color: #475569;
+}
+
+html.theme-dark .reporter-total-box {
+  background: linear-gradient(135deg, #0e7490, #0f766e);
+  box-shadow: 0 10px 30px rgba(8, 145, 178, 0.25);
+}

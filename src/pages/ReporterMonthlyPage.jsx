@@ -129,9 +129,9 @@ function ReporterMonthlyPage() {
               tone="success"
             />
             <SummaryCard
-              title="Hisobotchi xarajatlari"
+              title="Hamma harajat"
               value={money(manualExpenses)}
-              hint="Kunlik hisobotda kiritilganlar"
+              hint="Dori, ta'minot, kanstovar, aloqa, farzandlarga, uy uchun, qarz"
               tone="accent"
             />
           </div>
@@ -142,8 +142,14 @@ function ReporterMonthlyPage() {
               <div className="mt-3 divide-y divide-slate-100">
                 {reporterAmountFields.map((field) => (
                   <div key={field.key} className="flex items-center justify-between py-2 text-sm">
-                    <span className="text-slate-600">{field.label}</span>
-                    <span className="whitespace-nowrap font-semibold text-slate-900">{money(totals[field.key])}</span>
+                    <span className={field.computed ? "font-bold text-slate-900" : "text-slate-600"}>
+                      {field.label}
+                    </span>
+                    <span
+                      className={`whitespace-nowrap text-slate-900 ${field.computed ? "font-black" : "font-semibold"}`}
+                    >
+                      {money(totals[field.key])}
+                    </span>
                   </div>
                 ))}
               </div>

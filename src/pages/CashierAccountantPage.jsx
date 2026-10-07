@@ -312,7 +312,7 @@ function CashierAccountantPage() {
 
             <div className="card p-4 sm:p-5 lg:col-span-2">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-base font-bold text-slate-900">Svet, gaz, suv</h2>
+                <h2 className="text-base font-bold text-slate-900">Ta'minot (svet, gaz, suv)</h2>
                 <span className="text-xs font-semibold text-slate-500">
                   {report.utilities?.entered
                     ? `Hisobotchi kiritgan${report.utilities.enteredBy ? `: ${report.utilities.enteredBy}` : ""}`

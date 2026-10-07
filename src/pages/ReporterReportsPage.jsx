@@ -9,7 +9,6 @@ import reporterService from "../services/reporterService.js";
 import { extractErrorMessage, formatCurrency } from "../utils/format.js";
 import {
   formatMonthLabel,
-  getManualExpenseTotal,
   getYearLabel,
   reporterAmountFields,
   safeNumber,
@@ -34,7 +33,7 @@ function MonthlyMobileRow({ row }) {
         <span>LOR: {formatCurrency(row.lorPaidAmount)}</span>
         <span>Proc: {formatCurrency(row.procedurePaidAmount)}</span>
         <span>Jami: {formatCurrency(row.autoIncomeTotal)}</span>
-        <span>Harajat jami: {formatCurrency(row.manualExpenseTotal)}</span>
+        <span>Hamma harajat: {formatCurrency(row.expenseAmount)}</span>
         <span>Terminal: {formatCurrency(row.terminalAmount)}</span>
         <span>Click: {formatCurrency(row.clickAmount)}</span>
         <span>Perech: {formatCurrency(row.transferAmount)}</span>
@@ -158,8 +157,7 @@ function ReporterReportsPage() {
           autoIncomeTotal:
             safeNumber(row.cashier?.lor?.halfPaidAmount) +
             safeNumber(row.cashier?.procedure?.paidAmount),
-          ...manualAmounts,
-          manualExpenseTotal: getManualExpenseTotal(manualAmounts)
+          ...manualAmounts
         };
       }),
     [monthlyReport]
@@ -225,11 +223,6 @@ function ReporterReportsPage() {
       render: (row) => `${formatCurrency(row.autoIncomeTotal)}\u00a0so'm`
     },
     {
-      key: "expenseAmount",
-      label: "Harajat",
-      render: (row) => `${formatCurrency(row.expenseAmount)}\u00a0so'm`
-    },
-    {
       key: "medicineAmount",
       label: "Dori",
       render: (row) => `${formatCurrency(row.medicineAmount)}\u00a0so'm`
@@ -260,14 +253,19 @@ function ReporterReportsPage() {
       render: (row) => `${formatCurrency(row.homeAmount)}\u00a0so'm`
     },
     {
+      key: "debtAmount",
+      label: "Qarz",
+      render: (row) => `${formatCurrency(row.debtAmount)}\u00a0so'm`
+    },
+    {
+      key: "expenseAmount",
+      label: "Hamma harajat",
+      render: (row) => <b>{formatCurrency(row.expenseAmount)}{"\u00a0"}so'm</b>
+    },
+    {
       key: "bossAmount",
       label: "Boshliq",
       render: (row) => `${formatCurrency(row.bossAmount)}\u00a0so'm`
-    },
-    {
-      key: "manualExpenseTotal",
-      label: "Jami harajat",
-      render: (row) => `${formatCurrency(row.manualExpenseTotal)}\u00a0so'm`
     },
     {
       key: "terminalAmount",
@@ -284,11 +282,6 @@ function ReporterReportsPage() {
       label: "Click",
       render: (row) => `${formatCurrency(row.clickAmount)}\u00a0so'm`
     },
-    {
-      key: "debtAmount",
-      label: "Qarz",
-      render: (row) => `${formatCurrency(row.debtAmount)}\u00a0so'm`
-    }
   ];
 
   return (

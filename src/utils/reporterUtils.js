@@ -1,21 +1,77 @@
 import { toTashkentYmd } from "./date.js";
 
+// Hisobotchi kiritadigan summalar guruhlari. Ta'minot va Hamma harajat qo'lda
+// kiritilmaydi, o'zi hisoblanadi:
+//   Ta'minot = svet + gaz + suv
+//   Hamma harajat = dori + ta'minot + kanstovar + aloqa + farzandlarga + uy uchun + qarz
+export const reporterFieldGroups = [
+  {
+    key: "expenses",
+    title: "Xarajatlar",
+    hint: "Hammasi \"Hamma harajat\"ga qo'shiladi",
+    fields: [
+      { key: "medicineAmount", label: "Dori" },
+      { key: "stationeryAmount", label: "Kanstovar" },
+      { key: "communicationAmount", label: "Aloqa" },
+      { key: "childrenAmount", label: "Farzandlarga" },
+      { key: "homeAmount", label: "Uy uchun" },
+      { key: "debtAmount", label: "Qarz" }
+    ]
+  },
+  {
+    key: "supply",
+    title: "Ta'minot",
+    hint: "Svet + gaz + suv",
+    fields: [
+      { key: "electricityAmount", label: "Svet" },
+      { key: "gasAmount", label: "Gaz" },
+      { key: "waterAmount", label: "Suv" }
+    ]
+  },
+  {
+    key: "payments",
+    title: "Tushum va boshqa",
+    hint: "Hamma harajatga kirmaydi",
+    fields: [
+      { key: "terminalAmount", label: "Terminal" },
+      { key: "transferAmount", label: "Perechisleniya" },
+      { key: "clickAmount", label: "Click" },
+      { key: "bossAmount", label: "Boshliq summasi" }
+    ]
+  }
+];
+
+// Qo'lda kiritiladigan maydonlar (saqlashda yuboriladi).
+export const reporterInputFields = reporterFieldGroups.flatMap((group) => group.fields);
+
+const SUPPLY_PART_KEYS = ["electricityAmount", "gasAmount", "waterAmount"];
+const EXPENSE_PART_KEYS = [
+  "medicineAmount",
+  "supplyAmount",
+  "stationeryAmount",
+  "communicationAmount",
+  "childrenAmount",
+  "homeAmount",
+  "debtAmount"
+];
+
+// Jadval va xulosalarda ko'rsatish tartibi (hisoblanadiganlari bilan).
 export const reporterAmountFields = [
-  { key: "expenseAmount", label: "Harajat" },
   { key: "medicineAmount", label: "Dori" },
-  { key: "supplyAmount", label: "Ta'minot" },
+  { key: "electricityAmount", label: "Svet" },
+  { key: "gasAmount", label: "Gaz" },
+  { key: "waterAmount", label: "Suv" },
+  { key: "supplyAmount", label: "Ta'minot", computed: true },
   { key: "stationeryAmount", label: "Kanstovar" },
   { key: "communicationAmount", label: "Aloqa" },
   { key: "childrenAmount", label: "Farzandlarga" },
   { key: "homeAmount", label: "Uy uchun" },
+  { key: "debtAmount", label: "Qarz" },
+  { key: "expenseAmount", label: "Hamma harajat", computed: true },
   { key: "bossAmount", label: "Boshliq summasi" },
   { key: "terminalAmount", label: "Terminal" },
   { key: "transferAmount", label: "Perechisleniya" },
-  { key: "clickAmount", label: "Click" },
-  { key: "debtAmount", label: "Qarz" },
-  { key: "electricityAmount", label: "Svet" },
-  { key: "gasAmount", label: "Gaz" },
-  { key: "waterAmount", label: "Suv" }
+  { key: "clickAmount", label: "Click" }
 ];
 
 export const reporterMonthLabels = [
@@ -86,16 +142,17 @@ export const formatAmountInput = (value) => {
 
 export const isMissingAmount = (value) => String(value ?? "").trim() === "";
 
+// legacySupply: eski yozuvda Ta'minot svet/gaz/suvga bo'linmagan bo'lsa saqlangan summa.
+export const computeReporterTotals = (values = {}, legacySupply = 0) => {
+  const supplyParts = SUPPLY_PART_KEYS.reduce((sum, key) => sum + safeNumber(values[key]), 0);
+  const supplyAmount = supplyParts > 0 ? supplyParts : safeNumber(legacySupply);
+  const expenseAmount = EXPENSE_PART_KEYS.reduce(
+    (sum, key) => sum + (key === "supplyAmount" ? supplyAmount : safeNumber(values[key])),
+    0
+  );
+  return { supplyAmount, expenseAmount };
+};
+
+// Hamma harajat (server ham xuddi shunday hisoblaydi).
 export const getManualExpenseTotal = (manualAmounts = {}) =>
-  safeNumber(manualAmounts.expenseAmount) +
-  safeNumber(manualAmounts.medicineAmount) +
-  safeNumber(manualAmounts.supplyAmount) +
-  safeNumber(manualAmounts.stationeryAmount) +
-  safeNumber(manualAmounts.communicationAmount) +
-  safeNumber(manualAmounts.childrenAmount) +
-  safeNumber(manualAmounts.homeAmount) +
-  safeNumber(manualAmounts.bossAmount) +
-  safeNumber(manualAmounts.debtAmount) +
-  safeNumber(manualAmounts.electricityAmount) +
-  safeNumber(manualAmounts.gasAmount) +
-  safeNumber(manualAmounts.waterAmount);
+  safeNumber(manualAmounts.expenseAmount);

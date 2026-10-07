@@ -8,16 +8,18 @@ import Spinner from "../components/Spinner.jsx";
 import reporterService from "../services/reporterService.js";
 import { extractErrorMessage, formatCurrency } from "../utils/format.js";
 import {
+  computeReporterTotals,
   formatAmountInput,
   getPreviousDateKey,
-  isMissingAmount,
-  reporterAmountFields,
+  reporterFieldGroups,
+  reporterInputFields,
   safeNumber,
   toYmd
 } from "../utils/reporterUtils.js";
 
-const amountFields = reporterAmountFields;
+const NBSP = String.fromCharCode(160);
 const SUSPICIOUS_AMOUNT_THRESHOLD = 10000000;
+const SUPPLY_KEYS = ["electricityAmount", "gasAmount", "waterAmount"];
 const cancelReasonLabels = {
   patient_absent: "Bemor kelmadi",
   wrong_direction: "Noto'g'ri yo'naltirilgan",
@@ -25,188 +27,155 @@ const cancelReasonLabels = {
   other: "Boshqa sabab"
 };
 
+const money = (value) => `${formatCurrency(safeNumber(value))}${NBSP}so'm`;
+
 const emptyManual = () =>
-  amountFields.reduce(
-    (acc, field) => ({
-      ...acc,
-      [field.key]: ""
-    }),
-    { note: "" }
-  );
+  reporterInputFields.reduce((acc, field) => ({ ...acc, [field.key]: "" }), { note: "" });
 
 const normalizeManualForm = (manual = {}) =>
-  amountFields.reduce(
+  reporterInputFields.reduce(
     (acc, field) => {
       const value = safeNumber(manual[field.key]);
-      return {
-        ...acc,
-        [field.key]: value > 0 ? formatAmountInput(String(value)) : ""
-      };
+      return { ...acc, [field.key]: value > 0 ? formatAmountInput(String(value)) : "" };
     },
     { note: manual?.note || "" }
   );
 
+// Eski yozuvda Ta'minot svet/gaz/suvga bo'linmasdan kiritilgan bo'lsa o'sha summa.
+const getLegacySupply = (manual = {}) => {
+  const parts = SUPPLY_KEYS.reduce((sum, key) => sum + safeNumber(manual[key]), 0);
+  return parts > 0 ? 0 : safeNumber(manual.supplyAmount);
+};
+
 const getSuspiciousFields = (formValue) =>
-  amountFields
-    .map((field) => ({
-      ...field,
-      amount: safeNumber(formValue[field.key])
-    }))
+  reporterInputFields
+    .map((field) => ({ ...field, amount: safeNumber(formValue[field.key]) }))
     .filter((field) => field.amount >= SUSPICIOUS_AMOUNT_THRESHOLD);
 
 const getSuspiciousSignature = (fields) =>
   fields.map((field) => `${field.key}:${field.amount}`).join("|");
 
-function StatCard({ title, value, hint, tone = "cyan" }) {
-  const tones = {
-    cyan: "reporter-stat-cyan",
-    emerald: "reporter-stat-emerald",
-    amber: "reporter-stat-amber",
-    orange: "reporter-stat-orange",
-    slate: "reporter-stat-slate"
-  };
+// Avtosaqlash faqat summalar haqiqatan o'zgarganda ishlaydi (sahifani ochishning o'zi
+// yozuv yaratmaydi).
+const formSnapshot = (formValue) =>
+  JSON.stringify([
+    ...reporterInputFields.map((field) => safeNumber(formValue[field.key])),
+    String(formValue.note || "")
+  ]);
+
+const shiftDateKey = (dateKey, days) => {
+  const [year, month, day] = String(dateKey).split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return date.toISOString().slice(0, 10);
+};
+
+function SaveStatus({ status }) {
+  const meta = {
+    idle: ["bg-slate-300", "Avtomatik saqlanadi"],
+    waiting: ["bg-amber-400", "O'zgarish bor..."],
+    saving: ["bg-sky-500 animate-pulse", "Saqlanmoqda..."],
+    saved: ["bg-emerald-500", "Saqlandi"],
+    error: ["bg-rose-500", "Saqlanmadi"],
+    warning: ["bg-amber-500", "Katta summa tekshirilyapti"]
+  }[status] || ["bg-slate-300", ""];
 
   return (
-    <div className={`reporter-stat-card rounded-lg border p-3 shadow-sm sm:p-4 ${tones[tone] || tones.slate}`}>
-      <p className="reporter-stat-title text-xs font-semibold">{title}</p>
-      <p className="reporter-stat-value mt-1.5 break-words text-lg font-bold leading-tight sm:mt-2 sm:text-xl">
-        {value}
-      </p>
-      {hint ? <p className="reporter-stat-hint mt-1 text-xs font-semibold">{hint}</p> : null}
+    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600">
+      <span className={`h-2 w-2 rounded-full ${meta[0]}`} aria-hidden="true" />
+      {meta[1]}
+    </span>
+  );
+}
+
+function Kpi({ label, value, hint, accent = false }) {
+  return (
+    <div
+      className={`min-w-0 rounded-xl border px-3 py-2.5 ${
+        accent ? "border-cyan-200 bg-cyan-50" : "border-slate-200 bg-white"
+      }`}
+    >
+      <p className="truncate text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className={`mt-0.5 truncate font-black text-slate-900 ${accent ? "text-xl" : "text-lg"}`}>{value}</p>
+      {hint ? <p className="truncate text-xs font-semibold text-slate-500">{hint}</p> : null}
     </div>
   );
 }
 
-function CashierSummaryCards({ totals, lorHalfAmount, procedurePaidAmount, autoIncomeTotal }) {
+function AmountInput({ field, index, value, onChange, onEnter }) {
+  const filled = safeNumber(value) > 0;
   return (
-    <section className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
-      <StatCard
-        title="LOR odam"
-        value={totals.lor.count}
-        hint={`${formatCurrency(totals.lor.totalAmount)}\u00a0so'm jami`}
-      />
-      <StatCard
-        title="LOR summa"
-        value={`${formatCurrency(totals.lor.paidAmount)}\u00a0so'm`}
-        hint="Kassadan qabul qilingan summa"
-        tone="emerald"
-      />
-      <StatCard
-        title="LOR 50%"
-        value={`${formatCurrency(totals.lor.halfPaidAmount)}\u00a0so'm`}
-        hint="Kelgan LOR summasi ikkiga bo'lingan"
-        tone="amber"
-      />
-      <StatCard
-        title="Protsedura soni"
-        value={totals.procedure.proceduresCount}
-        hint={`${formatCurrency(totals.procedure.totalAmount)}\u00a0so'm jami`}
-        tone="slate"
-      />
-      <StatCard
-        title="Protsedura summa"
-        value={`${formatCurrency(procedurePaidAmount)}\u00a0so'm`}
-        hint="Kassadan kelgan protsedura summasi"
-        tone="emerald"
-      />
-      <StatCard
-        title="LOR 50% + Protsedura"
-        value={`${formatCurrency(autoIncomeTotal)}\u00a0so'm`}
-        hint="Avtomatik hisoblangan yakun"
-        tone="orange"
-      />
-      <StatCard
-        title="LOR 50% qiymati"
-        value={`${formatCurrency(lorHalfAmount)}\u00a0so'm`}
-        hint="Alohida nazorat summasi"
-        tone="slate"
-      />
-      <StatCard
-        title="Kassadagi qarz"
-        value={`${formatCurrency(totals.total.debtAmount)}\u00a0so'm`}
-        hint="Kassa yozuvlaridagi qolgan qarz"
-        tone="slate"
-      />
-    </section>
+    <label className="group block">
+      <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+        {field.label}
+      </span>
+      <span
+        className={`flex items-center rounded-xl border bg-white transition focus-within:border-cyan-500 focus-within:ring-4 focus-within:ring-cyan-500/15 ${
+          filled ? "border-slate-300" : "border-slate-200"
+        }`}
+      >
+        <input
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder="0"
+          data-amount-index={index}
+          aria-label={field.label}
+          className={`reporter-amount-field min-w-0 flex-1 bg-transparent px-3 py-2.5 text-right text-lg outline-none placeholder:text-slate-300 ${
+            filled ? "font-black text-slate-900" : "font-semibold text-slate-500"
+          }`}
+          value={value ?? ""}
+          onChange={(event) => onChange(formatAmountInput(event.target.value))}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              onEnter(index);
+            }
+          }}
+        />
+        <span className="pr-3 text-xs font-bold text-slate-400">so'm</span>
+      </span>
+    </label>
   );
 }
 
-function LorQueueSummaryCards({ queue }) {
-  const safeQueue = {
-    issuedCount: 0,
-    waitingCount: 0,
-    inProgressCount: 0,
-    calledCount: 0,
-    completedCount: 0,
-    cancelledCount: 0,
-    avgWaitMinutes: 0,
-    avgServiceMinutes: 0,
-    cancelReasons: [],
-    ...(queue || {})
-  };
-  const cancelReasonText = safeQueue.cancelReasons.length
-    ? safeQueue.cancelReasons
-        .map((item) => `${cancelReasonLabels[item.reason] || item.reason}: ${item.count}`)
-        .join(" · ")
-    : "Bekor qilingan navbat yo'q";
-
+function GroupCard({ group, startIndex, form, onFieldChange, onEnter, footer }) {
   return (
-    <section className="space-y-3">
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-5">
-        <StatCard
-          title="Navbat chiqarildi"
-          value={safeQueue.issuedCount}
-          hint={`Kutmoqda: ${safeQueue.waitingCount}`}
-        />
-        <StatCard
-          title="Qabul qilindi"
-          value={safeQueue.calledCount}
-          hint={`Hozir: ${safeQueue.inProgressCount}`}
-          tone="emerald"
-        />
-        <StatCard
-          title="Yakunlandi"
-          value={safeQueue.completedCount}
-          hint="Chek yaratilgan navbat"
-          tone="amber"
-        />
-        <StatCard
-          title="Bekor bo'ldi"
-          value={safeQueue.cancelledCount}
-          hint={cancelReasonText}
-          tone="orange"
-        />
-        <StatCard
-          title="O'rtacha kutish"
-          value={`${safeQueue.avgWaitMinutes || 0} daq`}
-          hint={`Qabul vaqti: ${safeQueue.avgServiceMinutes || 0} daq`}
-          tone="slate"
-        />
+    <section className="card p-4 sm:p-5">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-base font-black text-slate-900">{group.title}</h2>
+        <span className="text-xs font-semibold text-slate-500">{group.hint}</span>
       </div>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        {group.fields.map((field, offset) => (
+          <AmountInput
+            key={field.key}
+            field={field}
+            index={startIndex + offset}
+            value={form[field.key]}
+            onChange={(next) => onFieldChange(field.key, next)}
+            onEnter={onEnter}
+          />
+        ))}
+      </div>
+      {footer}
     </section>
   );
 }
 
-function AmountField({ label, value, missing, onChange }) {
+function SummaryLine({ label, value, strong = false, muted = false }) {
   return (
-    <label className="block">
-      <span className="reporter-field-label sampi-field-label mb-1.5 block text-sm font-semibold">
+    <div className="flex items-baseline justify-between gap-3 py-1.5">
+      <span className={strong ? "font-black text-slate-900" : muted ? "text-slate-400" : "text-slate-600"}>
         {label}
       </span>
-      <input
-        type="text"
-        inputMode="numeric"
-        autoComplete="off"
-        placeholder="0"
-        aria-label={label}
-        className={`reporter-amount-input sampi-input sampi-control min-h-14 w-full rounded-lg border px-3 py-2.5 text-base font-bold outline-none transition sm:text-lg ${
-          missing ? "reporter-input-missing" : ""
+      <span
+        className={`whitespace-nowrap ${
+          strong ? "text-xl font-black text-slate-900" : muted ? "font-semibold text-slate-400" : "font-bold text-slate-800"
         }`}
-        value={value ?? ""}
-        onChange={(event) => onChange(formatAmountInput(event.target.value))}
-      />
-      {missing ? <p className="mt-1 text-xs text-rose-600">To'ldirilmagan</p> : null}
-    </label>
+      >
+        {money(value)}
+      </span>
+    </div>
   );
 }
 
@@ -214,16 +183,17 @@ function ReporterDashboard() {
   const [date, setDate] = useState(toYmd);
   const [dailyReport, setDailyReport] = useState(null);
   const [form, setForm] = useState(emptyManual);
+  const [legacySupply, setLegacySupply] = useState(0);
   const [loadingDaily, setLoadingDaily] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copyingYesterday, setCopyingYesterday] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState("idle");
-  const [showMissing, setShowMissing] = useState(false);
   const [suspiciousPrompt, setSuspiciousPrompt] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const skipAutoSaveRef = useRef(true);
+  const savedSnapshotRef = useRef(formSnapshot(emptyManual()));
   const approvedSuspiciousSignatureRef = useRef("");
+  const today = useMemo(() => toYmd(), []);
 
   const loadDaily = useCallback(async () => {
     setLoadingDaily(true);
@@ -231,8 +201,10 @@ function ReporterDashboard() {
     try {
       const data = await reporterService.getDailyReport(date);
       setDailyReport(data);
-      skipAutoSaveRef.current = true;
-      setForm(normalizeManualForm(data?.manual));
+      const loadedForm = normalizeManualForm(data?.manual);
+      savedSnapshotRef.current = formSnapshot(loadedForm);
+      setForm(loadedForm);
+      setLegacySupply(getLegacySupply(data?.manual));
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -244,46 +216,29 @@ function ReporterDashboard() {
     loadDaily();
   }, [loadDaily]);
 
-  const totals = dailyReport?.cashier || {
+  const cashier = dailyReport?.cashier || {
     lor: { count: 0, totalAmount: 0, paidAmount: 0, halfPaidAmount: 0 },
     procedure: { proceduresCount: 0, totalAmount: 0, paidAmount: 0 },
     total: { debtAmount: 0 }
   };
-  const lorHalfAmount = safeNumber(totals.lor.halfPaidAmount);
-  const procedurePaidAmount = safeNumber(totals.procedure.paidAmount);
-  const autoIncomeTotal = lorHalfAmount + procedurePaidAmount;
-
-  const missingCount = useMemo(
-    () => amountFields.filter((field) => isMissingAmount(form[field.key])).length,
-    [form]
-  );
+  const queue = { cancelReasons: [], ...(dailyReport?.lorQueue || {}) };
+  const autoIncomeTotal = safeNumber(cashier.lor.halfPaidAmount) + safeNumber(cashier.procedure.paidAmount);
+  const { supplyAmount, expenseAmount } = computeReporterTotals(form, legacySupply);
 
   const buildPayload = useCallback(
     (formValue = form) => {
-      const payload = {
-        date,
-        note: formValue.note || ""
-      };
-
-      for (const field of amountFields) {
+      const payload = { date, note: formValue.note || "" };
+      for (const field of reporterInputFields) {
         payload[field.key] = safeNumber(formValue[field.key]);
       }
-
       return payload;
     },
     [date, form]
   );
 
   const saveRecord = useCallback(
-    async ({
-      formValue = form,
-      manual = false,
-      showMessage = false,
-      skipSuspiciousCheck = false
-    } = {}) => {
-      if (manual) {
-        setSaving(true);
-      }
+    async ({ formValue = form, manual = false, showMessage = false, skipSuspiciousCheck = false } = {}) => {
+      if (manual) setSaving(true);
       setError("");
 
       const suspiciousFields = getSuspiciousFields(formValue);
@@ -293,33 +248,23 @@ function ReporterDashboard() {
         suspiciousFields.length > 0 &&
         suspiciousSignature !== approvedSuspiciousSignatureRef.current
       ) {
-        setSuspiciousPrompt({
-          fields: suspiciousFields,
-          signature: suspiciousSignature,
-          formValue,
-          manual,
-          showMessage
-        });
+        setSuspiciousPrompt({ fields: suspiciousFields, signature: suspiciousSignature, formValue, manual, showMessage });
         setAutoSaveStatus("warning");
-        if (manual) {
-          setSaving(false);
-        }
+        if (manual) setSaving(false);
         return false;
       }
 
       try {
         const data = await reporterService.saveDailyRecord(buildPayload(formValue));
+        savedSnapshotRef.current = formSnapshot(formValue);
         setDailyReport(data);
-        if (showMessage) {
-          setSuccess("Hisobot saqlandi.");
-        }
+        setLegacySupply(getLegacySupply(data?.manual));
+        if (showMessage) setSuccess("Hisobot saqlandi.");
       } catch (err) {
         setError(extractErrorMessage(err));
         throw err;
       } finally {
-        if (manual) {
-          setSaving(false);
-        }
+        if (manual) setSaving(false);
       }
       return true;
     },
@@ -328,20 +273,14 @@ function ReporterDashboard() {
 
   useEffect(() => {
     if (loadingDaily) return undefined;
-
-    if (skipAutoSaveRef.current) {
-      skipAutoSaveRef.current = false;
-      return undefined;
-    }
+    if (formSnapshot(form) === savedSnapshotRef.current) return undefined;
 
     setAutoSaveStatus("waiting");
     const timer = window.setTimeout(async () => {
       setAutoSaveStatus("saving");
       try {
         const saved = await saveRecord({ showMessage: false });
-        if (saved) {
-          setAutoSaveStatus("saved");
-        }
+        if (saved) setAutoSaveStatus("saved");
       } catch {
         setAutoSaveStatus("error");
       }
@@ -351,14 +290,34 @@ function ReporterDashboard() {
   }, [form, loadingDaily, saveRecord]);
 
   const handleSave = async (event) => {
-    event.preventDefault();
+    event?.preventDefault();
     setSuccess("");
-    await saveRecord({ manual: true, showMessage: true });
+    await saveRecord({ manual: true, showMessage: true }).catch(() => {});
   };
 
-  const handleDateChange = (nextDate) => {
-    skipAutoSaveRef.current = true;
+  // Kun almashganda saqlanmagan o'zgarish avval o'z kuniga saqlanadi, yangi kunga o'tib ketmaydi.
+  const handleDateChange = async (nextDate) => {
+    if (!nextDate || nextDate === date) return;
+    if (formSnapshot(form) !== savedSnapshotRef.current) {
+      savedSnapshotRef.current = formSnapshot(form);
+      await saveRecord({ showMessage: false }).catch(() => {});
+    }
+    setAutoSaveStatus("idle");
+    setSuccess("");
     setDate(nextDate);
+  };
+
+  const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  // Tab o'chirilgan: Enter keyingi summaga o'tadi, oxirgisida saqlaydi.
+  const focusNextAmount = (index) => {
+    const next = document.querySelector(`[data-amount-index="${index + 1}"]`);
+    if (next) {
+      next.focus();
+      next.select?.();
+    } else {
+      handleSave();
+    }
   };
 
   const handleCopyYesterday = async () => {
@@ -368,12 +327,8 @@ function ReporterDashboard() {
     try {
       const previousDate = getPreviousDateKey(date);
       const data = await reporterService.getDailyReport(previousDate);
-      const copied = normalizeManualForm(data?.manual);
-      setForm((prev) => ({
-        ...copied,
-        note: prev.note || ""
-      }));
-      setSuccess(`${previousDate} sanasidagi summalar qo'yildi.`);
+      setForm((prev) => ({ ...normalizeManualForm(data?.manual), note: prev.note || "" }));
+      setSuccess(`${previousDate.split("-").reverse().join(".")} kungi summalar qo'yildi.`);
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -382,8 +337,7 @@ function ReporterDashboard() {
   };
 
   const handleClear = () => {
-    const confirmed = window.confirm("Kiritilgan summalarni tozalaysizmi?");
-    if (!confirmed) return;
+    if (!window.confirm("Kiritilgan summalarni tozalaysizmi?")) return;
     setForm(emptyManual());
     approvedSuspiciousSignatureRef.current = "";
     setSuccess("Summalar tozalandi.");
@@ -392,7 +346,6 @@ function ReporterDashboard() {
   const handleApproveSuspicious = async () => {
     const pending = suspiciousPrompt;
     if (!pending) return;
-
     approvedSuspiciousSignatureRef.current = pending.signature;
     setSuspiciousPrompt(null);
     await saveRecord({
@@ -400,142 +353,203 @@ function ReporterDashboard() {
       manual: pending.manual,
       showMessage: pending.showMessage,
       skipSuspiciousCheck: true
-    });
+    }).catch(() => {});
   };
 
-  const autoSaveLabel = {
-    idle: "Avto saqlash tayyor",
-    waiting: "Avto saqlash kutmoqda",
-    saving: "Avto saqlash saqlayapti",
-    saved: "Avto saqlash saqlandi",
-    error: "Avto saqlash xato",
-    warning: "Katta summa tekshirilyapti"
-  }[autoSaveStatus];
+  const groupStartIndex = (groupIndex) =>
+    reporterFieldGroups.slice(0, groupIndex).reduce((sum, group) => sum + group.fields.length, 0);
+  const expenseGroup = reporterFieldGroups.find((group) => group.key === "expenses");
+  const cancelReasonText = queue.cancelReasons?.length
+    ? queue.cancelReasons.map((item) => `${cancelReasonLabels[item.reason] || item.reason}: ${item.count}`).join(" · ")
+    : "";
 
   return (
-    <div className="reporter-dashboard space-y-3 pb-24 sm:space-y-4 sm:pb-4">
-      <div className="reporter-hero-card card p-3 sm:p-5">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+    <div className="reporter-dashboard space-y-4 pb-28 lg:pb-4">
+      <header className="card p-4 sm:p-5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-lg font-bold leading-tight text-slate-900 sm:text-2xl">
-              Kunlik kassa va xarajat hisoboti
-            </h1>
+            <h1 className="text-xl font-black text-slate-900 sm:text-2xl">Kunlik hisobot</h1>
+            <div className="mt-2">
+              <SaveStatus status={autoSaveStatus} />
+            </div>
           </div>
-          <div className="grid gap-2 sm:grid-cols-[12rem_auto] md:items-end md:gap-3">
-            <DatePickerField label="Kun" value={date} onChange={handleDateChange} />
+          <div className="flex flex-wrap items-end gap-2">
+            <button
+              type="button"
+              aria-label="Oldingi kun"
+              onClick={() => handleDateChange(shiftDateKey(date, -1))}
+              className="h-11 w-11 rounded-xl border border-slate-200 bg-white text-lg font-black text-slate-600 hover:bg-slate-50"
+            >
+              ‹
+            </button>
+            <div className="w-44">
+              <DatePickerField label="Kun" value={date} onChange={handleDateChange} />
+            </div>
+            <button
+              type="button"
+              aria-label="Keyingi kun"
+              onClick={() => handleDateChange(shiftDateKey(date, 1))}
+              className="h-11 w-11 rounded-xl border border-slate-200 bg-white text-lg font-black text-slate-600 hover:bg-slate-50"
+            >
+              ›
+            </button>
+            {date !== today ? (
+              <button
+                type="button"
+                onClick={() => handleDateChange(today)}
+                className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600 hover:bg-slate-50"
+              >
+                Bugun
+              </button>
+            ) : null}
             <Link
               to="/reporter/reports"
-              className="sampi-btn inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors duration-150 hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              className="inline-flex h-11 items-center rounded-xl bg-slate-100 px-4 text-sm font-bold text-slate-700 hover:bg-slate-200"
             >
               Yillik hisobot
             </Link>
           </div>
         </div>
-      </div>
+      </header>
 
       {error ? <Alert type="error" message={error} /> : null}
       {success ? <Alert type="success" message={success} /> : null}
 
-      {loadingDaily ? (
+      {loadingDaily && !dailyReport ? (
         <div className="card flex min-h-48 items-center justify-center p-6">
           <Spinner />
         </div>
       ) : (
-        <form className="reporter-entry-card card space-y-4 p-3 sm:p-5" noValidate onSubmit={handleSave}>
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Qo'lda kiritiladigan summalar</h2>
-              <p className="text-xs font-semibold text-slate-500">{autoSaveLabel}</p>
+        <>
+          <section>
+            <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+              Kassadan avtomatik
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+              <Kpi label="LOR bemorlar" value={`${cashier.lor.count} ta`} hint={money(cashier.lor.paidAmount)} />
+              <Kpi label="LOR 50%" value={money(cashier.lor.halfPaidAmount)} hint="Tushumning yarmi" />
+              <Kpi
+                label="Protsedura"
+                value={`${cashier.procedure.proceduresCount} ta`}
+                hint={money(cashier.procedure.paidAmount)}
+              />
+              <Kpi label="LOR 50% + Protsedura" value={money(autoIncomeTotal)} hint="Klinika daromadi" accent />
+              <Kpi label="Kassadagi qarz" value={money(cashier.total.debtAmount)} hint="To'lanmagan qism" />
+              <Kpi
+                label="LOR navbat"
+                value={`${queue.issuedCount || 0} ta`}
+                hint={`Yakunlandi: ${queue.completedCount || 0} · bekor: ${queue.cancelledCount || 0}`}
+              />
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
-              <Button
-                type="button"
-                variant="secondary"
-                className="min-h-11 px-3 text-xs"
-                loading={copyingYesterday}
-                loadingText="Olinmoqda..."
-                onClick={handleCopyYesterday}
-              >
-                Kechagini olish
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                className="min-h-11 px-3 text-xs"
-                onClick={() => setShowMissing((prev) => !prev)}
-              >
-                {showMissing ? "Yashirish" : `Bo'shlar: ${missingCount}`}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                className="min-h-11 px-3 text-xs"
-                disabled
-              >
-                Avto saqlash
-              </Button>
-              <Button type="button" variant="danger" className="min-h-11 px-3 text-xs" onClick={handleClear}>
-                Tozalash
-              </Button>
-            </div>
-          </div>
-          <CashierSummaryCards
-            totals={totals}
-            lorHalfAmount={lorHalfAmount}
-            procedurePaidAmount={procedurePaidAmount}
-            autoIncomeTotal={autoIncomeTotal}
-          />
-          <LorQueueSummaryCards queue={dailyReport?.lorQueue} />
-          <div className="reporter-amount-grid grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
-            {amountFields.map((field) => {
-              const missing = showMissing && isMissingAmount(form[field.key]);
-              return (
-                <AmountField
-                  key={field.key}
-                  label={field.label}
-                  missing={missing}
-                  value={form[field.key] ?? ""}
-                  onChange={(nextValue) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      [field.key]: nextValue
-                    }))
+            {cancelReasonText || queue.avgWaitMinutes ? (
+              <p className="mt-2 px-1 text-xs font-semibold text-slate-500">
+                O'rtacha kutish: {queue.avgWaitMinutes || 0} daq · qabul: {queue.avgServiceMinutes || 0} daq
+                {cancelReasonText ? ` · ${cancelReasonText}` : ""}
+              </p>
+            ) : null}
+          </section>
+
+          <form className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]" noValidate onSubmit={handleSave}>
+            <div className="space-y-4">
+              {reporterFieldGroups.map((group, groupIndex) => (
+                <GroupCard
+                  key={group.key}
+                  group={group}
+                  startIndex={groupStartIndex(groupIndex)}
+                  form={form}
+                  onFieldChange={setField}
+                  onEnter={focusNextAmount}
+                  footer={
+                    group.key === "supply" ? (
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-cyan-50 px-3 py-2">
+                        <span className="text-sm font-bold text-cyan-800">
+                          Ta'minot = svet + gaz + suv
+                          {legacySupply > 0 && SUPPLY_KEYS.every((key) => !safeNumber(form[key]))
+                            ? " (eski yozuv, bo'linmagan)"
+                            : ""}
+                        </span>
+                        <span className="text-lg font-black text-cyan-900">{money(supplyAmount)}</span>
+                      </div>
+                    ) : null
                   }
                 />
-              );
-            })}
-          </div>
-          <label className="block">
-            <span className="reporter-field-label sampi-field-label mb-1.5 block text-sm font-semibold">
-              Izoh
-            </span>
-            <textarea
-              className="reporter-note-input sampi-input sampi-control min-h-24 w-full rounded-lg border px-3 py-2.5 text-base outline-none transition sm:text-sm"
-              value={form.note || ""}
-              onChange={(event) =>
-                setForm((prev) => ({
-                  ...prev,
-                  note: event.target.value
-                }))
-              }
-            />
-          </label>
-          <div className="hidden justify-end sm:flex">
-            <Button type="submit" className="min-h-12" loading={saving} loadingText="Saqlanmoqda...">
-              Saqlash
-            </Button>
-          </div>
-          <div className="reporter-mobile-save sticky bottom-0 z-20 rounded-lg border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur sm:hidden">
-            <Button
-              type="submit"
-              className="min-h-12 w-full text-base"
-              loading={saving}
-              loadingText="Saqlanmoqda..."
-            >
-              Saqlash
-            </Button>
-          </div>
-        </form>
+              ))}
+
+              <section className="card p-4 sm:p-5">
+                <label className="block">
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Izoh</span>
+                  <textarea
+                    className="min-h-20 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/15"
+                    placeholder="Qo'shimcha ma'lumot (ixtiyoriy)"
+                    maxLength={500}
+                    value={form.note || ""}
+                    onChange={(event) => setField("note", event.target.value)}
+                  />
+                </label>
+              </section>
+            </div>
+
+            <aside className="card p-4 sm:p-5 lg:sticky lg:top-24">
+              <h2 className="text-base font-black text-slate-900">Hisob</h2>
+              <div className="mt-2 divide-y divide-slate-100 text-sm">
+                {expenseGroup.fields.slice(0, 1).map((field) => (
+                  <SummaryLine key={field.key} label={field.label} value={form[field.key]} />
+                ))}
+                <SummaryLine label="Ta'minot" value={supplyAmount} />
+                {expenseGroup.fields.slice(1).map((field) => (
+                  <SummaryLine key={field.key} label={field.label} value={form[field.key]} />
+                ))}
+              </div>
+              <div className="reporter-total-box mt-2 rounded-xl bg-slate-900 px-4 py-3 text-white">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-300">Hamma harajat</p>
+                <p className="mt-0.5 text-2xl font-black">{money(expenseAmount)}</p>
+              </div>
+              <p className="mt-4 text-xs font-bold uppercase tracking-wide text-slate-400">Hamma harajatga kirmaydi</p>
+              <div className="divide-y divide-slate-100 text-sm">
+                {reporterFieldGroups
+                  .find((group) => group.key === "payments")
+                  .fields.map((field) => (
+                    <SummaryLine key={field.key} label={field.label} value={form[field.key]} muted />
+                  ))}
+              </div>
+
+              <div className="mt-4 hidden gap-2 lg:grid">
+                <Button type="submit" className="min-h-12 text-base" loading={saving} loadingText="Saqlanmoqda...">
+                  Saqlash
+                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="min-h-10 text-xs"
+                    loading={copyingYesterday}
+                    loadingText="Olinmoqda..."
+                    onClick={handleCopyYesterday}
+                  >
+                    Kechagini olish
+                  </Button>
+                  <Button type="button" variant="secondary" className="min-h-10 text-xs" onClick={handleClear}>
+                    Tozalash
+                  </Button>
+                </div>
+              </div>
+            </aside>
+
+            {/* Telefonda: pastga yopishgan panel, Hamma harajat doim ko'rinadi. */}
+            <div className="sticky bottom-0 z-20 -mx-1 flex items-center gap-3 rounded-t-xl border border-b-0 border-slate-200 bg-white p-3 shadow-[0_-6px_24px_rgba(15,23,42,0.12)] lg:hidden">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Hamma harajat</p>
+                <p className="truncate text-lg font-black text-slate-900">{money(expenseAmount)}</p>
+              </div>
+              <Button type="button" variant="secondary" className="min-h-11 px-3 text-xs" onClick={handleCopyYesterday}>
+                Kechagi
+              </Button>
+              <Button type="submit" className="min-h-11 px-5" loading={saving} loadingText="...">
+                Saqlash
+              </Button>
+            </div>
+          </form>
+        </>
       )}
 
       <Modal
@@ -549,9 +563,7 @@ function ReporterDashboard() {
         bodyClassName="space-y-4"
       >
         <div className="reporter-warning-card rounded-lg border p-4">
-          <p className="text-sm font-bold">
-            Kiritilgan summa juda katta. Yana bir marta tekshiring.
-          </p>
+          <p className="text-sm font-bold">Kiritilgan summa juda katta. Yana bir marta tekshiring.</p>
           <div className="mt-3 space-y-2">
             {(suspiciousPrompt?.fields || []).map((field) => (
               <div
@@ -559,7 +571,7 @@ function ReporterDashboard() {
                 className="reporter-warning-row flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm font-semibold"
               >
                 <span>{field.label}</span>
-                <span>{formatCurrency(field.amount)} so'm</span>
+                <span>{money(field.amount)}</span>
               </div>
             ))}
           </div>
