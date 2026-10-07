@@ -27,6 +27,8 @@ const TV_TEXT = {
     callKicker: "Navbatingiz keldi",
     callNote: "LOR xonasiga kiring",
     waitTitle: "Navbatingizni kuting",
+    waitSub: "Raqamingiz shu yerda chaqiriladi",
+    countSuffix: "ta",
     currentKicker: "Hozir qabulda",
     currentNote: "LOR xonasida",
     callingKicker: "Chaqirilmoqda",
@@ -41,6 +43,8 @@ const TV_TEXT = {
     callKicker: "Ваша очередь",
     callNote: "Пройдите в кабинет ЛОР",
     waitTitle: "Ожидайте своей очереди",
+    waitSub: "Ваш номер появится здесь",
+    countSuffix: "чел.",
     currentKicker: "Сейчас на приёме",
     currentNote: "В кабинете ЛОР",
     callingKicker: "Вызывается",
@@ -70,13 +74,73 @@ const formatTvQueueCode = (value) => {
   return String(number);
 };
 
-const getWaitingGridMeta = (count) => {
-  if (count > 60) return { columns: 5, densityClass: "sampi-tv-waiting-menu-ultra" };
-  if (count > 30) return { columns: 4, densityClass: "sampi-tv-waiting-menu-ultra" };
-  if (count > 16) return { columns: 3, densityClass: "sampi-tv-waiting-menu-dense" };
-  if (count > 6) return { columns: 2, densityClass: "sampi-tv-waiting-menu-compact" };
-  return { columns: 1, densityClass: "" };
+// "Keyingi"dan keyingi raqamlar soniga qarab katakchalar soni va o'lchami.
+const getRestDensity = (count) => {
+  if (count > 24) return { columns: 4, className: "tvx-rest-ultra" };
+  if (count > 12) return { columns: 3, className: "tvx-rest-dense" };
+  if (count > 4) return { columns: 2, className: "" };
+  return { columns: 2, className: "tvx-rest-large" };
 };
+
+const UZ_MONTHS = [
+  "yanvar", "fevral", "mart", "aprel", "may", "iyun",
+  "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr"
+];
+const UZ_WEEKDAYS = ["yakshanba", "dushanba", "seshanba", "chorshanba", "payshanba", "juma", "shanba"];
+const TASHKENT_OFFSET_MS = 5 * 60 * 60 * 1000;
+
+// Toshkent vaqti (TV qurilmasining vaqt mintaqasidan qat'i nazar).
+const getTashkentParts = (now) => {
+  const local = new Date(now.getTime() + TASHKENT_OFFSET_MS);
+  return {
+    hours: String(local.getUTCHours()).padStart(2, "0"),
+    minutes: String(local.getUTCMinutes()).padStart(2, "0"),
+    day: local.getUTCDate(),
+    month: local.getUTCMonth(),
+    weekday: local.getUTCDay(),
+    year: local.getUTCFullYear()
+  };
+};
+
+const formatTvDate = (parts, lang) => {
+  if (lang === "ru") {
+    const date = new Date(Date.UTC(parts.year, parts.month, parts.day, 12));
+    const text = new Intl.DateTimeFormat("ru-RU", {
+      day: "numeric",
+      month: "long",
+      weekday: "long",
+      timeZone: "UTC"
+    }).format(date);
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+  return `${parts.day}-${UZ_MONTHS[parts.month]}, ${UZ_WEEKDAYS[parts.weekday]}`;
+};
+
+// Katta soat: har 10 soniyada yangilanadi (daqiqa aniqligi yetarli).
+function TvClock({ lang, compact = false }) {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 10000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const parts = getTashkentParts(now);
+  return (
+    <div className={`tvx-clock ${compact ? "tvx-clock-compact" : ""}`}>
+      <div className="tvx-clock-time">
+        {parts.hours}
+        <span className="tvx-clock-colon">:</span>
+        {parts.minutes}
+      </div>
+      {compact ? null : (
+        <div className="tvx-clock-date">
+          <TvText lang={lang}>{formatTvDate(parts, lang)}</TvText>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function TvLorQueuePage() {
   const { logout } = useAuth();
@@ -109,18 +173,9 @@ function TvLorQueuePage() {
   const displayQueueCode = current ? formatTvQueueCode(current.queueCode) : "";
   const waitingTickets = Array.isArray(queue?.waiting) ? queue.waiting : [];
   const waitingTicketCount = waitingTickets.length;
-  const waitingGrid = getWaitingGridMeta(waitingTicketCount);
-  const waitingGridRows = Math.max(
-    1,
-    Math.ceil(waitingTicketCount / waitingGrid.columns)
-  );
-  const waitingListStyle =
-    waitingTicketCount > 6
-      ? {
-          gridTemplateColumns: `repeat(${waitingGrid.columns}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${waitingGridRows}, minmax(0, 1fr))`
-        }
-      : undefined;
+  const nextTicket = waitingTickets[0] || null;
+  const restTickets = waitingTickets.slice(1);
+  const restDensity = getRestDensity(restTickets.length);
   const currentKey = queue?.announcementKey || "";
   const isConnectionSoft =
     connectionState === "reconnecting" || connectionState === "polling" || Boolean(error);
@@ -562,126 +617,119 @@ function TvLorQueuePage() {
   }, [connectStream, loadQueue]);
 
   return (
-    <main className="sampi-tv-shell sampi-tv-minimal-shell sampi-tv-kiosk-ready">
-      <div className="sampi-tv-minimal-stage">
-        <h1 className="sampi-tv-clinic-brand" aria-label="SAMPI MEDICINE">
-          <span>SAMPI</span>
-          <strong>MEDICINE</strong>
+    <main className="tvx-shell sampi-tv-kiosk-ready">
+      <header className="tvx-head">
+        <h1 className="tvx-brand" aria-label="SAMPI MEDICINE">
+          <span>SAMPI</span> <strong>MEDICINE</strong>
         </h1>
+        <TvClock lang={tvLang} />
+      </header>
 
-        {callAnnouncement ? (
-          <div
-            className="sampi-tv-call-layer"
-            aria-live="assertive"
-            aria-atomic="true"
-            key={callAnnouncement.key}
-          >
-            <div className="sampi-tv-call-card">
-              <div className="sampi-tv-call-kicker"><TvText lang={tvLang}>{t.callKicker}</TvText></div>
-              <div className="sampi-tv-call-number">{callAnnouncement.code}</div>
-              <div className="sampi-tv-call-note"><TvText lang={tvLang}>{t.callNote}</TvText></div>
-              <div
-                className="sampi-tv-call-progress"
-                style={{ "--call-ms": `${CALL_ANNOUNCEMENT_MS}ms` }}
-                aria-hidden="true"
-              />
+      <div className="tvx-grid">
+        <section
+          className={`tvx-card tvx-current ${isConnectionSoft ? "tvx-muted" : ""}`}
+          aria-live="polite"
+        >
+          {current ? (
+            <div
+              key={currentKey || current.id}
+              className={`tvx-current-body ${current.arrived === false ? "tvx-calling" : ""} ${
+                currentKey && currentKey === pulseKey ? "tvx-pulse" : ""
+              }`}
+            >
+              {/* Chaqirilgan, lekin hali kirmagan bemor "qabulda" deb ko'rsatilmaydi. */}
+              <div className="tvx-kicker">
+                <TvText lang={tvLang}>{current.arrived === false ? t.callingKicker : t.currentKicker}</TvText>
+              </div>
+              <div className="tvx-current-number">{displayQueueCode}</div>
+              <div className="tvx-current-note">
+                <TvText lang={tvLang}>{current.arrived === false ? t.callingNote : t.currentNote}</TvText>
+              </div>
             </div>
+          ) : (
+            <div className="tvx-standby">
+              <svg className="tvx-standby-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+              <div className="tvx-standby-title">
+                <TvText lang={tvLang}>{loading ? t.loading : t.waitTitle}</TvText>
+              </div>
+              <div className="tvx-standby-sub">
+                <TvText lang={tvLang}>{t.waitSub}</TvText>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <aside className="tvx-card tvx-waiting" aria-label="Navbatdagilar">
+          <div className="tvx-waiting-head">
+            <span>
+              <TvText lang={tvLang}>{t.waitingTitle}</TvText>
+            </span>
+            <b>{loading && !queue ? "..." : `${waitingTicketCount} ${t.countSuffix}`}</b>
           </div>
-        ) : null}
 
-        {audioStatus !== "ready" ? (
-          <button
-            className={`sampi-tv-audio-button sampi-tv-audio-button-${audioStatus}`}
-            type="button"
-            onClick={unlockQueueAudio}
-          >
-            <span aria-hidden="true" />
-            Ovozni yoqish
-          </button>
-        ) : null}
-
-        <div className="sampi-tv-screen-grid">
-          <section
-            className={`sampi-tv-current-card ${
-              currentKey && currentKey === pulseKey ? "sampi-tv-current-pulse" : ""
-            } ${isConnectionSoft ? "sampi-tv-current-muted" : ""}`}
-          >
-            {loading && !current ? (
-              <div className="sampi-tv-standby" aria-live="polite">
-                <div className="sampi-tv-standby-kicker">LOR</div>
-                <div className="sampi-tv-standby-title"><TvText lang={tvLang}>{t.waitTitle}</TvText></div>
-                <div className="sampi-tv-standby-line" aria-hidden="true" />
+          {waitingTicketCount ? (
+            <>
+              <div className="tvx-next" key={nextTicket.id || nextTicket.queueCode}>
+                <span className="tvx-next-number">{formatTvQueueCode(nextTicket.queueCode)}</span>
+                <span className="tvx-next-pill">
+                  <TvText lang={tvLang}>{t.next}</TvText>
+                </span>
               </div>
-            ) : current ? (
-              <div
-                className={`sampi-tv-current-content ${current.arrived === false ? "sampi-tv-current-calling" : ""}`}
-                aria-live="polite"
-              >
-                {/* Chaqirilgan, lekin hali kirmagan bemor "qabulda" deb ko'rsatilmaydi. */}
-                <div className="sampi-tv-current-kicker">
-                  <TvText lang={tvLang}>{current.arrived === false ? t.callingKicker : t.currentKicker}</TvText>
+              {restTickets.length ? (
+                <div
+                  className={`tvx-rest ${restDensity.className}`}
+                  style={{ gridTemplateColumns: `repeat(${restDensity.columns}, minmax(0, 1fr))` }}
+                >
+                  {restTickets.map((ticket, index) => (
+                    <div
+                      className="tvx-rest-cell"
+                      style={{ "--row-delay": `${Math.min(index, 12) * 35}ms` }}
+                      key={ticket.id || ticket._id || ticket.queueCode}
+                    >
+                      {formatTvQueueCode(ticket.queueCode)}
+                    </div>
+                  ))}
                 </div>
-                <div className="sampi-tv-number-shell">
-                  <div className="sampi-tv-current-code">{displayQueueCode}</div>
-                </div>
-                <div className="sampi-tv-current-note">
-                  <TvText lang={tvLang}>{current.arrived === false ? t.callingNote : t.currentNote}</TvText>
-                </div>
-              </div>
-            ) : (
-              <div className="sampi-tv-standby" aria-live="polite">
-                <div className="sampi-tv-standby-kicker">LOR</div>
-                <div className="sampi-tv-standby-title"><TvText lang={tvLang}>{t.waitTitle}</TvText></div>
-                <div className="sampi-tv-standby-line" aria-hidden="true" />
-              </div>
-            )}
-          </section>
-
-          <aside
-            className={`sampi-tv-waiting-menu ${
-              waitingTicketCount ? "sampi-tv-waiting-menu-active" : "sampi-tv-waiting-menu-empty"
-            } ${
-              waitingTicketCount > 6 ? "sampi-tv-waiting-menu-grid" : ""
-            } ${
-              waitingGrid.densityClass
-            }`}
-            aria-label="Kassadan chiqarilgan LOR cheklari"
-          >
-            <div className="sampi-tv-waiting-head">
-              <span><TvText lang={tvLang}>{t.waitingTitle}</TvText></span>
-              <b>{loading && !queue ? "..." : waitingTicketCount}</b>
+              ) : null}
+            </>
+          ) : (
+            <div className="tvx-waiting-empty">
+              <TvText lang={tvLang}>{loading && !queue ? t.loading : t.empty}</TvText>
             </div>
-            <div className="sampi-tv-waiting-list" style={waitingListStyle}>
-              {loading && !queue ? (
-                <div className="sampi-tv-waiting-empty">{t.loading}</div>
-              ) : waitingTicketCount ? (
-                waitingTickets.map((ticket, index) => (
-                  <div
-                    className={`sampi-tv-waiting-row ${
-                      index === 0 ? "sampi-tv-waiting-row-next" : ""
-                    }`}
-                    style={{ "--row-delay": `${Math.min(index, 12) * 35}ms` }}
-                    key={ticket.id || ticket._id || ticket.queueCode}
-                  >
-                    <span>{formatTvQueueCode(ticket.queueCode)}</span>
-                    {index === 0 ? <small>{t.next}</small> : null}
-                  </div>
-                ))
-              ) : (
-                <div className="sampi-tv-waiting-empty">
-                  <TvText lang={tvLang}>{t.empty}</TvText>
-                </div>
-              )}
-            </div>
-          </aside>
-        </div>
-
-        {isConnectionSoft ? (
-          <div className="sampi-tv-reconnect-note">
-            {t.reconnect}
-          </div>
-        ) : null}
+          )}
+        </aside>
       </div>
+
+      {callAnnouncement ? (
+        <div className="tvx-call" aria-live="assertive" aria-atomic="true" key={callAnnouncement.key}>
+          <div className="tvx-call-clock">
+            <TvClock lang={tvLang} compact />
+          </div>
+          <div className="tvx-call-kicker">
+            <TvText lang={tvLang}>{t.callKicker}</TvText>
+          </div>
+          <div className="tvx-call-number">{callAnnouncement.code}</div>
+          <div className="tvx-call-note">
+            <TvText lang={tvLang}>{t.callNote}</TvText>
+          </div>
+          <div
+            className="tvx-call-progress"
+            style={{ "--call-ms": `${CALL_ANNOUNCEMENT_MS}ms` }}
+            aria-hidden="true"
+          />
+        </div>
+      ) : null}
+
+      {audioStatus !== "ready" ? (
+        <button className="tvx-audio" type="button" onClick={unlockQueueAudio}>
+          Ovozni yoqish
+        </button>
+      ) : null}
+
+      {isConnectionSoft ? <div className="tvx-reconnect">{t.reconnect}</div> : null}
     </main>
   );
 }
