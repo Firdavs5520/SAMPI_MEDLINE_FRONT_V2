@@ -7,13 +7,20 @@ const PAPER_LINES = ["w-4/5", "w-3/5", "w-full", "w-2/3", "w-full", "w-1/2"];
 
 // Chek chiqayotganda printerdan qog'oz chiqib kelayotgandek animatsiya.
 // body ga portal qilinadi: sahifa animatsiyasining !important qoidalari bunga tegmaydi.
-function PrintingOverlay({ show = false, text = "Chek tayyorlanmoqda", doneText = "Chek tayyor" }) {
+// succeeded: jarayon tugaganda chek haqiqatan chiqdimi. Xato bo'lsa (yoki maydon xatosi)
+// "Chek tayyor" ✓ ko'rsatilmaydi, oyna darhol yopiladi.
+function PrintingOverlay({
+  show = false,
+  succeeded = true,
+  text = "Chek tayyorlanmoqda",
+  doneText = "Chek tayyor"
+}) {
   const [prevShow, setPrevShow] = useState(show);
   const [done, setDone] = useState(false);
 
   if (show !== prevShow) {
     setPrevShow(show);
-    setDone(!show);
+    setDone(!show && succeeded);
   }
 
   useEffect(() => {

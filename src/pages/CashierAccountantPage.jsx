@@ -128,7 +128,7 @@ function CashierAccountantPage() {
 
   return (
     <div className="space-y-5">
-      <PrintingOverlay show={printing} text="Hisobot chiqarilmoqda" doneText="Hisobot tayyor" />
+      <PrintingOverlay show={printing} succeeded={!error} text="Hisobot chiqarilmoqda" doneText="Hisobot tayyor" />
 
       <div className="card p-4 sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-4">

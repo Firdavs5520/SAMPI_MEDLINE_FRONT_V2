@@ -1178,7 +1178,7 @@ function LorServicesPage() {
           </label>
         </div>
       </Modal>
-      <PrintingOverlay show={submittingCheckout} text={text.creatingCheck} />
+      <PrintingOverlay show={submittingCheckout} succeeded={Boolean(success)} text={text.creatingCheck} />
     </div>
   );
 }

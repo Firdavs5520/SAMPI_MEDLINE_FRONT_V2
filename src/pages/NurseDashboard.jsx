@@ -627,7 +627,7 @@ function NurseDashboard() {
         </div>
       </div>
 
-      <PrintingOverlay show={submitting} text="Chek tayyorlanmoqda" />
+      <PrintingOverlay show={submitting} succeeded={Boolean(success)} text="Chek tayyorlanmoqda" />
     </div>
   );
 }

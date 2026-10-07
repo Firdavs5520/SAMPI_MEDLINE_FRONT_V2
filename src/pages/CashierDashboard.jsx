@@ -1251,7 +1251,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
     return (
       <div className="space-y-4">
-        <PrintingOverlay show={issuingLorTicket} text="Navbat cheki tayyorlanmoqda" />
+        <PrintingOverlay show={issuingLorTicket} succeeded={Boolean(success)} text="Navbat cheki tayyorlanmoqda" />
         <Alert type="success" message={success} />
         <Alert type="error" message={error} />
         <div className="card border-sky-100 bg-white p-4 text-center shadow-sm sm:p-6">
