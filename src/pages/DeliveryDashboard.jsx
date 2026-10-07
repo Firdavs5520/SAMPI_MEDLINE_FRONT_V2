@@ -252,7 +252,7 @@ function DeliveryDashboard() {
 
           <div className="mt-4">
             <Button
-              loading={savingStock}
+              loading={savingStock} succeeded={Boolean(success)} successText="Saqlandi"
               onClick={handleBatchRestock}
               className={`w-full sm:w-auto ${sectionTheme.submitButton}`}
             >
@@ -285,7 +285,16 @@ function DeliveryDashboard() {
             {
               key: "stock",
               label: "Qoldiq",
-              render: (row) => formatCurrency(row.stock)
+              render: (row) => {
+                const stock = Number(row.stock) || 0;
+                const tone = stock <= 0 ? "sx-dot-danger" : stock <= 10 ? "sx-dot-warning" : "";
+                return (
+                  <span className="whitespace-nowrap">
+                    {tone ? <span className={`sx-dot ${tone}`} aria-hidden="true" /> : null}
+                    {formatCurrency(stock)}
+                  </span>
+                );
+              }
             },
             {
               key: "status",

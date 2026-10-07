@@ -1,19 +1,37 @@
-// page: butun sahifa yuklanayotganda markazda brend belgisi, aylanuvchi halqa va
-// sakrab turuvchi nuqtalar. Oddiy holat (modal/kartochka ichida) ixcham ko'rinish.
+// page: butun sahifa yuklanayotganda sahifa shaklidagi "soya" bloklar (skeleton), ustidan
+// nur o'tib turadi — sahifa tezroq ochilayotgandek tuyuladi. Oddiy holat (modal/kartochka
+// ichida) ixcham nuqtalar.
 function Spinner({ text = "Yuklanmoqda...", page = false }) {
   if (page) {
     return (
-      <div className="sampi-page-loader" role="status" aria-live="polite">
-        <div className="sampi-page-loader-mark">
-          <span className="sampi-page-loader-ring" aria-hidden="true" />
-          <span className="sampi-page-loader-logo">SM</span>
+      <div className="sx-skeleton" role="status" aria-live="polite">
+        <span className="sr-only">{text}</span>
+        <div className="sx-skel-head">
+          <span className="sx-skel sx-skel-title" />
+          <span className="sx-skel sx-skel-sub" />
         </div>
-        <p className="sampi-page-loader-text">{text.replace(/\.\.\.$/, "")}</p>
-        <span className="sampi-loader-dots" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </span>
+        <div className="sx-skel-stats">
+          {[0, 1, 2, 3].map((index) => (
+            <div className="sx-skel-card" key={index} style={{ "--i": index }}>
+              <span className="sx-skel sx-skel-line-sm" />
+              <span className="sx-skel sx-skel-line-lg" />
+            </div>
+          ))}
+        </div>
+        <div className="sx-skel-card sx-skel-table">
+          <span className="sx-skel sx-skel-line-md" />
+          {[0, 1, 2, 3, 4].map((index) => (
+            <span className="sx-skel sx-skel-row" key={index} style={{ "--i": index }} />
+          ))}
+        </div>
+        <p className="sx-skel-label">
+          <span className="sampi-loader-dots" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+          {text.replace(/\.\.\.$/, "")}
+        </p>
       </div>
     );
   }

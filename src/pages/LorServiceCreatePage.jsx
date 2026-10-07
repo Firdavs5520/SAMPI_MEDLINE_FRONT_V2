@@ -230,7 +230,7 @@ function LorServiceCreatePage() {
               }))
             }
           />
-          <Button type="submit" className="h-fit self-end" loading={savingService}>
+          <Button type="submit" className="h-fit self-end" loading={savingService} succeeded={Boolean(success)} successText="Qo'shildi">
             Qo'shish
           </Button>
         </form>
@@ -268,7 +268,7 @@ function LorServiceCreatePage() {
                 }))
               }
             />
-            <Button type="submit" className="h-fit self-end" loading={updating}>
+            <Button type="submit" className="h-fit self-end" loading={updating} succeeded={Boolean(success)} successText="Saqlandi">
               Saqlash
             </Button>
             <Button

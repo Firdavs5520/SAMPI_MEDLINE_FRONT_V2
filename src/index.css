@@ -8587,3 +8587,246 @@ html.theme-dark .app-shell > div > main {
   from { opacity: 0; transform: translateX(-6px); }
   to { opacity: 1; transform: none; }
 }
+
+/* =====================================================================
+   Effektlar: raqamlar sanalishi, bildirishnomalar, "Saqlandi" tugmasi,
+   yangi qator, bo'sh holat rasmi, skeleton yuklanish, ogohlantirish nuqtalari.
+   ===================================================================== */
+
+/* Raqam o'zgarganda qisqa yashil yonish. */
+.sx-num { font-variant-numeric: tabular-nums; border-radius: 0.35rem; transition: background-color 600ms ease, color 600ms ease; }
+.sx-num-flash { animation: sx-num-flash 900ms ease; }
+
+@keyframes sx-num-flash {
+  0% { background-color: rgba(16, 185, 129, 0); }
+  25% { background-color: rgba(16, 185, 129, 0.22); color: #047857; }
+  100% { background-color: rgba(16, 185, 129, 0); }
+}
+
+/* Bildirishnomalar: o'ng pastda, ustma-ust. */
+.sx-toast-root {
+  position: fixed;
+  right: clamp(0.75rem, 2vw, 1.5rem);
+  bottom: clamp(0.75rem, 2vw, 1.5rem);
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+  pointer-events: none;
+}
+
+.sx-toast {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: min(24rem, calc(100vw - 1.5rem));
+  padding: 0.8rem 0.9rem 0.95rem;
+  overflow: hidden;
+  border-radius: 0.95rem;
+  background: #ffffff;
+  color: #064e3b;
+  font-size: 0.9rem;
+  font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25), 0 18px 40px -16px rgba(15, 23, 42, 0.35);
+  pointer-events: auto;
+  animation: sx-toast-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sx-toast-text { flex: 1; min-width: 0; }
+
+.sx-toast-close {
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #64748b;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sx-toast-close:hover { background: #f1f5f9; color: #0f172a; }
+
+.sx-toast-timer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: #10b981;
+  transform-origin: left center;
+  animation: sx-toast-timer var(--sx-toast-ms, 4500ms) linear both;
+}
+
+html.theme-dark .sx-toast { background: #0f1b2b; color: #a7f3d0; box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.3), 0 18px 40px -16px rgba(0, 0, 0, 0.8); }
+html.theme-dark .sx-toast-close:hover { background: #13243a; color: #f1f5f9; }
+
+@keyframes sx-toast-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sx-toast-timer {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+/* Xabar belgilari. */
+.sx-alert-icon { display: grid; flex: 0 0 auto; width: 1.25rem; height: 1.25rem; place-items: center; }
+
+.sx-alert-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sx-alert-icon-success { color: #10b981; }
+
+.sx-alert-check {
+  stroke-dasharray: 14;
+  stroke-dashoffset: 14;
+  animation: sx-draw 420ms ease 220ms forwards;
+}
+
+.sx-alert-error { animation: sx-alert-shake 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+
+@keyframes sx-alert-shake {
+  0%, 100% { transform: none; }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+@keyframes sx-draw { to { stroke-dashoffset: 0; } }
+
+/* "Saqlandi" tugmasi: yashil, ✓ chiziladi. */
+.sampi-btn.sx-btn-done {
+  background-color: #059669 !important;
+  color: #ffffff !important;
+}
+
+.sx-btn-done-label { animation: sx-fade 200ms ease both; }
+
+.sx-btn-check {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: sx-draw 380ms ease 60ms forwards;
+}
+
+/* Yangi qo'shilgan qator: 2 soniya och yashil. */
+.sampi-table-row.sx-row-new > td { animation: sx-row-new 2400ms ease both; }
+
+@keyframes sx-row-new {
+  0%, 35% { background-color: rgba(16, 185, 129, 0.16); }
+  100% { background-color: transparent; }
+}
+
+/* Bo'sh holat rasmi. */
+.sx-empty-art { width: 7rem; height: 5.25rem; margin-bottom: 0.25rem; }
+.sx-empty-art path { fill: none; stroke: #94a3b8; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.sx-empty-box { fill: #f1f5f9 !important; }
+.sx-empty-flap { fill: #e2e8f0 !important; transform-origin: 60px 50px; animation: sx-flap 3.2s ease-in-out infinite; }
+.sx-empty-flap-right { animation-delay: 0.4s; }
+.sx-empty-shadow { fill: rgba(148, 163, 184, 0.25); }
+.sx-empty-spark { fill: #22d3ee; animation: sx-twinkle 2.4s ease-in-out infinite; }
+.sx-empty-spark-2 { fill: #f59e0b; animation-delay: 1.2s; }
+.sx-empty { animation: sx-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+
+html.theme-dark .sx-empty-box { fill: #13243a !important; }
+html.theme-dark .sx-empty-flap { fill: #1c3048 !important; }
+html.theme-dark .sx-empty-art path { stroke: #475569; }
+
+@keyframes sx-flap {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-4deg); }
+}
+
+@keyframes sx-twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Skeleton yuklanish. */
+.sx-skeleton { display: flex; flex-direction: column; gap: 1rem; padding: 0.25rem 0; animation: sx-fade 200ms ease both; }
+.sx-skel-head { display: flex; flex-direction: column; gap: 0.55rem; padding: 1.1rem 1.25rem; border-radius: 0.9rem; background: #ffffff; box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.05); }
+.sx-skel-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.75rem; }
+.sx-skel-card { display: flex; flex-direction: column; gap: 0.6rem; padding: 1rem 1.1rem; border-radius: 0.9rem; background: #ffffff; box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.05); }
+.sx-skel-table { gap: 0.7rem; }
+
+.sx-skel {
+  display: block;
+  border-radius: 0.45rem;
+  background: linear-gradient(90deg, #eef2f6 0%, #e2e8f0 40%, #eef2f6 80%);
+  background-size: 300% 100%;
+  animation: sx-shimmer 1.4s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+.sx-skel-title { width: min(16rem, 60%); height: 1.3rem; }
+.sx-skel-sub { width: min(24rem, 80%); height: 0.8rem; }
+.sx-skel-line-sm { width: 45%; height: 0.7rem; }
+.sx-skel-line-lg { width: 70%; height: 1.5rem; }
+.sx-skel-line-md { width: 35%; height: 1rem; }
+.sx-skel-row { width: 100%; height: 2.4rem; }
+
+.sx-skel-label { display: flex; align-items: center; justify-content: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 700; color: #64748b; }
+
+html.theme-dark .sx-skel-head,
+html.theme-dark .sx-skel-card { background: #0f1a2c; box-shadow: 0 0 0 1px #1f2c3e; }
+html.theme-dark .sx-skel { background: linear-gradient(90deg, #13233a 0%, #1c3150 40%, #13233a 80%); background-size: 300% 100%; }
+
+@keyframes sx-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Mavzu belgisi aylanib almashadi. */
+.sx-theme-icon-in { animation: sx-theme-spin 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+@keyframes sx-theme-spin {
+  from { opacity: 0; transform: rotate(-120deg) scale(0.5); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Ogohlantirish nuqtalari: qarz (qizil), kam qoldiq (sariq). */
+.sx-dot {
+  position: relative;
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.4rem;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.sx-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  animation: sx-breathe 1.8s ease-out infinite;
+}
+
+.sx-dot-danger { background: #e11d48; }
+.sx-dot-warning { background: #f59e0b; }
+
+@keyframes sx-breathe {
+  0% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 0; transform: scale(2.6); }
+}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import AnimatedValue from "../components/AnimatedValue.jsx";
 import Alert from "../components/Alert.jsx";
 import Button from "../components/Button.jsx";
 import Input from "../components/Input.jsx";
@@ -42,7 +43,9 @@ function TotalCard({ title, value, hint, tone = "default" }) {
   return (
     <div className={`rounded-lg border p-4 ${tones[tone] || tones.default}`}>
       <p className="text-xs font-semibold text-slate-600">{title}</p>
-      <p className="mt-2 text-2xl font-bold text-slate-800">{value}</p>
+      <p className="mt-2 text-2xl font-bold text-slate-800">
+        <AnimatedValue value={value} />
+      </p>
       {hint ? <p className="mt-1 text-sm text-slate-600">{hint}</p> : null}
     </div>
   );
@@ -175,7 +178,7 @@ function CashierExpensesPage() {
               options={paymentMethodOptions}
               onChange={(value) => setForm((prev) => ({ ...prev, paymentMethod: value }))}
             />
-            <Button type="submit" loading={saving} loadingText="Saqlanmoqda..." className="h-fit">
+            <Button type="submit" loading={saving} succeeded={Boolean(success)} successText="Qo'shildi" loadingText="Saqlanmoqda..." className="h-fit">
               Qo'shish
             </Button>
           </form>

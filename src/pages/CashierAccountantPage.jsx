@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import AnimatedValue from "../components/AnimatedValue.jsx";
 import { Link } from "react-router-dom";
 import Alert from "../components/Alert.jsx";
 import Button from "../components/Button.jsx";
@@ -36,7 +37,9 @@ function SummaryCard({ title, value, hint, tone = "default" }) {
   return (
     <div className={`rounded-xl border p-4 ${tones[tone] || tones.default}`}>
       <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{title}</p>
-      <p className="mt-2 whitespace-nowrap text-2xl font-black text-slate-900">{sum(value)}</p>
+      <p className="mt-2 whitespace-nowrap text-2xl font-black text-slate-900">
+        <AnimatedValue value={sum(value)} />
+      </p>
       {hint ? <p className="mt-1 text-xs font-semibold text-slate-500">{hint}</p> : null}
     </div>
   );
@@ -47,7 +50,7 @@ function Line({ label, value, strong = false }) {
     <div className="flex items-baseline justify-between gap-3 py-1.5">
       <span className={strong ? "font-bold text-slate-800" : "text-slate-600"}>{label}</span>
       <span className={`whitespace-nowrap ${strong ? "text-lg font-black text-slate-900" : "font-bold text-slate-800"}`}>
-        {sum(value)}
+        <AnimatedValue value={sum(value)} />
       </span>
     </div>
   );

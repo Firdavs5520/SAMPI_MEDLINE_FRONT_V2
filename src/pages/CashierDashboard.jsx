@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import AnimatedValue from "../components/AnimatedValue.jsx";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
 import Alert from "../components/Alert.jsx";
@@ -272,7 +273,9 @@ function SummaryCard({ title, value, hint, tone = "default" }) {
   return (
     <div className={`rounded-lg border p-4 ${tones[tone] || tones.default}`}>
       <p className="text-xs font-semibold text-slate-600">{title}</p>
-      <p className="mt-2 text-2xl font-bold text-slate-800">{value}</p>
+      <p className="mt-2 text-2xl font-bold text-slate-800">
+        <AnimatedValue value={value} />
+      </p>
       <p className="mt-1 text-sm text-slate-600">{hint}</p>
     </div>
   );
@@ -1398,7 +1401,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
           </div>
 
           <div className="flex justify-end">
-            <Button type="submit" className="min-h-12 w-full sm:w-auto" loading={savingSettings}>
+            <Button type="submit" className="min-h-12 w-full sm:w-auto" loading={savingSettings} succeeded={Boolean(success)} successText="Saqlandi">
               Sozlamalarni saqlash
             </Button>
           </div>
@@ -1512,7 +1515,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/10"
               />
             </div>
-            <Button className="w-full sm:w-auto" onClick={handleAddSpecialist} loading={savingSpecialist}>
+            <Button className="w-full sm:w-auto" onClick={handleAddSpecialist} loading={savingSpecialist} succeeded={Boolean(success)} successText="Qo'shildi">
               Qo'shish
             </Button>
           </div>
@@ -1579,7 +1582,16 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     {
       key: "debtAmount",
       label: "Qarz",
-      render: (row) => `${formatCurrency(row.debtAmount || 0)}\u00a0so'm`
+      // Qarzi bor yozuvda qizil "nafas oluvchi" nuqta: ko'z darhol tushadi.
+      render: (row) =>
+        Number(row.debtAmount) > 0 ? (
+          <span className="whitespace-nowrap font-semibold text-rose-600">
+            <span className="sx-dot sx-dot-danger" aria-hidden="true" />
+            {`${formatCurrency(row.debtAmount)}\u00a0so'm`}
+          </span>
+        ) : (
+          `${formatCurrency(0)}\u00a0so'm`
+        )
     },
     {
       key: "paymentMethod",
@@ -1616,7 +1628,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
           <Button
             type="button"
             className="whitespace-nowrap px-3 py-1.5 text-xs"
-            loading={closingDebtId === row._id}
+            loading={closingDebtId === row._id} succeeded={Boolean(success)} successText="Yopildi"
             onClick={() => handleMarkDebtAsPaid(row)}
           >
             To'landi
@@ -2008,7 +2020,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                   <Button
                     type="submit"
-                    loading={savingEntry}
+                    loading={savingEntry} succeeded={Boolean(success)} successText="Qabul qilindi"
                     className={`w-full sm:w-auto ${sectionTheme.submitButton}`}
                   >
                     Chekni qabul qilish

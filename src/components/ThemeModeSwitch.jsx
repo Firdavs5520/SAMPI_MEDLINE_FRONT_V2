@@ -68,7 +68,9 @@ function ThemeModeSwitch({ compact = false }) {
         title={`Joriy: ${THEME_LABELS[mode]} | Bosganda: ${THEME_LABELS[nextMode()]}`}
         aria-label={`Tema: ${THEME_LABELS[mode]}`}
       >
-        <span className="sampi-theme-icon inline-flex items-center justify-center text-primary">{THEME_ICONS[mode]}</span>
+        <span key={mode} className="sampi-theme-icon sx-theme-icon-in inline-flex items-center justify-center text-primary">
+          {THEME_ICONS[mode]}
+        </span>
         {!compact ? <span>{THEME_LABELS[mode]}</span> : null}
       </button>
     </div>

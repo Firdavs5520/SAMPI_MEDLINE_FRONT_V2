@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import AnimatedValue from "../components/AnimatedValue.jsx";
 import { Link } from "react-router-dom";
 import serviceService from "../services/serviceService.js";
 import Spinner from "../components/Spinner.jsx";
@@ -18,7 +19,9 @@ function StatCard({ title, value, hint = "", tone = "default" }) {
   return (
     <div className={`rounded-lg border p-4 ${tones[tone]}`}>
       <p className="text-xs font-semibold uppercase tracking-wide opacity-80">{title}</p>
-      <p className="mt-2 break-words text-xl font-bold sm:text-2xl">{value}</p>
+      <p className="mt-2 break-words text-xl font-bold sm:text-2xl">
+        <AnimatedValue value={value} />
+      </p>
       <p className="mt-1 min-h-5 break-words text-xs opacity-80">{hint}</p>
     </div>
   );

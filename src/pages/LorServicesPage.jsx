@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import EmptyState from "../components/EmptyState.jsx";
 import { useLocation, useNavigate } from "react-router-dom";
 import serviceService from "../services/serviceService.js";
 import usageService from "../services/usageService.js";
@@ -893,8 +894,8 @@ function LorServicesPage() {
               ))}
             </div>
           ) : (
-            <div className="mt-4 rounded-lg border border-dashed border-slate-300 px-3 py-8 text-center text-sm font-semibold text-slate-500">
-              {text.queueEmpty}
+            <div className="mt-4 rounded-lg border border-dashed border-slate-300">
+              <EmptyState title={text.queueEmpty} hint="Kassir raqam chiqarishi bilan shu yerda paydo bo'ladi." />
             </div>
           )}
         </div>

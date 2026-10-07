@@ -92,7 +92,16 @@ function ManagerStockPage() {
             {
               key: "stock",
               label: "Qoldiq",
-              render: (row) => Number(row.stock) || 0
+              render: (row) => {
+                const stock = Number(row.stock) || 0;
+                const tone = stock <= 0 ? "sx-dot-danger" : stock <= 10 ? "sx-dot-warning" : "";
+                return (
+                  <span className="whitespace-nowrap">
+                    {tone ? <span className={`sx-dot ${tone}`} aria-hidden="true" /> : null}
+                    {stock}
+                  </span>
+                );
+              }
             },
             {
               key: "status",

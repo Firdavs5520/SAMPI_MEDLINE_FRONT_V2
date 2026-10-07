@@ -193,7 +193,7 @@ function NurseMedicinesPage() {
             onChange={(e) => setNewMedicinePrice(formatMoneyInput(e.target.value))}
             placeholder="Masalan: 12 000"
           />
-          <Button type="submit" className="h-fit self-end" loading={saving}>
+          <Button type="submit" className="h-fit self-end" loading={saving} succeeded={Boolean(success)} successText="Qo'shildi">
             Qo'shish
           </Button>
         </form>
@@ -231,7 +231,7 @@ function NurseMedicinesPage() {
                 }))
               }
             />
-            <Button type="submit" className="h-fit self-end" loading={updating}>
+            <Button type="submit" className="h-fit self-end" loading={updating} succeeded={Boolean(success)} successText="Saqlandi">
               Saqlash
             </Button>
             <Button
@@ -263,7 +263,20 @@ function NurseMedicinesPage() {
               label: "Narxi",
               render: (row) => formatCurrency(row.price)
             },
-            { key: "stock", label: "Qoldiq" },
+            {
+              key: "stock",
+              label: "Qoldiq",
+              render: (row) => {
+                const stock = Number(row.stock) || 0;
+                const tone = stock <= 0 ? "sx-dot-danger" : stock <= 10 ? "sx-dot-warning" : "";
+                return (
+                  <span className="whitespace-nowrap">
+                    {tone ? <span className={`sx-dot ${tone}`} aria-hidden="true" /> : null}
+                    {stock}
+                  </span>
+                );
+              }
+            },
             {
               key: "status",
               label: "Holat",

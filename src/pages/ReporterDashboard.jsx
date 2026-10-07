@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import AnimatedValue from "../components/AnimatedValue.jsx";
 import { Link } from "react-router-dom";
 import Alert from "../components/Alert.jsx";
 import Button from "../components/Button.jsx";
@@ -102,7 +103,9 @@ function Kpi({ label, value, hint, accent = false }) {
       }`}
     >
       <p className="truncate text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className={`mt-0.5 truncate font-black text-slate-900 ${accent ? "text-xl" : "text-lg"}`}>{value}</p>
+      <p className={`mt-0.5 truncate font-black text-slate-900 ${accent ? "text-xl" : "text-lg"}`}>
+        <AnimatedValue value={value} />
+      </p>
       {hint ? <p className="truncate text-xs font-semibold text-slate-500">{hint}</p> : null}
     </div>
   );
@@ -644,7 +647,7 @@ function ReporterDashboard() {
               </div>
 
               <div className="mt-4 hidden gap-2 lg:grid">
-                <Button type="submit" className="min-h-12 text-base" loading={saving} loadingText="Saqlanmoqda...">
+                <Button type="submit" className="min-h-12 text-base" loading={saving} succeeded={Boolean(success)} successText="Saqlandi" loadingText="Saqlanmoqda...">
                   Saqlash
                 </Button>
                 <div className="grid grid-cols-2 gap-2">
@@ -674,7 +677,7 @@ function ReporterDashboard() {
               <Button type="button" variant="secondary" className="min-h-11 px-3 text-xs" onClick={handleCopyYesterday}>
                 Kechagi
               </Button>
-              <Button type="submit" className="min-h-11 px-5" loading={saving} loadingText="...">
+              <Button type="submit" className="min-h-11 px-5" loading={saving} succeeded={Boolean(success)} successText="Saqlandi" loadingText="...">
                 Saqlash
               </Button>
             </div>

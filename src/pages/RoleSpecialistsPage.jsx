@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
+import EmptyState from "../components/EmptyState.jsx";
 import Input from "../components/Input.jsx";
 import { showFieldError } from "../utils/fieldError.js";
 import Button from "../components/Button.jsx";
@@ -191,7 +192,7 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
             placeholder={`Masalan: ${roleLabel} Aziz`}
             onChange={(e) => setNewName(toTitleCaseName(e.target.value))}
           />
-          <Button type="submit" loading={saving} className={`h-fit w-full self-end ${theme.accent} md:w-auto`}>
+          <Button type="submit" loading={saving} succeeded={Boolean(success)} successText="Qo'shildi" className={`h-fit w-full self-end ${theme.accent} md:w-auto`}>
             Qo'shish
           </Button>
         </form>
@@ -211,8 +212,8 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">
-            Ma'lumot topilmadi.
+          <div className="rounded-xl border border-dashed border-slate-300">
+            <EmptyState title="Ma'lumot topilmadi" hint="Yuqoridagi formadan yangisini qo'shing." />
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -234,7 +235,7 @@ function RoleSpecialistsPage({ mode = "nurse" }) {
                       <div className="flex flex-wrap gap-2">
                         <Button
                           type="button"
-                          loading={updating}
+                          loading={updating} succeeded={Boolean(success)} successText="Saqlandi"
                           className={`px-3 py-1.5 text-xs ${theme.accent}`}
                           onClick={() => saveEdit(item._id)}
                         >

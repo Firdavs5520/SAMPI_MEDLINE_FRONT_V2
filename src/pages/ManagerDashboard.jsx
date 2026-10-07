@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import AnimatedValue from "../components/AnimatedValue.jsx";
 import reportService from "../services/reportService.js";
 import Spinner from "../components/Spinner.jsx";
 import Alert from "../components/Alert.jsx";
@@ -110,7 +111,7 @@ function StatCard({ title, value, hint = "", tone = "default", compact = false }
       <p
         className={`mt-2 break-words font-bold ${compact ? "text-base leading-snug sm:text-lg" : "text-xl sm:text-2xl"}`}
       >
-        {value}
+        <AnimatedValue value={value} />
       </p>
       <p className="mt-1 min-h-5 break-words text-xs opacity-80">{hint}</p>
     </div>

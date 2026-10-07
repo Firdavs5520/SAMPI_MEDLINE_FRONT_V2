@@ -253,7 +253,7 @@ function NurseServicesPage() {
               setForm((prev) => ({ ...prev, third: formatMoneyInput(e.target.value) }))
             }
           />
-          <Button type="submit" className="h-fit self-end" loading={saving}>
+          <Button type="submit" className="h-fit self-end" loading={saving} succeeded={Boolean(success)} successText="Qo'shildi">
             Qo'shish
           </Button>
         </form>
@@ -319,7 +319,7 @@ function NurseServicesPage() {
                 }))
               }
             />
-            <Button type="submit" className="h-fit self-end" loading={updating}>
+            <Button type="submit" className="h-fit self-end" loading={updating} succeeded={Boolean(success)} successText="Saqlandi">
               Saqlash
             </Button>
             <Button

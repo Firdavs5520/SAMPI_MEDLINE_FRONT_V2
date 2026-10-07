@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import AnimatedValue from "../components/AnimatedValue.jsx";
 import Alert from "../components/Alert.jsx";
 import Button from "../components/Button.jsx";
 import MonthPickerField from "../components/MonthPickerField.jsx";
@@ -36,7 +37,9 @@ function SummaryCard({ title, value, hint, tone = "default" }) {
   return (
     <div className={`rounded-lg border p-4 ${tones[tone] || tones.default}`}>
       <p className="text-xs font-semibold text-slate-600">{title}</p>
-      <p className="mt-2 whitespace-nowrap text-2xl font-bold text-slate-900">{value}</p>
+      <p className="mt-2 whitespace-nowrap text-2xl font-bold text-slate-900">
+        <AnimatedValue value={value} />
+      </p>
       {hint ? <p className="mt-1 text-xs text-slate-500">{hint}</p> : null}
     </div>
   );
@@ -92,7 +95,7 @@ function ReporterMonthlyPage() {
         <Button
           type="button"
           className="min-h-12 w-full px-6 text-base sm:w-auto"
-          loading={downloading}
+          loading={downloading} succeeded={Boolean(success)} successText="Yuklandi"
           loadingText="Tayyorlanmoqda..."
           onClick={handleDownload}
         >
