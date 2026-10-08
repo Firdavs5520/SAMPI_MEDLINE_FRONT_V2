@@ -29,6 +29,8 @@ export const roleLabels = {
 
 // Navbardagi tugma bilan to'liq ekrandan chiqilganini bildiradi (sessiya davomida).
 export const FULLSCREEN_OFF_KEY = "sampi_fullscreen_off";
+// Sozlamalarda saytdagi (brauzer/PWA) avtomatik to'liq ekran butunlay o'chirilganini bildiradi.
+export const AUTO_FULLSCREEN_PREF_KEY = "sampi_auto_fullscreen";
 
 export const sidebarMenus = {
   nurse: [
@@ -37,14 +39,16 @@ export const sidebarMenus = {
     // Kam ishlatiladigan ro'yxatlar pastdagi "Sozlamalar" bo'limida.
     { label: "Hamshiralar", path: "/nurse/specialists", end: true, icon: "users", bottom: true },
     { label: "Dorilar va narxlar", path: "/nurse/medicines", icon: "pill", bottom: true },
-    { label: "Xizmatlar va narxlar", path: "/nurse/services", icon: "stethoscope", bottom: true }
+    { label: "Xizmatlar va narxlar", path: "/nurse/services", icon: "stethoscope", bottom: true },
+    { label: "Sozlamalar", path: "/nurse/settings", end: true, icon: "settings", bottom: true }
   ],
   lor: [
     { label: "Bemor qabuli", path: "/lor/services", end: true, icon: "stethoscope" },
     { label: "Mening cheklarim", path: "/lor/checks", end: true, icon: "receipt" },
     // bottom: menyuning pastidagi "Sozlamalar" bo'limida chiqadi.
     { label: "Doktorlar", path: "/lor/specialists", end: true, icon: "users", bottom: true },
-    { label: "Xizmatlar va narxlar", path: "/lor/services/add", end: true, icon: "plus", bottom: true }
+    { label: "Xizmatlar va narxlar", path: "/lor/services/add", end: true, icon: "plus", bottom: true },
+    { label: "Sozlamalar", path: "/lor/settings", end: true, icon: "settings", bottom: true }
   ],
   delivery: [{ label: "Omborga dori kirimi", path: "/delivery", end: true, icon: "truck" }],
   cashier: [

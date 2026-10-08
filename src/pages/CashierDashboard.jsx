@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AnimatedValue from "../components/AnimatedValue.jsx";
 import Input from "../components/Input.jsx";
 import Button from "../components/Button.jsx";
+import DeviceSettings from "../components/DeviceSettings.jsx";
 import Alert from "../components/Alert.jsx";
 import Spinner from "../components/Spinner.jsx";
 import PrintingOverlay from "../components/PrintingOverlay.jsx";
@@ -155,21 +156,6 @@ const SHORT_CHECK_ID_LENGTH = 6;
 
 const getTodayString = (settings = defaultCashierSettings) => getCurrentShiftYmd(settings);
 const SHIFT_DATE_REFRESH_MS = 60000;
-
-const canUseDesktopPrinterSettings = () =>
-  typeof window !== "undefined" &&
-  typeof window.sampiDesktop?.listPrinters === "function" &&
-  typeof window.sampiDesktop?.setReceiptPrinter === "function";
-
-const emptyPrinterSettings = {
-  available: false,
-  loading: false,
-  saving: false,
-  printers: [],
-  selectedPrinterName: "",
-  defaultPrinterName: "",
-  fallbackPrinterName: "XP-80"
-};
 
 const formatDateInput = (value) => {
   if (!value) return getTodayString();
@@ -351,9 +337,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
   const [settingsForm, setSettingsForm] = useState(() =>
     normalizeSettingsForm(defaultCashierSettings)
   );
-  const [printerSettings, setPrinterSettings] = useState(emptyPrinterSettings);
   // null: bu sozlama yo'q (sayt yoki eski desktop ilova).
-  const [startFullscreen, setStartFullscreen] = useState(null);
   const [closingDebtId, setClosingDebtId] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -411,16 +395,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
 
     return specialistTypeOptions;
   }, [lockedType, filters.department]);
-  const receiptPrinterOptions = useMemo(
-    () =>
-      printerSettings.printers.map((printer) => ({
-        value: printer.name,
-        label: `${printer.displayName || printer.name}${
-          printer.isDefault ? " (Windows asosiy)" : ""
-        }`
-      })),
-    [printerSettings.printers]
-  );
 
   const calculatedDebt = useMemo(() => {
     const amount = safeNumber(form.amount, 0);
@@ -615,38 +589,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     }
   }, [isFormSection, lockedType]);
 
-  const loadPrinterSettings = useCallback(async ({ silent = false } = {}) => {
-    if (!canUseDesktopPrinterSettings()) {
-      setPrinterSettings((prev) => ({
-        ...prev,
-        available: false,
-        loading: false,
-        saving: false
-      }));
-      return;
-    }
-
-    if (!silent) {
-      setPrinterSettings((prev) => ({ ...prev, available: true, loading: true }));
-    }
-
-    try {
-      const data = await window.sampiDesktop.listPrinters();
-      setPrinterSettings((prev) => ({
-        ...prev,
-        available: true,
-        loading: false,
-        printers: data?.printers || [],
-        selectedPrinterName: data?.selectedPrinterName || "",
-        defaultPrinterName: data?.defaultPrinterName || "",
-        fallbackPrinterName: data?.fallbackPrinterName || "XP-80"
-      }));
-    } catch (err) {
-      setPrinterSettings((prev) => ({ ...prev, available: true, loading: false }));
-      setError(extractErrorMessage(err));
-    }
-  }, []);
-
   const loadSettings = useCallback(async () => {
     setLoading(true);
     try {
@@ -777,11 +719,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     loadSettings
   ]);
 
-  useEffect(() => {
-    if (isSettingsSection) {
-      loadPrinterSettings();
-    }
-  }, [isSettingsSection, loadPrinterSettings]);
 
   useEffect(() => {
     loadSpecialists();
@@ -1052,29 +989,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isLorQueueSection, handleIssueLorTicket]);
 
-  useEffect(() => {
-    const desktop = typeof window !== "undefined" ? window.sampiDesktop : null;
-    if (!isSettingsSection || typeof desktop?.getWindowSettings !== "function") return;
-    desktop
-      .getWindowSettings()
-      .then((value) => setStartFullscreen(value?.startFullscreen !== false))
-      .catch(() => {});
-  }, [isSettingsSection]);
-
-  const handleStartFullscreenChange = async (enabled) => {
-    const desktop = window.sampiDesktop;
-    if (typeof desktop?.setStartFullscreen !== "function") return;
-    setStartFullscreen(enabled);
-    try {
-      const saved = await desktop.setStartFullscreen(enabled);
-      setStartFullscreen(saved?.startFullscreen !== false);
-      setSuccess(enabled ? "Ilova endi doim to'liq ekranda ochiladi." : "To'liq ekranda ochilish o'chirildi.");
-    } catch (err) {
-      setStartFullscreen(!enabled);
-      setError(extractErrorMessage(err));
-    }
-  };
-
   // Terilgan raqam aynan bitta chekka to'liq mos kelsa, uni o'zi ochadi.
   useEffect(() => {
     if (pendingSearch.length !== SHORT_CHECK_ID_LENGTH) return;
@@ -1166,33 +1080,6 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
       ...prev,
       [key]: value
     }));
-  };
-
-  const handleReceiptPrinterChange = async (printerName) => {
-    if (!canUseDesktopPrinterSettings() || printerSettings.saving) return;
-
-    setError("");
-    setSuccess("");
-    setPrinterSettings((prev) => ({
-      ...prev,
-      saving: true,
-      selectedPrinterName: printerName
-    }));
-
-    try {
-      const saved = await window.sampiDesktop.setReceiptPrinter(printerName);
-      setPrinterSettings((prev) => ({
-        ...prev,
-        saving: false,
-        selectedPrinterName: saved?.printerName || printerName
-      }));
-      setSuccess("Chek printeri saqlandi.");
-      await loadPrinterSettings({ silent: true });
-    } catch (err) {
-      setPrinterSettings((prev) => ({ ...prev, saving: false }));
-      setError(extractErrorMessage(err));
-      await loadPrinterSettings({ silent: true });
-    }
   };
 
   const handleSaveSettings = async (event) => {
@@ -1407,90 +1294,7 @@ function CashierDashboard({ forcedSection = "nurse-patients" }) {
           </div>
         </form>
 
-        {startFullscreen !== null ? (
-          <div className="card p-4 sm:p-5">
-            <label className="flex cursor-pointer items-start gap-3">
-              <input
-                type="checkbox"
-                className="mt-1 h-5 w-5 shrink-0"
-                checked={startFullscreen}
-                onChange={(event) => handleStartFullscreenChange(event.target.checked)}
-              />
-              <span>
-                <span className="block text-lg font-semibold text-slate-800">
-                  Ilova doim to'liq ekranda ochilsin
-                </span>
-                <span className="mt-1 block text-sm text-slate-500">
-                  Desktop ilova har ochilganda butun ekranni egallaydi. Vaqtincha chiqish uchun yuqoridagi to'liq
-                  ekran tugmasini bosing.
-                </span>
-              </span>
-            </label>
-          </div>
-        ) : null}
-
-        {printerSettings.available ? (
-          <div className="card space-y-4 p-4 sm:p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-800">Chek printeri</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Tanlangan printer navbat va cheklarni bitta bosishda chiqaradi.
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full sm:w-auto"
-                loading={printerSettings.loading}
-                disabled={printerSettings.saving}
-                onClick={() => loadPrinterSettings()}
-              >
-                Yangilash
-              </Button>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
-              <SelectMenu
-                label="Printer"
-                value={printerSettings.selectedPrinterName}
-                options={receiptPrinterOptions}
-                onChange={handleReceiptPrinterChange}
-                disabled={
-                  printerSettings.loading ||
-                  printerSettings.saving ||
-                  receiptPrinterOptions.length === 0
-                }
-              />
-              <Button
-                type="button"
-                className="min-h-12 w-full md:w-auto"
-                loading={printerSettings.saving}
-                disabled={
-                  printerSettings.loading ||
-                  printerSettings.saving ||
-                  !printerSettings.selectedPrinterName
-                }
-                onClick={() => handleReceiptPrinterChange(printerSettings.selectedPrinterName)}
-              >
-                Printerni saqlash
-              </Button>
-            </div>
-
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-600">
-              Hozirgi printer:{" "}
-              <strong className="text-slate-800">
-                {printerSettings.selectedPrinterName ||
-                  `${printerSettings.fallbackPrinterName} (avtomatik)`}
-              </strong>
-              {printerSettings.defaultPrinterName ? (
-                <span className="ml-2 text-slate-500">
-                  Windows asosiy: {printerSettings.defaultPrinterName}
-                </span>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
+        <DeviceSettings />
 
         <Alert type="success" message={success} />
         <Alert type="error" message={error} />

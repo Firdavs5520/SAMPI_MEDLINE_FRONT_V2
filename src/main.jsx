@@ -5,7 +5,7 @@ import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import "./index.css";
-import { FULLSCREEN_OFF_KEY } from "./utils/constants.js";
+import { AUTO_FULLSCREEN_PREF_KEY, FULLSCREEN_OFF_KEY } from "./utils/constants.js";
 import { showUpdatedSplashIfNeeded, showVersionSplash } from "./utils/versionSplash.js";
 
 const VERSION_NOTICE_ID = "sampi-version-toast";
@@ -75,6 +75,7 @@ const getAssetSignatureFromHtml = (html) => {
 // (Esc bilan chiqilsa, keyingi bosishda yana yoqiladi).
 const isAutoFullscreenDisabled = () => {
   try {
+    if (window.localStorage.getItem(AUTO_FULLSCREEN_PREF_KEY) === "off") return true;
     return window.sessionStorage.getItem(FULLSCREEN_OFF_KEY) === "1";
   } catch {
     return false;

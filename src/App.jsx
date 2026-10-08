@@ -4,6 +4,7 @@ import DesktopUpdatePrompt from "./components/DesktopUpdatePrompt.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import RequireLorIdentity from "./components/RequireLorIdentity.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
+import DeviceSettingsPage from "./pages/DeviceSettingsPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import NurseDashboard from "./pages/NurseDashboard.jsx";
 import NurseChecksPage from "./pages/NurseChecksPage.jsx";
@@ -68,6 +69,7 @@ function App() {
             />
             <Route path="/nurse/medicines" element={<NurseMedicinesPage />} />
             <Route path="/nurse/services" element={<NurseServicesPage />} />
+            <Route path="/nurse/settings" element={<DeviceSettingsPage />} />
           </Route>
         </Route>
 
@@ -82,6 +84,7 @@ function App() {
               element={<LorSelectPage />}
             />
 
+            <Route path="/lor/settings" element={<DeviceSettingsPage />} />
             <Route element={<RequireLorIdentity />}>
               <Route path="/lor/checks" element={<LorChecksPage />} />
               <Route path="/lor/services" element={<LorServicesPage />} />
