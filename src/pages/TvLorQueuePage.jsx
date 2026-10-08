@@ -17,6 +17,7 @@ const QUEUE_VOICE_VERSION = 2;
 const QUEUE_VOICE_PATH = (number) => `/audio/queue/${number}.mp3?v=${QUEUE_VOICE_VERSION}`;
 const QUEUE_VOICE_MAX = 150;
 const CHIME_MAX_WAIT_MS = 4000;
+const VOICE_LOAD_TIMEOUT_MS = 5000;
 // Chaqirilgan raqam katta ekranda 8 soniya turadi (pastdagi chiziq qolgan vaqtni ko'rsatadi).
 const CALL_ANNOUNCEMENT_MS = 8000;
 // Oqim (SSE) ulangan ko'rinsa ham proksi xabarni kechiktirishi yoki jim uzilishi mumkin,
@@ -274,37 +275,96 @@ function TvLorQueuePage() {
     setAudioStatus("blocked");
   }, [ensureQueueChime, playSyntheticQueueTone]);
 
-  // Raqamni o'zbekcha ovoz bilan bir marta aytadi; yangi chaqiruv kelsa eskisi to'xtaydi.
-  // Bitta audio element qayta ishlatiladi: ovozga bir marta berilgan ruxsat keyingi
-  // chaqiruvlarda ham saqlanadi.
-  const speakQueueNumber = useCallback(async (code) => {
-    const number = Number(String(code ?? "").replace(/\D/g, ""));
-    if (!number || number > QUEUE_VOICE_MAX) return;
+  // Ovoz fayli Web Audio orqali chalinadi: fayl yuklanib, xotirada dekodlanadi va AudioContext'da
+  // ijro etiladi. <audio> elementidagi avtoplay va service worker keshi muammolari bunga ta'sir
+  // qilmaydi. Dekodlangan ovozlar xotirada saqlanadi, navbatdagilari oldindan tayyorlanadi.
+  const voiceBuffersRef = useRef(new Map());
+  const voiceSourceRef = useRef(null);
 
-    if (!queueVoiceRef.current) {
-      queueVoiceRef.current = new Audio();
-      queueVoiceRef.current.preload = "auto";
-    }
-    const voice = queueVoiceRef.current;
-    voice.pause();
-    voice.src = QUEUE_VOICE_PATH(number);
+  const loadVoiceBuffer = useCallback(
+    (path) => {
+      const cached = voiceBuffersRef.current.get(path);
+      if (cached) return cached;
+      const promise = (async () => {
+        // Dekodlash uchun AudioContext'ni yoqish (resume) shart emas.
+        if (!audioContextRef.current) {
+          const AudioCtor = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtor) throw new Error("Web Audio yo'q");
+          audioContextRef.current = new AudioCtor();
+        }
+        const context = audioContextRef.current;
+        const response = await fetch(path);
+        if (!response.ok) throw new Error(`Ovoz fayli yuklanmadi: ${response.status}`);
+        const data = await response.arrayBuffer();
+        return context.decodeAudioData(data);
+      })();
+      voiceBuffersRef.current.set(path, promise);
+      promise.catch(() => voiceBuffersRef.current.delete(path));
+      return promise;
+    },
+    []
+  );
+
+  const playVoiceWithAudioElement = useCallback(async (path) => {
+    queueVoiceRef.current?.pause();
+    const voice = new Audio(path);
     voice.volume = 1;
-
-    await voice.play().catch(() => {});
+    queueVoiceRef.current = voice;
+    await voice.play();
   }, []);
 
-  // Navbatdagi raqamlarning ovoz fayllari oldindan yuklab qo'yiladi: chaqiruvda kutilmaydi.
-  const prefetchedVoicesRef = useRef(new Set());
-  const prefetchQueueVoices = useCallback((tickets) => {
-    (tickets || []).slice(0, 3).forEach((ticket) => {
-      const number = Number(String(ticket?.queueCode ?? "").replace(/\D/g, ""));
+  // Raqamni o'zbekcha ovoz bilan bir marta aytadi; yangi chaqiruv kelsa eskisi to'xtaydi.
+  const speakQueueNumber = useCallback(
+    async (code) => {
+      const number = Number(String(code ?? "").replace(/\D/g, ""));
       if (!number || number > QUEUE_VOICE_MAX) return;
       const path = QUEUE_VOICE_PATH(number);
-      if (prefetchedVoicesRef.current.has(path)) return;
-      prefetchedVoicesRef.current.add(path);
-      fetch(path).catch(() => prefetchedVoicesRef.current.delete(path));
-    });
-  }, []);
+
+      try {
+        const buffer = await Promise.race([
+          loadVoiceBuffer(path),
+          new Promise((_, reject) => window.setTimeout(() => reject(new Error("timeout")), VOICE_LOAD_TIMEOUT_MS))
+        ]);
+        const context = audioContextRef.current;
+        if (context?.state === "suspended") {
+          await Promise.race([context.resume(), new Promise((resolve) => window.setTimeout(resolve, 800))]);
+        }
+        if (!context || context.state !== "running") throw new Error("AudioContext ishlamayapti");
+        try {
+          voiceSourceRef.current?.stop();
+        } catch {
+          // Oldingi ovoz allaqachon tugagan.
+        }
+        queueVoiceRef.current?.pause();
+        const source = context.createBufferSource();
+        source.buffer = buffer;
+        const gain = context.createGain();
+        gain.gain.value = 1;
+        source.connect(gain);
+        gain.connect(context.destination);
+        voiceSourceRef.current = source;
+        source.start();
+        return;
+      } catch {
+        // Web Audio ishlamasa oddiy audio element bilan urinib ko'riladi.
+      }
+
+      await playVoiceWithAudioElement(path).catch(() => {});
+    },
+    [loadVoiceBuffer, playVoiceWithAudioElement]
+  );
+
+  // Navbatdagi raqamlarning ovozlari oldindan yuklanib dekodlanadi: chaqiruvda kutilmaydi.
+  const prefetchQueueVoices = useCallback(
+    (tickets) => {
+      (tickets || []).slice(0, 3).forEach((ticket) => {
+        const number = Number(String(ticket?.queueCode ?? "").replace(/\D/g, ""));
+        if (!number || number > QUEUE_VOICE_MAX) return;
+        loadVoiceBuffer(QUEUE_VOICE_PATH(number)).catch(() => {});
+      });
+    },
+    [loadVoiceBuffer]
+  );
 
   const unlockQueueAudio = useCallback(() => {
     if (audioUnlockedRef.current) return;
