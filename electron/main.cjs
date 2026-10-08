@@ -1298,7 +1298,11 @@ const rasterCache = new Map();
 const getReceiptRaster = (safeHtml) => {
   const cached = rasterCache.get(safeHtml);
   if (cached) return { promise: cached, cached: true };
-  const promise = renderReceiptRaster(safeHtml);
+  // Rasm chiqmasa bir marta qayta urinib ko'riladi, shundan keyingina drayverga o'tiladi.
+  const promise = renderReceiptRaster(safeHtml).catch((error) => {
+    console.warn("Receipt raster render failed, retrying once:", error?.message || error);
+    return renderReceiptRaster(safeHtml);
+  });
   rasterCache.set(safeHtml, promise);
   promise.catch(() => rasterCache.delete(safeHtml));
   while (rasterCache.size > RASTER_CACHE_LIMIT) {

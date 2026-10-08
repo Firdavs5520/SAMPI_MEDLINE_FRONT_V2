@@ -5,6 +5,10 @@ const RASTER_WIDTH_DOTS = 576;
 const RECEIPT_WIDTH_CSS_PX = (72 / 25.4) * 96;
 const RASTER_ZOOM = RASTER_WIDTH_DOTS / RECEIPT_WIDTH_CSS_PX;
 const RASTER_MAX_HEIGHT_DOTS = 8000;
+// Uzun chek bir katta rasm emas, shu balandlikdagi bo'laklarda olinadi: katta rasm olish ba'zan
+// "UnknownVizError" bilan tushib, chek drayver orqali (bo'linib) chiqardi.
+const CAPTURE_TILE_DOTS = 1024;
+const CAPTURE_ATTEMPTS = 3;
 const RASTER_ROWS_PER_COMMAND = 255;
 const BLACK_THRESHOLD = 160;
 // Oxirgi qatordan keyin ~10mm (80 nuqta) qog'oz surib, keyin qisman kesadi.
@@ -39,6 +43,31 @@ const measureReceiptHeight = (webContents) =>
     })()`,
     true
   );
+
+// Bitta bo'lakni oladi (xato bo'lsa qayta urinadi) va aniq 576 x tileHeight BGRA qaytaradi.
+const captureTile = async (webContents, y, tileHeight) => {
+  let lastError = null;
+  for (let attempt = 1; attempt <= CAPTURE_ATTEMPTS; attempt += 1) {
+    try {
+      let image = await webContents.capturePage({
+        x: 0,
+        y,
+        width: RASTER_WIDTH_DOTS,
+        height: tileHeight,
+      });
+      if (image.isEmpty()) throw new Error("Chek rasmi olinmadi.");
+      const size = image.getSize();
+      if (size.width !== RASTER_WIDTH_DOTS || size.height !== tileHeight) {
+        image = image.resize({ width: RASTER_WIDTH_DOTS, height: tileHeight, quality: "best" });
+      }
+      return image.toBitmap();
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 150 * attempt));
+    }
+  }
+  throw lastError || new Error("Chek rasmi olinmadi.");
+};
 
 // Chekni oq-qora rasmga aylantiradi: har qatorda 72 bayt (576 nuqta), 1 = qora.
 const renderReceiptRaster = async (html) => {
@@ -81,20 +110,13 @@ const renderReceiptRaster = async (html) => {
     win.setContentSize(RASTER_WIDTH_DOTS, heightDots);
     await waitForPaint(win.webContents);
 
-    let image = await win.webContents.capturePage({
-      x: 0,
-      y: 0,
-      width: RASTER_WIDTH_DOTS,
-      height: heightDots,
-    });
-    if (image.isEmpty()) {
-      throw new Error("Chek rasmi olinmadi.");
-    }
-    if (image.getSize().width !== RASTER_WIDTH_DOTS) {
-      image = image.resize({ width: RASTER_WIDTH_DOTS, quality: "best" });
+    const tiles = [];
+    for (let y = 0; y < heightDots; y += CAPTURE_TILE_DOTS) {
+      const tileHeight = Math.min(CAPTURE_TILE_DOTS, heightDots - y);
+      tiles.push(await captureTile(win.webContents, y, tileHeight));
     }
 
-    return bitmapToRaster(image.toBitmap(), image.getSize());
+    return bitmapToRaster(Buffer.concat(tiles), { width: RASTER_WIDTH_DOTS, height: heightDots });
   } finally {
     if (!win.isDestroyed()) {
       await new Promise((resolve) => {
