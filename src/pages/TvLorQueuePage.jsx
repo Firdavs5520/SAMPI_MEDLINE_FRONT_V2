@@ -16,7 +16,10 @@ const QUEUE_CHIME_PATH = "/audio/premium_queue_chime_close_match.wav";
 const QUEUE_VOICE_VERSION = 2;
 const QUEUE_VOICE_PATH = (number) => `/audio/queue/${number}.mp3?v=${QUEUE_VOICE_VERSION}`;
 const QUEUE_VOICE_MAX = 150;
-const CHIME_MAX_WAIT_MS = 4000;
+// Raqam ovozi "ding" boshlanganidan shuncha keyin, uning so'nayotgan qismi ustidan boshlanadi
+// ("ding" 2.85 s, eshitiladigan qismi ~1.3 s). Tugash hodisasi kutilmaydi: TV brauzerida u
+// kelmay qolishi mumkin.
+const CHIME_TO_VOICE_MS = 1300;
 const VOICE_LOAD_TIMEOUT_MS = 5000;
 // Chaqirilgan raqam katta ekranda 8 soniya turadi (pastdagi chiziq qolgan vaqtni ko'rsatadi).
 const CALL_ANNOUNCEMENT_MS = 8000;
@@ -247,14 +250,6 @@ function TvLorQueuePage() {
         await audio.play();
         audioUnlockedRef.current = true;
         setAudioStatus("ready");
-        // Ovozli e'lon "ding" tugagandan keyin boshlanishi uchun.
-        await new Promise((resolve) => {
-          const timer = window.setTimeout(resolve, CHIME_MAX_WAIT_MS);
-          audio.onended = () => {
-            window.clearTimeout(timer);
-            resolve();
-          };
-        });
         return;
       } catch {
         // Browser autoplay rules may block the file; keep the TV cue alive with Web Audio.
@@ -404,7 +399,18 @@ function TvLorQueuePage() {
             key: nextAnnouncementKey,
             code: nextAnnouncementCode
           });
+          // Ovoz fayli "ding" bilan bir vaqtda tayyorlanadi, raqam "ding"dan ~1.3 s keyin aytiladi.
+          const voiceNumber = Number(nextAnnouncementCode.replace(/\D/g, ""));
+          if (voiceNumber && voiceNumber <= QUEUE_VOICE_MAX) {
+            loadVoiceBuffer(QUEUE_VOICE_PATH(voiceNumber)).catch(() => {});
+          }
+          const chimeStartedAt = Date.now();
           playQueueTone()
+            .catch(() => {})
+            .then(() => {
+              const wait = Math.max(0, CHIME_TO_VOICE_MS - (Date.now() - chimeStartedAt));
+              return new Promise((resolve) => window.setTimeout(resolve, wait));
+            })
             .then(() => speakQueueNumber(nextAnnouncementCode))
             .catch(() => {});
           window.setTimeout(() => {
@@ -418,7 +424,7 @@ function TvLorQueuePage() {
       }
       firstAnnouncementRef.current = false;
     },
-    [playQueueTone, prefetchQueueVoices, speakQueueNumber]
+    [loadVoiceBuffer, playQueueTone, prefetchQueueVoices, speakQueueNumber]
   );
 
   const loadQueue = useCallback(
