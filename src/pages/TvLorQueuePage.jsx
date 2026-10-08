@@ -17,8 +17,11 @@ const QUEUE_VOICE_VERSION = 2;
 const QUEUE_VOICE_PATH = (number) => `/audio/queue/${number}.mp3?v=${QUEUE_VOICE_VERSION}`;
 const QUEUE_VOICE_MAX = 150;
 const CHIME_MAX_WAIT_MS = 4000;
-// Chaqirilgan raqam katta ekranda 30 soniya turadi (pastdagi chiziq qolgan vaqtni ko'rsatadi).
-const CALL_ANNOUNCEMENT_MS = 30000;
+// Chaqirilgan raqam katta ekranda 8 soniya turadi (pastdagi chiziq qolgan vaqtni ko'rsatadi).
+const CALL_ANNOUNCEMENT_MS = 8000;
+// Oqim (SSE) ulangan ko'rinsa ham proksi xabarni kechiktirishi yoki jim uzilishi mumkin,
+// shuning uchun navbat har doim shu oraliqda serverdan qayta so'raladi.
+const LIVE_POLL_INTERVAL_MS = 3000;
 
 // TV yozuvlari har 10 soniyada o'zbekcha va ruscha almashadi.
 const TV_LANGUAGE_SWITCH_MS = 10000;
@@ -165,6 +168,8 @@ function TvLorQueuePage() {
   const streamAttemptRef = useRef(0);
   const firstAnnouncementRef = useRef(true);
   const lastAnnouncementKeyRef = useRef("");
+  const announcedKeysRef = useRef(new Set());
+  const lastGeneratedAtRef = useRef(0);
   const mountedRef = useRef(false);
   const connectionStateRef = useRef("connecting");
   const adminExitRef = useRef({ count: 0, timer: 0 });
@@ -270,16 +275,35 @@ function TvLorQueuePage() {
   }, [ensureQueueChime, playSyntheticQueueTone]);
 
   // Raqamni o'zbekcha ovoz bilan bir marta aytadi; yangi chaqiruv kelsa eskisi to'xtaydi.
+  // Bitta audio element qayta ishlatiladi: ovozga bir marta berilgan ruxsat keyingi
+  // chaqiruvlarda ham saqlanadi.
   const speakQueueNumber = useCallback(async (code) => {
-    const number = Number(String(code ?? "").replace(/D/g, ""));
+    const number = Number(String(code ?? "").replace(/\D/g, ""));
     if (!number || number > QUEUE_VOICE_MAX) return;
 
-    queueVoiceRef.current?.pause();
-    const voice = new Audio(QUEUE_VOICE_PATH(number));
+    if (!queueVoiceRef.current) {
+      queueVoiceRef.current = new Audio();
+      queueVoiceRef.current.preload = "auto";
+    }
+    const voice = queueVoiceRef.current;
+    voice.pause();
+    voice.src = QUEUE_VOICE_PATH(number);
     voice.volume = 1;
-    queueVoiceRef.current = voice;
 
     await voice.play().catch(() => {});
+  }, []);
+
+  // Navbatdagi raqamlarning ovoz fayllari oldindan yuklab qo'yiladi: chaqiruvda kutilmaydi.
+  const prefetchedVoicesRef = useRef(new Set());
+  const prefetchQueueVoices = useCallback((tickets) => {
+    (tickets || []).slice(0, 3).forEach((ticket) => {
+      const number = Number(String(ticket?.queueCode ?? "").replace(/\D/g, ""));
+      if (!number || number > QUEUE_VOICE_MAX) return;
+      const path = QUEUE_VOICE_PATH(number);
+      if (prefetchedVoicesRef.current.has(path)) return;
+      prefetchedVoicesRef.current.add(path);
+      fetch(path).catch(() => prefetchedVoicesRef.current.delete(path));
+    });
   }, []);
 
   const unlockQueueAudio = useCallback(() => {
@@ -291,9 +315,15 @@ function TvLorQueuePage() {
 
   const applyQueueData = useCallback(
     (data) => {
+      // Oqim va so'rov javoblari aralash keladi: eskiroq ma'lumot yangisini bosib ketmasin.
+      const generatedAt = Date.parse(data?.generatedAt || "") || 0;
+      if (generatedAt && generatedAt < lastGeneratedAtRef.current) return;
+      if (generatedAt) lastGeneratedAtRef.current = generatedAt;
+
       setQueue(data);
       setError("");
       setLoading(false);
+      prefetchQueueVoices(data?.waiting);
 
       const nextAnnouncementKey = data?.announcementKey || "";
       const nextAnnouncementCode = data?.current
@@ -304,7 +334,10 @@ function TvLorQueuePage() {
         nextAnnouncementCode &&
         nextAnnouncementKey !== lastAnnouncementKeyRef.current
       ) {
-        if (!firstAnnouncementRef.current) {
+        // Har bir chaqiruv (qayta chaqiruv ham yangi kalit oladi) faqat bir marta e'lon qilinadi.
+        const alreadyAnnounced = announcedKeysRef.current.has(nextAnnouncementKey);
+        announcedKeysRef.current.add(nextAnnouncementKey);
+        if (!firstAnnouncementRef.current && !alreadyAnnounced) {
           setPulseKey(nextAnnouncementKey);
           window.clearTimeout(callAnnouncementTimerRef.current);
           setCallAnnouncement({
@@ -325,7 +358,7 @@ function TvLorQueuePage() {
       }
       firstAnnouncementRef.current = false;
     },
-    [playQueueTone, speakQueueNumber]
+    [playQueueTone, prefetchQueueVoices, speakQueueNumber]
   );
 
   const loadQueue = useCallback(
@@ -570,12 +603,14 @@ function TvLorQueuePage() {
     let stopped = false;
 
     const run = async () => {
-      if (connectionStateRef.current !== "live") {
-        await loadQueue({ silent: !firstAnnouncementRef.current });
-      }
+      const isLive = connectionStateRef.current === "live";
+      await loadQueue({ silent: !firstAnnouncementRef.current });
 
       if (!stopped) {
-        fallbackTimerRef.current = window.setTimeout(run, POLL_INTERVAL_MS);
+        fallbackTimerRef.current = window.setTimeout(
+          run,
+          isLive ? LIVE_POLL_INTERVAL_MS : POLL_INTERVAL_MS
+        );
       }
     };
 
