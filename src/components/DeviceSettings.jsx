@@ -3,7 +3,7 @@ import Alert from "./Alert.jsx";
 import Button from "./Button.jsx";
 import SelectMenu from "./SelectMenu.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
-import { AUTO_FULLSCREEN_PREF_KEY } from "../utils/constants.js";
+import { AUTO_FULLSCREEN_PREF_KEY, FULLSCREEN_OFF_KEY } from "../utils/constants.js";
 import { extractErrorMessage } from "../utils/format.js";
 
 const APP_VERSION = __APP_VERSION__;
@@ -115,6 +115,9 @@ function DeviceSettings() {
   });
   const [startFullscreen, setStartFullscreen] = useState(null);
   const [autoFullscreen, setAutoFullscreen] = useState(readAutoFullscreen);
+  const [isFullscreen, setIsFullscreen] = useState(
+    () => typeof document !== "undefined" && Boolean(document.fullscreenElement)
+  );
   const [updateState, setUpdateState] = useState(null);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
 
@@ -159,6 +162,20 @@ function DeviceSettings() {
       .getWindowSettings()
       .then((value) => setStartFullscreen(value?.startFullscreen !== false))
       .catch(() => {});
+  }, [desktop]);
+
+  // Hozirgi to'liq ekran holati: desktop'da Windows oynasi, saytda brauzer.
+  useEffect(() => {
+    if (typeof desktop?.toggleFullscreen === "function") {
+      desktop
+        .getWindowSettings?.()
+        .then((value) => setIsFullscreen(Boolean(value?.isFullscreen)))
+        .catch(() => {});
+      return desktop.onFullscreenChange?.((value) => setIsFullscreen(Boolean(value)));
+    }
+    const sync = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
   }, [desktop]);
 
   useEffect(() => {
@@ -242,6 +259,28 @@ function DeviceSettings() {
     showMessage(enabled ? "Sayt bosilganda to'liq ekranga o'tadi." : "Avtomatik to'liq ekran o'chirildi.");
   };
 
+  const handleToggleFullscreenNow = () => {
+    if (typeof desktop?.toggleFullscreen === "function") {
+      desktop
+        .toggleFullscreen()
+        .then((value) => setIsFullscreen(Boolean(value)))
+        .catch(showError);
+      return;
+    }
+    try {
+      // Qo'lda chiqilgan bo'lsa, shu sessiyada keyingi bosishda avtomatik qayta yoqilmaydi.
+      if (document.fullscreenElement) window.sessionStorage.setItem(FULLSCREEN_OFF_KEY, "1");
+      else window.sessionStorage.removeItem(FULLSCREEN_OFF_KEY);
+    } catch {
+      // sessionStorage yopiq bo'lsa ham tugma ishlayveradi.
+    }
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => {});
+    } else {
+      document.documentElement.requestFullscreen?.({ navigationUI: "hide" }).catch(() => {});
+    }
+  };
+
   const handleCheckUpdate = async () => {
     if (typeof desktop?.checkForUpdates !== "function") return;
     setCheckingUpdate(true);
@@ -263,6 +302,7 @@ function DeviceSettings() {
   const isDesktop = Boolean(desktop);
   const browserFullscreenSupported =
     !isDesktop && typeof document !== "undefined" && Boolean(document.fullscreenEnabled);
+  const canToggleFullscreenNow = typeof desktop?.toggleFullscreen === "function" || browserFullscreenSupported;
 
   return (
     <div className="space-y-4">
@@ -339,14 +379,24 @@ function DeviceSettings() {
         </div>
       </SettingCard>
 
-      {startFullscreen !== null || browserFullscreenSupported ? (
+      {startFullscreen !== null || canToggleFullscreenNow ? (
         <SettingCard title="To'liq ekran">
+          {canToggleFullscreenNow ? (
+            <Button
+              type="button"
+              variant="secondary"
+              className="min-h-12 w-full sm:w-auto"
+              onClick={handleToggleFullscreenNow}
+            >
+              {isFullscreen ? "Hozir to'liq ekrandan chiqish" : "Hozir to'liq ekranga o'tish"}
+            </Button>
+          ) : null}
           {startFullscreen !== null ? (
             <ToggleRow
               checked={startFullscreen}
               onChange={handleStartFullscreen}
               title="Ilova doim to'liq ekranda ochilsin"
-              description="Desktop ilova har ochilganda butun ekranni egallaydi. Vaqtincha chiqish uchun yuqoridagi to'liq ekran tugmasini bosing."
+              description="Desktop ilova har ochilganda butun ekranni egallaydi. Vaqtincha chiqish uchun yuqoridagi tugmani bosing."
             />
           ) : null}
           {browserFullscreenSupported ? (
